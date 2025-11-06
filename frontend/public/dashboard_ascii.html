@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVAQUOTE - Dashboard ASCII</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/novaquote.css" rel="stylesheet">
+    <style>
+        body {
+            background: #0a0a0f;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            margin: 0;
+        }
+        .ascii-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        .dashboard-title {
+            text-align: center;
+            color: #00ff00;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-active {
+            background: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+            animation: pulse 2s infinite;
+        }
+        .status-inactive {
+            background: #666;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .agent-line {
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(0, 255, 0, 0.1);
+            border-left: 3px solid #00ff00;
+            border-radius: 3px;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #00ff00;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .refresh-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #0a0a0f;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .refresh-btn:hover {
+            background: #00cc00;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="ascii-container">
+        <div class="dashboard-title">
+            <i class="fas fa-chart-line"></i>
+            🤖 NOVAQUOTE AGENT SYSTEM
+        </div>
+
+        <div id="agent-status-container" class="loading">
+            ⏳ Chargement des agents depuis Python...
+        </div>
+
+        <button class="refresh-btn" onclick="loadAgentData()">
+            <i class="fas fa-sync-alt"></i> Actualiser
+        </button>
+    </div>
+
+    <script>
+        async function loadAgentData() {
+            const container = document.getElementById('agent-status-container');
+            container.innerHTML = '<div class="loading">⏳ Chargement...</div>';
+
+            try {
+                // Récupérer les vraies données des agents
+                const response = await fetch('/api/dashboard/real-time');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    displayRealData(data.data);
+                } else {
+                    displayError('Données non disponibles');
+                }
+            } catch (error) {
+                console.error('Error loading agent data:', error);
+                displayError('Erreur de connexion');
+            }
+        }
+
+        function displayRealData(data) {
+            const container = document.getElementById('agent-status-container');
+
+            const status = data.system_status || 'UNKNOWN';
+            const cycle = data.current_cycle || '--:--:--';
+            const nextCycle = data.next_cycle || '--:--';
+            const decision = data.current_decision?.decision || 'WAITING';
+            const confidence = data.current_decision?.confidence || 0;
+
+            let statusHtml = `
+                <div class="agent-line">
+                    <span class="status-indicator ${status === 'ACTIVE' ? 'status-active' : 'status-inactive'}"></span>
+                    <strong>SYSTÈME:</strong> ${status}
+                </div>
+
+                <div class="agent-line">
+                    <strong>CYCLE ACTUEL:</strong> ${cycle}
+                </div>
+
+                <div class="agent-line">
+                    <strong>PROCHAIN CYCLE:</strong> ${nextCycle}
+                </div>
+
+                <div class="agent-line">
+                    <strong>DÉCISION COURANTE:</strong> ${decision} (${(confidence * 100).toFixed(1)}%)
+                </div>
+
+                <div class="agent-line">
+                    <strong>PERFORMANCE:</strong>
+                </div>
+            `;
+
+            // Ajouter les agents
+            if (data.active_agents) {
+                Object.entries(data.active_agents).forEach(([agentId, agentData]) => {
+                    statusHtml += `
+                        <div class="agent-line">
+                            <span class="status-indicator ${agentData.status === 'SUCCESS' ? 'status-active' : 'status-inactive'}"></span>
+                            <strong>${agentId.toUpperCase()}:</strong>
+                            ${agentData.confidence || 0}% confiance
+                            ${agentData.llm_calls || 0} appels
+                        </div>
+                    `;
+                });
+            }
+
+            // Ajouter les métriques
+            if (data.performance_stats) {
+                statusHtml += `
+                    <div class="agent-line">
+                        <strong>CYCLES EXÉCUTÉS:</strong> ${data.performance_stats.total_cycles || 0}
+                    </div>
+
+                    <div class="agent-line">
+                        <strong>TAUX DE SUCCÈS:</strong> ${((data.performance_stats.success_rate || 0) * 100).toFixed(1)}%
+                    </div>
+
+                    <div class="agent-line">
+                        <strong>PROFIT NET:</strong> $${(data.performance_stats.net_profit || 0).toLocaleString()}
+                    </div>
+                `;
+            }
+
+            // Ajouter métriques de risque
+            if (data.risk_metrics) {
+                statusHtml += `
+                    <div class="agent-line">
+                        <strong>NIVEAU DE RISQUE:</strong> ${data.risk_metrics.risk_level || 'UNKNOWN'}
+                    </div>
+
+                    <div class="agent-line">
+                        <strong>DRAWDOWN ACTUEL:</strong> ${((data.risk_metrics.current_drawdown || 0) * 100).toFixed(2)}%
+                    </div>
+                `;
+            }
+
+            container.innerHTML = statusHtml;
+        }
+
+        function displayError(message) {
+            const container = document.getElementById('agent-status-container');
+            container.innerHTML = `
+                <div class="loading" style="color: #ff6666;">
+                    ⚠️ ${message}
+                </div>
+            `;
+        }
+
+        // Charger les données au démarrage
+        window.addEventListener('load', loadAgentData);
+
+        // Recharger toutes les 30 secondes
+        setInterval(loadAgentData, 30000);
+    </script>
+</body>
+</html>

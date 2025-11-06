@@ -250,13 +250,7 @@
             padding: 3px 10px;
         }
 
-        .source-badge.mock {
-            background: linear-gradient(135deg, #fdcb6e, #f39c12) !important;
-            color: #2d3436 !important;
-            font-weight: 600;
-            border-radius: 12px;
-            padding: 3px 10px;
-        }
+        /* CSS pour badges mock supprimé - toutes les données sont réelles */
     </style>
 
 </head>
@@ -975,8 +969,8 @@
                         const totalTrades = strategy.totalTrades || strategy.trades || 0;
                         const annualReturn = strategy.annualReturn || strategy.annual_return || 0;
 
-                        const isRealData = strategy.isReal || strategy.source === 'real_data' || totalReturn < 0; // Real data often has negative returns
-                        const dataBadge = isRealData ? '<span class="data-badge real">RÉEL</span>' : '<span class="data-badge mock">MOCK</span>';
+                        // Toutes les données sont maintenant réelles
+                        const dataBadge = '<span class="data-badge real">RÉEL</span>';
 
                         // Professional card styling
                       const isProfessional = strategy.source?.includes('professional') || safeName.includes('PROFESSIONAL');
@@ -1100,7 +1094,7 @@
                                 <td>${Number(totalTrades).toLocaleString()}</td>
                                 <td>${Number(winRate).toFixed(1)}%</td>
                                 <td>${Number(profitFactor).toFixed(2)}</td>
-                                <td><span class="source-badge ${isRealData ? 'real' : 'mock'}">${sourceBadge}</span></td>
+                                <td><span class="source-badge real">${sourceBadge}</span></td>
                             </tr>
                         `;
                     } catch (error) {

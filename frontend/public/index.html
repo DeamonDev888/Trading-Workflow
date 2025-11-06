@@ -6,7 +6,167 @@
     <title>NOVAQUOTE - Hyperliquid Trading Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/novaquote.css" rel="stylesheet">
-    
+    <style>
+        .ascii-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .dashboard-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 24px;
+            font-size: 28px;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: 0.5px;
+        }
+        .controls-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .control-btn {
+            padding: 10px 24px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background: #ffffff;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .control-btn:hover {
+            background: #f1f3f4;
+            border-color: #adb5bd;
+            transform: none;
+        }
+        .control-btn.start {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .control-btn.start:hover {
+            background: #218838;
+            border-color: #1e7e34;
+        }
+        .control-btn.stop {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        .control-btn.stop:hover {
+            background: #c82333;
+            border-color: #bd2130;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+        .status-active {
+            background: #28a745;
+        }
+        .status-warning {
+            background: #ffc107;
+        }
+        .status-error {
+            background: #dc3545;
+        }
+        .status-inactive {
+            background: #6c757d;
+        }
+        .agent-line {
+            margin: 8px 0;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-left: 4px solid #dee2e6;
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            color: #495057;
+        }
+        .agent-line.active {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+        .agent-line.warning {
+            border-left-color: #ffc107;
+            background: #fffcf0;
+        }
+        .agent-line.error {
+            border-left-color: #dc3545;
+            background: #fff8f8;
+        }
+        .agent-label {
+            font-weight: 600;
+            color: #2c3e50;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        .agent-value {
+            color: #495057;
+            font-weight: 400;
+        }
+        .loading {
+            text-align: center;
+            font-size: 16px;
+            color: #6c757d;
+            padding: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .refresh-btn {
+            display: block;
+            margin: 16px auto 0;
+            padding: 10px 24px;
+            background: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.2s ease;
+        }
+        .refresh-btn:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+            transform: none;
+        }
+        .system-section {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+        .system-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -48,7 +208,7 @@
                                     <div class="wallet-option-title">Testnet (Paper Trading)</div>
                                     <div class="wallet-option-description">Hyperliquid testnet - Virtual trading</div>
                                 </div>
-                                <div class="wallet-option-badge badge-testnet">DEMO</div>
+                                <div class="wallet-option-badge badge-testnet">TESTNET</div>
                             </div>
                             <div class="wallet-option" data-wallet="paper">
                                 <div class="wallet-option-icon">
@@ -64,7 +224,7 @@
                     </div>
                     <div class="wallet-balance-display" id="current-wallet-balance">
                         <i class="fas fa-coins"></i>
-                        <span>$100,000.00</span>
+                        <span id="wallet-balance-amount">$0.00</span>
                     </div>
 
                     <!-- MetaMask Connection Status -->
@@ -117,33 +277,31 @@
             </div>
 
             <div class="ascii-dashboard">
-<pre id="master-agent-dashboard">
-┌─────────────────────────────────────────────────────────────┐
-│                    SYSTEM STATUS                             │
-│                  ● OFFLINE                                   │
-│                                                             │
-│ Current Cycle: --                                           │
-│ Next Execution: --                                          │
-│                                                             │
-│ AGENT STATUS:                                               │
-│   Risk Agent     [○] --% confidence  | -- LLM calls         │
-│   Strategy Agent [○] --% confidence  | -- signals          │
-│   Funding Agent  [○] --% confidence  | -- arbitrage        │
-│   Sentiment Agent[○] --% confidence  | -- mood            │
-│                                                             │
-│ CURRENT DECISION:                                           │
-│   Action: WAITING_FOR_START                                 │
-│   Confidence: --%                                           │
-│   Expected ROI: --%                                         │
-│                                                             │
-│ PERFORMANCE:                                                │
-│   Cycles: 0 executed                                       │
-│   Success Rate: --%                                        │
-│   Avg Return: --%                                          │
-│   Net Profit: --$                                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-</pre>
+                <div class="ascii-container">
+                    <div class="dashboard-title">
+                        Master Agent System Status
+                    </div>
+
+                    <div class="controls-bar">
+                        <button class="control-btn start" onclick="startSystem()">
+                            Start
+                        </button>
+                        <button class="control-btn stop" onclick="stopSystem()">
+                            Stop
+                        </button>
+                        <button class="control-btn" onclick="loadAgentData()">
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div id="agent-status-container" class="loading">
+                        Initializing system...
+                    </div>
+
+                    <button class="refresh-btn" onclick="loadAgentData()">
+                        Refresh Data
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -499,7 +657,7 @@
                 let balanceText = '';
 
                 if (walletType === 'paper') {
-                    // Paper wallet - show fictional/demo balance (no API call needed)
+                    // Paper wallet - show fictional balance (no API call needed)
                     balanceText = '$1,000,000.00';
                 } else {
                     // Mainnet & Testnet - fetch real balance from HyperLiquid API
@@ -1297,7 +1455,7 @@
         }
 
         function updateBalancesFallback() {
-            // Show default balance from wallet selection instead of hardcoded demo data
+            // Show balance from wallet selection instead of hardcoded values
             const walletType = document.querySelector('.wallet-option.selected')?.dataset.wallet || 'mainnet';
             let fallbackBalance = '$0.00';
 
@@ -1810,105 +1968,219 @@
             }
         }
 
-        function updateMasterAgentDashboard(data) {
-            const dashboardEl = document.getElementById('master-agent-dashboard');
+      // Professional Master Agent System Functions
+        async function loadAgentData() {
+            const container = document.getElementById('agent-status-container');
+            container.innerHTML = '<div class="loading">Initializing system...</div>';
 
-            if (!dashboardEl || !data) {
-                // Offline or no data state
-                dashboardEl.innerHTML = `┌─────────────────────────────────────────────────────────────┐
-│                    SYSTEM STATUS                             │
-│                  ● OFFLINE                                   │
-│                                                             │
-│ Current Cycle: --                                           │
-│ Next Execution: --                                          │
-│                                                             │
-│ AGENT STATUS:                                               │
-│   Risk Agent     [○] --% confidence  | -- LLM calls         │
-│   Strategy Agent [○] --% confidence  | -- signals          │
-│   Funding Agent  [○] --% confidence  | -- arbitrage        │
-│   Sentiment Agent[○] --% confidence  | -- mood            │
-│                                                             │
-│ CURRENT DECISION:                                           │
-│   Action: WAITING_FOR_START                                 │
-│   Confidence: --%                                           │
-│   Expected ROI: --%                                         │
-│                                                             │
-│ PERFORMANCE:                                                │
-│   Cycles: 0 executed                                       │
-│   Success Rate: --%                                        │
-│   Avg Return: --%                                          │
-│   Net Profit: --$                                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘`;
-                return;
+            try {
+                const response = await fetch('/api/dashboard/real-time');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    displayRealData(data.data);
+                } else {
+                    displayError('System unavailable');
+                }
+            } catch (error) {
+                console.error('Error loading system data:', error);
+                displayError('Connection error');
+            }
+        }
+
+        function displayRealData(data) {
+            const container = document.getElementById('agent-status-container');
+            const status = data.system_status || 'UNKNOWN';
+
+            let statusClass = 'status-inactive';
+            if (status === 'ACTIVE') statusClass = 'status-active';
+            else if (status === 'WARNING') statusClass = 'status-warning';
+            else if (status === 'ERROR') statusClass = 'status-error';
+
+            let statusHtml = `
+                <div class="system-section">
+                    <div class="system-section-title">System Status</div>
+                    <div class="agent-line ${statusClass}">
+                        <span class="status-indicator ${statusClass}"></span>
+                        <span class="agent-label">Status:</span>
+                        <span class="agent-value">${status}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Current Cycle:</span>
+                        <span class="agent-value">${data.current_cycle || 'N/A'}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Next Cycle:</span>
+                        <span class="agent-value">${data.next_cycle || 'N/A'}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Last Update:</span>
+                        <span class="agent-value">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                </div>
+
+                <div class="system-section">
+                    <div class="system-section-title">Current Decision</div>
+                    <div class="agent-line">
+                        <span class="agent-label">Action:</span>
+                        <span class="agent-value">${data.current_decision?.decision || 'HOLD'}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Confidence:</span>
+                        <span class="agent-value">${((data.current_decision?.confidence || 0) * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Expected ROI:</span>
+                        <span class="agent-value">${((data.current_decision?.expected_roi || 0) * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+
+                <div class="system-section">
+                    <div class="system-section-title">Agent Status</div>
+            `;
+
+            // Display agents
+            if (data.active_agents) {
+                Object.entries(data.active_agents).forEach(([agentId, agentData]) => {
+                    let agentStatusClass = 'inactive';
+                    if (agentData.status === 'SUCCESS') agentStatusClass = 'active';
+                    else if (agentData.status === 'ERROR') agentStatusClass = 'error';
+                    else if (agentData.status === 'WARNING') agentStatusClass = 'warning';
+
+                    statusHtml += `
+                        <div class="agent-line ${agentStatusClass}">
+                            <span class="status-indicator status-${agentStatusClass}"></span>
+                            <span class="agent-label">${agentId.replace('_', ' ').toUpperCase()}:</span>
+                            <span class="agent-value">
+                                ${(agentData.confidence || 0).toFixed(1)}% confidence |
+                                ${agentData.llm_calls || 0} calls |
+                                ${agentData.execution_time_ms || 0}ms
+                            </span>
+                        </div>
+                    `;
+                });
             }
 
-            // Format the dashboard with real data
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
+            statusHtml += `
+                </div>
 
-            const currentCycle = data.current_cycle || '--';
-            const nextCycle = data.next_cycle || '--';
-            const systemStatus = data.system_status || 'UNKNOWN';
+                <div class="system-section">
+                    <div class="system-section-title">Performance Metrics</div>
+            `;
 
-            // Get agent status
-            const agents = data.active_agents || {};
-            const riskAgent = agents['risk_agent'] || {};
-            const strategyAgent = agents['strategy_agent'] || {};
-            const fundingAgent = agents['funding_agent'] || {};
-            const sentimentAgent = agents['sentiment_agent'] || {};
+            // Performance metrics
+            if (data.performance_stats) {
+                statusHtml += `
+                    <div class="agent-line">
+                        <span class="agent-label">Total Cycles:</span>
+                        <span class="agent-value">${data.performance_stats.total_cycles || 0}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Success Rate:</span>
+                        <span class="agent-value">${((data.performance_stats.success_rate || 0) * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Net Profit:</span>
+                        <span class="agent-value">$${(data.performance_stats.net_profit || 0).toLocaleString()}</span>
+                    </div>
+                `;
+            }
 
-            // Format agent statuses
-            const agentLines = [
-                `│   Risk Agent     [${riskAgent.status === 'SUCCESS' ? '●' : '○'}] ${riskAgent.confidence || '--'}% confidence  | ${riskAgent.llm_calls || '--'} LLM calls         │`,
-                `│   Strategy Agent [${strategyAgent.status === 'SUCCESS' ? '●' : '○'}] ${strategyAgent.confidence || '--'}% confidence  | ${strategyAgent.signals || '--'} signals          │`,
-                `│   Funding Agent  [${fundingAgent.status === 'SUCCESS' ? '●' : '○'}] ${fundingAgent.confidence || '--'}% confidence  | ${fundingAgent.arbitrage || '--'} arbitrage        │`,
-                `│   Sentiment Agent[${sentimentAgent.status === 'SUCCESS' ? '●' : '○'}] ${sentimentAgent.confidence || '--'}% confidence  | ${sentimentAgent.mood || '--'} mood            │`
-            ].join('\n');
+            // Portfolio metrics
+            if (data.portfolio_metrics) {
+                statusHtml += `
+                    <div class="agent-line">
+                        <span class="agent-label">Portfolio Value:</span>
+                        <span class="agent-value">$${(data.portfolio_metrics.total_balance_usd || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Available Balance:</span>
+                        <span class="agent-value">$${(data.portfolio_metrics.available_balance || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Active Positions:</span>
+                        <span class="agent-value">${data.portfolio_metrics.active_positions || 0}</span>
+                    </div>
+                `;
+            }
 
-            // Get current decision
-            const decision = data.current_decision || {};
-            const action = decision.decision || 'NO_DECISION';
-            const confidence = decision.confidence ? `${(decision.confidence * 100).toFixed(1)}` : '--';
-            const expectedRoi = decision.expected_roi ? `${(decision.expected_roi * 100).toFixed(2)}` : '--';
+            // Risk metrics
+            if (data.risk_metrics) {
+                statusHtml += `
+                    <div class="agent-line">
+                        <span class="agent-label">Risk Level:</span>
+                        <span class="agent-value">${data.risk_metrics.risk_level || 'UNKNOWN'}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Current Drawdown:</span>
+                        <span class="agent-value">${((data.risk_metrics.current_drawdown || 0) * 100).toFixed(2)}%</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Leverage Ratio:</span>
+                        <span class="agent-value">${data.risk_metrics.leverage_ratio || 0}x</span>
+                    </div>
+                `;
+            }
 
-            // Get performance stats
-            const metrics = data.metrics || {};
-            const cycles = metrics.total_cycles || 0;
-            const successRate = metrics.success_rate ? `${(metrics.success_rate * 100).toFixed(1)}` : '--';
-            const avgReturn = metrics.average_confidence ? `${(metrics.average_confidence * 100).toFixed(1)}` : '--';
-            const netProfit = metrics.net_profit || '--';
-
-            // Build the ASCII dashboard
-            const asciiDashboard = `┌─────────────────────────────────────────────────────────────┐
-│                    SYSTEM STATUS                             │
-│                  ● ${systemStatus.padEnd(38)} │
-│                                                             │
-│ Current Cycle: ${currentCycle.padEnd(40)} │
-│ Next Execution: ${nextCycle.padEnd(40)} │
-│                                                             │
-│ AGENT STATUS:                                               │
-${agentLines}
-│                                                             │
-│ CURRENT DECISION:                                           │
-│   Action: ${action.padEnd(45)} │
-│   Confidence: ${confidence.padEnd(45)} │
-│   Expected ROI: ${expectedRoi.padEnd(45)} │
-│                                                             │
-│ PERFORMANCE:                                                │
-│   Cycles: ${cycles.toString().padEnd(42)} │
-│   Success Rate: ${successRate.padEnd(39)} │
-│   Avg Return: ${avgReturn.padEnd(42)} │
-│   Net Profit: ${netProfit.padEnd(41)} │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘`;
-
-            dashboardEl.innerHTML = asciiDashboard;
+            statusHtml += '</div>';
+            container.innerHTML = statusHtml;
         }
+
+        function displayError(message) {
+            const container = document.getElementById('agent-status-container');
+            container.innerHTML = `
+                <div class="system-section">
+                    <div class="system-section-title">System Error</div>
+                    <div class="agent-line error">
+                        <span class="status-indicator status-error"></span>
+                        <span class="agent-label">Error:</span>
+                        <span class="agent-value">${message}</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Timestamp:</span>
+                        <span class="agent-value">${new Date().toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startSystem() {
+            // Implement start system logic
+            console.log('Starting system...');
+            loadAgentData();
+        }
+
+        function stopSystem() {
+            // Implement stop system logic
+            console.log('Stopping system...');
+            const container = document.getElementById('agent-status-container');
+            container.innerHTML = `
+                <div class="system-section">
+                    <div class="system-section-title">System Status</div>
+                    <div class="agent-line inactive">
+                        <span class="status-indicator status-inactive"></span>
+                        <span class="agent-label">Status:</span>
+                        <span class="agent-value">STOPPED</span>
+                    </div>
+                    <div class="agent-line">
+                        <span class="agent-label">Message:</span>
+                        <span class="agent-value">System stopped by user</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Ancienne fonction pour la compatibilité - maintenant utilise le nouveau système
+        function updateMasterAgentDashboard(data) {
+            // Cette fonction est maintenant remplacée par loadAgentData()
+            loadAgentData();
+        }
+
+        // Charger les données au démarrage
+        window.addEventListener('load', loadAgentData);
+
+        // Recharger toutes les 30 secondes
+        setInterval(loadAgentData, 30000);
     </script>
 </body>
 </html>

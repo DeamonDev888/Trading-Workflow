@@ -77,8 +77,11 @@ class ProjectSnapshot:
         # Créer le fichier de visualisation des agents
         self.create_agents_visualization_file()
 
-        # Afficher aussi à l'écran
-        print('\n'.join(output_lines))
+        # Afficher aussi à l'écran (handle encoding)
+        try:
+            print('\n'.join(output_lines))
+        except UnicodeEncodeError:
+            print("Tree generated with special characters - check contexte/arborescence.md")
 
         return output_lines
 

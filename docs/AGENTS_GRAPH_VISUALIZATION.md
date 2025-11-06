@@ -1,6 +1,6 @@
 # 🧠 Graphique Technique des Agents IA - Fonctionnement Réel
 
-## Vue d'ensemble des 3 Agents IA
+## Vue d'ensemble des 4 Agents IA
 
 ```mermaid
 graph TD

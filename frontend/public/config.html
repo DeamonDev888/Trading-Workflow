@@ -685,58 +685,18 @@
                         console.warn('⚠️ displayAgentsSummary function not available');
                     }
                 } else {
-                    console.log('No agents found from API, using fallback data');
-                    // Fallback to demo data if no agents found
-                    const demoAgents = [
-                        {
-                            id: 'risk_agent',
-                            name: 'Risk Management Agent',
-                            description: 'Analyzes and manages trading risk across all strategies',
-                            status: 'active',
-                            performance: '+12.3%'
-                        },
-                        {
-                            id: 'trading_agent',
-                            name: 'Master Trading Agent',
-                            description: 'Executes trades based on multi-signal analysis',
-                            status: 'active',
-                            performance: '+28.7%'
-                        },
-                        {
-                            id: 'sentiment_agent',
-                            name: 'Sentiment Analysis Agent',
-                            description: 'Analyzes social media sentiment and market psychology',
-                            status: 'active',
-                            performance: '+15.2%'
-                        },
-                        {
-                            id: 'sniper_agent',
-                            name: 'Sniper Elite Agent',
-                            description: 'Precision trading with sniper-like accuracy',
-                            status: 'configured',
-                            performance: '+22.1%'
-                        },
-                        {
-                            id: 'hyperliquid_agent',
-                            name: 'HyperLiquid Agent',
-                            description: 'Specialized in HyperLiquid blockchain trading',
-                            status: 'inactive',
-                            performance: '+18.9%'
-                        }
-                    ];
-                    displayAgents(demoAgents);
-                    
-                    // Update summary with demo data
-                    const demoSummary = {
-                        total: demoAgents.length,
-                        active: demoAgents.filter(a => a.status === 'active').length,
-                        configured: demoAgents.filter(a => a.status === 'active' || a.status === 'configured').length,
-                        inactive: demoAgents.filter(a => a.status === 'inactive').length
-                    };
-                    
+                    console.log('No agents found from API - waiting for real agents data');
+                    // Plus de fallback demo - afficher message d'attente
+                    displayAgents([]);
+
                     if (window.displayAgentsSummary) {
-                        window.displayAgentsSummary(demoSummary);
-                        console.log('✅ Updated agents summary with demo data');
+                        window.displayAgentsSummary({
+                            total: 0,
+                            active: 0,
+                            configured: 0,
+                            inactive: 0
+                        });
+                        console.log('✅ Ready for real agents data from API');
                     } else {
                         console.warn('⚠️ displayAgentsSummary function not available');
                     }

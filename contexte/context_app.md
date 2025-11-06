@@ -1,6 +1,6 @@
 ---
 name: deamon-dev-ai-trading-expert
-description: Expert du système Deamon Dev AI Trading - maîtrise l'architecture réelle : 3 agents IA avec appels LLM, 7+ algorithmes de trading ordinaires, Model Factory, système de logging Winston, 5 pages frontend, et trading HyperLiquid. Basé à 100% sur le code source réel avec distinction fondamentale Agent/Algorithme.
+description: Expert du système Deamon Dev AI Trading - maîtrise l'architecture réelle : 4 agents IA avec appels LLM, 7+ algorithmes de trading ordinaires, Model Factory, système de logging Winston, 6 pages frontend, et trading HyperLiquid. Basé à 100% sur le code source réel avec distinction fondamentale Agent/Algorithme.
 ---
 
 # 🧠 Expert Système NOVAQUOTE Trading (Version Réelle)
@@ -15,11 +15,11 @@ description: Expert du système Deamon Dev AI Trading - maîtrise l'architecture
 
 Le **NOVAQUOTE Trading System** est une plateforme composée de :
 
-- **3 agents IA véritables** (avec appels LLM directs)
+- **4 agents IA véritables** (avec appels LLM directs)
 - **7+ algorithmes de trading ordinaires** (scripts Python sans IA)
 - **Model Factory** pour gérer les 11 modèles IA
 - **Système de logging Winston** avec 7 loggers spécialisés
-- **5 pages frontend** pour la gestion et monitoring
+- **6 pages frontend** pour la gestion et monitoring
 - **exchanges** HyperLiquid
 - **Aucun mock ou simulation ou demonstration n'est permis, nous sommes en reel prod et en trading reel**
 
@@ -29,7 +29,7 @@ Le **NOVAQUOTE Trading System** est une plateforme composée de :
 ```
 projet trading/
 ├── src/                    # Code source Python
-│   ├── agents/            # 10+ scripts (3 agents + 7+ algorithmes)
+│   ├── agents/            # 11+ scripts (4 agents + 7+ algorithmes)
 │   ├── models/            # Model Factory (11 modèles IA)
 │   ├── data/              # Données, OHLCV, backtests
 │   ├── config.py          # Configuration centralisée
@@ -37,7 +37,7 @@ projet trading/
 │   └── logger.js          # Système de logging Winston
 ├── frontend/              # Frontend server + pages
 │   ├── server-frontend.js # Static server (Port 9000)
-│   └── public/            # 5 pages HTML
+│   └── public/            # 6 pages HTML
 ├── backend/               # Backend server
 │   └── server-backend.js  # API + WebSocket (Port 7000)
 ├── logs/                  # Logs système (7 types)
@@ -56,18 +56,22 @@ projet trading/
 
 ## 🤖 Classification Fondamentale
 
-### 🧠 **Agents IA Véritables (3 scripts avec LLM)**
+### 🧠 **Agents IA Véritables (4 scripts avec LLM)**
 Ces scripts font **réellement des appels API à des LLM** :
 
 1. **`funding_agent.py`** ✅
    - Appels LLM : Détectés automatiquement
    - Fonction : Agent IA avec intégration LLM
 
-2. **`risk_agent.py`** ✅
+2. **`master_agent.py`** ✅
    - Appels LLM : Détectés automatiquement
    - Fonction : Agent IA avec intégration LLM
 
-3. **`strategy_agent.py`** ✅
+3. **`risk_agent.py`** ✅
+   - Appels LLM : Détectés automatiquement
+   - Fonction : Agent IA avec intégration LLM
+
+4. **`strategy_agent.py`** ✅
    - Appels LLM : Détectés automatiquement
    - Fonction : Agent IA avec intégration LLM
 
@@ -90,7 +94,7 @@ Ces scripts sont des **algorithmes purs** sans appels LLM :
 ## 🔧 **Configuration IA Centralisée - Model Factory**
 
 ### Model Factory ✅
-Système centralisé pour les **3 agents IA** dans `src/models/model_factory.py` :
+Système centralisé pour les **4 agents IA** dans `src/models/model_factory.py` :
 
 ```python
 # Configuration centralisée via config.py
@@ -98,7 +102,7 @@ AI_MODEL = "glm-4.6"  # Par défaut
 AI_TEMPERATURE = 0.7
 AI_MAX_TOKENS = 1024
 
-# Utilisation SEULEMENT pour les 3 agents IA
+# Utilisation SEULEMENT pour les 4 agents IA
 from src.models import model_factory
 model = model_factory.get_model(model_type, config.AI_MODEL)
 ```
@@ -127,7 +131,7 @@ Basée sur des **algorithmes purs** (pas d'IA) :
 - **`backtest.html`** - Interface configuration backtests
 - **`backtest_fixed.html`** - Version corrigée
 
-## 🎨 **Pages Frontend Réelles (5 pages)**
+## 🎨 **Pages Frontend Réelles (6 pages)**
 
 ### 1. `backtest.html` ✅
 - Interface Backtest
@@ -135,17 +139,19 @@ Basée sur des **algorithmes purs** (pas d'IA) :
 
 ### 2. `config.html` ✅
 - Configuration Système
-- Configuration des **3 agents IA** (modèles LLM)
+- Configuration des **4 agents IA** (modèles LLM)
 
-### 3. `index.html` ✅
+### 3. `dashboard_ascii.html` ✅
+
+### 4. `index.html` ✅
 - Dashboard Principal
-- Monitoring des 3 agents IA et 7+ algorithmes
+- Monitoring des 4 agents IA et 7+ algorithmes
 
-### 4. `test_agents.html` ✅
+### 5. `test_agents.html` ✅
 
-### 5. `validate_config.html` ✅
+### 6. `validate_config.html` ✅
 - Configuration Système
-- Configuration des **3 agents IA** (modèles LLM)
+- Configuration des **4 agents IA** (modèles LLM)
 
 ## 📝 **Système de Logging Winston Réel**
 
@@ -155,7 +161,7 @@ Logging pour **tous les scripts** (agents + algorithmes) :
 #### **Loggers disponibles** ✅
 - `apiLogger` - Appels API avec timing
 - `wsLogger` - Activité WebSocket
-- `agentsLogger` - Opérations **3 agents IA**
+- `agentsLogger` - Opérations **4 agents IA**
 - `backtestsLogger` - Backtests algorithmiques
 - `tradingLogger` - Opérations trading
 - `walletsLogger` - Authentification wallets
@@ -179,17 +185,17 @@ HYPERLIQUID_LEVERAGE = 5
 ## 🔧 **Instructions d'Utilisation Réelles**
 
 ### Quand utiliser cette compétence
-- Travail sur les **3 agents IA** avec appels LLM
+- Travail sur les **4 agents IA** avec appels LLM
 - Développement des **7+ algorithmes de trading**
 - Configuration **Model Factory** (11 modèles)
 - Analyse des **logs Winston** (7 loggers)
-- Développement **5 pages frontend**
+- Développement **6 pages frontend**
 - Configuration **trading multi-exchanges**
 
 ### Classification précise des fichiers
-- **Agents IA (3 scripts)** : funding_agent.py, risk_agent.py, strategy_agent.py
+- **Agents IA (4 scripts)** : funding_agent.py, master_agent.py, risk_agent.py, strategy_agent.py
 - **Algorithmes (7+ scripts)** : Tous les autres `src/agents/*.py`
-- **Model Factory** : `src/models/model_factory.py` (uniquement pour les 3 agents)
+- **Model Factory** : `src/models/model_factory.py` (uniquement pour les 4 agents)
 - **Configuration** : `src/config.py` (pour tout le système)
 - **Logging** : `src/logger.js` (Winston, 7 loggers)
 
@@ -215,12 +221,12 @@ HYPERLIQUID_LEVERAGE = 5
 - **`get_open_orders()`** - Active orders
 
 ### Architecture réelle
-- **3 agents IA** avec appels LLM
+- **4 agents IA** avec appels LLM
 - **7+ algorithmes** purs de trading
 - **1 Model Factory** pour les agents
 - **1 système de trading** algorithmique
 
-Cette compétence fait de toi un **expert du système réel** avec la distinction fondamentale entre **3 agents IA** (avec LLM) et **7+ algorithmes de trading ordinaires**.
+Cette compétence fait de toi un **expert du système réel** avec la distinction fondamentale entre **4 agents IA** (avec LLM) et **7+ algorithmes de trading ordinaires**.
 
 ## 👑 **L'AGENT MASTER - LE "CHEF" DU SYSTÈME NOVAQUOTE**
 
