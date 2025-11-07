@@ -5,8 +5,8 @@ Built with love by Moon Dev 🚀
 """
 
 import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from termcolor import cprint
 

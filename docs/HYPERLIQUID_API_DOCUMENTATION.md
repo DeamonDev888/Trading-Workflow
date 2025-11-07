@@ -1,10 +1,13 @@
 # 📚 Documentation Complète de l'API Hyperliquid
 
-*Documentation officielle récupérée et adaptée pour le projet Moon Dev AI Agents*
+_Documentation officielle récupérée et adaptée pour le projet Moon Dev AI
+Agents_
 
 ## 🎯 Vue d'ensemble
 
-Hyperliquid fournit une API REST complète pour interagir avec sa plateforme de trading décentralisée. Cette documentation couvre tous les aspects de l'API nécessaires pour développer des agents de trading automatisés.
+Hyperliquid fournit une API REST complète pour interagir avec sa plateforme de
+trading décentralisée. Cette documentation couvre tous les aspects de l'API
+nécessaires pour développer des agents de trading automatisés.
 
 ### 🔗 URLs des Endpoints
 
@@ -13,12 +16,15 @@ Hyperliquid fournit une API REST complète pour interagir avec sa plateforme de 
 
 ### 🛠️ SDKs Officiels
 
-- **Python SDK** : [https://github.com/hyperliquid-dex/hyperliquid-python-sdk](https://github.com/hyperliquid-dex/hyperliquid-python-sdk)
-- **Rust SDK** : [https://github.com/hyperliquid-dex/hyperliquid-rust-sdk](https://github.com/hyperliquid-dex/hyperliquid-rust-sdk)
+- **Python SDK** :
+  [https://github.com/hyperliquid-dex/hyperliquid-python-sdk](https://github.com/hyperliquid-dex/hyperliquid-python-sdk)
+- **Rust SDK** :
+  [https://github.com/hyperliquid-dex/hyperliquid-rust-sdk](https://github.com/hyperliquid-dex/hyperliquid-rust-sdk)
 - **SDKs communautaires TypeScript** :
   - [https://github.com/nktkas/hyperliquid](https://github.com/nktkas/hyperliquid)
   - [https://github.com/nomeida/hyperliquid](https://github.com/nomeida/hyperliquid)
-- **CCXT** : [https://docs.ccxt.com/#/exchanges/hyperliquid](https://docs.ccxt.com/#/exchanges/hyperliquid)
+- **CCXT** :
+  [https://docs.ccxt.com/#/exchanges/hyperliquid](https://docs.ccxt.com/#/exchanges/hyperliquid)
 
 ---
 
@@ -26,15 +32,15 @@ Hyperliquid fournit une API REST complète pour interagir avec sa plateforme de 
 
 ### Abréviations Standard
 
-| Abréviation | Signification | Description |
-|-------------|---------------|-------------|
-| `Px` | Price | Prix |
-| `Sz` | Size | Taille en unités de base (coin) |
-| `Szi` | Signed size | Taille signée (positive = long, négative = short) |
-| `Ntl` | Notional | Montant USD (Px × Sz) |
-| `Side` | Side | Côté du trade (B = Bid/Buy, A = Ask/Short) |
-| `Asset` | Asset | Index entier représentant l'asset |
-| `Tif` | Time in force | Durée de validité de l'ordre |
+| Abréviation | Signification | Description                                       |
+| ----------- | ------------- | ------------------------------------------------- |
+| `Px`        | Price         | Prix                                              |
+| `Sz`        | Size          | Taille en unités de base (coin)                   |
+| `Szi`       | Signed size   | Taille signée (positive = long, négative = short) |
+| `Ntl`       | Notional      | Montant USD (Px × Sz)                             |
+| `Side`      | Side          | Côté du trade (B = Bid/Buy, A = Ask/Short)        |
+| `Asset`     | Asset         | Index entier représentant l'asset                 |
+| `Tif`       | Time in force | Durée de validité de l'ordre                      |
 
 ### Time in Force (TIF)
 
@@ -50,30 +56,34 @@ Hyperliquid fournit une API REST complète pour interagir avec sa plateforme de 
 
 ### Pérpetuels (Perpetuals)
 
-Les endpoints de perpétuels utilisent un entier `asset` qui correspond à l'index dans la réponse `meta`.
+Les endpoints de perpétuels utilisent un entier `asset` qui correspond à l'index
+dans la réponse `meta`.
 
 **Exemple** : `BTC = 0` sur mainnet
 
 ### Spot Trading
 
-Les endpoints spot utilisent `10000 + spotInfo["index"]` où `spotInfo` est l'objet correspondant dans `spotMeta.universe`.
+Les endpoints spot utilisent `10000 + spotInfo["index"]` où `spotInfo` est
+l'objet correspondant dans `spotMeta.universe`.
 
-**Exemple** : Pour `PURR/USDC`, l'asset est `10000` car son index dans spotInfo est `0`.
+**Exemple** : Pour `PURR/USDC`, l'asset est `10000` car son index dans spotInfo
+est `0`.
 
 ### Pérpetuels Builder-Déployés
 
 `100000 + perp_dex_index * 10000 + index_in_meta`
 
-**Exemple** : `test:ABC` sur testnet a `perp_dex_index = 1`, `index_in_meta = 0`, donc `asset = 110000`.
+**Exemple** : `test:ABC` sur testnet a `perp_dex_index = 1`,
+`index_in_meta = 0`, donc `asset = 110000`.
 
 ### Exemples Pratiques
 
-| Asset | Mainnet ID | Testnet ID | Remarques |
-|-------|------------|------------|-----------|
-| BTC (perp) | 0 | 0 | Index dans meta |
-| ETH (perp) | 1 | 1 | Index dans meta |
-| HYPE (spot) | 107 | 1035 | 10000 + spotIndex |
-| PURR/USDC | 10000 | 10000 | 10000 + spotIndex |
+| Asset       | Mainnet ID | Testnet ID | Remarques         |
+| ----------- | ---------- | ---------- | ----------------- |
+| BTC (perp)  | 0          | 0          | Index dans meta   |
+| ETH (perp)  | 1          | 1          | Index dans meta   |
+| HYPE (spot) | 107        | 1035       | 10000 + spotIndex |
+| PURR/USDC   | 10000      | 10000      | 10000 + spotIndex |
 
 ---
 
@@ -81,11 +91,14 @@ Les endpoints spot utilisent `10000 + spotInfo["index"]` où `spotInfo` est l'ob
 
 ### ⚠️ Avertissement Important
 
-Il est fortement recommandé d'utiliser un SDK officiel plutôt que d'implémenter manuellement les signatures. De nombreuses erreurs peuvent survenir lors de la génération manuelle des signatures.
+Il est fortement recommandé d'utiliser un SDK officiel plutôt que d'implémenter
+manuellement les signatures. De nombreuses erreurs peuvent survenir lors de la
+génération manuelle des signatures.
 
 ### Erreurs Courantes de Signature
 
-1. **Non-réalisation de schémas de signature multiples** : L1 vs L1 user-signed actions
+1. **Non-réalisation de schémas de signature multiples** : L1 vs L1 user-signed
+   actions
 2. **Ordre des champs incorrect** : Le msgpack nécessite un ordre spécifique
 3. **Zéros de fin manquants** : Problèmes avec les nombres
 4. **Casse des adresses** : Les adresses doivent être en minuscules
@@ -94,10 +107,12 @@ Il est fortement recommandé d'utiliser un SDK officiel plutôt que d'implément
 ### Schémas de Signature
 
 #### L1 Actions (Exchange Endpoint)
+
 - Utilisent `sign_l1_action()` du SDK Python
 - Signature directe avec clé privée
 
 #### User-Signed Actions (Transfers, Withdrawals)
+
 - Utilisent `sign_user_signed_action()` du SDK Python
 - Signature EIP-712 avec typed data
 
@@ -121,6 +136,7 @@ Content-Type: application/json
 ```
 
 **Réponse** :
+
 ```json
 {
   "APE": "4.33245",
@@ -368,13 +384,13 @@ wscat -c wss://api.hyperliquid.xyz/ws
 
 ### VIP Tiers
 
-| Tier | Volume 30j (USDC) | Réduction Frais |
-|------|-------------------|-----------------|
-| Bronze | 1M | 5% |
-| Silver | 5M | 10% |
-| Gold | 10M | 15% |
-| Platinum | 25M | 20% |
-| Diamond | 50M | 25% |
+| Tier     | Volume 30j (USDC) | Réduction Frais |
+| -------- | ----------------- | --------------- |
+| Bronze   | 1M                | 5%              |
+| Silver   | 5M                | 10%             |
+| Gold     | 10M               | 15%             |
+| Platinum | 25M               | 20%             |
+| Diamond  | 50M               | 25%             |
 
 ---
 
@@ -382,16 +398,19 @@ wscat -c wss://api.hyperliquid.xyz/ws
 
 ### Vue d'ensemble
 
-HyperEVM est une machine virtuelle Ethereum intégrée à Hyperliquid, utilisant le consensus HyperBFT pour la sécurité.
+HyperEVM est une machine virtuelle Ethereum intégrée à Hyperliquid, utilisant le
+consensus HyperBFT pour la sécurité.
 
 ### Configuration Réseau
 
 #### Mainnet
+
 - **Chain ID** : 999
 - **RPC URL** : `https://rpc.hyperliquid.xyz/evm`
 - **Token natif** : HYPE (18 décimales)
 
 #### Testnet
+
 - **Chain ID** : 998
 - **RPC URL** : `https://rpc.hyperliquid-testnet.xyz/evm`
 - **Token natif** : HYPE (18 décimales)
@@ -406,6 +425,7 @@ HyperEVM est une machine virtuelle Ethereum intégrée à Hyperliquid, utilisant
 ### Transferts HyperCore ↔ HyperEVM
 
 Pour transférer HYPE de HyperCore vers HyperEVM :
+
 1. Envoyer HYPE à l'adresse `0x2222222222222222222222222222222222222222`
 2. Le HYPE apparaît automatiquement sur HyperEVM
 
@@ -428,13 +448,13 @@ HyperEVM supporte les méthodes JSON-RPC standard d'Ethereum :
 
 ### Codes d'Erreur Courants
 
-| Erreur | Description |
-|--------|-------------|
-| `User or API Wallet 0x0123... does not exist` | Signature invalide |
-| `Must deposit before performing actions` | Compte non initialisé |
-| `Order must have minimum value of $10` | Ordre trop petit |
-| `Insufficient margin` | Marge insuffisante |
-| `Rate limit exceeded` | Limite de taux dépassée |
+| Erreur                                        | Description             |
+| --------------------------------------------- | ----------------------- |
+| `User or API Wallet 0x0123... does not exist` | Signature invalide      |
+| `Must deposit before performing actions`      | Compte non initialisé   |
+| `Order must have minimum value of $10`        | Ordre trop petit        |
+| `Insufficient margin`                         | Marge insuffisante      |
+| `Rate limit exceeded`                         | Limite de taux dépassée |
 
 ### Debugging des Signatures
 
@@ -493,11 +513,13 @@ await client.subscribe_trades("BTC")
 
 ## 🔗 Ressources Utiles
 
-- **Documentation officielle** : [https://hyperliquid.gitbook.io/hyperliquid-docs](https://hyperliquid.gitbook.io/hyperliquid-docs)
-- **Python SDK** : [https://github.com/hyperliquid-dex/hyperliquid-python-sdk](https://github.com/hyperliquid-dex/hyperliquid-python-sdk)
+- **Documentation officielle** :
+  [https://hyperliquid.gitbook.io/hyperliquid-docs](https://hyperliquid.gitbook.io/hyperliquid-docs)
+- **Python SDK** :
+  [https://github.com/hyperliquid-dex/hyperliquid-python-sdk](https://github.com/hyperliquid-dex/hyperliquid-python-sdk)
 - **Discord** : [https://discord.gg/hyperliquid](https://discord.gg/hyperliquid)
 - **Explorer** : [https://app.hyperliquid.xyz](https://app.hyperliquid.xyz)
 
 ---
 
-*Documentation créée pour le projet Moon Dev AI Agents - Version 1.0*
+_Documentation créée pour le projet Moon Dev AI Agents - Version 1.0_

@@ -13,11 +13,7 @@
   "execution_time": "professional_backtest_engine",
   "category": "Funding",
   "trading_period": "90_days",
-  "symbols_tested": [
-    "BTC",
-    "ETH",
-    "SOL"
-  ],
+  "symbols_tested": ["BTC", "ETH", "SOL"],
   "data_quality": "professional",
   "metrics": {
     "avg_win_trade": 272.49,

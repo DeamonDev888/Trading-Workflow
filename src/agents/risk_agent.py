@@ -1,214 +1,207 @@
 """
-🌙 Deamon Dev's Risk Management Agent
-Built with love by Deamon Dev 🚀
-"""
+[OK] Deamon Dev's Risk Management Agent V2 - Claude Code Sub-Agent Version
+Built with love by Deamon Dev [ROCKET]
 
-# Model override settings - Adding DeepSeek support
-MODEL_OVERRIDE = "0"  # Set to "deepseek-chat" or "deepseek-reasoner" to use DeepSeek, "0" to use default
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
-
-# 🛡️ Risk Override Prompt - The Secret Sauce!
-RISK_OVERRIDE_PROMPT = """
-You are Deamon Dev's Risk Management AI 🛡️
-
-We've hit a {limit_type} limit and need to decide whether to override it.
-
-Analyze the provided market data for each position and decide if we should override the daily limit.
-Consider for each position:
-1. Recent price action and momentum (both 15m and 5m timeframes)
-2. Volume patterns and trends
-3. Market conditions and volatility
-4. Risk/reward ratio based on current position size
-
-For max loss overrides:
-- Be EXTREMELY conservative
-- Only override if strong reversal signals
-- Require 90%+ confidence
-- All positions must show reversal potential
-
-For max gain overrides:
-- Can be more lenient
-- Look for continued momentum
-- Require 60%+ confidence
-- Most positions should show upward momentum
-
-Current Positions and Data:
-{position_data}
-
-Respond with either:
-OVERRIDE: <detailed reason for each position>
-or
-RESPECT_LIMIT: <detailed reason for each position>
+Version 2.0: Utilise les sub-agents Claude Code au lieu d'appels LLM directs
+Garde la même logique que V1 mais délègue l'analyse IA au sub-agent claude-risk-advisor
 """
 
 import json
 import os
-import re
+import subprocess
 import time
 import traceback
 from datetime import datetime, timedelta
 
-import anthropic
-import openai
 import pandas as pd
 from dotenv import load_dotenv
-from termcolor import colored, cprint
+from termcolor import cprint
 
 from src import config
 from src import nice_funcs as n
 from src.agents.base_agent import BaseAgent
 from src.config import *
-from src.data.ohlcv_collector import collect_all_tokens
 
 # Load environment variables
 load_dotenv()
 
 
 class RiskAgent(BaseAgent):
+    """Risk Agent - Utilise Claude Code Sub-Agents"""
+
     def __init__(self):
-        """Initialize Deamon Dev's Risk Agent 🛡️"""
+        """Initialize Deamon Dev's Risk Agent"""
         super().__init__(
             "risk_agent", enable_postgres=True
         )  # Initialize base agent with PostgreSQL support
 
-        # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL
-        self.ai_temperature = (
-            AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-        )
-        self.ai_max_tokens = (
-            AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
-        )
-
-        print(f"🤖 Using AI Model: {self.ai_model}")
-        if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
-            print("⚠️ Note: Using some override settings instead of config.py defaults")
-            if AI_MODEL:
-                print(f"  - Model: {AI_MODEL}")
-            if AI_TEMPERATURE > 0:
-                print(f"  - Temperature: {AI_TEMPERATURE}")
-            if AI_MAX_TOKENS > 0:
-                print(f"  - Max Tokens: {AI_MAX_TOKENS}")
-
-        load_dotenv()
-
-        # Get API keys
-        openai_key = os.getenv("OPENAI_KEY")
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        deepseek_key = os.getenv("DEEPSEEK_KEY")
-
-        if not openai_key:
-            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-
-        # Initialize OpenAI client for DeepSeek
-        if deepseek_key and MODEL_OVERRIDE.lower() == "deepseek-chat":
-            self.deepseek_client = openai.OpenAI(
-                api_key=deepseek_key, base_url=DEEPSEEK_BASE_URL
-            )
-            print("🚀 DeepSeek model initialized!")
-        else:
-            self.deepseek_client = None
-
-        # Initialize Anthropic client
-        self.client = anthropic.Anthropic(api_key=anthropic_key)
-
-        self.override_active = False
-        self.last_override_check = None
+        # Configuration pour le sub-agent
+        self.subagent_name = "claude-risk-advisor"
 
         # Initialize start balance using portfolio value
         self.start_balance = self.get_portfolio_value()
-        print(f"🏦 Initial Portfolio Balance: ${self.start_balance:.2f}")
+        print(f"[BANK] Initial Portfolio Balance: ${self.start_balance:.2f}")
 
         self.current_value = self.start_balance
-        cprint("🛡️ Risk Agent initialized!", "white", "on_blue")
+        self.override_active = False
+        self.last_override_check = None
+
+        cprint(
+            "[OK] Risk Agent initialized with Claude Code Sub-Agents!",
+            "white",
+            "on_blue",
+        )
+
+    def call_subagent(self, prompt: str, context_data: dict = None) -> str:
+        """
+        Appeler le sub-agent claude-risk-advisor via Claude Code CLI
+
+        Args:
+            prompt: Le prompt pour le sub-agent
+            context_data: Données contextuelles (portfolio, market data, etc.)
+
+        Returns:
+            Réponse du sub-agent
+
+        Raises:
+            RuntimeError: Si l'appel au sub-agent échoue
+        """
+        full_prompt = f"""Use the claude-risk-advisor subagent to analyze this risk scenario:
+
+{prompt}
+
+Context Data:
+{json.dumps(context_data, indent=2) if context_data else 'N/A'}
+
+Please provide a detailed risk assessment with clear recommendations."""
+
+        # Exécuter Claude Code avec le sub-agent
+        cmd = [
+            "claude",
+            "--dangerously-skip-permissions",
+            "--agent",
+            self.subagent_name,
+            full_prompt,
+        ]
+
+        cprint(
+            f"[INFO] Calling sub-agent: {self.subagent_name} (skipping permissions)",
+            "cyan",
+        )
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minutes timeout
+            cwd=os.getcwd(),
+        )
+
+        if result.returncode != 0:
+            error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
+            cprint(error_msg, "red")
+            raise RuntimeError(error_msg)
+
+        cprint("[OK] Sub-agent response received", "green")
+        return result.stdout
 
     def get_portfolio_value(self):
         """Calculate total portfolio value in USD"""
         total_value = 0.0
 
         try:
-            print("\n🔍 Deamon Dev's Portfolio Value Calculator Starting... 🚀")
+            print(
+                "\n[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]"
+            )
 
             # Get USDC balance first
-            print("💵 Getting USDC balance...")
+            print("[MONEY] Getting USDC balance...")
             try:
-                print(f"🔍 Checking USDC balance for address: {config.USDC_ADDRESS}")
+                print(
+                    f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}"
+                )
                 usdc_value = n.get_token_balance_usd(config.USDC_ADDRESS)
-                print(f"✅ USDC Value: ${usdc_value:.2f}")
+                print(f"[OK] USDC Value: ${usdc_value:.2f}")
                 total_value += usdc_value
             except Exception as e:
-                print(f"❌ Error getting USDC balance: {str(e)}")
-                print(f"🔍 Debug info - USDC Address: {config.USDC_ADDRESS}")
+                print(f"[ERROR] Error getting USDC balance: {str(e)}")
+                print(f"[SEARCH] Debug info - USDC Address: {config.USDC_ADDRESS}")
                 traceback.print_exc()
 
             # Get balance of each monitored token
-            print("\n📊 Getting monitored token balances...")
-            print(f"🎯 Total tokens to check: {len(config.MONITORED_TOKENS)}")
-            print(f"📝 Token list: {config.MONITORED_TOKENS}")
+            print("\n[STATS] Getting monitored token balances...")
+            print(f"[TARGET] Total tokens to check: {len(config.MONITORED_TOKENS)}")
+            print(f"[NOTE] Token list: {config.MONITORED_TOKENS}")
 
             for token in config.MONITORED_TOKENS:
                 if token != config.USDC_ADDRESS:  # Skip USDC as we already counted it
                     try:
-                        print(f"\n🪙 Checking token: {token[:8]}...")
+                        print(f"\n[COIN] Checking token: {token[:8]}...")
                         token_value = n.get_token_balance_usd(token)
                         if token_value > 0:
-                            print(f"💰 Found position worth: ${token_value:.2f}")
+                            print(f"[MONEY] Found position worth: ${token_value:.2f}")
                             total_value += token_value
                         else:
                             print("ℹ️ No balance found for this token")
                     except Exception as e:
-                        print(f"❌ Error getting balance for {token[:8]}: {str(e)}")
-                        print("🔍 Full error trace:")
+                        print(
+                            f"[ERROR] Error getting balance for {token[:8]}: {str(e)}"
+                        )
+                        print("[SEARCH] Full error trace:")
                         traceback.print_exc()
 
-            print(f"\n💎 Deamon Dev's Total Portfolio Value: ${total_value:.2f} 🌙")
+            print(
+                f"\n[DIAMOND] Deamon Dev's Total Portfolio Value: ${total_value:.2f} [OK]"
+            )
             return total_value
 
         except Exception as e:
-            cprint(f"❌ Error calculating portfolio value: {str(e)}", "white", "on_red")
-            print("🔍 Full error trace:")
+            cprint(
+                f"[ERROR] Error calculating portfolio value: {str(e)}",
+                "white",
+                "on_red",
+            )
+            print("[SEARCH] Full error trace:")
             traceback.print_exc()
             return 0.0
 
     def log_daily_balance(self):
         """Log portfolio value if not logged in past check period"""
         try:
-            print("\n📝 Checking if we need to log daily balance...")
+            print("\n[NOTE] Checking if we need to log daily balance...")
 
             # Create data directory if it doesn't exist
             os.makedirs("src/data", exist_ok=True)
             balance_file = "src/data/portfolio_balance.csv"
-            print(f"📁 Using balance file: {balance_file}")
+            print(f"[DIR] Using balance file: {balance_file}")
 
             # Check if we already have a recent log
             if os.path.exists(balance_file):
-                print("✅ Found existing balance log file")
+                print("[OK] Found existing balance log file")
                 df = pd.read_csv(balance_file)
                 if not df.empty:
                     df["timestamp"] = pd.to_datetime(df["timestamp"])
                     last_log = df["timestamp"].max()
                     hours_since_log = (datetime.now() - last_log).total_seconds() / 3600
 
-                    print(f"⏰ Hours since last log: {hours_since_log:.1f}")
+                    print(f"[CLOCK] Hours since last log: {hours_since_log:.1f}")
                     print(
-                        f"⚙️ Max hours between checks: {config.MAX_LOSS_GAIN_CHECK_HOURS}"
+                        f"[GEAR] Max hours between checks: {config.MAX_LOSS_GAIN_CHECK_HOURS}"
                     )
 
                     if hours_since_log < config.MAX_LOSS_GAIN_CHECK_HOURS:
                         cprint(
-                            f"✨ Recent balance log found ({hours_since_log:.1f} hours ago)",
+                            f"[OK] Recent balance log found ({hours_since_log:.1f} hours ago)",
                             "white",
                             "on_blue",
                         )
                         return
             else:
-                print("📊 Creating new balance log file")
+                print("[STATS] Creating new balance log file")
                 df = pd.DataFrame(columns=["timestamp", "balance"])
 
             # Get current portfolio value
-            print("\n💰 Getting fresh portfolio value...")
+            print("\n[MONEY] Getting fresh portfolio value...")
             current_value = self.get_portfolio_value()
 
             # Add new row
@@ -216,7 +209,7 @@ class RiskAgent(BaseAgent):
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "balance": current_value,
             }
-            print(f"📝 Adding new balance record: {new_row}")
+            print(f"[NOTE] Adding new balance record: {new_row}")
 
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
@@ -229,7 +222,7 @@ class RiskAgent(BaseAgent):
             )
 
         except Exception as e:
-            cprint(f"❌ Error logging balance: {str(e)}", "white", "on_red")
+            cprint(f"[ERROR] Error logging balance: {str(e)}", "white", "on_red")
             traceback.print_exc()  # Print full stack trace
 
     def get_position_data(self, token):
@@ -246,11 +239,13 @@ class RiskAgent(BaseAgent):
                 "5m": data_5m.to_dict() if data_5m is not None else None,
             }
         except Exception as e:
-            cprint(f"❌ Error getting data for {token}: {str(e)}", "white", "on_red")
+            cprint(
+                f"[ERROR] Error getting data for {token}: {str(e)}", "white", "on_red"
+            )
             return None
 
     def should_override_limit(self, limit_type):
-        """Ask AI if we should override the limit based on recent market data"""
+        """Ask AI (sub-agent) if we should override the limit based on recent market data"""
         try:
             # Only check every 15 minutes
             if (
@@ -260,7 +255,7 @@ class RiskAgent(BaseAgent):
                 return self.override_active
 
             # Get current positions first
-            positions = n.fetch_wallet_holdings_og(address)
+            positions = n.fetch_wallet_holdings_og(config.address)
 
             # Filter for tokens that are both in MONITORED_TOKENS and in our positions
             # Exclude USDC and SOL
@@ -270,7 +265,9 @@ class RiskAgent(BaseAgent):
             ]
 
             if positions.empty:
-                cprint("❌ No monitored positions found to analyze", "white", "on_red")
+                cprint(
+                    "[ERROR] No monitored positions found to analyze", "white", "on_red"
+                )
                 return False
 
             # Collect data only for monitored tokens we have positions in
@@ -281,7 +278,7 @@ class RiskAgent(BaseAgent):
 
                 if current_value > 0:  # Double check we have a position
                     cprint(
-                        f"📊 Getting market data for monitored position: {token}",
+                        f"[STATS] Getting market data for monitored position: {token}",
                         "white",
                         "on_blue",
                     )
@@ -294,80 +291,83 @@ class RiskAgent(BaseAgent):
 
             if not position_data:
                 cprint(
-                    "❌ Could not get market data for any monitored positions",
+                    "[ERROR] Could not get market data for any monitored positions",
                     "white",
                     "on_red",
                 )
                 return False
 
-            # Format data for AI analysis
-            prompt = RISK_OVERRIDE_PROMPT.format(
-                limit_type=limit_type, position_data=json.dumps(position_data, indent=2)
-            )
+            # Format data for sub-agent analysis
+            prompt = f"""
+RISK LIMIT BREACH DETECTED
 
-            cprint("🤖 AI Agent analyzing market data...", "white", "on_green")
+Limit Type: {limit_type}
+Current Portfolio Value: ${self.current_value}
+Start Balance: ${self.start_balance}
+Current P&L: ${self.current_value - self.start_balance}
 
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are Deamon Dev's Risk Management AI. Analyze positions and respond with OVERRIDE or RESPECT_LIMIT.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False,
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                response_text = str(message.content)
+POSITION DATA:
+{json.dumps(position_data, indent=2)}
 
-            # Handle TextBlock format if using Claude
-            if "TextBlock" in response_text:
-                match = re.search(r"text='([^']*)'", response_text)
-                if match:
-                    response_text = match.group(1)
+Please analyze this risk scenario and recommend whether to OVERRIDE the limit (keep positions open) or RESPECT the limit (close all positions).
+
+Consider:
+- Recent price action on 15m and 5m timeframes
+- Volume patterns and trends
+- Market conditions and volatility
+- Risk/reward ratio for each position
+- Overall market sentiment
+
+Provide a detailed analysis with clear recommendation.
+"""
+
+            # Appeler le sub-agent
+            context_data = {
+                "limit_type": limit_type,
+                "current_value": self.current_value,
+                "start_balance": self.start_balance,
+                "position_data": position_data,
+                "config": {
+                    "max_loss_usd": MAX_LOSS_USD,
+                    "max_gain_usd": MAX_GAIN_USD,
+                    "use_percentage": USE_PERCENTAGE,
+                    "max_loss_percent": MAX_LOSS_PERCENT,
+                    "max_gain_percent": MAX_GAIN_PERCENT,
+                },
+            }
+
+            cprint("[AI] Claude Code Sub-Agent analyzing risk...", "white", "on_green")
+
+            response = self.call_subagent(prompt, context_data)
 
             self.last_override_check = datetime.now()
 
             # Check if we should override (keep positions open)
-            self.override_active = "OVERRIDE" in response_text.upper()
+            self.override_active = "OVERRIDE" in response.upper()
 
-            # Print the AI's reasoning with model info
-            cprint("\n🧠 Risk Agent Analysis:", "white", "on_blue")
-            cprint(
-                f"Using model: {'DeepSeek' if self.deepseek_client else 'Claude'}",
-                "white",
-                "on_blue",
-            )
-            print(response_text)
+            # Print the sub-agent's reasoning
+            cprint("\n🧠 Risk Sub-Agent Analysis:", "white", "on_blue")
+            print("=" * 80)
+            print(response)
+            print("=" * 80)
 
             if self.override_active:
                 cprint(
-                    "\n🤖 Risk Agent suggests keeping positions open",
+                    "\n[AI] Sub-Agent suggests keeping positions open",
                     "white",
                     "on_yellow",
                 )
             else:
-                cprint("\n🛡️ Risk Agent recommends closing positions", "white", "on_red")
+                cprint(
+                    "\n[SHIELD] Sub-Agent recommends closing positions",
+                    "white",
+                    "on_red",
+                )
 
             return self.override_active
 
         except Exception as e:
-            cprint(f"❌ Error in override check: {str(e)}", "white", "on_red")
+            cprint(f"[ERROR] Error in override check: {str(e)}", "white", "on_red")
             return False
 
     def check_pnl_limits(self):
@@ -384,15 +384,19 @@ class RiskAgent(BaseAgent):
                 if percent_change <= -MAX_LOSS_PERCENT:
                     cprint("\n🛑 MAXIMUM LOSS PERCENTAGE REACHED", "white", "on_red")
                     cprint(
-                        f"📉 Loss: {percent_change:.2f}% (Limit: {MAX_LOSS_PERCENT}%)",
+                        f"[DOWN] Loss: {percent_change:.2f}% (Limit: {MAX_LOSS_PERCENT}%)",
                         "red",
                     )
                     return True
 
                 if percent_change >= MAX_GAIN_PERCENT:
-                    cprint("\n🎯 MAXIMUM GAIN PERCENTAGE REACHED", "white", "on_green")
                     cprint(
-                        f"📈 Gain: {percent_change:.2f}% (Limit: {MAX_GAIN_PERCENT}%)",
+                        "\n[TARGET] MAXIMUM GAIN PERCENTAGE REACHED",
+                        "white",
+                        "on_green",
+                    )
+                    cprint(
+                        f"[UP] Gain: {percent_change:.2f}% (Limit: {MAX_GAIN_PERCENT}%)",
                         "green",
                     )
                     return True
@@ -404,15 +408,15 @@ class RiskAgent(BaseAgent):
                 if usd_change <= -MAX_LOSS_USD:
                     cprint("\n🛑 MAXIMUM LOSS USD REACHED", "white", "on_red")
                     cprint(
-                        f"📉 Loss: ${abs(usd_change):.2f} (Limit: ${MAX_LOSS_USD:.2f})",
+                        f"[DOWN] Loss: ${abs(usd_change):.2f} (Limit: ${MAX_LOSS_USD:.2f})",
                         "red",
                     )
                     return True
 
                 if usd_change >= MAX_GAIN_USD:
-                    cprint("\n🎯 MAXIMUM GAIN USD REACHED", "white", "on_green")
+                    cprint("\n[TARGET] MAXIMUM GAIN USD REACHED", "white", "on_green")
                     cprint(
-                        f"📈 Gain: ${usd_change:.2f} (Limit: ${MAX_GAIN_USD:.2f})",
+                        f"[UP] Gain: ${usd_change:.2f} (Limit: ${MAX_GAIN_USD:.2f})",
                         "green",
                     )
                     return True
@@ -420,21 +424,21 @@ class RiskAgent(BaseAgent):
             return False
 
         except Exception as e:
-            cprint(f"❌ Error checking PnL limits: {e}", "red")
+            cprint(f"[ERROR] Error checking PnL limits: {e}", "red")
             return False
 
     def close_all_positions(self):
         """Close all monitored positions except USDC and SOL"""
         try:
-            cprint("\n🔄 Closing monitored positions...", "white", "on_cyan")
+            cprint("\n[REFRESH] Closing monitored positions...", "white", "on_cyan")
 
             # Get all positions
-            positions = n.fetch_wallet_holdings_og(address)
+            positions = n.fetch_wallet_holdings_og(config.address)
 
             # Debug print to see what we're working with
-            cprint("\n📊 Current positions:", "cyan")
+            cprint("\n[STATS] Current positions:", "cyan")
             print(positions)
-            cprint("\n🎯 Monitored tokens:", "cyan")
+            cprint("\n[TARGET] Monitored tokens:", "cyan")
             print(MONITORED_TOKENS)
 
             # Filter for tokens that are both in MONITORED_TOKENS and not in EXCLUDED_TOKENS
@@ -444,7 +448,7 @@ class RiskAgent(BaseAgent):
             ]
 
             if positions.empty:
-                cprint("📝 No monitored positions to close", "white", "on_blue")
+                cprint("[NOTE] No monitored positions to close", "white", "on_blue")
                 return
 
             # Close each monitored position
@@ -453,26 +457,28 @@ class RiskAgent(BaseAgent):
                 value = row["USD Value"]
 
                 cprint(
-                    f"\n💰 Closing position: {token} (${value:.2f})", "white", "on_cyan"
+                    f"\n[MONEY] Closing position: {token} (${value:.2f})",
+                    "white",
+                    "on_cyan",
                 )
                 try:
-                    n.chunk_kill(token, max_usd_order_size, slippage)
+                    n.chunk_kill(token, config.max_usd_order_size, config.slippage)
                     cprint(
-                        f"✅ Successfully closed position for {token}",
+                        f"[OK] Successfully closed position for {token}",
                         "white",
                         "on_green",
                     )
                 except Exception as e:
                     cprint(
-                        f"❌ Error closing position for {token}: {str(e)}",
+                        f"[ERROR] Error closing position for {token}: {str(e)}",
                         "white",
                         "on_red",
                     )
 
-            cprint("\n✨ All monitored positions closed", "white", "on_green")
+            cprint("\n[OK] All monitored positions closed", "white", "on_green")
 
         except Exception as e:
-            cprint(f"❌ Error in close_all_positions: {str(e)}", "white", "on_red")
+            cprint(f"[ERROR] Error in close_all_positions: {str(e)}", "white", "on_red")
 
     def check_risk_limits(self):
         """Check if any risk limits have been breached"""
@@ -481,14 +487,14 @@ class RiskAgent(BaseAgent):
             current_pnl = self.get_current_pnl()
             current_balance = self.get_portfolio_value()
 
-            print(f"\n💰 Current PnL: ${current_pnl:.2f}")
+            print(f"\n[MONEY] Current PnL: ${current_pnl:.2f}")
             print(f"💼 Current Balance: ${current_balance:.2f}")
-            print(f"📉 Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
+            print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
             # Check minimum balance limit
             if current_balance < MINIMUM_BALANCE_USD:
                 print(
-                    f"⚠️ ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
+                    f"[WARNING] ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
                 )
                 self.handle_limit_breach("MINIMUM_BALANCE", current_balance)
                 return True
@@ -496,36 +502,36 @@ class RiskAgent(BaseAgent):
             # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
-                    print(f"⚠️ PnL limit reached: {current_pnl}%")
+                    print(f"[WARNING] PnL limit reached: {current_pnl}%")
                     self.handle_limit_breach("PNL_PERCENT", current_pnl)
                     return True
             else:
                 if abs(current_pnl) >= MAX_LOSS_USD:
-                    print(f"⚠️ PnL limit reached: ${current_pnl:.2f}")
+                    print(f"[WARNING] PnL limit reached: ${current_pnl:.2f}")
                     self.handle_limit_breach("PNL_USD", current_pnl)
                     return True
 
-            print("✅ All risk limits OK")
+            print("[OK] All risk limits OK")
             return False
 
         except Exception as e:
-            print(f"❌ Error checking risk limits: {str(e)}")
+            print(f"[ERROR] Error checking risk limits: {str(e)}")
             return False
 
     def handle_limit_breach(self, breach_type, current_value):
-        """Handle breached risk limits with AI consultation if enabled"""
+        """Handle breached risk limits with sub-agent consultation"""
         try:
             # If AI confirmation is disabled, close positions immediately
             if not USE_AI_CONFIRMATION:
                 print(
-                    f"\n🚨 {breach_type} limit breached! Closing all positions immediately..."
+                    f"\n[ALERT] {breach_type} limit breached! Closing all positions immediately..."
                 )
-                print(f"💡 (AI confirmation disabled in config)")
+                print(f"[IDEA] (AI confirmation disabled in config)")
                 self.close_all_positions()
                 return
 
-            # Get all current positions using fetch_wallet_holdings_og
-            positions_df = n.fetch_wallet_holdings_og(address)
+            # Get all current positions
+            positions_df = n.fetch_wallet_holdings_og(config.address)
 
             # Prepare breach context
             if breach_type == "MINIMUM_BALANCE":
@@ -535,15 +541,15 @@ class RiskAgent(BaseAgent):
             else:
                 context = f"Current PnL ({current_value}%) has exceeded percentage limit ({MAX_LOSS_PERCENT}%)"
 
-            # Format positions for AI
+            # Format positions for sub-agent
             positions_str = "\nCurrent Positions:\n"
             for _, row in positions_df.iterrows():
                 if row["USD Value"] > 0:
                     positions_str += f"- {row['Mint Address']}: {row['Amount']} (${row['USD Value']:.2f})\n"
 
-            # Get AI recommendation
+            # Get sub-agent recommendation
             prompt = f"""
-🚨 RISK LIMIT BREACH ALERT 🚨
+[ALERT] RISK LIMIT BREACH ALERT [ALERT]
 
 {context}
 
@@ -555,95 +561,81 @@ Should we close all positions immediately? Consider:
 3. Recent price action
 4. Risk of further losses
 
-Respond with:
-CLOSE_ALL or HOLD_POSITIONS
-Then explain your reasoning.
+Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL or HOLD_POSITIONS.
 """
-            # Use DeepSeek if configured
-            if self.deepseek_client and MODEL_OVERRIDE.lower() == "deepseek-chat":
-                print("🚀 Using DeepSeek for analysis...")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are Deamon Dev's Risk Management AI. Analyze the breach and decide whether to close positions.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    stream=False,
-                )
-                response_text = response.choices[0].message.content.strip()
-            else:
-                # Use Claude as before
-                print("🤖 Using Claude for analysis...")
-                message = self.client.messages.create(
-                    model=self.ai_model,
-                    max_tokens=self.ai_max_tokens,
-                    temperature=self.ai_temperature,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                response_text = str(message.content)
 
-            # Handle TextBlock format if using Claude
-            if "TextBlock" in response_text:
-                match = re.search(r"text='([^']*)'", response_text)
-                if match:
-                    response_text = match.group(1)
+            # Préparer les données contextuelles
+            context_data = {
+                "breach_type": breach_type,
+                "current_value": current_value,
+                "config": {
+                    "minimum_balance_usd": MINIMUM_BALANCE_USD,
+                    "max_loss_usd": MAX_LOSS_USD,
+                    "max_loss_percent": MAX_LOSS_PERCENT,
+                    "use_ai_confirmation": USE_AI_CONFIRMATION,
+                },
+                "positions": positions_str,
+            }
 
-            print("\n🤖 AI Risk Assessment:")
-            print("=" * 50)
-            print(f"Using model: {'DeepSeek' if self.deepseek_client else 'Claude'}")
-            print(response_text)
-            print("=" * 50)
+            # Appeler le sub-agent
+            cprint(
+                "\n[AI] Consulting Claude Code Sub-Agent for risk decision...",
+                "white",
+                "on_yellow",
+            )
+            response = self.call_subagent(prompt, context_data)
+
+            print("\n[AI] Sub-Agent Risk Assessment:")
+            print("=" * 80)
+            print(response)
+            print("=" * 80)
 
             # Parse decision
-            decision = response_text.split("\n")[0].strip()
-
-            if decision == "CLOSE_ALL":
-                print("🚨 AI recommends closing all positions!")
+            decision = response.split("\n")[0].strip()
+            if "CLOSE_ALL" in decision.upper():
+                print("[ALERT] Sub-Agent recommends closing all positions!")
                 self.close_all_positions()
             else:
-                print("✋ AI recommends holding positions despite breach")
+                print("✋ Sub-Agent recommends holding positions despite breach")
 
         except Exception as e:
-            print(f"❌ Error handling limit breach: {str(e)}")
+            print(f"[ERROR] Error handling limit breach: {str(e)}")
             # Default to closing positions on error
-            print("⚠️ Error in AI consultation - defaulting to close all positions")
+            print(
+                "[WARNING] Error in sub-agent consultation - defaulting to close all positions"
+            )
             self.close_all_positions()
 
     def get_current_pnl(self):
         """Calculate current PnL based on start balance"""
         try:
             current_value = self.get_portfolio_value()
-            print(f"\n💰 Start Balance: ${self.start_balance:.2f}")
-            print(f"📊 Current Value: ${current_value:.2f}")
+            print(f"\n[MONEY] Start Balance: ${self.start_balance:.2f}")
+            print(f"[STATS] Current Value: ${current_value:.2f}")
 
             pnl = current_value - self.start_balance
-            print(f"📈 Current PnL: ${pnl:.2f}")
+            print(f"[UP] Current PnL: ${pnl:.2f}")
             return pnl
 
         except Exception as e:
-            print(f"❌ Error calculating PnL: {str(e)}")
+            print(f"[ERROR] Error calculating PnL: {str(e)}")
             return 0.0
 
     def run(self):
-        """Run the risk agent (implements BaseAgent interface)"""
+        """Run the risk agent V2 (implements BaseAgent interface)"""
         try:
             # Get current PnL
             current_pnl = self.get_current_pnl()
             current_balance = self.get_portfolio_value()
 
-            print(f"\n💰 Current PnL: ${current_pnl:.2f}")
+            print(f"\n[MONEY] Current PnL: ${current_pnl:.2f}")
             print(f"💼 Current Balance: ${current_balance:.2f}")
-            print(f"📉 Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
+            print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
             # Check minimum balance limit
             if current_balance < MINIMUM_BALANCE_USD:
                 print(
-                    f"⚠️ ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
+                    f"[WARNING] ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
                 )
                 self.handle_limit_breach("MINIMUM_BALANCE", current_balance)
                 return True
@@ -651,26 +643,28 @@ Then explain your reasoning.
             # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
-                    print(f"⚠️ PnL limit reached: {current_pnl}%")
+                    print(f"[WARNING] PnL limit reached: {current_pnl}%")
                     self.handle_limit_breach("PNL_PERCENT", current_pnl)
                     return True
             else:
                 if abs(current_pnl) >= MAX_LOSS_USD:
-                    print(f"⚠️ PnL limit reached: ${current_pnl:.2f}")
+                    print(f"[WARNING] PnL limit reached: ${current_pnl:.2f}")
                     self.handle_limit_breach("PNL_USD", current_pnl)
                     return True
 
-            print("✅ All risk limits OK")
+            print("[OK] All risk limits OK")
             return False
 
         except Exception as e:
-            print(f"❌ Error checking risk limits: {str(e)}")
+            print(f"[ERROR] Error checking risk limits: {str(e)}")
             return False
 
 
 def main():
     """Main function to run the risk agent"""
-    cprint("🛡🛡🛡️ Risk Agent Starting...", "white", "on_blue")
+    cprint(
+        "🛡🛡[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue"
+    )
 
     agent = RiskAgent()
 
@@ -686,10 +680,10 @@ def main():
             time.sleep(300)
 
         except KeyboardInterrupt:
-            print("\n👋 Risk Agent shutting down gracefully...")
+            print("\n👋 Risk Agent V2 shutting down gracefully...")
             break
         except Exception as e:
-            print(f"❌ Error: {str(e)}")
+            print(f"[ERROR] Error: {str(e)}")
             print("🔧 Deamon Dev suggests checking the logs and trying again!")
             time.sleep(300)  # Still sleep on error
 

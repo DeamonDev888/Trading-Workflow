@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-🌙 AI Agents Manager - Système de gestion des 4 vrais agents IA
+[OK] AI Agents Manager - Système de gestion des 4 vrais agents IA
 Uniquement les agents avec appels API LLM (ChatGPT, Claude, etc.)
 """
 
 import json
 import sys
-from pathlib import Path
 
 # Configuration des 4 vrais agents IA (avec appels LLM)
 AGENTS_CONFIG = {
@@ -18,7 +17,7 @@ AGENTS_CONFIG = {
         "can_trade": True,
         "requires_wallet": True,
         "paper_trading": True,
-        "is_ai_agent": True,  # ✅ VRAI agent IA
+        "is_ai_agent": True,  # [OK] VRAI agent IA
         "performance": "0%",
         "status": "active",
     },
@@ -30,7 +29,7 @@ AGENTS_CONFIG = {
         "can_trade": False,
         "requires_wallet": False,
         "paper_trading": False,
-        "is_ai_agent": True,  # ✅ VRAI agent IA
+        "is_ai_agent": True,  # [OK] VRAI agent IA
         "performance": "0%",
         "status": "inactive",
     },
@@ -42,7 +41,7 @@ AGENTS_CONFIG = {
         "can_trade": False,
         "requires_wallet": False,
         "paper_trading": False,
-        "is_ai_agent": True,  # ✅ VRAI agent IA
+        "is_ai_agent": True,  # [OK] VRAI agent IA
         "performance": "0%",
         "status": "active",
     },
@@ -54,7 +53,7 @@ AGENTS_CONFIG = {
         "can_trade": False,
         "requires_wallet": False,
         "paper_trading": False,
-        "is_ai_agent": True,  # ✅ VRAI agent IA
+        "is_ai_agent": True,  # [OK] VRAI agent IA
         "performance": "0%",
         "status": "active",
     },
@@ -173,7 +172,7 @@ class AgentManager:
         """Tester la connexion avec le gestionnaire"""
         return {
             "success": True,
-            "message": "✅ Connection to AI Agent Manager successful",
+            "message": "[OK] Connection to AI Agent Manager successful",
             "agents_count": len(AGENTS_CONFIG),
             "available_agents": list(AGENTS_CONFIG.keys()),
         }

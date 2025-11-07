@@ -1,0 +1,388 @@
+Traceback (most recent call last):
+  File "C:\Users\Deamon\Desktop\Backup\Trade\projet trading\test_paper_trading_simulation.py", line 310, in test_funding_agent_execution
+    opportunities = await agent.find_arbitrage_opportunities()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FundingAgent' object has no attribute 'find_arbitrage_opportunities'
+emoji is not installed, thus not converting emoticons or emojis into text. Install emoji: pip3 install emoji==0.6.0
+Traceback (most recent call last):
+  File "C:\Users\Deamon\Desktop\Backup\Trade\projet trading\test_paper_trading_simulation.py", line 342, in test_sentiment_agent_execution
+    result = await agent.analyze_sentiment("BTC")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object numpy.float64 can't be used in 'await' expression
+================================================================================
+ NOVAQUOTE PAPER TRADING SIMULATION - REEL MAIS SANS RISQUE
+================================================================================
+Mode: PAPER TRADING
+Simulation: ON
+Time: 2025-11-07 17:34:12
+================================================================================
+Wallet fictif pour tests complets - Aucun risque financier!
+================================================================================
+[INFO] Exchange manager not available, using direct nice_funcs
+[OK] Configuration patched for paper trading
+
+
+[ROCKET] DEMARRAGE DU TEST PAPER TRADING SIMULATION
+================================================================================
+
+[1/6] Initialisation du Portfolio Paper Trading...
+
+============================================================
+ [CHART] PAPER TRADING PORTFOLIO - WALLET FICTIF
+============================================================
+[MONEY] USDC: $10000.00
+
+[WINNER] TOTAL PORTFOLIO VALUE: $10000.00
+[STATS] Total Trades: 0
+============================================================
+
+[OK] Portfolio initialise: $10000.00
+[OK] Pret pour paper trading!
+
+[2/6] Test du Risk Agent en Paper Trading...
+[OK] Strategy library initialized: 7 proven strategies
+[Risk_Agent Agent] Initialized
+
+[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]
+[MONEY] Getting USDC balance...
+[SEARCH] Checking USDC balance for address: FAKE_USDC_ADDRESS
+[OK] USDC Value: $0.00
+
+[STATS] Getting monitored token balances...
+[TARGET] Total tokens to check: 7
+[NOTE] Token list: ['BTC', 'ETH', 'SOL', 'BNB', 'AVAX', 'LINK', 'LDO']
+
+[COIN] Checking token: BTC...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: ETH...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: SOL...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: BNB...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: AVAX...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: LINK...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: LDO...
+ℹ️ No balance found for this token
+
+[DIAMOND] Deamon Dev's Total Portfolio Value: $0.00 [OK]
+[BANK] Initial Portfolio Balance: $0.00
+[OK] Risk Agent initialized with Claude Code Sub-Agents!
+  [OK] Risk Agent cree
+  [SIM] Verification des limites de risque...
+
+[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]
+[MONEY] Getting USDC balance...
+[SEARCH] Checking USDC balance for address: FAKE_USDC_ADDRESS
+[OK] USDC Value: $0.00
+
+[STATS] Getting monitored token balances...
+[TARGET] Total tokens to check: 7
+[NOTE] Token list: ['BTC', 'ETH', 'SOL', 'BNB', 'AVAX', 'LINK', 'LDO']
+
+[COIN] Checking token: BTC...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: ETH...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: SOL...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: BNB...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: AVAX...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: LINK...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: LDO...
+ℹ️ No balance found for this token
+
+[DIAMOND] Deamon Dev's Total Portfolio Value: $0.00 [OK]
+  [OK] Resultat check_pnl_limits: False
+
+[3/6] Test du Strategy Agent en Paper Trading...
+[OK] Strategy Agent using direct nice_funcs
+
+================================================================================
+[WINNER] STRATEGY AGENT - VALIDATED STRATEGIES ONLY
+================================================================================
+
+[STATS] Library Statistics:
+  • Total Strategies: 7
+  • Valid Strategies: 7
+  • Average Win Rate: 70.4%
+  • Average Profit Factor: 2.27
+
+[FOLDER] Validated Strategy Categories:
+
+  [BULLET] RISK_MANAGEMENT:
+    [OK] RSI_Oversold_68
+       Win Rate: 68.0% | Profit Factor: 2.10 | Tested on: BTC, ETH, SOL
+    [OK] Volume_Breakout_71
+       Win Rate: 71.0% | Profit Factor: 2.30 | Tested on: BTC, ETH, SOL
+    [OK] Fear_Contrarian_73
+       Win Rate: 73.0% | Profit Factor: 2.80 | Tested on: BTC, ETH
+
+  [BULLET] TECHNICAL:
+    [OK] MACD_Crossover_65
+       Win Rate: 65.0% | Profit Factor: 1.80 | Tested on: BTC, ETH, SOL
+    [OK] BB_Squeeze_62
+       Win Rate: 62.0% | Profit Factor: 1.70 | Tested on: BTC, ETH, SOL
+
+  [BULLET] FUNDING:
+    [OK] Funding_Arbitrage_85
+       Win Rate: 85.0% | Profit Factor: 3.20 | Tested on: BTC, ETH, SOL
+
+  [BULLET] SENTIMENT:
+    [OK] Twitter_Sentiment_69
+       Win Rate: 69.0% | Profit Factor: 2.00 | Tested on: BTC, ETH
+
+================================================================================
+[OK] Strategy Agent initialized with proven strategies only!
+  [OK] Strategy Agent cree
+  [SIM] Generation de signaux pour BTC...
+
+================================================================================
+[AI] STRATEGY AGENT - ANALYZING BTC
+================================================================================
+
+[STATS] Current Market Conditions:
+  • symbol: BTC
+  • timestamp: 1762554861.804806
+  • volatility: MEDIUM
+  • trend: RANGING
+  • sentiment: NEUTRAL
+  • funding_rate: 0.0
+
+[TARGET] Selecting optimal validated strategy for BTC...
+
+[OK] SELECTED VALIDATED STRATEGY:
+  • Name: Funding_Arbitrage_85
+  • Category: funding
+  • Historical Win Rate: 85.0%
+  • Historical Profit Factor: 3.20
+  • Recent Win Rate: 83.0%
+
+[SEARCH] Checking if Funding_Arbitrage_85 conditions are met...
+[OK] ALL STRATEGY CONDITIONS MET!
+   [OK] Funding rate ≥ 1.0% (current: 1.5%)
+   [OK] direction: opposite_to_funding
+   [OK] hold_duration: until_funding_flip
+
+[IDEA] Generating signal using Funding_Arbitrage_85...
+[WARNING] No signal generated from validated strategy
+  [NOTE] Aucun signal genere (conditions non remplies)
+
+[4/6] Test du Funding Agent en Paper Trading...
+[Funding Agent] Initialized
+🚀 Deamon Dev's Funding Agent using DeepSeek override!
+📝 Initialized new funding rate history
+
+================================================================================
+🏆 FUNDING ARBITRAGE STRATEGY VALIDATED
+================================================================================
+✅ Strategy: Funding_Arbitrage_85
+✅ Historical Win Rate: 85.0%
+✅ Profit Factor: 3.20
+✅ Tested on: BTC, ETH, SOL
+✅ Current Validation: True
+================================================================================
+💰 Fran the Funding Agent initialized!
+🎯 Alerting on funding rates: below -5% or above 20%
+📊 Analyzing 100 15m candles for context
+  [OK] Funding Agent cree
+  [SIM] Analyse des opportunites de funding...
+  [ERROR] Funding Agent test failed: 'FundingAgent' object has no attribute 'find_arbitrage_opportunities'
+
+[5/6] Test du Sentiment Agent en Paper Trading...
+[Sentiment Agent] Initialized
+[AI] Loading sentiment model...
+[OK] Sentiment model loaded!
+[OK] Deamon Dev's Sentiment Analysis Agent initialized!
+  [OK] Sentiment Agent cree
+  [SIM] Analyse du sentiment pour BTC...
+  [ERROR] Sentiment Agent test failed: object numpy.float64 can't be used in 'await' expression
+
+[6/6] Test Master Agent - Cycle Complet Paper Trading...
+[Risk_Agent Agent] Initialized
+
+[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]
+[MONEY] Getting USDC balance...
+[SEARCH] Checking USDC balance for address: FAKE_USDC_ADDRESS
+[OK] USDC Value: $0.00
+
+[STATS] Getting monitored token balances...
+[TARGET] Total tokens to check: 7
+[NOTE] Token list: ['BTC', 'ETH', 'SOL', 'BNB', 'AVAX', 'LINK', 'LDO']
+
+[COIN] Checking token: BTC...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: ETH...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: SOL...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: BNB...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: AVAX...
+ℹ️ No balance found for this token
+
+[COIN] Checking token: LINK...
+ℹ️ No balance found for this token
+emoji is not installed, thus not converting emoticons or emojis into text. Install emoji: pip3 install emoji==0.6.0
+
+[COIN] Checking token: LDO...
+ℹ️ No balance found for this token
+
+[DIAMOND] Deamon Dev's Total Portfolio Value: $0.00 [OK]
+[BANK] Initial Portfolio Balance: $0.00
+[OK] Risk Agent initialized with Claude Code Sub-Agents!
+[OK] Strategy Agent using direct nice_funcs
+
+================================================================================
+[WINNER] STRATEGY AGENT - VALIDATED STRATEGIES ONLY
+================================================================================
+
+[STATS] Library Statistics:
+  • Total Strategies: 7
+  • Valid Strategies: 7
+  • Average Win Rate: 70.4%
+  • Average Profit Factor: 2.27
+
+[FOLDER] Validated Strategy Categories:
+
+  [BULLET] RISK_MANAGEMENT:
+    [OK] RSI_Oversold_68
+       Win Rate: 68.0% | Profit Factor: 2.10 | Tested on: BTC, ETH, SOL
+    [OK] Volume_Breakout_71
+       Win Rate: 71.0% | Profit Factor: 2.30 | Tested on: BTC, ETH, SOL
+    [OK] Fear_Contrarian_73
+       Win Rate: 73.0% | Profit Factor: 2.80 | Tested on: BTC, ETH
+
+  [BULLET] TECHNICAL:
+    [OK] MACD_Crossover_65
+       Win Rate: 65.0% | Profit Factor: 1.80 | Tested on: BTC, ETH, SOL
+    [OK] BB_Squeeze_62
+       Win Rate: 62.0% | Profit Factor: 1.70 | Tested on: BTC, ETH, SOL
+
+  [BULLET] FUNDING:
+    [OK] Funding_Arbitrage_85
+       Win Rate: 85.0% | Profit Factor: 3.20 | Tested on: BTC, ETH, SOL
+
+  [BULLET] SENTIMENT:
+    [OK] Twitter_Sentiment_69
+       Win Rate: 69.0% | Profit Factor: 2.00 | Tested on: BTC, ETH
+
+================================================================================
+[OK] Strategy Agent initialized with proven strategies only!
+[Funding Agent] Initialized
+🚀 Deamon Dev's Funding Agent using DeepSeek override!
+📝 Initialized new funding rate history
+
+================================================================================
+🏆 FUNDING ARBITRAGE STRATEGY VALIDATED
+================================================================================
+✅ Strategy: Funding_Arbitrage_85
+✅ Historical Win Rate: 85.0%
+✅ Profit Factor: 3.20
+✅ Tested on: BTC, ETH, SOL
+✅ Current Validation: True
+================================================================================
+💰 Fran the Funding Agent initialized!
+🎯 Alerting on funding rates: below -5% or above 20%
+📊 Analyzing 100 15m candles for context
+[Sentiment Agent] Initialized
+[AI] Loading sentiment model...
+[OK] Sentiment model loaded!
+[OK] Deamon Dev's Sentiment Analysis Agent initialized!
+
+================================================================================
+[OK] NOVAQUOTE AGENT MASTER - COORDINATEUR CENTRAL
+================================================================================
+
+[OK] Agent Master initialisé avec succès
+   [STATS] 4 agents configurés
+   [CLOCK] Durée cycle: 20 minutes
+   [DIR] Backtests directory: C:\Users\Deamon\Desktop\Backup\Trade\projet trading\src\data\production_backtests
+   [DIR] Results directory: C:\Users\Deamon\Desktop\Backup\Trade\projet trading\src\data\rbi_v3\10_23_2025\backtests_final
+
+
+  [OK] Master Agent cree
+  [OK] 4 agents configures
+
+  [SIM] Execution d'un cycle complet...
+    [1/5] Analyse de risque...
+   [OK] risk_agent: SUCCESS (confiance: 85.00%, 1 appels LLM, 114.9ms)
+    [OK] Risk: SUCCESS (confiance: 85.00%)
+    [2/5] Analyse de strategie...
+   [OK] strategy_agent: SUCCESS (confiance: 80.00%, 1 appels LLM, 110.3ms)
+    [OK] Strategy: SUCCESS (confiance: 80.00%)
+    [3/5] Analyse de funding...
+   [OK] funding_agent: SUCCESS (confiance: 78.00%, 1 appels LLM, 109.3ms)
+    [OK] Funding: SUCCESS (confiance: 78.00%)
+    [4/5] Analyse de sentiment...
+   [OK] sentiment_agent: SUCCESS (confiance: 84.00%, 1 appels LLM, 111.1ms)
+    [OK] Sentiment: SUCCESS (confiance: 84.00%)
+    [5/5] Decision combinee...
+   [WINNER] Décision: EXECUTER_BUY_SIGNALS
+   [STATS] Confiance: 81.75%
+   [UP] Signaux: 2 BUY, 0 SELL
+    [OK] Decision: EXECUTER_BUY_SIGNALS
+    [OK] Confiance: 81.75%
+
+================================================================================
+ [CHART] RAPPORT FINAL - PAPER TRADING SIMULATION
+================================================================================
+[OK] PASS: Initial Portfolio
+[OK] PASS: Risk Agent
+[OK] PASS: Strategy Agent
+[ERROR] FAIL: Funding Agent
+[ERROR] FAIL: Sentiment Agent
+[OK] PASS: Master Agent
+
+[TARGET] Decision finale: EXECUTER_BUY_SIGNALS
+[STATS] Confiance: 81.75%
+
+[MONEY] Portfolio Initial: $10000.00
+[MONEY] Portfolio Final: $10000.00
+[MONEY] P&L: $0.00
+
+[TIME] Temps d'execution: 13.97 secondes
+================================================================================
+
+============================================================
+ [CHART] PAPER TRADING PORTFOLIO - WALLET FICTIF
+============================================================
+[MONEY] USDC: $10000.00
+
+[WINNER] TOTAL PORTFOLIO VALUE: $10000.00
+[STATS] Total Trades: 0
+============================================================
+
+
+============================================================
+ [CHART] HISTORIQUE DES TRADES - PAPER TRADING
+============================================================
+Aucun trade execute.
+
+============================================================
+
+[WARNING] CERTAINS TESTS ONT ECHOUE
+Verifiez les erreurs ci-dessus
+
+================================================================================

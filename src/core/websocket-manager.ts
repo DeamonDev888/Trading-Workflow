@@ -34,7 +34,7 @@ export class ResilientWebSocket extends EventEmitter {
     connected: false,
     retryCount: 0,
     totalRetries: 0,
-    uptime: 0
+    uptime: 0,
   };
 
   constructor(
@@ -49,7 +49,7 @@ export class ResilientWebSocket extends EventEmitter {
       backoffMultiplier: 2,
       heartbeatInterval: 30000,
       connectionTimeout: 10000,
-      ...config
+      ...config,
     };
   }
 
@@ -74,7 +74,6 @@ export class ResilientWebSocket extends EventEmitter {
           this.handleConnectionError(new Error('Connection timeout'));
         }
       }, this.config.connectionTimeout);
-
     } catch (error) {
       this.handleConnectionError(error as Error);
     }
@@ -162,13 +161,16 @@ export class ResilientWebSocket extends EventEmitter {
     this.emit('disconnected', event);
 
     // Auto-reconnexion si non manuelle
-    if (event.code !== 1000 && this.reconnectAttempts < this.config.maxRetries) {
+    if (
+      event.code !== 1000 &&
+      this.reconnectAttempts < this.config.maxRetries
+    ) {
       this.scheduleReconnect();
     }
   }
 
   private handleError(error: Event): void {
-    console.error(`[WebSocket] ❌ Error:`, error);
+    console.error('[WebSocket] ❌ Error:', error);
     this.emit('error', error);
   }
 
@@ -183,7 +185,7 @@ export class ResilientWebSocket extends EventEmitter {
   }
 
   private handleConnectionError(error: Error): void {
-    console.error(`[WebSocket] ❌ Connection failed:`, error);
+    console.error('[WebSocket] ❌ Connection failed:', error);
     this.emit('error', error);
 
     this.scheduleReconnect();
@@ -197,7 +199,9 @@ export class ResilientWebSocket extends EventEmitter {
     this.status.retryCount = this.reconnectAttempts;
     this.status.totalRetries++;
 
-    console.log(`[WebSocket] 🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.config.maxRetries})`);
+    console.log(
+      `[WebSocket] 🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.config.maxRetries})`
+    );
 
     this.retryTimer = setTimeout(() => {
       this.connect();
@@ -206,7 +210,9 @@ export class ResilientWebSocket extends EventEmitter {
 
   private calculateRetryDelay(): number {
     const baseDelay = this.config.retryDelay;
-    const exponentialDelay = baseDelay * Math.pow(this.config.backoffMultiplier, this.reconnectAttempts - 1);
+    const exponentialDelay =
+      baseDelay *
+      Math.pow(this.config.backoffMultiplier, this.reconnectAttempts - 1);
     const jitter = Math.random() * 1000; // Jitter pour éviter les cascades
 
     return Math.min(exponentialDelay + jitter, 30000); // Max 30s
@@ -222,7 +228,10 @@ export class ResilientWebSocket extends EventEmitter {
 
         // Vérifier si le PONG a été reçu
         setTimeout(() => {
-          if (this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 25000) {
+          if (
+            this.lastPingTime &&
+            Date.now() - this.lastPingTime.getTime() > 25000
+          ) {
             console.warn('[WebSocket] ⚠️ Heartbeat timeout - reconnecting');
             this.handleConnectionError(new Error('Heartbeat timeout'));
           }

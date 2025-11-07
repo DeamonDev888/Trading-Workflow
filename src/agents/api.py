@@ -1,11 +1,10 @@
 """
-🚀 NOVAQUOTE API Module
+[ROCKET] NOVAQUOTE API Module
 Compatibility layer for API connections
 """
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Dict
 
 import requests
 
@@ -25,9 +24,8 @@ class DeamonDevAPI:
         try:
             response = self.session.get(f"{self.base_url}/api/health", timeout=5)
             self.is_connected = response.status_code == 200
-            logger.info(
-                f"API connection: {'✅ Success' if self.is_connected else '❌ Failed'}"
-            )
+            status = "[OK] Success" if self.is_connected else "[ERROR] Failed"
+            logger.info(f"API connection: {status}")
             return self.is_connected
         except Exception as e:
             logger.error(f"API connection failed: {e}")

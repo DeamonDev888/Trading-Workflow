@@ -2,10 +2,32 @@
 💰 Deamon Dev's Funding Rate Monitor
 Built with love by Deamon Dev 🚀
 
-Fran the Funding Agent tracks funding rate changes across different timeframes and announces significant changes via OpenAI TTS.
+Fran the Funding Agent tracks funding rate changes across different timeframes
+and announces significant changes via OpenAI TTS.
 
 
 """
+
+import asyncio
+import os
+import re
+import time
+import traceback
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict
+
+import anthropic
+import openai
+import pandas as pd
+from dotenv import load_dotenv
+from termcolor import cprint
+
+from src import config
+from src.agents.api import DeamonDevAPI
+from src.agents.base_agent import BaseAgent
+from src.agents.strategy_library import PROVEN_STRATEGIES
+from src.hyperliquid import HyperliquidClient
 
 # Model override settings
 # Set to "0" to use config.py's AI_MODEL setting
@@ -15,31 +37,6 @@ Fran the Funding Agent tracks funding rate changes across different timeframes a
 # - "0" (Use config.py's AI_MODEL setting)
 MODEL_OVERRIDE = "deepseek-chat"  # Set to "deepseek-chat" to use DeepSeek
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
-
-import asyncio
-import os
-import re
-import time
-import traceback
-from collections import deque
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict
-
-import anthropic
-import numpy as np
-import openai
-import pandas as pd
-from dotenv import load_dotenv
-from termcolor import colored, cprint
-
-from src import nice_funcs as n
-from src.agents.api import DeamonDevAPI
-from src.agents.base_agent import BaseAgent
-from src.agents.strategy_library import PROVEN_STRATEGIES
-
-# Import NEW Hyperliquid module
-from src.hyperliquid import HyperliquidClient
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -62,10 +59,6 @@ SYMBOL_NAMES = {
     # 'BNB': 'BNB',
     "FARTCOIN": "Fart Coin"
 }
-
-# AI Settings - Override config.py if set
-# Import defaults from config
-from src import config
 
 # Only set these if you want to override config.py settings
 AI_MODEL = False  # Set to model name to override config.AI_MODEL
@@ -172,19 +165,31 @@ class FundingAgent(BaseAgent):
         funding_strategy = PROVEN_STRATEGIES.strategies.get("Funding_Arbitrage_85")
 
         if funding_strategy:
-            cprint("\n" + "="*80, "green")
+            cprint("\n" + "=" * 80, "green")
             cprint("🏆 FUNDING ARBITRAGE STRATEGY VALIDATED", "green")
-            cprint("="*80, "green")
+            cprint("=" * 80, "green")
             cprint(f"✅ Strategy: {funding_strategy['name']}", "green")
-            cprint(f"✅ Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green")
-            cprint(f"✅ Profit Factor: {funding_strategy['profit_factor']:.2f}", "green")
-            cprint(f"✅ Tested on: {', '.join(funding_strategy['symbols_validated'])}", "green")
-            cprint(f"✅ Current Validation: {funding_strategy['current_validation']['valid']}", "green")
-            cprint("="*80, "green")
+            cprint(
+                f"✅ Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green"
+            )
+            cprint(
+                f"✅ Profit Factor: {funding_strategy['profit_factor']:.2f}", "green"
+            )
+            cprint(
+                f"✅ Tested on: {', '.join(funding_strategy['symbols_validated'])}",
+                "green",
+            )
+            cprint(
+                f"✅ Current Validation: {funding_strategy['current_validation']['valid']}",
+                "green",
+            )
+            cprint("=" * 80, "green")
         else:
             cprint("⚠️ Funding_Arbitrage_85 strategy NOT found in library!", "yellow")
 
-    def validate_funding_opportunity_with_proof(self, symbol: str, funding_rate: float) -> Dict:
+    def validate_funding_opportunity_with_proof(
+        self, symbol: str, funding_rate: float
+    ) -> Dict:
         """
         Validate a funding opportunity using the proven Funding_Arbitrage_85 strategy
 
@@ -195,7 +200,7 @@ class FundingAgent(BaseAgent):
         if not funding_strategy:
             return {
                 "valid": False,
-                "reason": "Funding_Arbitrage_85 strategy not in validated library"
+                "reason": "Funding_Arbitrage_85 strategy not in validated library",
             }
 
         # Check if symbol was tested
@@ -203,7 +208,7 @@ class FundingAgent(BaseAgent):
             return {
                 "valid": False,
                 "reason": f"Funding strategy not tested on {symbol}",
-                "backtest_proof": funding_strategy
+                "backtest_proof": funding_strategy,
             }
 
         # Check funding rate threshold from strategy
@@ -213,7 +218,7 @@ class FundingAgent(BaseAgent):
             return {
                 "valid": False,
                 "reason": f"Funding rate {funding_rate:.2%} below strategy threshold {min_funding:.2%}",
-                "backtest_proof": funding_strategy
+                "backtest_proof": funding_strategy,
             }
 
         # Check current validation status
@@ -221,7 +226,7 @@ class FundingAgent(BaseAgent):
             return {
                 "valid": False,
                 "reason": "Funding strategy currently not validated",
-                "backtest_proof": funding_strategy
+                "backtest_proof": funding_strategy,
             }
 
         # ✅ VALIDATED
@@ -231,7 +236,7 @@ class FundingAgent(BaseAgent):
             "backtest_proof": funding_strategy,
             "strategy_definition": funding_strategy,
             "funding_rate": funding_rate,
-            "threshold_met": funding_rate >= min_funding
+            "threshold_met": funding_rate >= min_funding,
         }
 
     async def _analyze_opportunity(self, symbol, funding_data, market_data):

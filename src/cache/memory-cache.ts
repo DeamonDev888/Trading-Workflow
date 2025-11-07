@@ -38,7 +38,7 @@ export class MemoryCache {
     misses: 0,
     hitRate: 0,
     evictions: 0,
-    totalEntries: 0
+    totalEntries: 0,
   };
 
   constructor(config: Partial<CacheConfig> = {}) {
@@ -47,7 +47,7 @@ export class MemoryCache {
       defaultTTL: 300000, // 5 minutes
       cleanupInterval: 60000, // 1 minute
       checkInterval: 10000, // 10 secondes
-      ...config
+      ...config,
     };
 
     this.stats.maxSize = this.config.maxSize;
@@ -72,7 +72,7 @@ export class MemoryCache {
       value,
       expires,
       hits: 0,
-      lastAccessed: Date.now()
+      lastAccessed: Date.now(),
     };
 
     this.cache.set(key, entry);
@@ -189,8 +189,9 @@ export class MemoryCache {
     if (this.cache.size === 0) return 0;
 
     // Trier par lastAccessed (plus ancien en premier)
-    const entries = Array.from(this.cache.entries())
-      .sort((a, b) => a[1].lastAccessed - b[1].lastAccessed);
+    const entries = Array.from(this.cache.entries()).sort(
+      (a, b) => a[1].lastAccessed - b[1].lastAccessed
+    );
 
     const toEvict = Math.ceil(this.config.maxSize * 0.2); // Éviter 20%
     const evicted = Math.min(toEvict, entries.length);
@@ -322,9 +323,9 @@ export class MemoryCache {
     const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
       key,
       size: JSON.stringify(entry.value).length,
-      age: now - (entry.expires - (this.config.defaultTTL)),
+      age: now - (entry.expires - this.config.defaultTTL),
       hits: entry.hits,
-      ttl: entry.expires - now
+      ttl: entry.expires - now,
     }));
 
     return {
@@ -335,7 +336,7 @@ export class MemoryCache {
       misses: this.stats.misses,
       hitRate: this.stats.hitRate,
       evictions: this.stats.evictions,
-      totalEntries: this.stats.totalEntries
+      totalEntries: this.stats.totalEntries,
     };
   }
 

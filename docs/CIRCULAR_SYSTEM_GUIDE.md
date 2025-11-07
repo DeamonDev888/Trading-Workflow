@@ -2,7 +2,9 @@
 
 ## 📋 Vue d'ensemble
 
-Le **Système Circulaire NOVAQUOTE** est un système de trading automatisé qui orchestre 4 agents IA dans un cycle de 20 minutes avec backtests intégrés en temps réel.
+Le **Système Circulaire NOVAQUOTE** est un système de trading automatisé qui
+orchestre 4 agents IA dans un cycle de 20 minutes avec backtests intégrés en
+temps réel.
 
 ### 🎯 Fonctionnement
 
@@ -83,12 +85,14 @@ GET /api/backtests/validate
 **Rôle**: Coordinateur central
 
 **Responsabilités**:
+
 - Orchestration des 4 agents
 - Prise de décision unifiée
 - Validation backtests
 - Mise à jour dashboard
 
 **Cycle**:
+
 ```python
 cycle_duration_seconds = 20 * 60  # 20 minutes
 ```
@@ -98,12 +102,14 @@ cycle_duration_seconds = 20 * 60  # 20 minutes
 **Rôle**: Validation des décisions
 
 **Fonctions**:
+
 - Chargement backtests historiques
 - Validation signaux vs historique
 - Calcul score de validation
 - Génération rapports
 
 **Backtests chargés**:
+
 - `src/data/production_backtests/*.json`
 - `src/data/rbi_v3/10_23_2025/backtests_final/*.json`
 
@@ -112,6 +118,7 @@ cycle_duration_seconds = 20 * 60  # 20 minutes
 **Rôle**: Centralisation des métriques
 
 **Métriques collectées**:
+
 - Performance agents
 - Statistiques cycles
 - Tendances
@@ -120,21 +127,25 @@ cycle_duration_seconds = 20 * 60  # 20 minutes
 ### 4. Agents IA (4 agents)
 
 #### 🛡️ Risk Agent
+
 - **Fichier**: `src/agents/risk_agent.py`
 - **IA**: Claude + DeepSeek
 - **Fonction**: Contrôle risque, limites
 
 #### 📊 Strategy Agent
+
 - **Fichier**: `src/agents/strategy_agent.py`
 - **IA**: Claude
 - **Fonction**: Signaux techniques
 
 #### 💰 Funding Agent
+
 - **Fichier**: `src/agents/funding_agent.py`
 - **IA**: Claude + DeepSeek
 - **Fonction**: Arbitrage funding
 
 #### 🎭 Sentiment Agent
+
 - **Fichier**: `src/agents/sentiment_analysis_agent.py`
 - **IA**: OpenAI TTS
 - **Fonction**: Analyse sentiment
@@ -184,13 +195,13 @@ src/data/
 
 ```javascript
 // Logs disponibles
-apiLogger       // Appels API
-wsLogger        // WebSocket
-agentsLogger    // Opérations agents
-backtestsLogger // Backtests
-tradingLogger   // Trading
-walletsLogger   // Wallets
-systemLogger    // Surveillance
+apiLogger; // Appels API
+wsLogger; // WebSocket
+agentsLogger; // Opérations agents
+backtestsLogger; // Backtests
+tradingLogger; // Trading
+walletsLogger; // Wallets
+systemLogger; // Surveillance
 ```
 
 ### Fichiers de Logs
@@ -321,6 +332,7 @@ curl -X POST http://localhost:7000/api/debug/hyperliquid
 ### Response Types
 
 #### Dashboard Data
+
 ```typescript
 interface DashboardData {
   timestamp: string;
@@ -336,6 +348,7 @@ interface DashboardData {
 ```
 
 #### Agent Status
+
 ```typescript
 interface AgentStatus {
   status: 'SUCCESS' | 'WARNING' | 'ERROR' | 'CRITICAL';
@@ -420,6 +433,7 @@ rm backend/dashboard_data.json
 ### Logs d'Erreur
 
 Vérifier ces fichiers en cas de problème:
+
 1. `logs/error-YYYY-MM-DD.log` - Erreurs système
 2. `logs/agents-YYYY-MM-DD.log` - Erreurs agents
 3. `backend/dashboard_data.json` - État dashboard
@@ -453,7 +467,8 @@ Le Système Circulaire NOVAQUOTE est maintenant **opérationnel** avec :
 - ✅ Métriques centralisées
 - ✅ Logging complet
 
-**Pour commencer**: `node run.js start` puis `curl -X POST http://localhost:7000/api/agents/master/start`
+**Pour commencer**: `node run.js start` puis
+`curl -X POST http://localhost:7000/api/agents/master/start`
 
 **Dashboard**: http://localhost:9001
 

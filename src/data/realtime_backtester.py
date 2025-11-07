@@ -14,17 +14,16 @@ Fonctionnalités :
 Built with love by Moon Dev 🚀
 """
 
-import json
 import asyncio
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
+import json
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
-import traceback
+from typing import Any, Dict, List, Optional
 
-from termcolor import cprint, colored
+import numpy as np
+from termcolor import cprint
+
 from src.logger import get_logger
 
 logger = get_logger("realtime_backtester")
@@ -33,6 +32,7 @@ logger = get_logger("realtime_backtester")
 @dataclass
 class BacktestResult:
     """Résultat d'un backtest historique"""
+
     strategy_name: str
     win_rate: float
     profit_factor: float
@@ -48,6 +48,7 @@ class BacktestResult:
 @dataclass
 class ValidationResult:
     """Résultat de validation temps réel"""
+
     strategy_name: str
     backtest_result: BacktestResult
     current_signal_match: bool
@@ -67,7 +68,9 @@ class RealTimeBacktester:
     def __init__(self):
         """Initialise le backtester temps réel"""
         self.backtests_dir = Path(__file__).parent / "production_backtests"
-        self.results_dir = Path(__file__).parent / "rbi_v3" / "10_23_2025" / "backtests_final"
+        self.results_dir = (
+            Path(__file__).parent / "rbi_v3" / "10_23_2025" / "backtests_final"
+        )
 
         # Cache des backtests chargés
         self.backtests_cache: Dict[str, BacktestResult] = {}
@@ -78,7 +81,7 @@ class RealTimeBacktester:
             "successful_validations": 0,
             "failed_validations": 0,
             "avg_validation_score": 0.0,
-            "strategies_performance": {}
+            "strategies_performance": {},
         }
 
         cprint(f"\n{'='*80}", "cyan")
@@ -106,7 +109,10 @@ class RealTimeBacktester:
                     result = await self.parse_backtest_file(json_file, strategy_name)
                     if result:
                         backtests[strategy_name] = result
-                        cprint(f"   ✅ {strategy_name}: {result.win_rate:.1%} win rate", "green")
+                        cprint(
+                            f"   ✅ {strategy_name}: {result.win_rate:.1%} win rate",
+                            "green",
+                        )
                 except Exception as e:
                     cprint(f"   ❌ Erreur {json_file.name}: {str(e)}", "red")
                     logger.error(f"Erreur parsing backtest {json_file}", exc_info=True)
@@ -117,33 +123,63 @@ class RealTimeBacktester:
                 try:
                     strategy_name = json_file.stem.replace("_FINAL_results", "")
                     if strategy_name not in backtests:  # Éviter les doublons
-                        result = await self.parse_backtest_file(json_file, strategy_name)
+                        result = await self.parse_backtest_file(
+                            json_file, strategy_name
+                        )
                         if result:
                             backtests[strategy_name] = result
-                            cprint(f"   ✅ {strategy_name}: {result.win_rate:.1%} win rate", "green")
+                            cprint(
+                                f"   ✅ {strategy_name}: {result.win_rate:.1%} win rate",
+                                "green",
+                            )
                 except Exception as e:
                     cprint(f"   ❌ Erreur {json_file.name}: {str(e)}", "red")
                     logger.error(f"Erreur parsing backtest {json_file}", exc_info=True)
 
         self.backtests_cache = backtests
-        cprint(f"\n📊 {len(backtests)} backtests chargés avec succès", "green", attrs=["bold"])
+        cprint(
+            f"\n📊 {len(backtests)} backtests chargés avec succès",
+            "green",
+            attrs=["bold"],
+        )
         return backtests
 
-    async def parse_backtest_file(self, file_path: Path, strategy_name: str) -> Optional[BacktestResult]:
+    async def parse_backtest_file(
+        self, file_path: Path, strategy_name: str
+    ) -> Optional[BacktestResult]:
         """
         📄 PARSE UN FICHIER DE BACKTEST
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Extraction des métriques avec fallback
-            win_rate = self.extract_metric(data, ['Win Rate [%]', 'win_rate', 'Win Rate', 'winrate']) / 100
-            profit_factor = self.extract_metric(data, ['Profit Factor', 'profit_factor', 'pf'])
-            sharpe_ratio = self.extract_metric(data, ['Sharpe Ratio', 'sharpe', 'sharpe_ratio'])
-            max_drawdown = abs(self.extract_metric(data, ['Max. Drawdown [%]', 'max_drawdown', 'Max Drawdown']) / 100)
-            total_return = self.extract_metric(data, ['Return [%]', 'return', 'total_return']) / 100
-            total_trades = int(self.extract_metric(data, ['# Trades', 'total_trades', 'trades']))
+            win_rate = (
+                self.extract_metric(
+                    data, ["Win Rate [%]", "win_rate", "Win Rate", "winrate"]
+                )
+                / 100
+            )
+            profit_factor = self.extract_metric(
+                data, ["Profit Factor", "profit_factor", "pf"]
+            )
+            sharpe_ratio = self.extract_metric(
+                data, ["Sharpe Ratio", "sharpe", "sharpe_ratio"]
+            )
+            max_drawdown = abs(
+                self.extract_metric(
+                    data, ["Max. Drawdown [%]", "max_drawdown", "Max Drawdown"]
+                )
+                / 100
+            )
+            total_return = (
+                self.extract_metric(data, ["Return [%]", "return", "total_return"])
+                / 100
+            )
+            total_trades = int(
+                self.extract_metric(data, ["# Trades", "total_trades", "trades"])
+            )
 
             # Calculer la durée moyenne (simulation)
             avg_trade_duration = 4.5  # 4.5 heures en moyenne
@@ -167,7 +203,7 @@ class RealTimeBacktester:
                 total_trades=total_trades,
                 avg_trade_duration=avg_trade_duration,
                 success_threshold=success_threshold,
-                file_path=str(file_path)
+                file_path=str(file_path),
             )
 
             return result
@@ -176,7 +212,9 @@ class RealTimeBacktester:
             cprint(f"   ⚠️ Impossible de parser {file_path.name}: {str(e)}", "yellow")
             return None
 
-    def extract_metric(self, data: Dict, possible_keys: List[str], default: float = 0.0) -> float:
+    def extract_metric(
+        self, data: Dict, possible_keys: List[str], default: float = 0.0
+    ) -> float:
         """
         🔍 EXTRAIT UNE MÉTRIQUE AVEC FALLBACK MULTIPLE
         """
@@ -213,7 +251,9 @@ class RealTimeBacktester:
 
         return default
 
-    async def validate_signals(self, agent_signals: Dict[str, Any]) -> Dict[str, ValidationResult]:
+    async def validate_signals(
+        self, agent_signals: Dict[str, Any]
+    ) -> Dict[str, ValidationResult]:
         """
         ✅ VALIDE LES SIGNAUX DES AGENTS CONTRE LES BACKTESTS
         """
@@ -236,7 +276,10 @@ class RealTimeBacktester:
                 # Chercher le backtest correspondant
                 backtest_result = None
                 for bt_name, bt_result in self.backtests_cache.items():
-                    if strategy_name.lower() in bt_name.lower() or bt_name.lower() in strategy_name.lower():
+                    if (
+                        strategy_name.lower() in bt_name.lower()
+                        or bt_name.lower() in strategy_name.lower()
+                    ):
                         backtest_result = bt_result
                         break
 
@@ -249,9 +292,14 @@ class RealTimeBacktester:
                     cprint(f"   ⚠️ Pas de backtest pour {strategy_name}", "yellow")
 
         # Affichage du résumé
-        passed = sum(1 for v in validation_results.values() if v.validation_status == "PASS")
+        passed = sum(
+            1 for v in validation_results.values() if v.validation_status == "PASS"
+        )
         total = len(validation_results)
-        cprint(f"\n   ✅ Validation: {passed}/{total} stratégies validées", "green" if passed == total else "yellow")
+        cprint(
+            f"\n   ✅ Validation: {passed}/{total} stratégies validées",
+            "green" if passed == total else "yellow",
+        )
 
         return validation_results
 
@@ -260,7 +308,7 @@ class RealTimeBacktester:
         token: str,
         strategy_name: str,
         signal: Dict[str, Any],
-        backtest_result: BacktestResult
+        backtest_result: BacktestResult,
     ) -> ValidationResult:
         """
         🎯 VALIDE UN SEUL SIGNAL
@@ -273,9 +321,12 @@ class RealTimeBacktester:
 
         # Calculer la performance actuelle (simulation)
         current_performance = {
-            "win_rate": backtest_result.win_rate * (0.95 + np.random.random() * 0.1),  # ±5%
-            "profit_factor": backtest_result.profit_factor * (0.9 + np.random.random() * 0.2),  # ±10%
-            "sharpe_ratio": backtest_result.sharpe_ratio * (0.85 + np.random.random() * 0.3),  # ±15%
+            "win_rate": backtest_result.win_rate
+            * (0.95 + np.random.random() * 0.1),  # ±5%
+            "profit_factor": backtest_result.profit_factor
+            * (0.9 + np.random.random() * 0.2),  # ±10%
+            "sharpe_ratio": backtest_result.sharpe_ratio
+            * (0.85 + np.random.random() * 0.3),  # ±15%
         }
 
         # Calculer le score de validation (0.0 - 1.0)
@@ -297,18 +348,16 @@ class RealTimeBacktester:
         )
 
         # Affichage
-        status_color = {
-            "PASS": "green",
-            "WARNING": "yellow",
-            "FAIL": "red"
-        }.get(validation_status, "white")
+        status_color = {"PASS": "green", "WARNING": "yellow", "FAIL": "red"}.get(
+            validation_status, "white"
+        )
 
         cprint(
             f"   {validation_status} {token} - {strategy_name}: "
             f"score={validation_score:.2f}, "
             f"backtest={backtest_result.win_rate:.1%}, "
             f"signal={signal_confidence:.1%}",
-            status_color
+            status_color,
         )
 
         return ValidationResult(
@@ -319,14 +368,14 @@ class RealTimeBacktester:
             validation_score=validation_score,
             validation_status=validation_status,
             recommendations=recommendations,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     def calculate_validation_score(
         self,
         backtest_result: BacktestResult,
         signal_confidence: float,
-        current_performance: Dict[str, float]
+        current_performance: Dict[str, float],
     ) -> float:
         """
         📊 CALCULE LE SCORE DE VALIDATION (0.0 - 1.0)
@@ -336,7 +385,7 @@ class RealTimeBacktester:
             "win_rate": 0.3,
             "profit_factor": 0.25,
             "sharpe_ratio": 0.2,
-            "signal_confidence": 0.25
+            "signal_confidence": 0.25,
         }
 
         # Scores normalisés (0.0 - 1.0)
@@ -346,10 +395,14 @@ class RealTimeBacktester:
         scores["win_rate"] = min(1.0, backtest_result.win_rate / 0.7)  # 70%+ = 1.0
 
         # Profit factor score
-        scores["profit_factor"] = min(1.0, backtest_result.profit_factor / 2.0)  # 2.0+ = 1.0
+        scores["profit_factor"] = min(
+            1.0, backtest_result.profit_factor / 2.0
+        )  # 2.0+ = 1.0
 
         # Sharpe ratio score
-        scores["sharpe_ratio"] = min(1.0, backtest_result.sharpe_ratio / 2.0)  # 2.0+ = 1.0
+        scores["sharpe_ratio"] = min(
+            1.0, backtest_result.sharpe_ratio / 2.0
+        )  # 2.0+ = 1.0
 
         # Signal confidence score
         scores["signal_confidence"] = signal_confidence
@@ -357,18 +410,22 @@ class RealTimeBacktester:
         # Performance actuelle vs backtest (bonus/malus)
         performance_bonus = 0.0
         if "win_rate" in current_performance:
-            perf_ratio = current_performance["win_rate"] / max(0.01, backtest_result.win_rate)
+            perf_ratio = current_performance["win_rate"] / max(
+                0.01, backtest_result.win_rate
+            )
             performance_bonus = min(0.1, max(-0.1, (perf_ratio - 1.0) * 0.2))
 
         # Score final pondéré
-        final_score = sum(scores[key] * weights[key] for key in scores.keys()) + performance_bonus
+        final_score = (
+            sum(scores[key] * weights[key] for key in scores.keys()) + performance_bonus
+        )
         return max(0.0, min(1.0, final_score))
 
     def generate_recommendations(
         self,
         backtest_result: BacktestResult,
         signal: Dict[str, Any],
-        validation_score: float
+        validation_score: float,
     ) -> List[str]:
         """
         💡 GÉNÈRE DES RECOMMANDATIONS BASÉES SUR LA VALIDATION
@@ -377,7 +434,9 @@ class RealTimeBacktester:
 
         # Recommandations basées sur le score de validation
         if validation_score < 0.5:
-            recommendations.append("🟥 Score faible - Recommandation d'attendre une meilleure opportunité")
+            recommendations.append(
+                "🟥 Score faible - Recommandation d'attendre une meilleure opportunité"
+            )
         elif validation_score < 0.7:
             recommendations.append("🟨 Score moyen - Surveiller de près l'évolution")
         else:
@@ -385,10 +444,14 @@ class RealTimeBacktester:
 
         # Recommandations basées sur les métriques de backtest
         if backtest_result.win_rate < 0.6:
-            recommendations.append("⚠️ Win rate backtest faible - Ajuster les paramètres d'entrée")
+            recommendations.append(
+                "⚠️ Win rate backtest faible - Ajuster les paramètres d'entrée"
+            )
 
         if backtest_result.profit_factor < 1.5:
-            recommendations.append("⚠️ Profit factor backtest faible - Optimiser la sortie")
+            recommendations.append(
+                "⚠️ Profit factor backtest faible - Optimiser la sortie"
+            )
 
         if backtest_result.max_drawdown > 0.2:
             recommendations.append("⚠️ Drawdown élevé - Réduire la taille de position")
@@ -401,24 +464,34 @@ class RealTimeBacktester:
         return recommendations
 
     async def generate_validation_report(
-        self,
-        validation_results: Dict[str, ValidationResult]
+        self, validation_results: Dict[str, ValidationResult]
     ) -> Dict[str, Any]:
         """
         📋 GÉNÈRE UN RAPPORT DE VALIDATION COMPLET
         """
         total_validations = len(validation_results)
-        passed_validations = sum(1 for v in validation_results.values() if v.validation_status == "PASS")
-        warning_validations = sum(1 for v in validation_results.values() if v.validation_status == "WARNING")
-        failed_validations = sum(1 for v in validation_results.values() if v.validation_status == "FAIL")
+        passed_validations = sum(
+            1 for v in validation_results.values() if v.validation_status == "PASS"
+        )
+        warning_validations = sum(
+            1 for v in validation_results.values() if v.validation_status == "WARNING"
+        )
+        failed_validations = sum(
+            1 for v in validation_results.values() if v.validation_status == "FAIL"
+        )
 
-        avg_score = sum(v.validation_score for v in validation_results.values()) / total_validations if total_validations > 0 else 0.0
+        avg_score = (
+            sum(v.validation_score for v in validation_results.values())
+            / total_validations
+            if total_validations > 0
+            else 0.0
+        )
 
         # Stratégies les plus performantes
         top_strategies = sorted(
             validation_results.items(),
             key=lambda x: x[1].validation_score,
-            reverse=True
+            reverse=True,
         )[:5]
 
         # Collecter toutes les recommandations
@@ -433,8 +506,12 @@ class RealTimeBacktester:
                 "passed": passed_validations,
                 "warnings": warning_validations,
                 "failed": failed_validations,
-                "success_rate": passed_validations / total_validations if total_validations > 0 else 0.0,
-                "average_score": avg_score
+                "success_rate": (
+                    passed_validations / total_validations
+                    if total_validations > 0
+                    else 0.0
+                ),
+                "average_score": avg_score,
             },
             "top_strategies": [
                 {
@@ -442,7 +519,9 @@ class RealTimeBacktester:
                     "score": result.validation_score,
                     "status": result.validation_status,
                     "backtest_winrate": result.backtest_result.win_rate,
-                    "signal_confidence": result.current_performance.get("win_rate", 0.0)
+                    "signal_confidence": result.current_performance.get(
+                        "win_rate", 0.0
+                    ),
                 }
                 for name, result in top_strategies
             ],
@@ -455,13 +534,13 @@ class RealTimeBacktester:
                     "backtest_metrics": {
                         "win_rate": result.backtest_result.win_rate,
                         "profit_factor": result.backtest_result.profit_factor,
-                        "sharpe_ratio": result.backtest_result.sharpe_ratio
+                        "sharpe_ratio": result.backtest_result.sharpe_ratio,
                     },
                     "current_performance": result.current_performance,
-                    "recommendations": result.recommendations
+                    "recommendations": result.recommendations,
                 }
                 for name, result in validation_results.items()
-            }
+            },
         }
 
         # Mettre à jour les métriques
@@ -473,8 +552,13 @@ class RealTimeBacktester:
         current_avg = self.validation_metrics["avg_validation_score"]
         total_metrics = self.validation_metrics["total_validations"]
         self.validation_metrics["avg_validation_score"] = (
-            (current_avg * (total_metrics - total_validations) + avg_score * total_validations) / total_metrics
-            if total_metrics > 0 else avg_score
+            (
+                current_avg * (total_metrics - total_validations)
+                + avg_score * total_validations
+            )
+            / total_metrics
+            if total_metrics > 0
+            else avg_score
         )
 
         return report
@@ -501,7 +585,7 @@ class RealTimeBacktester:
         reports_dir.mkdir(parents=True, exist_ok=True)
 
         report_file = reports_dir / f"{cycle_id}_validation_report.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         cprint(f"   💾 Rapport de validation sauvegardé: {report_file}", "blue")
@@ -513,7 +597,8 @@ class RealTimeBacktester:
         total = self.validation_metrics["total_validations"]
         success_rate = (
             self.validation_metrics["successful_validations"] / total
-            if total > 0 else 0.0
+            if total > 0
+            else 0.0
         )
 
         return {
@@ -523,7 +608,7 @@ class RealTimeBacktester:
             "success_rate": success_rate,
             "average_score": self.validation_metrics["avg_validation_score"],
             "active_strategies": len(self.backtests_cache),
-            "cache_size": len(self.backtests_cache)
+            "cache_size": len(self.backtests_cache),
         }
 
 
@@ -544,14 +629,14 @@ async def main():
                     "token": "BTC",
                     "strategy": "GoldenCrossover",
                     "signal": "BUY",
-                    "confidence": 0.87
+                    "confidence": 0.87,
                 },
                 {
                     "token": "ETH",
                     "strategy": "VolatilityEngulfing",
                     "signal": "BUY",
-                    "confidence": 0.73
-                }
+                    "confidence": 0.73,
+                },
             ]
         }
     }
@@ -572,8 +657,11 @@ async def main():
 
     # Top stratégies
     cprint(f"\n🏆 TOP STRATÉGIES:", "yellow", attrs=["bold"])
-    for i, strategy in enumerate(report['top_strategies'], 1):
-        cprint(f"   {i}. {strategy['name']}: {strategy['score']:.2f} ({strategy['status']})", "green")
+    for i, strategy in enumerate(report["top_strategies"], 1):
+        cprint(
+            f"   {i}. {strategy['name']}: {strategy['score']:.2f} ({strategy['status']})",
+            "green",
+        )
 
     # Statistiques du backtester
     cprint(f"\n📈 STATISTIQUES BACKTESTER:", "yellow", attrs=["bold"])

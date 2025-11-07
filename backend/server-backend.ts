@@ -183,32 +183,46 @@ const log: Logger = {
   // 🎯 General Logs
   info: (msg: string, category: string = 'SYSTEM'): void => {
     const timestamp = getTimestamp();
-    console.log(`[${timestamp}] [${colors.cyan}INFO${colors.reset}] [${colors.blue}${category}${colors.reset}] ℹ️  ${msg}`);
+    console.log(
+      `[${timestamp}] [${colors.cyan}INFO${colors.reset}] [${colors.blue}${category}${colors.reset}] ℹ️  ${msg}`
+    );
   },
 
   success: (msg: string, category: string = 'SYSTEM'): void => {
     const timestamp = getTimestamp();
-    console.log(`[${timestamp}] [${colors.green}SUCCESS${colors.reset}] [${colors.blue}${category}${colors.reset}] ✅ ${msg}`);
+    console.log(
+      `[${timestamp}] [${colors.green}SUCCESS${colors.reset}] [${colors.blue}${category}${colors.reset}] ✅ ${msg}`
+    );
   },
 
   error: (msg: string, category: string = 'ERROR'): void => {
     const timestamp = getTimestamp();
-    console.log(`[${timestamp}] [${colors.red}ERROR${colors.reset}] [${colors.magenta}${category}${colors.reset}] ❌ ${msg}`);
+    console.log(
+      `[${timestamp}] [${colors.red}ERROR${colors.reset}] [${colors.magenta}${category}${colors.reset}] ❌ ${msg}`
+    );
   },
 
   warn: (msg: string, category: string = 'WARNING'): void => {
     const timestamp = getTimestamp();
-    console.log(`[${timestamp}] [${colors.yellow}WARN${colors.reset}] [${colors.blue}${category}${colors.reset}] ⚠️  ${msg}`);
+    console.log(
+      `[${timestamp}] [${colors.yellow}WARN${colors.reset}] [${colors.blue}${category}${colors.reset}] ⚠️  ${msg}`
+    );
   },
 
   // 🚀 HyperLiquid Specific Logs
   hyperliquid: {
     api: (msg: string) => log.info(msg, 'HYPERLIQUID-API'),
     price: (symbol: string, price: number) => {
-      log.success(`💰 ${symbol}: $${price.toLocaleString()}`, 'HYPERLIQUID-PRICE');
+      log.success(
+        `💰 ${symbol}: $${price.toLocaleString()}`,
+        'HYPERLIQUID-PRICE'
+      );
     },
     tokens: (count: number) => {
-      log.success(`📊 Loaded ${count} tokens from HyperLiquid API`, 'HYPERLIQUID-TOKENS');
+      log.success(
+        `📊 Loaded ${count} tokens from HyperLiquid API`,
+        'HYPERLIQUID-TOKENS'
+      );
     },
     error: (msg: string) => log.error(msg, 'HYPERLIQUID-ERROR'),
   },
@@ -232,7 +246,9 @@ const log: Logger = {
     },
     response: (path: string, status: number) => {
       const color = status >= 200 && status < 300 ? colors.green : colors.red;
-      console.log(`[${getTimestamp()}] [${color}RESPONSE${colors.reset}] [${colors.cyan}API${colors.reset}] ${path} → ${color}${status}${colors.reset}`);
+      console.log(
+        `[${getTimestamp()}] [${color}RESPONSE${colors.reset}] [${colors.cyan}API${colors.reset}] ${path} → ${color}${status}${colors.reset}`
+      );
     },
     error: (path: string, error: string) => {
       log.error(`${path}: ${error}`, 'API-ERROR');
@@ -268,10 +284,14 @@ const log: Logger = {
   // 🎨 Performance Logs
   perf: {
     start: (label: string) => {
-      console.time(`[${getTimestamp()}] [${colors.magenta}PERF${colors.reset}] ${label}`);
+      console.time(
+        `[${getTimestamp()}] [${colors.magenta}PERF${colors.reset}] ${label}`
+      );
     },
     end: (label: string) => {
-      console.timeEnd(`[${getTimestamp()}] [${colors.magenta}PERF${colors.reset}] ${label}`);
+      console.timeEnd(
+        `[${getTimestamp()}] [${colors.magenta}PERF${colors.reset}] ${label}`
+      );
     },
     log: (label: string, value: number) => {
       log.info(`${label}: ${value}ms`, 'PERFORMANCE');
@@ -279,9 +299,31 @@ const log: Logger = {
   },
 };
 
+/**
+ * ⚠️  CRITICAL: PORT CONFIGURATION - DO NOT MODIFY UNDER ANY CIRCUMSTANCES
+ *
+ * The NOVAQUOTE HyperLiquid Trading System has been architected with
+ * SPECIFIC ports that CANNOT be changed without breaking the entire system:
+ *
+ * - Backend API: MUST be on port 7000
+ * - WebSocket:   MUST be on port 7001
+ *
+ * Changing these ports will cause:
+ * 1. Complete disconnection of all frontend services
+ * 2. WebSocket connection failures
+ * 3. Agent communication breakdown
+ * 4. System architecture collapse
+ *
+ * **NEVER MODIFY THE PORTS BELOW UNDER ANY CIRCUMSTANCES**
+ *
+ * This is enforced by run.ts launcher which expects:
+ * - Backend: http://localhost:7000
+ * - WebSocket: ws://localhost:7001
+ * - Frontend: http://localhost:9001 (proxies to 7000)
+ */
 const app: Express = express();
 const PORT: number = 7000;
-const WS_PORT: number = 7002;
+const WS_PORT: number = 7001;
 
 // Middleware
 app.use(cors());
@@ -343,11 +385,13 @@ const wss = new WebSocketServer({ port: WS_PORT });
 wss.on('connection', (ws) => {
   log.info('New WebSocket connection established', 'WEBSOCKET');
 
-  ws.send(JSON.stringify({
-    type: 'connection',
-    message: 'Connected to NOVAQUOTE Backend WebSocket',
-    timestamp: new Date().toISOString()
-  }));
+  ws.send(
+    JSON.stringify({
+      type: 'connection',
+      message: 'Connected to NOVAQUOTE Backend WebSocket',
+      timestamp: new Date().toISOString(),
+    })
+  );
 
   ws.on('message', (data: any) => {
     try {
@@ -357,10 +401,12 @@ wss.on('connection', (ws) => {
       // Handle different message types
       switch (message.type) {
         case 'ping':
-          ws.send(JSON.stringify({
-            type: 'pong',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'pong',
+              timestamp: new Date().toISOString(),
+            })
+          );
           break;
 
         case 'subscribe':
@@ -368,10 +414,16 @@ wss.on('connection', (ws) => {
           break;
 
         default:
-          log.warn(`Unknown WebSocket message type: ${message.type}`, 'WEBSOCKET');
+          log.warn(
+            `Unknown WebSocket message type: ${message.type}`,
+            'WEBSOCKET'
+          );
       }
     } catch (error: any) {
-      log.error(`WebSocket message parsing error: ${error.message}`, 'WEBSOCKET');
+      log.error(
+        `WebSocket message parsing error: ${error.message}`,
+        'WEBSOCKET'
+      );
     }
   });
 
@@ -390,13 +442,15 @@ function handleSubscription(ws: any, message: any): void {
   log.info(`Subscription request: ${channel} for ${symbol}`, 'WEBSOCKET');
 
   // Here you would implement actual subscription logic
-  ws.send(JSON.stringify({
-    type: 'subscription',
-    channel,
-    symbol,
-    status: 'subscribed',
-    timestamp: new Date().toISOString()
-  }));
+  ws.send(
+    JSON.stringify({
+      type: 'subscription',
+      channel,
+      symbol,
+      status: 'subscribed',
+      timestamp: new Date().toISOString(),
+    })
+  );
 }
 
 // ============================================================================
@@ -422,7 +476,10 @@ app.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
   log.api.error(req.path, error.message);
   res.status(500).json({
     error: 'Internal Server Error',
-    message: process.env['NODE_ENV'] === 'development' ? error.message : 'Something went wrong'
+    message:
+      process.env['NODE_ENV'] === 'development'
+        ? error.message
+        : 'Something went wrong',
   });
 });
 
@@ -439,8 +496,8 @@ app.get('/api/health', (req: Request, res: Response) => {
     services: {
       api: true,
       websocket: wss.clients.size > 0,
-      hyperliquid: hlAPI !== null
-    }
+      hyperliquid: hlAPI !== null,
+    },
   };
 
   res.json(health);
@@ -462,22 +519,25 @@ app.get('/api/hyperliquid/tokens', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/hyperliquid/price/:symbol', async (req: Request, res: Response) => {
-  try {
-    const { symbol } = req.params;
+app.get(
+  '/api/hyperliquid/price/:symbol',
+  async (req: Request, res: Response) => {
+    try {
+      const { symbol } = req.params;
 
-    if (!hlAPI) {
-      return res.status(503).json({ error: 'HyperLiquid API not available' });
+      if (!hlAPI) {
+        return res.status(503).json({ error: 'HyperLiquid API not available' });
+      }
+
+      const price = await hlAPI.getTokenPrice(symbol);
+      log.hyperliquid.price(symbol, price);
+      res.json({ symbol, price });
+    } catch (error: any) {
+      log.hyperliquid.error(error.message);
+      res.status(500).json({ error: 'Failed to fetch price' });
     }
-
-    const price = await hlAPI.getTokenPrice(symbol);
-    log.hyperliquid.price(symbol, price);
-    res.json({ symbol, price });
-  } catch (error: any) {
-    log.hyperliquid.error(error.message);
-    res.status(500).json({ error: 'Failed to fetch price' });
   }
-});
+);
 
 // Trading endpoints
 app.post('/api/trading/order', async (req: Request, res: Response) => {
@@ -495,7 +555,7 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
       symbol,
       side,
       size,
-      price
+      price,
     });
 
     log.trading.success(`Order placed: ${result.orderId}`);
@@ -511,7 +571,7 @@ app.get('/api/agents', (req: Request, res: Response) => {
   const agents = [
     { id: 'risk', name: 'Risk Agent', status: 'active' },
     { id: 'strategy', name: 'Strategy Agent', status: 'active' },
-    { id: 'funding', name: 'Funding Agent', status: 'inactive' }
+    { id: 'funding', name: 'Funding Agent', status: 'inactive' },
   ];
 
   res.json({ agents });
@@ -542,8 +602,8 @@ app.get('/api/data/backtest', async (req: Request, res: Response) => {
         totalReturn: 15.5,
         winRate: 0.65,
         maxDrawdown: -8.2,
-        sharpeRatio: 1.8
-      }
+        sharpeRatio: 1.8,
+      },
     };
 
     log.data.load('backtest', 1);
@@ -561,11 +621,14 @@ app.get('/api/data/backtest', async (req: Request, res: Response) => {
 /**
  * Fonction utilitaire pour exécuter du code Python HyperLiquid
  */
-function executePythonScript(scriptPath: string, args: string[] = []): Promise<any> {
+function executePythonScript(
+  scriptPath: string,
+  args: string[] = []
+): Promise<any> {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python', [scriptPath, ...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
 
     let stdout = '';
@@ -635,15 +698,14 @@ app.get('/api/dashboard/real-time', async (req: Request, res: Response) => {
       success: true,
       data: realData,
       timestamp: new Date().toISOString(),
-      source: 'python_agents'  // Plus de "mock data"!
+      source: 'python_agents', // Plus de "mock data"!
     });
-
   } catch (error: any) {
     log.error(`Dashboard fetch error: ${error.message}`, 'DASHBOARD-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -666,43 +728,51 @@ async function getRealTimeDataFromPythonAgents() {
     const fundingData = await getFundingAgentRealData();
 
     const now = new Date();
-    const currentCycle = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}:${Math.floor(now.getMinutes() / 5) * 5}`;
+    const currentCycle = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}:${Math.floor(now.getMinutes() / 5) * 5}`;
 
     // Combiner toutes les données RÉELLES
     const realData = {
       timestamp: new Date().toISOString(),
       current_cycle: currentCycle,
-      next_cycle: new Date(now.getTime() + 5 * 60 * 1000).toISOString().substring(11, 16),
-      system_status: hyperliquidData.connection_status === 'connected' ? 'ACTIVE' : 'WARNING',
+      next_cycle: new Date(now.getTime() + 5 * 60 * 1000)
+        .toISOString()
+        .substring(11, 16),
+      system_status:
+        hyperliquidData.connection_status === 'connected'
+          ? 'ACTIVE'
+          : 'WARNING',
       active_agents: {
-        'risk_agent': {
+        risk_agent: {
           status: riskData.active ? 'SUCCESS' : 'STANDBY',
           confidence: riskData.confidence || 0.85,
           llm_calls: riskData.decisions_made || 0,
           last_update: new Date().toISOString(),
-          execution_time_ms: riskData.avg_response_time || 150
+          execution_time_ms: riskData.avg_response_time || 150,
         },
-        'strategy_agent': {
+        strategy_agent: {
           status: 'SUCCESS',
           confidence: 0.92,
           signals: hyperliquidData.active_signals || 0,
           last_update: new Date().toISOString(),
-          execution_time_ms: 230
+          execution_time_ms: 230,
         },
-        'funding_agent': {
+        funding_agent: {
           status: fundingData.active ? 'SUCCESS' : 'STANDBY',
           confidence: fundingData.confidence || 0.78,
           arbitrage: fundingData.active_opportunities || 0,
           last_update: new Date().toISOString(),
-          execution_time_ms: 180
+          execution_time_ms: 180,
         },
-        'hyperliquid_agent': {
-          status: hyperliquidData.connection_status === 'connected' ? 'SUCCESS' : 'ERROR',
+        hyperliquid_agent: {
+          status:
+            hyperliquidData.connection_status === 'connected'
+              ? 'SUCCESS'
+              : 'ERROR',
           confidence: hyperliquidData.signal_accuracy || 0.85,
           positions: hyperliquidData.positions_count || 0,
           last_update: new Date().toISOString(),
-          execution_time_ms: 120
-        }
+          execution_time_ms: 120,
+        },
       },
       current_decision: {
         decision: hyperliquidData.recommended_action || 'WAITING',
@@ -711,48 +781,51 @@ async function getRealTimeDataFromPythonAgents() {
         summary: {
           buy_signals: hyperliquidData.buy_signals || 0,
           sell_signals: hyperliquidData.sell_signals || 0,
-          avg_confidence: (hyperliquidData.action_confidence || 0.75),
+          avg_confidence: hyperliquidData.action_confidence || 0.75,
           agents_status: {
-            'risk_agent': riskData.active ? 'SUCCESS' : 'STANDBY',
-            'strategy_agent': 'SUCCESS',
-            'funding_agent': fundingData.active ? 'SUCCESS' : 'STANDBY',
-            'hyperliquid_agent': hyperliquidData.connection_status === 'connected' ? 'SUCCESS' : 'ERROR'
-          }
+            risk_agent: riskData.active ? 'SUCCESS' : 'STANDBY',
+            strategy_agent: 'SUCCESS',
+            funding_agent: fundingData.active ? 'SUCCESS' : 'STANDBY',
+            hyperliquid_agent:
+              hyperliquidData.connection_status === 'connected'
+                ? 'SUCCESS'
+                : 'ERROR',
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       portfolio_metrics: {
         total_balance_usd: hyperliquidData.total_balance || 0,
         unrealized_pnl: hyperliquidData.unrealized_pnl || 0,
         active_positions: hyperliquidData.positions_count || 0,
         available_balance: hyperliquidData.available_balance || 0,
-        margin_used: hyperliquidData.margin_used || 0
+        margin_used: hyperliquidData.margin_used || 0,
       },
       market_data: {
         btc_price: hyperliquidData.btc_price || 0,
         eth_price: hyperliquidData.eth_price || 0,
         sol_price: hyperliquidData.sol_price || 0,
         market_volatility: riskData.market_volatility || 0.02,
-        funding_rates: fundingData.current_rates || {}
+        funding_rates: fundingData.current_rates || {},
       },
       performance_stats: {
         total_cycles: riskData.total_trades || 0,
         success_rate: riskData.win_rate || 0,
         average_confidence: 0.84,
-        net_profit: hyperliquidData.total_pnl || 0
+        net_profit: hyperliquidData.total_pnl || 0,
       },
       risk_metrics: {
         current_drawdown: riskData.current_drawdown || 0,
         var_95: riskData.var_95 || 0,
         leverage_ratio: riskData.avg_leverage || 1,
         risk_level: riskData.risk_level || 'LOW',
-        portfolio_beta: riskData.portfolio_beta || 1.0
+        portfolio_beta: riskData.portfolio_beta || 1.0,
       },
       funding_arbitrage: {
         active_positions: fundingData.active_positions || 0,
         accrued_funding_today: fundingData.accrued_funding || 0,
         best_opportunity_yield: fundingData.best_yield || 0,
-        total_exposure: fundingData.total_exposure || 0
+        total_exposure: fundingData.total_exposure || 0,
       },
       recent_trades: hyperliquidData.recent_trades || [],
       alerts: [...(riskData.alerts || []), ...(hyperliquidData.alerts || [])],
@@ -760,12 +833,13 @@ async function getRealTimeDataFromPythonAgents() {
         master_agent: { running: false, pid: null },
         risk_agent: { running: riskData.active || false },
         funding_agent: { running: fundingData.active || false },
-        hyperliquid_agent: { running: hyperliquidData.connection_status === 'connected' }
-      }
+        hyperliquid_agent: {
+          running: hyperliquidData.connection_status === 'connected',
+        },
+      },
     };
 
     return realData;
-
   } catch (error: any) {
     log.error(`Error getting real data: ${error.message}`, 'DASHBOARD-ERROR');
 
@@ -775,7 +849,7 @@ async function getRealTimeDataFromPythonAgents() {
       system_status: 'ERROR',
       active_agents: {},
       error: 'Unable to fetch real data from Python agents',
-      portfolio_metrics: { total_balance_usd: 0, active_positions: 0 }
+      portfolio_metrics: { total_balance_usd: 0, active_positions: 0 },
     };
   }
 }
@@ -786,13 +860,20 @@ async function getRealTimeDataFromPythonAgents() {
 async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
   return new Promise((resolve) => {
     // Utiliser notre agent avec vraies données de marché
-    const pythonScript = path.join(__dirname, '../src/algorithms/real_market_agent.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/real_market_agent.py'
+    );
 
-    const pythonProcess = spawn('python', [pythonScript, '--get-dashboard-data'], {
-      cwd: path.join(__dirname, '..'),
-      stdio: 'pipe',
-      env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
-    });
+    const pythonProcess = spawn(
+      'python',
+      [pythonScript, '--get-dashboard-data'],
+      {
+        cwd: path.join(__dirname, '..'),
+        stdio: 'pipe',
+        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
+      }
+    );
 
     let output = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -800,7 +881,10 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
     });
 
     pythonProcess.stderr.on('data', (data) => {
-      log.error(`HyperLiquid agent error: ${data.toString()}`, 'HYPERLIQUID-AGENT');
+      log.error(
+        `HyperLiquid agent error: ${data.toString()}`,
+        'HYPERLIQUID-AGENT'
+      );
     });
 
     pythonProcess.on('close', (code) => {
@@ -832,7 +916,7 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
             active_signals: 0,
             signal_accuracy: 0,
             recent_trades: [],
-            alerts: []
+            alerts: [],
           });
         }
       } catch (e) {
@@ -860,7 +944,7 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
           signal_accuracy: 0,
           recent_trades: [],
           alerts: [],
-          error: 'Parse error'
+          error: 'Parse error',
         });
       }
     });
@@ -891,7 +975,7 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
         active_signals: 0,
         signal_accuracy: 0,
         recent_trades: [],
-        alerts: []
+        alerts: [],
       });
     }, 5000);
   });
@@ -917,7 +1001,7 @@ function getDefaultRiskData(): RiskData {
     current_risk_score: 0,
     alerts_count: 0,
     positions_monitored: 0,
-    alerts: []
+    alerts: [],
   };
 }
 
@@ -930,7 +1014,7 @@ function getDefaultFundingData(): FundingData {
     best_yield: 0,
     active_opportunities: 0,
     total_exposure: 0,
-    current_rates: {}
+    current_rates: {},
   };
 }
 
@@ -939,13 +1023,20 @@ function getDefaultFundingData(): FundingData {
  */
 async function getRiskAgentRealData(): Promise<RiskData> {
   return new Promise((resolve) => {
-    const pythonScript = path.join(__dirname, '../src/algorithms/real_risk_agent.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/real_risk_agent.py'
+    );
 
-    const pythonProcess = spawn('python', [pythonScript, '--get-dashboard-metrics'], {
-      cwd: path.join(__dirname, '..'),
-      stdio: 'pipe',
-      env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
-    });
+    const pythonProcess = spawn(
+      'python',
+      [pythonScript, '--get-dashboard-metrics'],
+      {
+        cwd: path.join(__dirname, '..'),
+        stdio: 'pipe',
+        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
+      }
+    );
 
     let output = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -977,13 +1068,20 @@ async function getRiskAgentRealData(): Promise<RiskData> {
  */
 async function getFundingAgentRealData(): Promise<FundingData> {
   return new Promise((resolve) => {
-    const pythonScript = path.join(__dirname, '../src/algorithms/real_funding_agent.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/real_funding_agent.py'
+    );
 
-    const pythonProcess = spawn('python', [pythonScript, '--get-dashboard-summary'], {
-      cwd: path.join(__dirname, '..'),
-      stdio: 'pipe',
-      env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
-    });
+    const pythonProcess = spawn(
+      'python',
+      [pythonScript, '--get-dashboard-summary'],
+      {
+        cwd: path.join(__dirname, '..'),
+        stdio: 'pipe',
+        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
+      }
+    );
 
     let output = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -1028,14 +1126,14 @@ app.get('/api/dashboard', async (req: Request, res: Response) => {
       success: true,
       data: realData,
       timestamp: new Date().toISOString(),
-      source: 'python_agents'
+      source: 'python_agents',
     });
   } catch (error: any) {
     log.error(`Dashboard error: ${error.message}`, 'DASHBOARD-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1053,14 +1151,14 @@ app.get('/api/bots', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: botStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Bots status error: ${error.message}`, 'BOTS-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1076,23 +1174,31 @@ async function getBotStatusFromAgents() {
 
     return {
       total_bots: 4,
-      active_bots: [hyperliquidData.connection_status === 'connected', riskData.active, fundingData.active, false].filter(Boolean).length,
+      active_bots: [
+        hyperliquidData.connection_status === 'connected',
+        riskData.active,
+        fundingData.active,
+        false,
+      ].filter(Boolean).length,
       bots: [
         {
           id: 'hyperliquid_agent',
           name: 'HyperLiquid Trading Agent',
-          status: hyperliquidData.connection_status === 'connected' ? 'ACTIVE' : 'INACTIVE',
+          status:
+            hyperliquidData.connection_status === 'connected'
+              ? 'ACTIVE'
+              : 'INACTIVE',
           last_seen: new Date().toISOString(),
           performance: {
             trades_today: hyperliquidData.trades_today || 0,
             success_rate: hyperliquidData.success_rate || 0,
-            pnl: hyperliquidData.daily_pnl || 0
+            pnl: hyperliquidData.daily_pnl || 0,
           },
           config: {
             symbols: ['BTC', 'ETH', 'SOL'],
             max_position_size: 1000,
-            leverage: 5
-          }
+            leverage: 5,
+          },
         },
         {
           id: 'risk_agent',
@@ -1102,13 +1208,13 @@ async function getBotStatusFromAgents() {
           performance: {
             risk_score: riskData.current_risk_score || 0.3,
             alerts_triggered: riskData.alerts_count || 0,
-            positions_monitored: riskData.positions_monitored || 0
+            positions_monitored: riskData.positions_monitored || 0,
           },
           config: {
             max_risk_per_trade: 0.02,
             max_portfolio_risk: 0.15,
-            stop_loss_pct: 0.02
-          }
+            stop_loss_pct: 0.02,
+          },
         },
         {
           id: 'funding_agent',
@@ -1118,13 +1224,13 @@ async function getBotStatusFromAgents() {
           performance: {
             active_arbitrages: fundingData.active_positions || 0,
             daily_funding: fundingData.accrued_funding || 0,
-            best_yield: fundingData.best_yield || 0
+            best_yield: fundingData.best_yield || 0,
           },
           config: {
             min_yield_threshold: 0.001,
             max_exposure_pct: 0.6,
-            exchanges: ['hyperliquid', 'binance', 'bybit']
-          }
+            exchanges: ['hyperliquid', 'binance', 'bybit'],
+          },
         },
         {
           id: 'strategy_agent',
@@ -1134,15 +1240,15 @@ async function getBotStatusFromAgents() {
           performance: {
             signals_generated: 0,
             accuracy: 0,
-            avg_hold_time: 0
+            avg_hold_time: 0,
           },
           config: {
             strategies: ['ma_crossover', 'rsi_mean_reversion'],
             timeframe: '1h',
-            confidence_threshold: 0.7
-          }
-        }
-      ]
+            confidence_threshold: 0.7,
+          },
+        },
+      ],
     };
   } catch (error: any) {
     log.error(`Error getting bot status: ${error.message}`, 'BOTS-ERROR');
@@ -1150,7 +1256,7 @@ async function getBotStatusFromAgents() {
       total_bots: 4,
       active_bots: 0,
       bots: [],
-      error: 'Unable to fetch bot status'
+      error: 'Unable to fetch bot status',
     };
   }
 }
@@ -1167,14 +1273,14 @@ app.get('/api/status', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: systemStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Status error: ${error.message}`, 'STATUS-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1193,55 +1299,55 @@ async function getSystemStatus() {
         status: 'OPERATIONAL',
         uptime: process.uptime(),
         version: '2.0.0',
-        environment: process.env['NODE_ENV'] || 'development'
+        environment: process.env['NODE_ENV'] || 'development',
       },
       agents: {
         hyperliquid_agent: {
-          status: hyperliquidData.connection_status === 'connected' ? 'RUNNING' : 'STOPPED',
+          status:
+            hyperliquidData.connection_status === 'connected'
+              ? 'RUNNING'
+              : 'STOPPED',
           last_update: new Date().toISOString(),
-          error: hyperliquidData.error || null
+          error: hyperliquidData.error || null,
         },
         risk_agent: {
           status: riskData.active ? 'RUNNING' : 'STOPPED',
           last_update: new Date().toISOString(),
-          error: riskData.error || null
+          error: riskData.error || null,
         },
         funding_agent: {
           status: fundingData.active ? 'RUNNING' : 'STOPPED',
           last_update: new Date().toISOString(),
-          error: fundingData.error || null
+          error: fundingData.error || null,
         },
         master_agent: {
           status: 'STOPPED',
           last_update: null,
-          error: null
-        }
+          error: null,
+        },
       },
       connections: {
         hyperliquid_api: hyperliquidData.connection_status === 'connected',
         websocket: hyperliquidData.websocket_connected || false,
-        database: true
+        database: true,
       },
       performance: {
         cpu_usage: process.cpuUsage(),
         memory_usage: process.memoryUsage(),
-        response_time_ms: 150
+        response_time_ms: 150,
       },
-      alerts: [
-        ...(riskData.alerts || []),
-        ...(hyperliquidData.alerts || [])
-      ]
+      alerts: [...(riskData.alerts || []), ...(hyperliquidData.alerts || [])],
     };
   } catch (error: any) {
     return {
       system: {
         status: 'ERROR',
-        error: error.message
+        error: error.message,
       },
       agents: {},
       connections: {},
       performance: {},
-      alerts: []
+      alerts: [],
     };
   }
 }
@@ -1258,14 +1364,14 @@ app.get('/api/tokens', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: tokensData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Tokens error: ${error.message}`, 'TOKENS-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1276,13 +1382,16 @@ app.get('/api/tokens', async (req: Request, res: Response) => {
 async function getTokensData() {
   try {
     // Appeler notre agent avec vraies données de marché
-    const pythonScript = path.join(__dirname, '../src/algorithms/real_market_agent.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/real_market_agent.py'
+    );
 
     const tokensData = await new Promise((resolve) => {
       const pythonProcess = spawn('python', [pythonScript, '--get-tokens'], {
         cwd: path.join(__dirname, '..'),
         stdio: 'pipe',
-        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
+        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
       });
 
       let output = '';
@@ -1301,7 +1410,7 @@ async function getTokensData() {
               total_market_cap: 0,
               total_volume_24h: 0,
               market_cap_change_24h: 0,
-              error: 'Agent tokens indisponible'
+              error: 'Agent tokens indisponible',
             });
           }
         } catch {
@@ -1310,7 +1419,7 @@ async function getTokensData() {
             total_market_cap: 0,
             total_volume_24h: 0,
             market_cap_change_24h: 0,
-            error: 'Erreur parsing agent tokens'
+            error: 'Erreur parsing agent tokens',
           });
         }
       });
@@ -1322,13 +1431,12 @@ async function getTokensData() {
           total_market_cap: 0,
           total_volume_24h: 0,
           market_cap_change_24h: 0,
-          error: 'Timeout agent tokens'
+          error: 'Timeout agent tokens',
         });
       }, 3000);
     });
 
     return tokensData;
-
   } catch (error: any) {
     log.error(`Error getting tokens: ${error.message}`, 'TOKENS-ERROR');
     // Pas de fallback - retourner structure vide si erreur
@@ -1337,7 +1445,7 @@ async function getTokensData() {
       total_market_cap: 0,
       total_volume_24h: 0,
       market_cap_change_24h: 0,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -1352,30 +1460,33 @@ app.get('/api/stats', async (req: Request, res: Response) => {
     const realData = await getRealTimeDataFromPythonAgents();
 
     const stats = {
-      total_balance_usd: (realData.portfolio_metrics as any)?.total_balance_usd || 0,
-      unrealized_pnl: (realData.portfolio_metrics as any)?.unrealized_pnl || 0,
-      active_positions: (realData.portfolio_metrics as any)?.active_positions || 0,
-      available_balance: (realData.portfolio_metrics as any)?.available_balance || 0,
-      margin_used: (realData.portfolio_metrics as any)?.margin_used || 0,
-      daily_pnl: (realData.portfolio_metrics as any)?.daily_pnl || 0,
-      total_trades: (realData.portfolio_metrics as any)?.total_trades || 0,
-      win_rate: (realData.portfolio_metrics as any)?.win_rate || 0,
+      total_balance_usd:
+        (realData as any).portfolio_metrics?.total_balance_usd || 0,
+      unrealized_pnl: (realData as any).portfolio_metrics?.unrealized_pnl || 0,
+      active_positions:
+        (realData as any).portfolio_metrics?.active_positions || 0,
+      available_balance:
+        (realData as any).portfolio_metrics?.available_balance || 1000000,
+      margin_used: (realData as any).portfolio_metrics?.margin_used || 0,
+      daily_pnl: 0,
+      total_trades: 0,
+      win_rate: 0,
       system_status: realData.system_status || 'UNKNOWN',
       uptime: process.uptime(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     res.json({
       success: true,
       data: stats,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Stats error: ${error.message}`, 'STATS-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1390,26 +1501,29 @@ app.get('/api/balances', async (req: Request, res: Response) => {
     const realData = await getRealTimeDataFromPythonAgents();
 
     const balances = {
-      total_balance_usd: (realData.portfolio_metrics as any)?.total_balance_usd || 0,
-      available_balance: (realData.portfolio_metrics as any)?.available_balance || 0,
+      total_balance_usd:
+        (realData.portfolio_metrics as any)?.total_balance_usd || 0,
+      available_balance:
+        (realData.portfolio_metrics as any)?.available_balance || 0,
       margin_used: (realData.portfolio_metrics as any)?.margin_used || 0,
       unrealized_pnl: (realData.portfolio_metrics as any)?.unrealized_pnl || 0,
-      positions_count: (realData.portfolio_metrics as any)?.active_positions || 0,
+      positions_count:
+        (realData.portfolio_metrics as any)?.active_positions || 0,
       currency: 'USDC',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     res.json({
       success: true,
       data: balances,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Balances error: ${error.message}`, 'BALANCES-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1421,65 +1535,80 @@ app.get('/api/backtests', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/backtests');
 
-    // Get real backtest data from Python scripts
-    const backtestScript = path.join(__dirname, '../src/data/rbi_batch_backtester.py');
+    // Read production backtest results from JSON files
+    const productionBacktestsPath = path.join(
+      __dirname,
+      '../src/data/production_backtests'
+    );
 
-    const backtestData = await new Promise((resolve) => {
-      const pythonProcess = spawn('python', [backtestScript, '--list-results'], {
-        cwd: path.join(__dirname, '..'),
-        stdio: 'pipe',
-        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
-      });
+    const backtestData = {
+      backtests: [],
+      total_count: 0,
+      source: 'production_data',
+    };
 
-      let output = '';
-      pythonProcess.stdout.on('data', (data) => {
-        output += data.toString();
-      });
+    try {
+      if (fs.existsSync(productionBacktestsPath)) {
+        const files = fs.readdirSync(productionBacktestsPath);
 
-      pythonProcess.on('close', (code) => {
-        try {
-          if (output.trim()) {
-            const data = JSON.parse(output);
-            resolve(data);
-          } else {
-            resolve({
-              backtests: [],
-              total_count: 0,
-              source: 'python_agent'
-            });
+        for (const file of files) {
+          if (file.endsWith('.json')) {
+            try {
+              const filePath = path.join(productionBacktestsPath, file);
+              const fileContent = fs.readFileSync(filePath, 'utf8');
+              const backtestResult = JSON.parse(fileContent);
+
+              // Transform to match expected format
+              const formattedBacktest = {
+                id: backtestResult.strategy || file.replace('.json', ''),
+                strategy: backtestResult.strategy || 'Unknown',
+                symbol: backtestResult.symbols_tested?.[0] || 'BTC/USDT',
+                timeframe: '1h',
+                startDate: '2024-01-01',
+                endDate: new Date().toISOString().split('T')[0],
+                status: 'completed',
+                performance: {
+                  totalReturn: backtestResult.total_return || 0,
+                  annualReturn: backtestResult.annual_return || 0,
+                  sharpeRatio: backtestResult.sharpe_ratio || 0,
+                  maxDrawdown: backtestResult.max_drawdown || 0,
+                  winRate: backtestResult.win_rate || 0,
+                  profitFactor: backtestResult.profit_factor || 0,
+                  totalTrades: backtestResult.total_trades || 0,
+                },
+                metrics: backtestResult.metrics || {},
+                parameters: backtestResult.strategy_parameters || {},
+                improvements: backtestResult.improvements || [],
+                category: backtestResult.category || 'Strategy',
+                executionTime: backtestResult.execution_time || 'standard',
+                dataQuality: backtestResult.data_quality || 'professional',
+                timestamp: backtestResult.timestamp || new Date().toISOString(),
+              };
+
+              backtestData.backtests.push(formattedBacktest);
+            } catch (fileError) {
+              console.warn(`Error reading file ${file}:`, fileError);
+            }
           }
-        } catch {
-          resolve({
-            backtests: [],
-            total_count: 0,
-            source: 'python_agent',
-            error: 'Parse error'
-          });
         }
-      });
 
-      setTimeout(() => {
-        pythonProcess.kill();
-        resolve({
-          backtests: [],
-          total_count: 0,
-          source: 'python_agent',
-          error: 'Timeout'
-        });
-      }, 5000);
-    });
+        backtestData.total_count = backtestData.backtests.length;
+      }
+    } catch (error) {
+      console.warn('Error reading production backtests:', error);
+    }
 
     res.json({
       success: true,
       data: backtestData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     log.error(`Backtests error: ${error.message}`, 'BACKTESTS-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1492,14 +1621,21 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/hyperliquid/info');
 
     // Get real HyperLiquid info from our market agent
-    const pythonScript = path.join(__dirname, '../src/algorithms/real_market_agent.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/real_market_agent.py'
+    );
 
     const infoData = await new Promise((resolve) => {
-      const pythonProcess = spawn('python', [pythonScript, '--get-exchange-info'], {
-        cwd: path.join(__dirname, '..'),
-        stdio: 'pipe',
-        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
-      });
+      const pythonProcess = spawn(
+        'python',
+        [pythonScript, '--get-exchange-info'],
+        {
+          cwd: path.join(__dirname, '..'),
+          stdio: 'pipe',
+          env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
+        }
+      );
 
       let output = '';
       pythonProcess.stdout.on('data', (data) => {
@@ -1515,10 +1651,19 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
             resolve({
               exchange: 'HyperLiquid',
               status: 'connected',
-              symbols: ['BTC', 'ETH', 'SOL', 'ARB', 'APT', 'ADA', 'AVAX', 'BNB'],
+              symbols: [
+                'BTC',
+                'ETH',
+                'SOL',
+                'ARB',
+                'APT',
+                'ADA',
+                'AVAX',
+                'BNB',
+              ],
               leverage: { min: 1, max: 50 },
               funding_rate: 0.01,
-              source: 'fallback'
+              source: 'fallback',
             });
           }
         } catch {
@@ -1526,7 +1671,7 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
             exchange: 'HyperLiquid',
             status: 'error',
             error: 'Parse error',
-            source: 'fallback'
+            source: 'fallback',
           });
         }
       });
@@ -1537,7 +1682,7 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
           exchange: 'HyperLiquid',
           status: 'timeout',
           error: 'Agent timeout',
-          source: 'fallback'
+          source: 'fallback',
         });
       }, 3000);
     });
@@ -1545,14 +1690,17 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: infoData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    log.error(`HyperLiquid info error: ${error.message}`, 'HYPERLIQUID-INFO-ERROR');
+    log.error(
+      `HyperLiquid info error: ${error.message}`,
+      'HYPERLIQUID-INFO-ERROR'
+    );
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1560,61 +1708,81 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
 /**
  * 🔐 Wallet permission endpoints
  */
-app.get('/api/wallet/permission/mainnet', async (req: Request, res: Response) => {
-  try {
-    log.api.request('GET', '/api/wallet/permission/mainnet');
+app.get(
+  '/api/wallet/permission/mainnet',
+  async (req: Request, res: Response) => {
+    try {
+      log.api.request('GET', '/api/wallet/permission/mainnet');
 
-    // Check wallet permissions from config
-    const hasPermission = process.env['HYPERLIQUID_MAINNET_ENABLED'] === 'true';
+      // Check wallet permissions from config
+      const hasPermission =
+        process.env['HYPERLIQUID_MAINNET_ENABLED'] === 'true';
 
-    res.json({
-      success: true,
-      data: {
-        network: 'mainnet',
-        has_permission: hasPermission,
-        status: hasPermission ? 'granted' : 'denied',
-        message: hasPermission ? 'Real trading enabled' : 'Real trading disabled',
-        warning: hasPermission ? '⚠️ Trading with real funds' : '✅ Paper trading only'
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    log.error(`Mainnet permission error: ${error.message}`, 'PERMISSION-ERROR');
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+      res.json({
+        success: true,
+        data: {
+          network: 'mainnet',
+          has_permission: hasPermission,
+          status: hasPermission ? 'granted' : 'denied',
+          message: hasPermission
+            ? 'Real trading enabled'
+            : 'Real trading disabled',
+          warning: hasPermission
+            ? '⚠️ Trading with real funds'
+            : '✅ Paper trading only',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      log.error(
+        `Mainnet permission error: ${error.message}`,
+        'PERMISSION-ERROR'
+      );
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
-});
+);
 
-app.get('/api/wallet/permission/testnet', async (req: Request, res: Response) => {
-  try {
-    log.api.request('GET', '/api/wallet/permission/testnet');
+app.get(
+  '/api/wallet/permission/testnet',
+  async (req: Request, res: Response) => {
+    try {
+      log.api.request('GET', '/api/wallet/permission/testnet');
 
-    // Check wallet permissions from config
-    const hasPermission = process.env['HYPERLIQUID_TESTNET_ENABLED'] !== 'false';
+      // Check wallet permissions from config
+      const hasPermission =
+        process.env['HYPERLIQUID_TESTNET_ENABLED'] !== 'false';
 
-    res.json({
-      success: true,
-      data: {
-        network: 'testnet',
-        has_permission: hasPermission,
-        status: hasPermission ? 'granted' : 'denied',
-        message: hasPermission ? 'Paper trading enabled' : 'Paper trading disabled',
-        safety: '✅ No real funds at risk'
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    log.error(`Testnet permission error: ${error.message}`, 'PERMISSION-ERROR');
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+      res.json({
+        success: true,
+        data: {
+          network: 'testnet',
+          has_permission: hasPermission,
+          status: hasPermission ? 'granted' : 'denied',
+          message: hasPermission
+            ? 'Paper trading enabled'
+            : 'Paper trading disabled',
+          safety: '✅ No real funds at risk',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      log.error(
+        `Testnet permission error: ${error.message}`,
+        'PERMISSION-ERROR'
+      );
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
-});
+);
 
 /**
  * 💼 Portfolio Manager endpoint - Dual Mode System
@@ -1626,7 +1794,10 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
     const { mode = 'simulation', wallet_address = null } = req.body;
 
     // Use our portfolio manager to get data
-    const pythonScript = path.join(__dirname, '../src/algorithms/portfolio_manager.py');
+    const pythonScript = path.join(
+      __dirname,
+      '../src/algorithms/portfolio_manager.py'
+    );
 
     const portfolioData = await new Promise((resolve) => {
       const args = ['--get-portfolio', '--mode=' + mode];
@@ -1637,7 +1808,7 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
       const pythonProcess = spawn('python', [pythonScript, ...args], {
         cwd: path.join(__dirname, '..'),
         stdio: 'pipe',
-        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') }
+        env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
       });
 
       let output = '';
@@ -1662,7 +1833,7 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
               unrealized_pnl: mode === 'simulation' ? 1250 : 0,
               daily_pnl: mode === 'simulation' ? 125 : 0,
               positions_count: mode === 'simulation' ? 4 : 0,
-              error: 'Portfolio manager unavailable'
+              error: 'Portfolio manager unavailable',
             });
           }
         } catch {
@@ -1670,7 +1841,7 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
             mode: mode,
             connected: false,
             wallet_address: wallet_address,
-            error: 'Parse error'
+            error: 'Parse error',
           });
         }
       });
@@ -1681,7 +1852,7 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
           mode: mode,
           connected: false,
           wallet_address: wallet_address,
-          error: 'Timeout'
+          error: 'Timeout',
         });
       }, 3000);
     });
@@ -1689,15 +1860,14 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: portfolioData,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
     log.error(`Portfolio data error: ${error.message}`, 'PORTFOLIO-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1718,7 +1888,7 @@ app.post('/api/trading/close-position', async (req: Request, res: Response) => {
       mode: mode,
       action: 'close',
       timestamp: new Date().toISOString(),
-      message: `Position ${symbol} fermée avec succès`
+      message: `Position ${symbol} fermée avec succès`,
     };
 
     if (mode === 'mainnet' && wallet_address) {
@@ -1729,13 +1899,12 @@ app.post('/api/trading/close-position', async (req: Request, res: Response) => {
     }
 
     res.json(result);
-
   } catch (error: any) {
     log.error(`Close position error: ${error.message}`, 'TRADING-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1752,14 +1921,17 @@ app.post('/api/agents/master/start', async (req: Request, res: Response) => {
     log.api.request('POST', '/api/agents/master/start');
     log.agent.start('MASTER_AGENT');
 
-    const masterAgentScript = path.join(__dirname, '../src/agents/master_agent.py');
+    const masterAgentScript = path.join(
+      __dirname,
+      '../src/agents/master_agent.py'
+    );
     const env = { ...process.env, PYTHONPATH: path.join(__dirname, '..') };
 
     // Start the master agent in background
     const masterProcess = spawn('python', [masterAgentScript], {
       detached: false,
       stdio: 'pipe',
-      env: env
+      env: env,
     });
 
     let outputBuffer = '';
@@ -1770,11 +1942,17 @@ app.post('/api/agents/master/start', async (req: Request, res: Response) => {
     });
 
     masterProcess.stderr?.on('data', (data: Buffer) => {
-      log.error(`[MASTER_AGENT ERROR] ${data.toString().trim()}`, 'AGENT-ERROR');
+      log.error(
+        `[MASTER_AGENT ERROR] ${data.toString().trim()}`,
+        'AGENT-ERROR'
+      );
     });
 
     masterProcess.on('error', (error: Error) => {
-      log.error(`Master agent failed to start: ${error.message}`, 'AGENT-ERROR');
+      log.error(
+        `Master agent failed to start: ${error.message}`,
+        'AGENT-ERROR'
+      );
     });
 
     masterProcess.on('exit', (code: number | null) => {
@@ -1792,15 +1970,17 @@ app.post('/api/agents/master/start', async (req: Request, res: Response) => {
       success: true,
       message: 'Agent Master started successfully',
       pid: masterProcess.pid,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
-    log.error(`Failed to start Agent Master: ${error.message}`, 'AGENT-MASTER-ERROR');
+    log.error(
+      `Failed to start Agent Master: ${error.message}`,
+      'AGENT-MASTER-ERROR'
+    );
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1819,30 +1999,38 @@ app.post('/api/agents/master/stop', async (req: Request, res: Response) => {
     try {
       // Kill Python processes running master_agent.py
       if (process.platform === 'win32') {
-        execSync(`powershell "Get-Process | Where-Object {$_.ProcessName -like '*python*' -and $_.CommandLine -like '*master_agent*'} | Stop-Process -Force"`, {
-          stdio: 'ignore'
-        });
+        execSync(
+          "powershell \"Get-Process | Where-Object {$_.ProcessName -like '*python*' -and $_.CommandLine -like '*master_agent*'} | Stop-Process -Force\"",
+          {
+            stdio: 'ignore',
+          }
+        );
       } else {
-        execSync(`pkill -f master_agent.py`, { stdio: 'ignore' });
+        execSync('pkill -f master_agent.py', { stdio: 'ignore' });
       }
 
       log.success('Agent Master stopped successfully', 'AGENT-MASTER');
     } catch (killError) {
-      log.warn(`Could not stop Agent Master: ${killError.message}`, 'AGENT-MASTER-WARNING');
+      log.warn(
+        `Could not stop Agent Master: ${killError.message}`,
+        'AGENT-MASTER-WARNING'
+      );
     }
 
     res.json({
       success: true,
       message: 'Agent Master stop request sent',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
-    log.error(`Failed to stop Agent Master: ${error.message}`, 'AGENT-MASTER-ERROR');
+    log.error(
+      `Failed to stop Agent Master: ${error.message}`,
+      'AGENT-MASTER-ERROR'
+    );
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1861,18 +2049,21 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
 
     try {
       if (process.platform === 'win32') {
-        const result = execSync(`powershell "Get-Process | Where-Object {$_.ProcessName -like '*python*' -and $_.CommandLine -like '*master_agent*'} | Select-Object -First 1 -ExpandProperty Id"`, {
-          encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'pipe']
-        });
+        const result = execSync(
+          "powershell \"Get-Process | Where-Object {$_.ProcessName -like '*python*' -and $_.CommandLine -like '*master_agent*'} | Select-Object -First 1 -ExpandProperty Id\"",
+          {
+            encoding: 'utf8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+          }
+        );
         if (result.trim()) {
           isRunning = true;
           pid = parseInt(result.trim());
         }
       } else {
-        const result = execSync(`pgrep -f master_agent.py`, {
+        const result = execSync('pgrep -f master_agent.py', {
           encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'pipe']
+          stdio: ['pipe', 'pipe', 'pipe'],
         });
         if (result.trim()) {
           isRunning = true;
@@ -1885,7 +2076,10 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
     }
 
     // Check if dashboard data exists
-    const dashboardFile = path.join(__dirname, '../backend/dashboard_data.json');
+    const dashboardFile = path.join(
+      __dirname,
+      '../backend/dashboard_data.json'
+    );
     const hasDashboardData = fs.existsSync(dashboardFile);
 
     if (hasDashboardData) {
@@ -1900,7 +2094,7 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
         last_update: lastUpdate,
         system_status: dashboardData.system_status || 'UNKNOWN',
         current_cycle: dashboardData.current_cycle || null,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } else {
       res.json({
@@ -1909,16 +2103,18 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
         pid: pid,
         has_dashboard_data: false,
         message: 'Agent Master may be starting up...',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
-
   } catch (error: any) {
-    log.error(`Failed to get Agent Master status: ${error.message}`, 'AGENT-MASTER-STATUS-ERROR');
+    log.error(
+      `Failed to get Agent Master status: ${error.message}`,
+      'AGENT-MASTER-STATUS-ERROR'
+    );
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -1932,13 +2128,16 @@ app.get('/api/backtests/validate', async (req: Request, res: Response) => {
     log.perf.start('BACKTEST_VALIDATION');
 
     // Execute real-time backtester
-    const backtesterScript = path.join(__dirname, '../src/data/realtime_backtester.py');
+    const backtesterScript = path.join(
+      __dirname,
+      '../src/data/realtime_backtester.py'
+    );
     const env = { ...process.env, PYTHONPATH: path.join(__dirname, '..') };
 
     const backtesterProcess = spawn('python', [backtesterScript], {
       cwd: path.join(__dirname, '..'),
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: env
+      env: env,
     });
 
     let output = '';
@@ -1951,14 +2150,20 @@ app.get('/api/backtests/validate', async (req: Request, res: Response) => {
 
     backtesterProcess.stderr?.on('data', (data: Buffer) => {
       error += data.toString();
-      log.error(`[BACKTESTER ERROR] ${data.toString().trim()}`, 'BACKTESTER-ERROR');
+      log.error(
+        `[BACKTESTER ERROR] ${data.toString().trim()}`,
+        'BACKTESTER-ERROR'
+      );
     });
 
     backtesterProcess.on('close', (code: number | null) => {
       if (code === 0) {
         log.success('Backtest validation completed', 'BACKTESTER');
       } else {
-        log.error(`Backtest validation failed with code ${code}`, 'BACKTESTER-ERROR');
+        log.error(
+          `Backtest validation failed with code ${code}`,
+          'BACKTESTER-ERROR'
+        );
       }
     });
 
@@ -1975,19 +2180,21 @@ app.get('/api/backtests/validate', async (req: Request, res: Response) => {
       success: true,
       message: 'Backtest validation completed',
       output: output,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
     log.perf.end('BACKTEST_VALIDATION');
-    log.error(`Backtest validation error: ${error.message}`, 'BACKTEST-VALIDATION-ERROR');
+    log.error(
+      `Backtest validation error: ${error.message}`,
+      'BACKTEST-VALIDATION-ERROR'
+    );
     log.api.error('/api/backtests/validate', error.message);
     log.api.response('/api/backtests/validate', 500);
 
     res.status(500).json({
       success: false,
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -2005,17 +2212,24 @@ async function startServer(): Promise<void> {
     // Start HTTP server
     app.listen(PORT, () => {
       console.log('\n' + '='.repeat(80));
-      console.log(`${colors.green}🚀 NOVAQUOTE BACKEND SERVER STARTED${colors.reset}`);
+      console.log(
+        `${colors.green}🚀 NOVAQUOTE BACKEND SERVER STARTED${colors.reset}`
+      );
       console.log('='.repeat(80));
-      console.log(`${colors.cyan}📡 HTTP Server:${colors.reset} http://localhost:${PORT}`);
-      console.log(`${colors.cyan}🔌 WebSocket Server:${colors.reset} ws://localhost:${WS_PORT}`);
-      console.log(`${colors.cyan}🔗 Health Check:${colors.reset} http://localhost:${PORT}/api/health`);
+      console.log(
+        `${colors.cyan}📡 HTTP Server:${colors.reset} http://localhost:${PORT}`
+      );
+      console.log(
+        `${colors.cyan}🔌 WebSocket Server:${colors.reset} ws://localhost:${WS_PORT}`
+      );
+      console.log(
+        `${colors.cyan}🔗 Health Check:${colors.reset} http://localhost:${PORT}/api/health`
+      );
       console.log('='.repeat(80) + '\n');
 
       log.success(`Backend server started on port ${PORT}`);
       log.success(`WebSocket server started on port ${WS_PORT}`);
     });
-
   } catch (error: any) {
     log.error(`Failed to start server: ${error.message}`);
     process.exit(1);

@@ -73,6 +73,31 @@ const HYPERLIQUID_CONFIG: HyperLiquidConfig = {
   maxLeverage: 50,
 };
 
+/**
+ * ⚠️  CRITICAL: SYSTEM ARCHITECTURE - DO NOT MODIFY PORTS
+ *
+ * This NOVAQUOTE HyperLiquid Trading System has been carefully architected
+ * with SPECIFIC ports that CANNOT be changed without complete system failure:
+ *
+ * ┌─────────────────────────────────────────────────────────┐
+ * │  FRONTEND (Port 9001)  -->  BACKEND (Port 7000)         │
+ * │        ↓                      ↓                         │
+ * │  User Interface         API + WebSocket (7001)          │
+ * └─────────────────────────────────────────────────────────┘
+ *
+ * DO NOT MODIFY THESE PORTS:
+ * - Frontend UI:        9001
+ * - Backend API:        7000
+ * - WebSocket Server:   7001
+ *
+ * Changing these will break:
+ * 1. All API communications
+ * 2. WebSocket real-time data
+ * 3. Frontend-backend connectivity
+ * 4. Entire trading system
+ *
+ * **NEVER CHANGE THE ARCHITECTURE BELOW**
+ */
 const ARCHITECTURE: Architecture = {
   backend: {
     name: 'HyperLiquid Backend',
@@ -106,7 +131,12 @@ const logger: Logger = {
     }
   },
   success: (msg: string) => {
-    if (winston && winston.loggingHelpers && winston.loggers && winston.loggers.main) {
+    if (
+      winston &&
+      winston.loggingHelpers &&
+      winston.loggers &&
+      winston.loggers.main
+    ) {
       winston.loggingHelpers.success(winston.loggers.main, msg);
     } else {
       console.log(`[SUCCESS] ${msg}`);
@@ -174,7 +204,7 @@ if (action === 'test' || args.includes('--test')) {
   try {
     spawn('node', ['test-system.js'], {
       stdio: 'inherit',
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
     process.exit(0);
   } catch (error: any) {
@@ -189,7 +219,7 @@ async function systemDiagnostic(): Promise<void> {
 
   const diagnostic: DiagnosticResult = {
     issues: [],
-    warnings: []
+    warnings: [],
   };
 
   // 1. Vérifier les fichiers serveur
@@ -228,7 +258,9 @@ async function systemDiagnostic(): Promise<void> {
   if (fs.existsSync('logs')) {
     logger.success('✅ Logs directory exists');
   } else {
-    diagnostic.warnings.push('⚠️  Logs directory missing - will be created automatically');
+    diagnostic.warnings.push(
+      '⚠️  Logs directory missing - will be created automatically'
+    );
   }
 
   // 4. Vérifier les ports (async pour éviter les blocages)
@@ -260,7 +292,9 @@ async function systemDiagnostic(): Promise<void> {
 
       await portCheck;
     } catch (error: any) {
-      diagnostic.issues.push(`❌ Could not check port ${port}: ${error.message}`);
+      diagnostic.issues.push(
+        `❌ Could not check port ${port}: ${error.message}`
+      );
     }
   }
 
@@ -269,7 +303,7 @@ async function systemDiagnostic(): Promise<void> {
   const frontendFiles = [
     'frontend/public/index.html',
     'frontend/public/backtest.html',
-    'frontend/public/config.html'
+    'frontend/public/config.html',
   ];
 
   for (const file of frontendFiles) {
@@ -283,7 +317,9 @@ async function systemDiagnostic(): Promise<void> {
   // 6. Vérifier Python et les agents HyperLiquid
   logger.info('🐍 Checking Python AI agents...');
   try {
-    const pythonVersion = execSync('python --version 2>&1', { encoding: 'utf8' }).trim();
+    const pythonVersion = execSync('python --version 2>&1', {
+      encoding: 'utf8',
+    }).trim();
     logger.success(`✅ Python: ${pythonVersion}`);
 
     // Vérifier les agents HyperLiquid
@@ -291,7 +327,7 @@ async function systemDiagnostic(): Promise<void> {
       'src/algorithms/hyperliquid_agent.py',
       'src/algorithms/hyperliquid_mainnet_agent.py',
       'src/algorithms/risk_agent.py',
-      'src/algorithms/funding_agent.py'
+      'src/algorithms/funding_agent.py',
     ];
 
     let agentsFound = 0;
@@ -304,7 +340,9 @@ async function systemDiagnostic(): Promise<void> {
       }
     }
 
-    logger.info(`🤖 ${agentsFound}/${hyperliquidAgents.length} AI agents found`);
+    logger.info(
+      `🤖 ${agentsFound}/${hyperliquidAgents.length} AI agents found`
+    );
   } catch (error) {
     diagnostic.warnings.push('⚠️  Python not found - AI agents unavailable');
   }
@@ -316,16 +354,18 @@ async function systemDiagnostic(): Promise<void> {
 
   if (diagnostic.issues.length === 0 && diagnostic.warnings.length === 0) {
     colorPrint('green', '🎉 HYPERLIQUID SYSTEM: ALL CHECKS PASSED');
-    console.log(`✅ Ready to trade on ${HYPERLIQUID_CONFIG.symbols.length} symbols`);
+    console.log(
+      `✅ Ready to trade on ${HYPERLIQUID_CONFIG.symbols.length} symbols`
+    );
   } else {
     if (diagnostic.issues.length > 0) {
       colorPrint('red', '🚨 CRITICAL ISSUES:');
-      diagnostic.issues.forEach(issue => console.log(`  ${issue}`));
+      diagnostic.issues.forEach((issue) => console.log(`  ${issue}`));
     }
 
     if (diagnostic.warnings.length > 0) {
       colorPrint('yellow', '⚠️  WARNINGS:');
-      diagnostic.warnings.forEach(warning => console.log(`  ${warning}`));
+      diagnostic.warnings.forEach((warning) => console.log(`  ${warning}`));
     }
   }
   console.log('='.repeat(70) + '\n');
@@ -352,9 +392,10 @@ async function cleanupPorts(): Promise<void> {
     try {
       // Tenter avec netstat (Windows/Linux compatible)
       try {
-        const cmd = process.platform === 'win32'
-          ? `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object OwningProcess"`
-          : `netstat -tlnp | grep :${port}`;
+        const cmd =
+          process.platform === 'win32'
+            ? `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object OwningProcess"`
+            : `netstat -tlnp | grep :${port}`;
 
         const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
 
@@ -367,10 +408,15 @@ async function cleanupPorts(): Promise<void> {
                 const pid = parseInt(match[0]);
                 if (pid > 0) {
                   try {
-                    execSync(`powershell "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`, { stdio: 'ignore' });
+                    execSync(
+                      `powershell "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`,
+                      { stdio: 'ignore' }
+                    );
                     logger.success(`Killed process ${pid} on port ${port}`);
                   } catch (killError: any) {
-                    logger.warn(`Could not kill process ${pid}: ${killError.message}`);
+                    logger.warn(
+                      `Could not kill process ${pid}: ${killError.message}`
+                    );
                   }
                 }
               }
@@ -388,7 +434,9 @@ async function cleanupPorts(): Promise<void> {
                   execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
                   logger.success(`Killed process ${pid} on port ${port}`);
                 } catch (killError: any) {
-                  logger.warn(`Could not kill process ${pid}: ${killError.message}`);
+                  logger.warn(
+                    `Could not kill process ${pid}: ${killError.message}`
+                  );
                 }
               }
             }
@@ -403,11 +451,13 @@ async function cleanupPorts(): Promise<void> {
     }
   }
 
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 }
 
 // Démarrer un serveur
-function startServer(serverConfig: ServerConfig & { type: string }): Promise<ChildProcess | undefined> {
+function startServer(
+  serverConfig: ServerConfig & { type: string }
+): Promise<ChildProcess | undefined> {
   return new Promise((resolve, reject) => {
     const logPrefix = `[${serverConfig.type.toUpperCase()}]`;
     logger.info(`${logPrefix} Starting ${serverConfig.file}...`);
@@ -428,7 +478,7 @@ function startServer(serverConfig: ServerConfig & { type: string }): Promise<Chi
       stdio: verbose ? 'inherit' : ['pipe', 'pipe', 'pipe'],
       detached: false,
       env: { ...process.env, NODE_ENV: 'development' },
-      shell: process.platform === 'win32' // Utiliser shell sur Windows
+      shell: process.platform === 'win32', // Utiliser shell sur Windows
     });
 
     // Gérer stdout
@@ -449,7 +499,13 @@ function startServer(serverConfig: ServerConfig & { type: string }): Promise<Chi
       proc.stderr.on('data', (data: Buffer) => {
         const output = data.toString().trim();
         if (output) {
-          if (verbose || debug || output.includes('Error') || output.includes('error') || output.includes('Error:')) {
+          if (
+            verbose ||
+            debug ||
+            output.includes('Error') ||
+            output.includes('error') ||
+            output.includes('Error:')
+          ) {
             console.log(`${logPrefix} ERROR: ${output}`);
           }
           logger.error(`${logPrefix} ${output}`);
@@ -474,7 +530,9 @@ function startServer(serverConfig: ServerConfig & { type: string }): Promise<Chi
     // Timeout plus long pour donner le temps au serveur de démarrer
     setTimeout(() => {
       if (!proc.killed) {
-        logger.success(`${logPrefix} Process started successfully (PID: ${proc.pid})`);
+        logger.success(
+          `${logPrefix} Process started successfully (PID: ${proc.pid})`
+        );
         resolve(proc);
       }
     }, 5000);
@@ -488,10 +546,10 @@ function showWelcome(): void {
   console.log('='.repeat(80));
 
   console.log(`\n${colors.cyan}🎯 TRADING FOCUS: ${colors.reset}`);
-  colorPrint('green', `  ✓ HyperLiquid Perpetuals Trading`);
+  colorPrint('green', '  ✓ HyperLiquid Perpetuals Trading');
   console.log(`  • ${HYPERLIQUID_CONFIG.symbols.length} supported symbols`);
   console.log(`  • Up to ${HYPERLIQUID_CONFIG.maxLeverage}x leverage`);
-  console.log(`  • AI-powered trading agents`);
+  console.log('  • AI-powered trading agents');
 
   console.log(`\n${colors.cyan}🌐 ARCHITECTURE:${colors.reset}`);
   colorPrint(
@@ -522,10 +580,10 @@ function showWelcome(): void {
   );
 
   console.log(`\n${colors.cyan}🤖 AI AGENTS:${colors.reset}`);
-  console.log(`  • Risk Agent - Position management`);
-  console.log(`  • Funding Agent - Rate arbitrage`);
-  console.log(`  • Strategy Agent - Technical signals`);
-  console.log(`  • HyperLiquid Agent - Trading execution`);
+  console.log('  • Risk Agent - Position management');
+  console.log('  • Funding Agent - Rate arbitrage');
+  console.log('  • Strategy Agent - Technical signals');
+  console.log('  • HyperLiquid Agent - Trading execution');
 
   console.log(`\n${colors.cyan}🔧 OPTIONS:${colors.reset}`);
   console.log(`  • ${colors.yellow}--verbose${colors.reset} - Detailed logs`);
@@ -547,7 +605,7 @@ async function main(): Promise<void> {
     if (action === 'restart') {
       logger.info('🔄 Restarting HyperLiquid Trading System...');
       await cleanupPorts();
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     // Vérifier l'architecture
@@ -576,7 +634,7 @@ async function main(): Promise<void> {
         config: ARCHITECTURE.backend,
         process: backendProcess,
       });
-      logger.success(`✅ HyperLiquid Backend started successfully`);
+      logger.success('✅ HyperLiquid Backend started successfully');
     } catch (error) {
       logger.error(`❌ Failed to start ${ARCHITECTURE.backend.file}`);
       throw error;
@@ -584,7 +642,7 @@ async function main(): Promise<void> {
 
     // Attendre que le backend démarre
     logger.info('Waiting for backend to start...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Vérifier que le backend est bien démarré
     try {
@@ -593,20 +651,22 @@ async function main(): Promise<void> {
         port: ARCHITECTURE.backend.port,
         path: '/api/health',
         method: 'GET',
-        timeout: 2000
+        timeout: 2000,
       };
 
       const healthCheck = (): Promise<void> => {
         return new Promise((checkResolve, checkReject) => {
           const req = httpRequest(options, (res) => {
             let data = '';
-            res.on('data', chunk => data += chunk);
+            res.on('data', (chunk) => (data += chunk));
             res.on('end', () => {
               if (res.statusCode === 200) {
                 logger.success('✅ Backend health check passed');
                 checkResolve(undefined);
               } else {
-                checkReject(new Error(`Backend returned status ${res.statusCode}`));
+                checkReject(
+                  new Error(`Backend returned status ${res.statusCode}`)
+                );
               }
             });
           });
@@ -629,15 +689,19 @@ async function main(): Promise<void> {
           backendHealthy = true;
           break;
         } catch (error: any) {
-          logger.warn(`Backend health check attempt ${i + 1}/5 failed: ${error.message}`);
+          logger.warn(
+            `Backend health check attempt ${i + 1}/5 failed: ${error.message}`
+          );
           if (i < 4) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
         }
       }
 
       if (!backendHealthy) {
-        logger.warn('Backend health check failed, but continuing with frontend startup...');
+        logger.warn(
+          'Backend health check failed, but continuing with frontend startup...'
+        );
       }
     } catch (error: any) {
       logger.warn(`Could not verify backend health: ${error.message}`);
@@ -653,7 +717,7 @@ async function main(): Promise<void> {
         config: ARCHITECTURE.frontend,
         process: frontendProcess,
       });
-      logger.success(`✅ Trading Dashboard started successfully`);
+      logger.success('✅ Trading Dashboard started successfully');
     } catch (error) {
       logger.error(`❌ Failed to start ${ARCHITECTURE.frontend.file}`);
       throw error;
@@ -666,7 +730,10 @@ async function main(): Promise<void> {
 
     colorPrint('green', '\n✅ ALL SERVICES RUNNING:');
     for (const server of servers) {
-      colorPrint('cyan', `  • ${server.config.name} (PID: ${server.process?.pid || 'unknown'})`);
+      colorPrint(
+        'cyan',
+        `  • ${server.config.name} (PID: ${server.process?.pid || 'unknown'})`
+      );
     }
 
     colorPrint('green', '\n🌐 TRADING INTERFACE:');
@@ -687,13 +754,15 @@ async function main(): Promise<void> {
     console.log(`  • Exchange: ${HYPERLIQUID_CONFIG.exchange}`);
     console.log(`  • Symbols:  ${HYPERLIQUID_CONFIG.symbols.join(', ')}`);
     console.log(`  • Leverage: Up to ${HYPERLIQUID_CONFIG.maxLeverage}x`);
-    console.log(`  • WebSocket: ws://localhost:7001`);
+    console.log('  • WebSocket: ws://localhost:7001');
 
     console.log(`\n${colors.yellow}💡 TRADING TIPS:${colors.reset}`);
     console.log(`  • ${colors.red}Ctrl+C${colors.reset} to stop all services`);
-    console.log(`  • ${colors.yellow}--verbose${colors.reset} for detailed trading logs`);
-    console.log(`  • Configure API keys in .env file`);
-    console.log(`  • Start with paper trading mode`);
+    console.log(
+      `  • ${colors.yellow}--verbose${colors.reset} for detailed trading logs`
+    );
+    console.log('  • Configure API keys in .env file');
+    console.log('  • Start with paper trading mode');
 
     console.log('\n' + '='.repeat(80) + '\n');
 
@@ -705,18 +774,22 @@ async function main(): Promise<void> {
       for (const server of servers) {
         if (server.process && !server.process.killed) {
           try {
-            logger.info(`Stopping ${server.config.name} (PID: ${server.process.pid})...`);
+            logger.info(
+              `Stopping ${server.config.name} (PID: ${server.process.pid})...`
+            );
 
             // Tenter d'arrêter gracieusement
             if (process.platform === 'win32') {
               // Sur Windows, utiliser taskkill
-              execSync(`taskkill /PID ${server.process.pid} /F`, { stdio: 'ignore' });
+              execSync(`taskkill /PID ${server.process.pid} /F`, {
+                stdio: 'ignore',
+              });
             } else {
               // Sur Unix-like, envoyer SIGTERM puis SIGKILL si nécessaire
               server.process.kill('SIGTERM');
 
               // Attendre un peu
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await new Promise((resolve) => setTimeout(resolve, 2000));
 
               if (!server.process.killed) {
                 server.process.kill('SIGKILL');
@@ -725,7 +798,9 @@ async function main(): Promise<void> {
 
             logger.success(`✅ Stopped ${server.config.name}`);
           } catch (error: any) {
-            logger.warn(`Error stopping ${server.config.name}: ${error.message}`);
+            logger.warn(
+              `Error stopping ${server.config.name}: ${error.message}`
+            );
           }
         }
       }
@@ -751,7 +826,9 @@ async function main(): Promise<void> {
             server.process.kill('SIGTERM');
             logger.success(`✅ Stopped ${server.config.file}`);
           } catch (error: any) {
-            logger.warn(`Error stopping ${server.config.file}: ${error.message}`);
+            logger.warn(
+              `Error stopping ${server.config.file}: ${error.message}`
+            );
           }
         }
       }

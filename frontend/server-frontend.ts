@@ -18,6 +18,26 @@ interface Logger {
   error: LogFunction;
 }
 
+/**
+ * ⚠️  CRITICAL: PORT CONFIGURATION - DO NOT MODIFY UNDER ANY CIRCUMSTANCES
+ *
+ * The NOVAQUOTE Frontend Server is configured to run on a SPECIFIC port
+ * that CANNOT be changed without breaking the system architecture:
+ *
+ * - Frontend UI:  MUST be on port 9001
+ * - Proxies to:   MUST forward to http://localhost:7000 (backend API)
+ *
+ * Changing this port will cause:
+ * 1. Complete disconnect from backend services
+ * 2. API proxy failures
+ * 3. Frontend not accessible via intended URL
+ *
+ * **NEVER MODIFY THE PORT BELOW UNDER ANY CIRCUMSTANCES**
+ *
+ * This is enforced by run.ts launcher which expects:
+ * - Frontend: http://localhost:9001
+ * - Backend:  http://localhost:7000
+ */
 const app: Express = express();
 const PORT: number = 9001;
 
@@ -138,7 +158,7 @@ app.listen(PORT, '127.0.0.1', (): void => {
 ║     • http://localhost:${PORT}/config.html        (Configuration)             ║
 ║                                                                              ║
 ║  🔗 Backend API: http://localhost:7000                                     ║
-║  🌊 WebSocket: ws://localhost:7000                                          ║
+║  🌊 WebSocket: ws://localhost:7001                                          ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
   `);

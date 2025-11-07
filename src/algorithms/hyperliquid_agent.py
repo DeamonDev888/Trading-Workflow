@@ -5,16 +5,18 @@ Connection directe à l'API HyperLiquid pour trading live
 """
 
 import asyncio
-import websockets
-import json
-import hmac
 import hashlib
-import time
-import requests
-from typing import Dict, List, Optional, Any
+import hmac
+import json
 import logging
+import time
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Dict, List, Optional
+
+import requests
+import websockets
+
 
 @dataclass
 class Position:
@@ -26,6 +28,7 @@ class Position:
     pnl: Decimal
     leverage: int
 
+
 @dataclass
 class OrderResult:
     success: bool
@@ -34,9 +37,16 @@ class OrderResult:
     executed_price: Optional[Decimal] = None
     executed_size: Optional[Decimal] = None
 
+
 class HyperLiquidAgent:
-    def __init__(self, api_key: str, secret_key: str, base_url: str = "https://api.hyperliquid.xyz/info",
-                 ws_url: str = "wss://api.hyperliquid.xyz/ws", testnet: bool = False):
+    def __init__(
+        self,
+        api_key: str,
+        secret_key: str,
+        base_url: str = "https://api.hyperliquid.xyz/info",
+        ws_url: str = "wss://api.hyperliquid.xyz/ws",
+        testnet: bool = False,
+    ):
         self.api_key = api_key
         self.secret_key = secret_key
         self.base_url = base_url
@@ -48,16 +58,14 @@ class HyperLiquidAgent:
             self.ws_url = "wss://api.hyperliquid-testnet.xyz/ws"
 
         self.positions: Dict[str, Position] = {}
-        self.balance = Decimal('0')
+        self.balance = Decimal("0")
         self.logger = logging.getLogger("HyperLiquidAgent")
 
     def _sign_payload(self, payload: Dict) -> str:
         """Signer la payload avec la clé secrète"""
         message = json.dumps(payload)
         return hmac.new(
-            self.secret_key.encode(),
-            message.encode(),
-            hashlib.sha256
+            self.secret_key.encode(), message.encode(), hashlib.sha256
         ).hexdigest()
 
     async def get_meta(self) -> Dict:
@@ -84,10 +92,7 @@ class HyperLiquidAgent:
     async def get_spot_user_state(self, user_address: str) -> Dict:
         """Récupérer l'état du compte spot"""
         try:
-            payload = {
-                "type": "spotUserState",
-                "user": user_address
-            }
+            payload = {"type": "spotUserState", "user": user_address}
             response = requests.post(f"{self.base_url}/info", json=payload)
             return response.json()
         except Exception as e:
@@ -101,9 +106,7 @@ class HyperLiquidAgent:
                 # Souscription aux données de prix
                 subscribe_msg = {
                     "method": "subscribe",
-                    "subscription": {
-                        "type": "allTrades"
-                    }
+                    "subscription": {"type": "allTrades"},
                 }
                 await websocket.send(json.dumps(subscribe_msg))
 
@@ -132,9 +135,16 @@ class HyperLiquidAgent:
 
         self.logger.info(f"Trade {symbol}: {side} {size} @ {price}")
 
-    async def place_order(self, symbol: str, side: str, order_type: str,
-                         size: Decimal, price: Optional[Decimal] = None,
-                         reduce_only: bool = False, leverage: int = 5) -> OrderResult:
+    async def place_order(
+        self,
+        symbol: str,
+        side: str,
+        order_type: str,
+        size: Decimal,
+        price: Optional[Decimal] = None,
+        reduce_only: bool = False,
+        leverage: int = 5,
+    ) -> OrderResult:
         """Placer un ordre sur HyperLiquid"""
         try:
             timestamp = int(time.time() * 1000)
@@ -145,25 +155,22 @@ class HyperLiquidAgent:
                 "orderType": order_type,
                 "sz": str(size),
                 "reduceOnly": reduce_only,
-                "leverage": leverage
+                "leverage": leverage,
             }
 
             if price:
                 order_payload["limitPx"] = str(price)
 
             payload = {
-                "action": {
-                    "type": "order",
-                    "orders": [order_payload]
-                },
+                "action": {"type": "order", "orders": [order_payload]},
                 "nonce": timestamp,
-                "signature": self._sign_payload(order_payload)
+                "signature": self._sign_payload(order_payload),
             }
 
             response = requests.post(
                 f"{self.base_url.replace('/info', '/exchange')}",
                 json=payload,
-                headers={"Authorization": f"Bearer {self.api_key}"}
+                headers={"Authorization": f"Bearer {self.api_key}"},
             )
 
             if response.status_code == 200:
@@ -171,17 +178,18 @@ class HyperLiquidAgent:
                 if result.get("status") == "ok":
                     return OrderResult(
                         success=True,
-                        order_id=result.get("response", {}).get("statuses", [{}])[0].get("resting", {}).get("oid")
+                        order_id=result.get("response", {})
+                        .get("statuses", [{}])[0]
+                        .get("resting", {})
+                        .get("oid"),
                     )
                 else:
                     return OrderResult(
-                        success=False,
-                        error=result.get("response", "Erreur inconnue")
+                        success=False, error=result.get("response", "Erreur inconnue")
                     )
             else:
                 return OrderResult(
-                    success=False,
-                    error=f"HTTP {response.status_code}: {response.text}"
+                    success=False, error=f"HTTP {response.status_code}: {response.text}"
                 )
 
         except Exception as e:
@@ -193,24 +201,18 @@ class HyperLiquidAgent:
         try:
             timestamp = int(time.time() * 1000)
 
-            cancel_payload = {
-                "asset": symbol,
-                "oid": order_id
-            }
+            cancel_payload = {"asset": symbol, "oid": order_id}
 
             payload = {
-                "action": {
-                    "type": "cancel",
-                    "cancels": [cancel_payload]
-                },
+                "action": {"type": "cancel", "cancels": [cancel_payload]},
                 "nonce": timestamp,
-                "signature": self._sign_payload(cancel_payload)
+                "signature": self._sign_payload(cancel_payload),
             }
 
             response = requests.post(
                 f"{self.base_url.replace('/info', '/exchange')}",
                 json=payload,
-                headers={"Authorization": f"Bearer {self.api_key}"}
+                headers={"Authorization": f"Bearer {self.api_key}"},
             )
 
             return response.status_code == 200 and response.json().get("status") == "ok"
@@ -222,10 +224,7 @@ class HyperLiquidAgent:
     async def get_positions(self, user_address: str) -> List[Position]:
         """Récupérer les positions ouvertes"""
         try:
-            payload = {
-                "type": "clearinghouseState",
-                "user": user_address
-            }
+            payload = {"type": "clearinghouseState", "user": user_address}
             response = requests.post(f"{self.base_url}/info", json=payload)
 
             if response.status_code == 200:
@@ -237,15 +236,23 @@ class HyperLiquidAgent:
                         symbol = asset_data.get("coin", "")
                         position = asset_data.get("position", {})
 
-                        positions.append(Position(
-                            symbol=symbol,
-                            side="long" if Decimal(position.get("szi", "0")) > 0 else "short",
-                            size=abs(Decimal(position.get("szi", "0"))),
-                            entry_price=Decimal(position.get("entryPx", "0")),
-                            mark_price=Decimal(position.get("markPx", "0")),
-                            pnl=Decimal(position.get("unrealizedPnl", "0")),
-                            leverage=int(position.get("leverage", {}).get("value", 1))
-                        ))
+                        positions.append(
+                            Position(
+                                symbol=symbol,
+                                side=(
+                                    "long"
+                                    if Decimal(position.get("szi", "0")) > 0
+                                    else "short"
+                                ),
+                                size=abs(Decimal(position.get("szi", "0"))),
+                                entry_price=Decimal(position.get("entryPx", "0")),
+                                mark_price=Decimal(position.get("markPx", "0")),
+                                pnl=Decimal(position.get("unrealizedPnl", "0")),
+                                leverage=int(
+                                    position.get("leverage", {}).get("value", 1)
+                                ),
+                            )
+                        )
 
                 return positions
             return []
@@ -266,7 +273,7 @@ class HyperLiquidAgent:
                 side="sell" if position.side == "long" else "buy",
                 order_type="market",
                 size=position.size,
-                reduce_only=True
+                reduce_only=True,
             )
             results.append(result)
 
@@ -293,9 +300,30 @@ class HyperLiquidAgent:
     def get_supported_symbols(self) -> List[str]:
         """Liste des symboles supportés par HyperLiquid"""
         return [
-            "BTC", "ETH", "SOL", "ARB", "APT", "ADA", "AVAX", "BNB",
-            "DOGE", "MATIC", "DOT", "LINK", "UNI", "AAVE", "SUSHI", "CRV",
-            "LDO", "INJ", "ATOM", "OP", "DYDX", "SUI", "STX", "LTC"
+            "BTC",
+            "ETH",
+            "SOL",
+            "ARB",
+            "APT",
+            "ADA",
+            "AVAX",
+            "BNB",
+            "DOGE",
+            "MATIC",
+            "DOT",
+            "LINK",
+            "UNI",
+            "AAVE",
+            "SUSHI",
+            "CRV",
+            "LDO",
+            "INJ",
+            "ATOM",
+            "OP",
+            "DYDX",
+            "SUI",
+            "STX",
+            "LTC",
         ]
 
     async def get_market_stats(self, symbol: str) -> Dict:
@@ -303,7 +331,7 @@ class HyperLiquidAgent:
         try:
             # Récupérer les prix récents
             all_mids = await self.get_all_mids()
-            current_price = all_mids.get(symbol, Decimal('0'))
+            current_price = all_mids.get(symbol, Decimal("0"))
 
             # Récupérer les métadonnées
             meta = await self.get_meta()
@@ -320,19 +348,25 @@ class HyperLiquidAgent:
                 "current_price": float(current_price),
                 "volume_24h": symbol_info.get("dayNtlVlm", 0) if symbol_info else 0,
                 "funding_rate": symbol_info.get("funding", 0) if symbol_info else 0,
-                "open_interest": symbol_info.get("openInterest", 0) if symbol_info else 0,
+                "open_interest": (
+                    symbol_info.get("openInterest", 0) if symbol_info else 0
+                ),
                 "mark_price": float(current_price),
-                "timestamp": int(time.time())
+                "timestamp": int(time.time()),
             }
 
         except Exception as e:
             self.logger.error(f"Erreur get_market_stats: {e}")
             return {}
 
+
 # Instance globale pour l'agent
 _agent_instance = None
 
-def get_hyperliquid_agent(api_key: str = None, secret_key: str = None, testnet: bool = False) -> HyperLiquidAgent:
+
+def get_hyperliquid_agent(
+    api_key: str = None, secret_key: str = None, testnet: bool = False
+) -> HyperLiquidAgent:
     """Récupérer ou créer l'instance de l'agent HyperLiquid"""
     global _agent_instance
 
@@ -341,9 +375,11 @@ def get_hyperliquid_agent(api_key: str = None, secret_key: str = None, testnet: 
 
     return _agent_instance
 
+
 if __name__ == "__main__":
-    import sys
     import os
+    import sys
+
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -352,7 +388,7 @@ if __name__ == "__main__":
         agent = HyperLiquidAgent(
             api_key=os.getenv("HYPERLIQUID_API_KEY", ""),
             secret_key=os.getenv("HYPERLIQUID_SECRET_KEY", ""),
-            testnet=True
+            testnet=True,
         )
 
         # Parser les arguments de ligne de commande
@@ -388,10 +424,22 @@ if __name__ == "__main__":
                         "active_signals": 1,
                         "signal_accuracy": 0.78,
                         "recent_trades": [
-                            {"symbol": "BTC", "side": "buy", "size": 0.1, "price": 43250, "pnl": 25.50},
-                            {"symbol": "ETH", "side": "buy", "size": 2.0, "price": 2250, "pnl": 50.00}
+                            {
+                                "symbol": "BTC",
+                                "side": "buy",
+                                "size": 0.1,
+                                "price": 43250,
+                                "pnl": 25.50,
+                            },
+                            {
+                                "symbol": "ETH",
+                                "side": "buy",
+                                "size": 2.0,
+                                "price": 2250,
+                                "pnl": 50.00,
+                            },
                         ],
-                        "alerts": []
+                        "alerts": [],
                     }
                     print(json.dumps(dashboard_data))
                 except Exception as e:
@@ -406,19 +454,23 @@ if __name__ == "__main__":
 
                     for symbol in ["BTC", "ETH", "SOL", "BNB", "AVAX"]:
                         price = float(prices.get(symbol, 0)) if prices else 0
-                        tokens.append({
-                            "symbol": symbol,
-                            "name": symbol,
-                            "price": price,
-                            "change_24h": 0.02 if price > 0 else 0,  # Test data
-                            "volume_24h": 100000000 if price > 0 else 0  # Test data
-                        })
+                        tokens.append(
+                            {
+                                "symbol": symbol,
+                                "name": symbol,
+                                "price": price,
+                                "change_24h": 0.02 if price > 0 else 0,  # Test data
+                                "volume_24h": (
+                                    100000000 if price > 0 else 0
+                                ),  # Test data
+                            }
+                        )
 
                     tokens_data = {
                         "tokens": tokens,
                         "total_market_cap": 2500000000000,
                         "total_volume_24h": 90000000000,
-                        "market_cap_change_24h": 0.025
+                        "market_cap_change_24h": 0.025,
                     }
                     print(json.dumps(tokens_data))
                 except Exception as e:
@@ -433,7 +485,9 @@ if __name__ == "__main__":
                 print(f"Symboles disponibles: {len(meta.get('symbols', []))}")
 
             else:
-                print("Commandes disponibles: --get-dashboard-data, --get-tokens, --test")
+                print(
+                    "Commandes disponibles: --get-dashboard-data, --get-tokens, --test"
+                )
         else:
             # Test par défaut
             await main()

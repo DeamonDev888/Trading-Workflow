@@ -4,11 +4,7 @@ Complete REST API client for Hyperliquid DEX
 Built with love by Moon Dev 🚀
 """
 
-import asyncio
-import json
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 from termcolor import cprint
@@ -20,8 +16,6 @@ from .types import (
     Order,
     Position,
     Trade,
-    get_asset_id,
-    get_symbol_from_asset_id,
 )
 
 

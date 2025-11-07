@@ -1,6 +1,6 @@
 """
-🌙 Deamon Dev's Sentiment Analysis Agent
-Built with love by Deamon Dev 🚀
+[OK] Deamon Dev's Sentiment Analysis Agent
+Built with love by Deamon Dev [ROCKET]
 
 SentimentAnalysisAgent monitors Twitter sentiment for our token list using twikit.
 It analyzes sentiment using HuggingFace models and tracks mentioned tokens.
@@ -31,7 +31,6 @@ VOICE_NAME = "nova"  # Options: alloy, echo, fable, onyx, nova, shimmer
 VOICE_SPEED = 1  # 0.25 to 4.0
 
 import asyncio
-import csv
 import os
 import pathlib
 import sys
@@ -104,7 +103,7 @@ def patched_client(*args, **kwargs):
 httpx.Client = patched_client
 
 # imports
-from twikit import BadRequest, Client, TooManyRequests
+from twikit import Client, TooManyRequests
 
 from src.agents.base_agent import BaseAgent
 
@@ -127,10 +126,156 @@ class SentimentAnalysisAgent(BaseAgent):
             )
 
         # Load the sentiment model at initialization
-        cprint("🤖 Loading sentiment model...", "cyan")
+        cprint("[AI] Loading sentiment model...", "cyan")
         self.init_sentiment_model()
 
-        cprint("🌙 Deamon Dev's Sentiment Analysis Agent initialized!", "green")
+        cprint("[OK] Deamon Dev's Sentiment Analysis Agent initialized!", "green")
+
+    def call_subagent(self, prompt: str, context_data: dict = None) -> str:
+        """
+        Appeler le sub-agent claude-sentiment-advisor via Claude Code CLI
+
+        Args:
+            prompt: Le prompt pour le sub-agent
+            context_data: Données contextuelles (sentiment scores, market data, etc.)
+
+        Returns:
+            Réponse du sub-agent
+
+        Raises:
+            RuntimeError: Si l'appel au sub-agent échoue
+        """
+        import json
+        import subprocess
+
+        full_prompt = f"""Use the claude-sentiment-advisor subagent to analyze this sentiment scenario:
+
+{prompt}
+
+Context Data:
+{json.dumps(context_data, indent=2) if context_data else 'N/A'}
+
+Please provide a detailed sentiment analysis with clear trading recommendations (BUY/SELL/HOLD/WATCH)."""
+
+        # Exécuter Claude Code avec le sub-agent
+        cmd = [
+            "claude",
+            "--dangerously-skip-permissions",
+            "--agent",
+            "claude-sentiment-advisor",
+            full_prompt,
+        ]
+
+        cprint(
+            f"[INFO] Calling sub-agent: claude-sentiment-advisor (skipping permissions)",
+            "cyan",
+        )
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minutes timeout
+            cwd=os.getcwd(),
+        )
+
+        if result.returncode != 0:
+            error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
+            cprint(error_msg, "red")
+            raise RuntimeError(error_msg)
+
+        cprint("[OK] Sub-agent response received", "green")
+        return result.stdout
+
+    def analyze_sentiment_with_subagent(
+        self, sentiment_score: float, num_tweets: int, token: str
+    ) -> dict:
+        """
+        Analyser le sentiment avec sub-agent pour génération de signaux de trading
+
+        Args:
+            sentiment_score: Score de sentiment (-1 à 1)
+            num_tweets: Nombre de tweets analysés
+            token: Token analyzed
+
+        Returns:
+            Dictionnaire avec recommandation et analyse
+
+        Raises:
+            RuntimeError: Si l'appel au sub-agent échoue
+        """
+        # Déterminer le niveau de sentiment
+        if sentiment_score <= -0.6:
+            sentiment_level = "EXTREME FEAR"
+        elif sentiment_score <= -0.4:
+            sentiment_level = "HIGH FEAR"
+        elif sentiment_score < 0.4:
+            sentiment_level = "NEUTRAL"
+        elif sentiment_score < 0.6:
+            sentiment_level = "HIGH GREED"
+        else:
+            sentiment_level = "EXTREME GREED"
+
+        # Construire le prompt
+        prompt = f"""
+Analyze sentiment for {token}:
+- Sentiment Score: {sentiment_score:.2f} (range: -1.0 to 1.0)
+- Sentiment Level: {sentiment_level}
+- Number of Tweets: {num_tweets}
+- Threshold for Alerts: ±{SENTIMENT_ANNOUNCE_THRESHOLD}
+
+Remember:
+- Extreme fear (below -0.4) often signals buy opportunities (contrarian)
+- Extreme greed (above 0.4) often signals sell opportunities (contrarian)
+- Combine sentiment with market context
+- High mention volume strengthens signals
+"""
+
+        # Préparer les données contextuelles
+        context_data = {
+            "token": token,
+            "sentiment_score": sentiment_score,
+            "sentiment_level": sentiment_level,
+            "num_tweets": num_tweets,
+            "threshold": SENTIMENT_ANNOUNCE_THRESHOLD,
+        }
+
+        cprint(f"[AI] Using Sub-Agent for sentiment signal generation...", "cyan")
+
+        # Appeler le sub-agent
+        response = self.call_subagent(prompt, context_data)
+
+        # Parse réponse du sub-agent
+        lines = response.split("\n")
+        action = "HOLD"  # Default
+        confidence = 50
+
+        for line in lines:
+            line = line.strip().upper()
+            if "ACTION:" in line:
+                if "BUY" in line:
+                    action = "BUY"
+                elif "SELL" in line:
+                    action = "SELL"
+                elif "HOLD" in line:
+                    action = "HOLD"
+                elif "WATCH" in line:
+                    action = "WATCH"
+            elif "CONFIDENCE:" in line:
+                import re
+
+                matches = re.findall(r"(\d+)", line)
+                if matches:
+                    confidence = int(matches[0])
+
+        return {
+            "action": action,
+            "confidence": confidence,
+            "sentiment_score": sentiment_score,
+            "sentiment_level": sentiment_level,
+            "analysis": response,
+            "source": "subagent",
+        }
 
     def init_sentiment_model(self):
         """Initialize the BERT model for sentiment analysis"""
@@ -141,7 +286,7 @@ class SentimentAnalysisAgent(BaseAgent):
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 "finiteautomata/bertweet-base-sentiment-analysis"
             )
-            cprint("✨ Sentiment model loaded!", "green")
+            cprint("[OK] Sentiment model loaded!", "green")
 
     def analyze_sentiment(self, texts):
         """Analyze sentiment of a batch of texts"""
@@ -179,7 +324,7 @@ class SentimentAnalysisAgent(BaseAgent):
     def _announce(self, message, is_important=False):
         """Announce a message using text-to-speech"""
         try:
-            print(f"\n🗣️ {message}")
+            print(f"\n[SPEECH] {message}")
 
             # Only use voice for important messages
             if not is_important:
@@ -210,10 +355,10 @@ class SentimentAnalysisAgent(BaseAgent):
             try:
                 speech_file.unlink()
             except Exception as e:
-                print(f"⚠️ Couldn't delete audio file: {e}")
+                print(f"[WARNING] Couldn't delete audio file: {e}")
 
         except Exception as e:
-            print(f"❌ Error in text-to-speech: {str(e)}")
+            print(f"[ERROR] Error in text-to-speech: {str(e)}")
 
     def save_sentiment_score(self, sentiment_score, num_tweets):
         """Save sentiment score to history"""
@@ -246,7 +391,7 @@ class SentimentAnalysisAgent(BaseAgent):
             history_df.to_csv(SENTIMENT_HISTORY_FILE, index=False)
 
         except Exception as e:
-            cprint(f"❌ Error saving sentiment history: {str(e)}", "red")
+            cprint(f"[ERROR] Error saving sentiment history: {str(e)}", "red")
 
     def get_sentiment_change(self):
         """Calculate sentiment change from last run"""
@@ -281,7 +426,7 @@ class SentimentAnalysisAgent(BaseAgent):
             return percent_change, time_diff
 
         except Exception as e:
-            cprint(f"❌ Error calculating sentiment change: {str(e)}", "red")
+            cprint(f"[ERROR] Error calculating sentiment change: {str(e)}", "red")
             return None, None
 
     def analyze_and_announce_sentiment(self, tweets):
@@ -350,7 +495,7 @@ class SentimentAnalysisAgent(BaseAgent):
         # If not announcing vocally, print the raw score for debugging
         if not is_important:
             cprint(
-                f"📊 Raw sentiment score: {sentiment_score:.2f} (on scale of -1 to 1)",
+                f"[STATS] Raw sentiment score: {sentiment_score:.2f} (on scale of -1 to 1)",
                 "cyan",
             )
 
@@ -359,25 +504,26 @@ class SentimentAnalysisAgent(BaseAgent):
         try:
             if not os.path.exists("cookies.json"):
                 cprint(
-                    "❌ No cookies.json found! Please run twitter_login.py first", "red"
+                    "[ERROR] No cookies.json found! Please run twitter_login.py first",
+                    "red",
                 )
                 sys.exit(1)
 
-            cprint("🌙 Deamon Dev's Sentiment Analysis Agent starting up...", "cyan")
+            cprint("[OK] Deamon Dev's Sentiment Analysis Agent starting up...", "cyan")
             client = Client()
             client.load_cookies("cookies.json")
             cprint(
-                "🚀 Deamon Dev's cookies loaded successfully! Time to fly to the moon! 🌙",
+                "[ROCKET] Deamon Dev's cookies loaded successfully! Time to fly to the moon! [OK]",
                 "green",
             )
             return client
 
         except Exception as e:
-            cprint(f"❌ Error initializing client: {str(e)}", "red")
+            cprint(f"[ERROR] Error initializing client: {str(e)}", "red")
             if os.path.exists("cookies.json"):
                 os.remove("cookies.json")
-                cprint("🗑️ Removed invalid cookies file", "yellow")
-                cprint("🔄 Please run twitter_login.py again", "yellow")
+                cprint("[TRASH] Removed invalid cookies file", "yellow")
+                cprint("[REFRESH] Please run twitter_login.py again", "yellow")
             sys.exit(1)
 
     async def get_tweets(self, query):
@@ -386,7 +532,7 @@ class SentimentAnalysisAgent(BaseAgent):
 
         try:
             cprint(
-                f"🕒 Time is {datetime.now()} - Deamon Dev getting fresh tweets for {query}! 🌟",
+                f"🕒 Time is {datetime.now()} - Deamon Dev getting fresh tweets for {query}! [STAR2]",
                 "cyan",
             )
 
@@ -405,7 +551,7 @@ class SentimentAnalysisAgent(BaseAgent):
                         word.lower() in tweet.text.lower() for word in IGNORE_LIST
                     ):
                         collected_tweets.append(tweet)
-                        cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
+                        cprint(f"[NOTE] Found tweet: {tweet.text[:100]}...", "cyan")
 
                 # Try to get more tweets if we need them
                 try:
@@ -424,10 +570,12 @@ class SentimentAnalysisAgent(BaseAgent):
                                 for word in IGNORE_LIST
                             ):
                                 collected_tweets.append(tweet)
-                                cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
+                                cprint(
+                                    f"[NOTE] Found tweet: {tweet.text[:100]}...", "cyan"
+                                )
                 except AttributeError:
                     # If pagination is not supported, just continue with what we have
-                    cprint("📊 Got initial batch of tweets", "cyan")
+                    cprint("[STATS] Got initial batch of tweets", "cyan")
                 except Exception as e:
                     cprint(f"ℹ️ Stopped pagination: {str(e)}", "yellow")
 
@@ -436,7 +584,7 @@ class SentimentAnalysisAgent(BaseAgent):
             wait_time = (rate_limit_reset - datetime.now()).total_seconds() + randint(
                 5, 10
             )
-            cprint(f"⏰ Rate limit hit, waiting {wait_time} seconds...", "yellow")
+            cprint(f"[CLOCK] Rate limit hit, waiting {wait_time} seconds...", "yellow")
             time.sleep(wait_time)
             # Try one more time after waiting
             try:
@@ -449,20 +597,20 @@ class SentimentAnalysisAgent(BaseAgent):
                             word.lower() in tweet.text.lower() for word in IGNORE_LIST
                         ):
                             collected_tweets.append(tweet)
-                            cprint(f"📝 Found tweet: {tweet.text[:100]}...", "cyan")
+                            cprint(f"[NOTE] Found tweet: {tweet.text[:100]}...", "cyan")
             except Exception as e:
-                cprint(f"❌ Second attempt failed: {str(e)}", "red")
+                cprint(f"[ERROR] Second attempt failed: {str(e)}", "red")
         except Exception as e:
-            cprint(f"❌ Error fetching tweets: {str(e)}", "red")
+            cprint(f"[ERROR] Error fetching tweets: {str(e)}", "red")
             time.sleep(randint(3, 7))
 
         if collected_tweets:
             cprint(
-                f"✨ Successfully collected {len(collected_tweets)} tweets for {query}",
+                f"[OK] Successfully collected {len(collected_tweets)} tweets for {query}",
                 "green",
             )
         else:
-            cprint(f"⚠️ No tweets found for {query}", "yellow")
+            cprint(f"[WARNING] No tweets found for {query}", "yellow")
 
         return collected_tweets
 
@@ -492,7 +640,7 @@ class SentimentAnalysisAgent(BaseAgent):
                 }
                 new_tweets_data.append(tweet_data)
             except Exception as e:
-                cprint(f"⚠️ Error processing tweet: {str(e)}", "yellow")
+                cprint(f"[WARNING] Error processing tweet: {str(e)}", "yellow")
                 continue
 
         if not new_tweets_data:
@@ -517,17 +665,19 @@ class SentimentAnalysisAgent(BaseAgent):
                 # Save new file
                 new_df.to_csv(filename, index=False)
 
-            cprint(f"📝 Added {len(new_df)} new tweets to {token}_tweets.csv", "green")
+            cprint(
+                f"[NOTE] Added {len(new_df)} new tweets to {token}_tweets.csv", "green"
+            )
             if os.path.exists(filename):
                 total_tweets = len(pd.read_csv(filename))
-                cprint(f"📊 Total tweets in database: {total_tweets}", "green")
+                cprint(f"[STATS] Total tweets in database: {total_tweets}", "green")
 
         except Exception as e:
-            cprint(f"❌ Error saving to CSV: {str(e)}", "red")
+            cprint(f"[ERROR] Error saving to CSV: {str(e)}", "red")
 
     async def run_async(self):
         """Async function to run sentiment analysis"""
-        cprint("🤖 Deamon Dev's Sentiment Analysis running...", "cyan")
+        cprint("[AI] Deamon Dev's Sentiment Analysis running...", "cyan")
 
         # Initialize client if not already done
         if not self.client:
@@ -536,24 +686,24 @@ class SentimentAnalysisAgent(BaseAgent):
         all_tweets = []
         for token in TOKENS_TO_TRACK:
             try:
-                cprint(f"🔍 Analyzing sentiment for {token}...", "cyan")
+                cprint(f"[SEARCH] Analyzing sentiment for {token}...", "cyan")
                 tweets = await self.get_tweets(token)
                 if tweets:
                     self.save_tweets(tweets, token)
                     all_tweets.extend(tweets)
-                    cprint(f"✅ Saved {len(tweets)} tweets for {token}", "green")
+                    cprint(f"[OK] Saved {len(tweets)} tweets for {token}", "green")
                 else:
-                    cprint(f"⚠️ No tweets found for {token}", "yellow")
+                    cprint(f"[WARNING] No tweets found for {token}", "yellow")
 
             except Exception as e:
-                cprint(f"❌ Error processing {token}: {str(e)}", "red")
+                cprint(f"[ERROR] Error processing {token}: {str(e)}", "red")
                 continue
 
         # Analyze sentiment for all collected tweets
         if all_tweets:
             self.analyze_and_announce_sentiment(all_tweets)
 
-        cprint("🌙 Deamon Dev's Sentiment Analysis complete! 🚀", "green")
+        cprint("[OK] Deamon Dev's Sentiment Analysis complete! [ROCKET]", "green")
 
     def run(self):
         """Main function to run sentiment analysis"""
@@ -564,7 +714,7 @@ if __name__ == "__main__":
     try:
         agent = SentimentAnalysisAgent()
         cprint(
-            f"\n🌙 Deamon Dev's Sentiment Analysis Agent starting (checking every {CHECK_INTERVAL_MINUTES} minutes)...",
+            f"\n[OK] Deamon Dev's Sentiment Analysis Agent starting (checking every {CHECK_INTERVAL_MINUTES} minutes)...",
             "cyan",
         )
 
@@ -580,7 +730,7 @@ if __name__ == "__main__":
             except KeyboardInterrupt:
                 raise
             except Exception as e:
-                cprint(f"\n❌ Error in run loop: {str(e)}", "red")
+                cprint(f"\n[ERROR] Error in run loop: {str(e)}", "red")
                 time.sleep(60)  # Wait a minute before retrying
 
     except KeyboardInterrupt:
@@ -589,5 +739,5 @@ if __name__ == "__main__":
             "yellow",
         )
     except Exception as e:
-        cprint(f"\n❌ Fatal error: {str(e)}", "red")
+        cprint(f"\n[ERROR] Fatal error: {str(e)}", "red")
         sys.exit(1)

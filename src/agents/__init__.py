@@ -1,11 +1,11 @@
 """
-🌙 Deamon Dev's AI Agents Module
-Built with love by Deamon Dev 🚀
+[OK] Deamon Dev's AI Agents Module
+Built with love by Deamon Dev [ROCKET]
 
 This module contains ONLY scripts that make LLM API calls.
 These are the 4 true AI agents in the system.
 
-🚨 IMPORTANT: This module contains ONLY agents with LLM API calls
+[ALERT] IMPORTANT: This module contains ONLY agents with LLM API calls
 🔹 risk_agent.py - Risk management with Claude/DeepSeek
 🔹 funding_agent.py - Funding monitoring with Claude/DeepSeek
 🔹 strategy_agent.py - Strategy generation with Claude

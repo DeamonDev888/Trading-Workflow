@@ -41,14 +41,17 @@ export class CircuitBreaker {
       resetTimeout: 60000,
       monitoringPeriod: 10000,
       expectedRecoveryTime: 30000,
-      ...config
+      ...config,
     };
   }
 
   /**
    * 🔄 Exécuter une opération avec protection du circuit breaker
    */
-  async execute<T>(operation: () => Promise<T>, operationName: string = 'unknown'): Promise<T> {
+  async execute<T>(
+    operation: () => Promise<T>,
+    operationName: string = 'unknown'
+  ): Promise<T> {
     this.totalRequests++;
 
     // Vérifier si le circuit est ouvert
@@ -61,7 +64,9 @@ export class CircuitBreaker {
       } else {
         // Passer en HALF_OPEN pour tester si le service a récupéré
         this.state = 'HALF_OPEN';
-        console.log(`[CircuitBreaker] 🔄 HALF_OPEN - Testing recovery for ${operationName}`);
+        console.log(
+          `[CircuitBreaker] 🔄 HALF_OPEN - Testing recovery for ${operationName}`
+        );
       }
     }
 
@@ -85,7 +90,9 @@ export class CircuitBreaker {
     // Réinitialiser le circuit si en HALF_OPEN
     if (this.state === 'HALF_OPEN') {
       this.reset();
-      console.log('[CircuitBreaker] ✅ Circuit reset to CLOSED - Service recovered');
+      console.log(
+        '[CircuitBreaker] ✅ Circuit reset to CLOSED - Service recovered'
+      );
     } else if (this.state === 'CLOSED') {
       // Nettoyer les vieilles failures en mode CLOSED
       this.cleanupOldFailures();
@@ -100,7 +107,10 @@ export class CircuitBreaker {
     this.lastFailureTime = new Date();
     this.failures.push(Date.now());
 
-    if (this.state === 'CLOSED' && this.failureCount >= this.config.failureThreshold) {
+    if (
+      this.state === 'CLOSED' &&
+      this.failureCount >= this.config.failureThreshold
+    ) {
       this.trip();
     } else if (this.state === 'HALF_OPEN') {
       // Retourner en OPEN si échec en HALF_OPEN
@@ -114,7 +124,9 @@ export class CircuitBreaker {
   private trip(): void {
     this.state = 'OPEN';
     this.nextAttemptTime = new Date(Date.now() + this.config.resetTimeout);
-    console.error(`[CircuitBreaker] 🚨 Circuit OPENED - ${this.failureCount} failures detected`);
+    console.error(
+      `[CircuitBreaker] 🚨 Circuit OPENED - ${this.failureCount} failures detected`
+    );
   }
 
   /**
@@ -135,7 +147,9 @@ export class CircuitBreaker {
     const now = Date.now();
     const windowStart = now - this.config.monitoringPeriod;
 
-    this.failures = this.failures.filter(failureTime => failureTime > windowStart);
+    this.failures = this.failures.filter(
+      (failureTime) => failureTime > windowStart
+    );
     this.failureCount = this.failures.length;
   }
 
@@ -151,7 +165,7 @@ export class CircuitBreaker {
       lastSuccessTime: this.lastSuccessTime,
       nextAttemptTime: this.nextAttemptTime,
       totalRequests: this.totalRequests,
-      rejectionCount: this.rejectionCount
+      rejectionCount: this.rejectionCount,
     };
   }
 

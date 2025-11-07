@@ -39,6 +39,9 @@ HYPERLIQUID_SYMBOLS = [
 HYPERLIQUID_DEFAULT_LEVERAGE = 5
 HYPERLIQUID_MAX_LEVERAGE = 50
 
+# Monitored tokens for agents
+MONITORED_TOKENS = ["BTC", "ETH", "SOL", "BNB", "AVAX", "LINK", "LDO"]
+
 # Risk Management Settings 🛡️ - CONSERVATIVE SETTINGS
 CASH_PERCENTAGE = 30  # Minimum % to keep as safety buffer (0-100)
 MAX_POSITION_PERCENTAGE = 20  # Maximum % allocation per position (0-100)
@@ -192,3 +195,4 @@ EXIT_ALL_POSITIONS = False
 DO_NOT_TRADE_LIST = []
 CLOSED_POSITIONS_TXT = ""
 MINIMUM_TRADES_IN_LAST_HOUR = 2
+# Test line that is way too long and should be split by the linter to test its capabilities and make sure it works properly

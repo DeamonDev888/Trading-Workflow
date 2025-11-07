@@ -1,5 +1,5 @@
 """
-🌙 NOVAQUOTE - AGENT MASTER - COORDINATEUR CENTRAL
+[OK] NOVAQUOTE - AGENT MASTER - COORDINATEUR CENTRAL
 ================================================================================
 Le Agent Master est le cerveau coordinateur qui orchestre tous les agents
 dans un cycle circulaire de 20 minutes avec backtests intégrés.
@@ -11,28 +11,24 @@ Fonctionnalités principales :
 - Mise à jour du dashboard
 - Boucles de feedback et amélioration continue
 
-Built with love by Moon Dev 🚀
+Built with love by Moon Dev [ROCKET]
 """
 
+import asyncio
 import json
 import time
-import asyncio
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
-import traceback
+from typing import Any, Dict, List, Optional
 
-from dotenv import load_dotenv
-from termcolor import cprint, colored
-import pandas as pd
+from termcolor import cprint
 
-from src import config
 from src.agents.base_agent import BaseAgent
-from src.agents.risk_agent import RiskAgent
-from src.agents.strategy_agent import StrategyAgent
 from src.agents.funding_agent import FundingAgent
+from src.agents.risk_agent import RiskAgent
 from src.agents.sentiment_analysis_agent import SentimentAnalysisAgent
+from src.agents.strategy_agent import StrategyAgent
 from src.logger import get_logger
 
 # Configuration logging
@@ -42,6 +38,7 @@ logger = get_logger("master_agent")
 @dataclass
 class AgentResult:
     """Résultat d'un agent pour le cycle"""
+
     agent_name: str
     status: str  # SUCCESS, WARNING, ERROR, CRITICAL
     confidence: float  # 0.0 - 1.0
@@ -55,6 +52,7 @@ class AgentResult:
 @dataclass
 class CycleMetrics:
     """Métriques complètes d'un cycle"""
+
     cycle_id: str
     start_time: str
     end_time: str
@@ -69,7 +67,7 @@ class CycleMetrics:
 
 class MasterAgent:
     """
-    🤖 AGENT MASTER - COORDINATEUR CENTRAL
+    [AI] AGENT MASTER - COORDINATEUR CENTRAL
     Orchestration des 4 agents dans un cycle circulaire de 20 minutes
     """
 
@@ -86,12 +84,20 @@ class MasterAgent:
             "risk_agent": RiskAgent(),
             "strategy_agent": StrategyAgent(),
             "funding_agent": FundingAgent(),
-            "sentiment_agent": SentimentAnalysisAgent()
+            "sentiment_agent": SentimentAnalysisAgent(),
         }
 
         # Chemins des backtests
-        self.backtests_dir = Path(__file__).parent.parent / "data" / "production_backtests"
-        self.backtests_results_dir = Path(__file__).parent.parent / "data" / "rbi_v3" / "10_23_2025" / "backtests_final"
+        self.backtests_dir = (
+            Path(__file__).parent.parent / "data" / "production_backtests"
+        )
+        self.backtests_results_dir = (
+            Path(__file__).parent.parent
+            / "data"
+            / "rbi_v3"
+            / "10_23_2025"
+            / "backtests_final"
+        )
 
         # Historique des cycles
         self.cycle_history: List[CycleMetrics] = []
@@ -102,27 +108,33 @@ class MasterAgent:
             "successful_decisions": 0,
             "average_confidence": 0.0,
             "active_strategies": [],
-            "deactivated_strategies": []
+            "deactivated_strategies": [],
         }
 
         cprint(f"\n{'='*80}", "cyan")
-        cprint("🌙 NOVAQUOTE AGENT MASTER - COORDINATEUR CENTRAL", "cyan", attrs=["bold"])
+        cprint(
+            "[OK] NOVAQUOTE AGENT MASTER - COORDINATEUR CENTRAL", "cyan", attrs=["bold"]
+        )
         cprint(f"{'='*80}\n", "cyan")
 
-        cprint("✅ Agent Master initialisé avec succès", "green")
-        cprint(f"   📊 {len(self.agents)} agents configurés", "blue")
-        cprint(f"   ⏱️  Durée cycle: {self.cycle_duration_seconds//60} minutes", "blue")
-        cprint(f"   📁 Backtests directory: {self.backtests_dir}", "blue")
-        cprint(f"   📁 Results directory: {self.backtests_results_dir}", "blue")
+        cprint("[OK] Agent Master initialisé avec succès", "green")
+        cprint(f"   [STATS] {len(self.agents)} agents configurés", "blue")
+        cprint(
+            f"   [CLOCK] Durée cycle: {self.cycle_duration_seconds//60} minutes", "blue"
+        )
+        cprint(f"   [DIR] Backtests directory: {self.backtests_dir}", "blue")
+        cprint(f"   [DIR] Results directory: {self.backtests_results_dir}", "blue")
         cprint("\n")
 
     async def run_continuous_cycle(self):
         """
-        🔄 CYCLE CIRCULAIRE CONTINU
+        [REFRESH] CYCLE CIRCULAIRE CONTINU
         Exécute le cycle de 20 minutes en continu
         """
         self.is_running = True
-        cprint("🚀 Démarrage du cycle circulaire continu...", "green", attrs=["bold"])
+        cprint(
+            "[ROCKET] Démarrage du cycle circulaire continu...", "green", attrs=["bold"]
+        )
 
         try:
             while self.is_running:
@@ -132,7 +144,11 @@ class MasterAgent:
                 # Générer ID unique pour le cycle
                 self.current_cycle_id = cycle_start.strftime("%Y-%m-%d_%H:%M")
                 cprint(f"\n{'='*80}", "yellow")
-                cprint(f"🔄 CYCLE #{self.cycle_count} - {self.current_cycle_id}", "yellow", attrs=["bold"])
+                cprint(
+                    f"[REFRESH] CYCLE #{self.cycle_count} - {self.current_cycle_id}",
+                    "yellow",
+                    attrs=["bold"],
+                )
                 cprint(f"{'='*80}\n", "yellow")
 
                 # Exécuter le cycle
@@ -155,72 +171,105 @@ class MasterAgent:
                 # Affichage compte à rebours
                 if sleep_time > 0:
                     cprint(f"\n⏳ Attente du prochain cycle...", "blue")
-                    cprint(f"   ⏰ Prochain cycle dans {sleep_time/60:.1f} minutes", "blue")
-                    await asyncio.sleep(min(sleep_time, 60))  # Sleep par tranche de 60s max
+                    cprint(
+                        f"   [CLOCK] Prochain cycle dans {sleep_time/60:.1f} minutes",
+                        "blue",
+                    )
+                    await asyncio.sleep(
+                        min(sleep_time, 60)
+                    )  # Sleep par tranche de 60s max
 
         except Exception as e:
-            cprint(f"\n❌ ERREUR FATALE dans le cycle: {str(e)}", "red", attrs=["bold"])
+            cprint(
+                f"\n[ERROR] ERREUR FATALE dans le cycle: {str(e)}",
+                "red",
+                attrs=["bold"],
+            )
             logger.error(f"Erreur fatale Agent Master", exc_info=True)
             self.is_running = False
 
     async def execute_cycle(self) -> CycleMetrics:
         """
-        🎯 EXÉCUTION D'UN CYCLE COMPLET
+        [TARGET] EXÉCUTION D'UN CYCLE COMPLET
         Orchestration des 4 agents avec backtests intégrés
         """
         cycle_start = datetime.now()
-        cprint("🎯 Début d'exécution du cycle...", "cyan")
+        cprint("[TARGET] Début d'exécution du cycle...", "cyan")
 
         agents_results = []
 
         try:
             # ==================== PHASE 1: RISK AGENT (SÉCURITÉ PREMIÈRE) ====================
-            cprint("\n🛡️ [1/4] RISK AGENT - Contrôle sécurité...", "magenta", attrs=["bold"])
+            cprint(
+                "\n[SHIELD] [1/4] RISK AGENT - Contrôle sécurité...",
+                "magenta",
+                attrs=["bold"],
+            )
             risk_result = await self.execute_agent_with_backtest(
-                "risk_agent",
-                self.agents["risk_agent"],
-                self.run_risk_analysis
+                "risk_agent", self.agents["risk_agent"], self.run_risk_analysis
             )
             agents_results.append(risk_result)
 
             if risk_result.status == "CRITICAL":
-                cprint("🚨 RISK AGENT: RISQUE CRITIQUE DÉTECTÉ - ARRÊT IMMÉDIAT", "red", attrs=["bold", "blink"])
-                return await self.create_emergency_stop_metrics(cycle_start, agents_results, "RISK_AGENT_CRITICAL")
+                cprint(
+                    "[ALERT] RISK AGENT: RISQUE CRITIQUE DÉTECTÉ - ARRÊT IMMÉDIAT",
+                    "red",
+                    attrs=["bold", "blink"],
+                )
+                return await self.create_emergency_stop_metrics(
+                    cycle_start, agents_results, "RISK_AGENT_CRITICAL"
+                )
 
             # ==================== PHASE 2: STRATEGY AGENT (ANALYSE TECHNIQUE) ====================
-            cprint("\n📊 [2/4] STRATEGY AGENT - Analyse technique...", "magenta", attrs=["bold"])
+            cprint(
+                "\n[STATS] [2/4] STRATEGY AGENT - Analyse technique...",
+                "magenta",
+                attrs=["bold"],
+            )
             strategy_result = await self.execute_agent_with_backtest(
                 "strategy_agent",
                 self.agents["strategy_agent"],
-                self.run_strategy_analysis
+                self.run_strategy_analysis,
             )
             agents_results.append(strategy_result)
 
             # ==================== PHASE 3: FUNDING AGENT (ARBITRAGE) ====================
-            cprint("\n💰 [3/4] FUNDING AGENT - Analyse funding...", "magenta", attrs=["bold"])
+            cprint(
+                "\n[MONEY] [3/4] FUNDING AGENT - Analyse funding...",
+                "magenta",
+                attrs=["bold"],
+            )
             funding_result = await self.execute_agent_with_backtest(
-                "funding_agent",
-                self.agents["funding_agent"],
-                self.run_funding_analysis
+                "funding_agent", self.agents["funding_agent"], self.run_funding_analysis
             )
             agents_results.append(funding_result)
 
             # ==================== PHASE 4: SENTIMENT AGENT (ANALYSE SOCIALE) ====================
-            cprint("\n🎭 [4/4] SENTIMENT AGENT - Analyse sentiment...", "magenta", attrs=["bold"])
+            cprint(
+                "\n[MASK] [4/4] SENTIMENT AGENT - Analyse sentiment...",
+                "magenta",
+                attrs=["bold"],
+            )
             sentiment_result = await self.execute_agent_with_backtest(
                 "sentiment_agent",
                 self.agents["sentiment_agent"],
-                self.run_sentiment_analysis
+                self.run_sentiment_analysis,
             )
             agents_results.append(sentiment_result)
 
             # ==================== PHASE 5: DÉCISION UNIFIÉE ====================
-            cprint("\n🏆 [5/5] AGENT MASTER - Synthèse et décision...", "cyan", attrs=["bold"])
+            cprint(
+                "\n[WINNER] [5/5] AGENT MASTER - Synthèse et décision...",
+                "cyan",
+                attrs=["bold"],
+            )
             combined_decision = await self.make_combined_decision(agents_results)
 
             # ==================== BACKTEST VALIDATION ====================
-            cprint("\n🧪 VALIDATION BACKTESTS TEMPS RÉEL", "cyan", attrs=["bold"])
-            backtests_validation = await self.validate_with_backtests(agents_results, combined_decision)
+            cprint("\n[TEST] VALIDATION BACKTESTS TEMPS RÉEL", "cyan", attrs=["bold"])
+            backtests_validation = await self.validate_with_backtests(
+                agents_results, combined_decision
+            )
 
             # ==================== FINALISATION ====================
             cycle_end = datetime.now()
@@ -237,7 +286,9 @@ class MasterAgent:
                 decision_confidence=combined_decision["confidence"],
                 backtests_validation=backtests_validation,
                 execution_summary=combined_decision["summary"],
-                next_cycle_time=(cycle_end + timedelta(seconds=self.cycle_duration_seconds)).isoformat()
+                next_cycle_time=(
+                    cycle_end + timedelta(seconds=self.cycle_duration_seconds)
+                ).isoformat(),
             )
 
             # Mise à jour du dashboard
@@ -246,18 +297,19 @@ class MasterAgent:
             return cycle_metrics
 
         except Exception as e:
-            cprint(f"\n❌ ERREUR DURANT L'EXÉCUTION DU CYCLE: {str(e)}", "red", attrs=["bold"])
+            cprint(
+                f"\n[ERROR] ERREUR DURANT L'EXÉCUTION DU CYCLE: {str(e)}",
+                "red",
+                attrs=["bold"],
+            )
             logger.error(f"Erreur cycle {self.current_cycle_id}", exc_info=True)
             raise
 
     async def execute_agent_with_backtest(
-        self,
-        agent_name: str,
-        agent: BaseAgent,
-        agent_function: callable
+        self, agent_name: str, agent: BaseAgent, agent_function: callable
     ) -> AgentResult:
         """
-        🤖 EXÉCUTE UN AGENT AVEC BACKTEST INTÉGRÉ
+        [AI] EXÉCUTE UN AGENT AVEC BACKTEST INTÉGRÉ
         """
         start_time = time.time()
         timestamp = datetime.now().isoformat()
@@ -284,7 +336,7 @@ class MasterAgent:
                 llm_calls=llm_calls,
                 execution_time_ms=execution_time_ms,
                 timestamp=timestamp,
-                backtest_results=None
+                backtest_results=None,
             )
 
             # Affichage du statut
@@ -292,10 +344,13 @@ class MasterAgent:
                 "SUCCESS": "green",
                 "WARNING": "yellow",
                 "ERROR": "red",
-                "CRITICAL": "red"
+                "CRITICAL": "red",
             }.get(status, "white")
 
-            cprint(f"   ✅ {agent_name}: {status} (confiance: {confidence:.2%}, {llm_calls} appels LLM, {execution_time_ms:.1f}ms)", status_color)
+            cprint(
+                f"   [OK] {agent_name}: {status} (confiance: {confidence:.2%}, {llm_calls} appels LLM, {execution_time_ms:.1f}ms)",
+                status_color,
+            )
 
             return result
 
@@ -303,7 +358,7 @@ class MasterAgent:
             execution_time_ms = (time.time() - start_time) * 1000
             error_msg = f"Erreur {agent_name}: {str(e)}"
 
-            cprint(f"   ❌ {agent_name}: ERROR - {error_msg}", "red")
+            cprint(f"   [ERROR] {agent_name}: ERROR - {error_msg}", "red")
             logger.error(error_msg, exc_info=True)
 
             return AgentResult(
@@ -314,11 +369,11 @@ class MasterAgent:
                 llm_calls=0,
                 execution_time_ms=execution_time_ms,
                 timestamp=timestamp,
-                backtest_results=None
+                backtest_results=None,
             )
 
     async def run_risk_analysis(self) -> Dict[str, Any]:
-        """🛡️ Analyse du risque par le Risk Agent"""
+        """[SHIELD] Analyse du risque par le Risk Agent"""
         # Simuler l'analyse du risk agent
         await asyncio.sleep(0.1)  # Simulation
 
@@ -336,13 +391,13 @@ class MasterAgent:
             "llm_analysis": {
                 "model": "claude-3-5-haiku-latest",
                 "confidence": 0.92,
-                "recommendation": "Portfolio sécurisé, continuer avec paramètres actuels"
+                "recommendation": "Portfolio sécurisé, continuer avec paramètres actuels",
             },
-            "backtest_correlation": 0.94  # Corrélation avec backtests historiques
+            "backtest_correlation": 0.94,  # Corrélation avec backtests historiques
         }
 
     async def run_strategy_analysis(self) -> Dict[str, Any]:
-        """📊 Analyse technique par le Strategy Agent"""
+        """[STATS] Analyse technique par le Strategy Agent"""
         await asyncio.sleep(0.1)
 
         return {
@@ -354,7 +409,7 @@ class MasterAgent:
                     "signal": "BUY",
                     "confidence": 0.87,
                     "price_target": 67850,
-                    "stop_loss": 62300
+                    "stop_loss": 62300,
                 },
                 {
                     "token": "ETH",
@@ -362,25 +417,25 @@ class MasterAgent:
                     "signal": "BUY",
                     "confidence": 0.73,
                     "price_target": 3240,
-                    "stop_loss": 2890
-                }
+                    "stop_loss": 2890,
+                },
             ],
             "market_regime": "BULLISH",
             "volatility_index": 0.32,
             "llm_analysis": {
                 "model": "claude-3-sonnet-20240229",
                 "confidence": 0.89,
-                "sentiment": "Confluence positive détectée, momentum haussier confirmé"
+                "sentiment": "Confluence positive détectée, momentum haussier confirmé",
             },
             "backtest_validation": {
                 "strategies_tested": 7,
                 "success_rate": 0.82,
-                "average_return": 0.157
-            }
+                "average_return": 0.157,
+            },
         }
 
     async def run_funding_analysis(self) -> Dict[str, Any]:
-        """💰 Analyse du funding par le Funding Agent"""
+        """[MONEY] Analyse du funding par le Funding Agent"""
         await asyncio.sleep(0.1)
 
         return {
@@ -388,7 +443,7 @@ class MasterAgent:
             "funding_rates": {
                 "HyperLiquid": {"BTC": 0.0002, "ETH": 0.00015, "SOL": 0.00018},
                 "Binance": {"BTC": -0.0001, "ETH": -0.00005, "SOL": -0.00012},
-                "Bybit": {"BTC": 0.00015, "ETH": 0.0001, "SOL": 0.00014}
+                "Bybit": {"BTC": 0.00015, "ETH": 0.0001, "SOL": 0.00014},
             },
             "arbitrage_opportunities": [
                 {
@@ -396,22 +451,22 @@ class MasterAgent:
                     "exchanges": ["HyperLiquid", "Binance"],
                     "rate_diff": 0.0003,
                     "potential_profit": 0.23,
-                    "confidence": 0.78
+                    "confidence": 0.78,
                 }
             ],
             "llm_analysis": {
                 "model": "deepseek-reasoner",
                 "confidence": 0.91,
-                "recommendation": "Opportunité arbitrage favorable sur BTC/ETH détectée"
+                "recommendation": "Opportunité arbitrage favorable sur BTC/ETH détectée",
             },
             "backtest_arbitrage": {
                 "historical_success": 0.76,
-                "avg_profit_per_trade": 0.18
-            }
+                "avg_profit_per_trade": 0.18,
+            },
         }
 
     async def run_sentiment_analysis(self) -> Dict[str, Any]:
-        """🎭 Analyse du sentiment par le Sentiment Agent"""
+        """[MASK] Analyse du sentiment par le Sentiment Agent"""
         await asyncio.sleep(0.1)
 
         return {
@@ -424,23 +479,27 @@ class MasterAgent:
                 "model": "openai-gpt-4o",
                 "confidence": 0.84,
                 "overall_sentiment": "OPTIMISTE",
-                "sentiment_score": 0.65
+                "sentiment_score": 0.65,
             },
             "sentiment_correlation": {
                 "correlation_with_price": 0.73,
                 "leading_indicator": True,
-                "backtest_match": 0.81
-            }
+                "backtest_match": 0.81,
+            },
         }
 
-    async def make_combined_decision(self, agents_results: List[AgentResult]) -> Dict[str, Any]:
+    async def make_combined_decision(
+        self, agents_results: List[AgentResult]
+    ) -> Dict[str, Any]:
         """
-        🏆 PRISE DE DÉCISION UNIFIÉE
+        [WINNER] PRISE DE DÉCISION UNIFIÉE
         Combine les résultats des 4 agents pour une décision finale
         """
         # Calculer le score combiné
         total_confidence = sum(result.confidence for result in agents_results)
-        avg_confidence = total_confidence / len(agents_results) if agents_results else 0.0
+        avg_confidence = (
+            total_confidence / len(agents_results) if agents_results else 0.0
+        )
 
         # Analyser les signaux BUY/SELL
         buy_signals = 0
@@ -453,7 +512,9 @@ class MasterAgent:
                     if signal.get("signal") == "BUY":
                         buy_signals += 1
                         if signal.get("confidence", 0) > 0.8:
-                            strong_signals.append(f"{signal['token']} ({signal['strategy']})")
+                            strong_signals.append(
+                                f"{signal['token']} ({signal['strategy']})"
+                            )
                     elif signal.get("signal") == "SELL":
                         sell_signals += 1
 
@@ -479,29 +540,23 @@ class MasterAgent:
             "strong_signals": strong_signals,
             "avg_confidence": avg_confidence,
             "decision_detail": decision_detail,
-            "agents_status": {r.agent_name: r.status for r in agents_results}
+            "agents_status": {r.agent_name: r.status for r in agents_results},
         }
 
-        cprint(f"   🏆 Décision: {decision}", "green", attrs=["bold"])
-        cprint(f"   📊 Confiance: {avg_confidence:.2%}", "blue")
-        cprint(f"   📈 Signaux: {buy_signals} BUY, {sell_signals} SELL", "blue")
+        cprint(f"   [WINNER] Décision: {decision}", "green", attrs=["bold"])
+        cprint(f"   [STATS] Confiance: {avg_confidence:.2%}", "blue")
+        cprint(f"   [UP] Signaux: {buy_signals} BUY, {sell_signals} SELL", "blue")
 
-        return {
-            "decision": decision,
-            "confidence": avg_confidence,
-            "summary": summary
-        }
+        return {"decision": decision, "confidence": avg_confidence, "summary": summary}
 
     async def validate_with_backtests(
-        self,
-        agents_results: List[AgentResult],
-        combined_decision: Dict[str, Any]
+        self, agents_results: List[AgentResult], combined_decision: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        🧪 VALIDATION AVEC BACKTESTS TEMPS RÉEL
+        [TEST] VALIDATION AVEC BACKTESTS TEMPS RÉEL
         Compare la décision actuelle avec les backtests historiques
         """
-        cprint("   📊 Validation backtests...", "blue")
+        cprint("   [STATS] Validation backtests...", "blue")
 
         # Simulation de validation (à remplacer par de vraies données)
         await asyncio.sleep(0.05)
@@ -518,9 +573,13 @@ class MasterAgent:
                 "strategy": strategy_name,
                 "backtest_winrate": 0.68 + (hash(strategy_name) % 100) / 1000,  # Simulé
                 "backtest_return": 0.15 + (hash(strategy_name) % 100) / 1000,
-                "current_signal_match": True if "BUY" in combined_decision["decision"] else False,
+                "current_signal_match": (
+                    True if "BUY" in combined_decision["decision"] else False
+                ),
                 "confidence_score": 0.75 + (hash(strategy_name) % 50) / 100,
-                "validation_status": "PASS" if (hash(strategy_name) % 3) != 0 else "WARNING"
+                "validation_status": (
+                    "PASS" if (hash(strategy_name) % 3) != 0 else "WARNING"
+                ),
             }
 
             if validation_result["validation_status"] == "PASS":
@@ -530,12 +589,17 @@ class MasterAgent:
             "total_strategies_tested": len(backtest_files),
             "strategies_passed": len(active_strategies),
             "strategies_failed": len(backtest_files) - len(active_strategies),
-            "success_rate": len(active_strategies) / len(backtest_files) if backtest_files else 0.0,
+            "success_rate": (
+                len(active_strategies) / len(backtest_files) if backtest_files else 0.0
+            ),
             "active_strategies": active_strategies,
-            "validation_timestamp": datetime.now().isoformat()
+            "validation_timestamp": datetime.now().isoformat(),
         }
 
-        cprint(f"   ✅ {validation_summary['strategies_passed']}/{validation_summary['total_strategies_tested']} stratégies validées", "green")
+        cprint(
+            f"   [OK] {validation_summary['strategies_passed']}/{validation_summary['total_strategies_tested']} stratégies validées",
+            "green",
+        )
 
         return validation_summary
 
@@ -592,7 +656,9 @@ class MasterAgent:
             opportunities = data.get("arbitrage_opportunities", [])
             if not opportunities:
                 return 0.5
-            avg_confidence = sum(o.get("confidence", 0) for o in opportunities) / len(opportunities)
+            avg_confidence = sum(o.get("confidence", 0) for o in opportunities) / len(
+                opportunities
+            )
             return avg_confidence
 
         elif agent_name == "sentiment_agent":
@@ -608,10 +674,7 @@ class MasterAgent:
         return 0
 
     async def create_emergency_stop_metrics(
-        self,
-        cycle_start: datetime,
-        agents_results: List[AgentResult],
-        reason: str
+        self, cycle_start: datetime, agents_results: List[AgentResult], reason: str
     ) -> CycleMetrics:
         """Crée les métriques pour un arrêt d'urgence"""
         cycle_end = datetime.now()
@@ -627,7 +690,9 @@ class MasterAgent:
             decision_confidence=1.0,
             backtests_validation={"status": "STOPPED", "reason": reason},
             execution_summary={"reason": reason, "action": "ARRÊT_IMMEDIAT"},
-            next_cycle_time=(cycle_end + timedelta(seconds=self.cycle_duration_seconds)).isoformat()
+            next_cycle_time=(
+                cycle_end + timedelta(seconds=self.cycle_duration_seconds)
+            ).isoformat(),
         )
 
     async def save_cycle_metrics(self, cycle_metrics: CycleMetrics):
@@ -638,7 +703,7 @@ class MasterAgent:
 
         # Sauvegarder le cycle individuel
         cycle_file = cycles_dir / f"{cycle_metrics.cycle_id}.json"
-        with open(cycle_file, 'w', encoding='utf-8') as f:
+        with open(cycle_file, "w", encoding="utf-8") as f:
             json.dump(asdict(cycle_metrics), f, indent=2, ensure_ascii=False)
 
         # Sauvegarder dans l'historique
@@ -651,65 +716,77 @@ class MasterAgent:
         cprint(f"   💾 Métriques sauvegardées: {cycle_file}", "blue")
 
     def update_performance_metrics(self, cycle_metrics: CycleMetrics):
-        """📊 Met à jour les métriques de performance"""
+        """[STATS] Met à jour les métriques de performance"""
         self.performance_metrics["total_cycles"] += 1
 
         # Compter les décisions réussies (non-STOP ou WARNING)
-        if cycle_metrics.combined_decision not in ["EMERGENCY_STOP", "WAIT_FOR_BETTER_ENTRY"]:
+        if cycle_metrics.combined_decision not in [
+            "EMERGENCY_STOP",
+            "WAIT_FOR_BETTER_ENTRY",
+        ]:
             self.performance_metrics["successful_decisions"] += 1
 
         # Mettre à jour la confiance moyenne
         total_confidence = (
-            sum(r.confidence for r in cycle_metrics.agents_results) / len(cycle_metrics.agents_results)
-            if cycle_metrics.agents_results else 0
+            sum(r.confidence for r in cycle_metrics.agents_results)
+            / len(cycle_metrics.agents_results)
+            if cycle_metrics.agents_results
+            else 0
         )
 
         # Calculer la moyenne mobile
         current_avg = self.performance_metrics["average_confidence"]
         cycle_count = self.performance_metrics["total_cycles"]
         self.performance_metrics["average_confidence"] = (
-            (current_avg * (cycle_count - 1) + total_confidence) / cycle_count
-        )
+            current_avg * (cycle_count - 1) + total_confidence
+        ) / cycle_count
 
     def display_cycle_summary(self, cycle_metrics: CycleMetrics):
-        """📊 Affiche le résumé du cycle"""
+        """[STATS] Affiche le résumé du cycle"""
         cprint(f"\n{'='*80}", "cyan")
-        cprint("📊 RÉSUMÉ DU CYCLE", "cyan", attrs=["bold"])
+        cprint("[STATS] RÉSUMÉ DU CYCLE", "cyan", attrs=["bold"])
         cprint(f"{'='*80}", "cyan")
 
         # Métriques générales
-        cprint(f"🆔 Cycle ID: {cycle_metrics.cycle_id}", "white")
-        cprint(f"⏱️  Durée: {cycle_metrics.duration_ms:.1f}ms", "white")
-        cprint(f"🏆 Décision: {cycle_metrics.combined_decision}", "green", attrs=["bold"])
-        cprint(f"📊 Confiance: {cycle_metrics.decision_confidence:.2%}", "blue")
+        cprint(f"[ID] Cycle ID: {cycle_metrics.cycle_id}", "white")
+        cprint(f"[CLOCK] Durée: {cycle_metrics.duration_ms:.1f}ms", "white")
+        cprint(
+            f"[WINNER] Décision: {cycle_metrics.combined_decision}",
+            "green",
+            attrs=["bold"],
+        )
+        cprint(f"[STATS] Confiance: {cycle_metrics.decision_confidence:.2%}", "blue")
 
         # Résultats des agents
-        cprint(f"\n🤖 RÉSULTATS AGENTS:", "yellow")
+        cprint(f"\n[AI] RÉSULTATS AGENTS:", "yellow")
         for result in cycle_metrics.agents_results:
             status_color = {
                 "SUCCESS": "green",
                 "WARNING": "yellow",
                 "ERROR": "red",
-                "CRITICAL": "red"
+                "CRITICAL": "red",
             }.get(result.status, "white")
 
             cprint(
                 f"   {result.agent_name}: {result.status} "
                 f"(conf: {result.confidence:.2%}, "
                 f"{result.llm_calls} LLM, {result.execution_time_ms:.1f}ms)",
-                status_color
+                status_color,
             )
 
         # Validation backtests
         if cycle_metrics.backtests_validation:
             bv = cycle_metrics.backtests_validation
-            cprint(f"\n🧪 VALIDATION BACKTESTS:", "yellow")
-            cprint(f"   Stratégies testées: {bv.get('total_strategies_tested', 0)}", "white")
+            cprint(f"\n[TEST] VALIDATION BACKTESTS:", "yellow")
+            cprint(
+                f"   Stratégies testées: {bv.get('total_strategies_tested', 0)}",
+                "white",
+            )
             cprint(f"   Stratégies validées: {bv.get('strategies_passed', 0)}", "green")
             cprint(f"   Taux de réussite: {bv.get('success_rate', 0):.1%}", "green")
 
         # Prochain cycle
-        cprint(f"\n⏰ Prochain cycle: {cycle_metrics.next_cycle_time}", "blue")
+        cprint(f"\n[CLOCK] Prochain cycle: {cycle_metrics.next_cycle_time}", "blue")
 
         cprint(f"{'='*80}\n", "cyan")
 
@@ -723,31 +800,33 @@ class MasterAgent:
             "current_decision": {
                 "decision": cycle_metrics.combined_decision,
                 "confidence": cycle_metrics.decision_confidence,
-                "summary": cycle_metrics.execution_summary
+                "summary": cycle_metrics.execution_summary,
             },
             "agents_status": {
                 result.agent_name: {
                     "status": result.status,
                     "confidence": result.confidence,
                     "llm_calls": result.llm_calls,
-                    "last_update": result.timestamp
+                    "last_update": result.timestamp,
                 }
                 for result in cycle_metrics.agents_results
             },
             "metrics": {
                 "total_cycles": self.performance_metrics["total_cycles"],
                 "success_rate": (
-                    self.performance_metrics["successful_decisions"] /
-                    max(1, self.performance_metrics["total_cycles"])
+                    self.performance_metrics["successful_decisions"]
+                    / max(1, self.performance_metrics["total_cycles"])
                 ),
-                "average_confidence": self.performance_metrics["average_confidence"]
+                "average_confidence": self.performance_metrics["average_confidence"],
             },
-            "next_cycle": cycle_metrics.next_cycle_time
+            "next_cycle": cycle_metrics.next_cycle_time,
         }
 
         # Sauvegarder pour le backend (le backend lira ce fichier)
-        dashboard_file = Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
-        with open(dashboard_file, 'w', encoding='utf-8') as f:
+        dashboard_file = (
+            Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
+        )
+        with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(dashboard_data, f, indent=2, ensure_ascii=False)
 
         cprint(f"   📱 Dashboard mis à jour", "blue")
@@ -756,7 +835,7 @@ class MasterAgent:
         """🛑 Arrête l'Agent Master"""
         cprint("\n🛑 Arrêt de l'Agent Master...", "yellow", attrs=["bold"])
         self.is_running = False
-        cprint("✅ Agent Master arrêté", "green")
+        cprint("[OK] Agent Master arrêté", "green")
 
 
 async def main():
@@ -765,10 +844,10 @@ async def main():
     try:
         await master.run_continuous_cycle()
     except KeyboardInterrupt:
-        cprint("\n\n⚠️ Interruption clavier détectée", "yellow")
+        cprint("\n\n[WARNING] Interruption clavier détectée", "yellow")
         master.stop()
     except Exception as e:
-        cprint(f"\n❌ Erreur fatale: {str(e)}", "red", attrs=["bold"])
+        cprint(f"\n[ERROR] Erreur fatale: {str(e)}", "red", attrs=["bold"])
         logger.error("Erreur fatale main", exc_info=True)
         master.stop()
 

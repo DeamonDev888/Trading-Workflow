@@ -5,11 +5,12 @@ Agent de gestion de risque avec données réelles
 """
 
 import json
-import sys
 import math
 import random
-from datetime import datetime, timedelta
-from typing import Dict, Any
+import sys
+from datetime import datetime
+from typing import Any, Dict
+
 
 def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[str, Any]:
     """Calculer les métriques de risque réelles"""
@@ -40,7 +41,7 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
     cumulative_returns = []
     running_total = 1.0
     for r in daily_returns:
-        running_total *= (1 + r)
+        running_total *= 1 + r
         cumulative_returns.append(running_total)
 
     peak = cumulative_returns[0]
@@ -53,12 +54,21 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
 
     # Beta du portefeuille (vs marché)
     market_return = 0.008  # 0.8% daily market return
-    covariance = sum((r - sum(daily_returns)/days) * (market_return - sum(daily_returns)/days) for r in daily_returns) / days
+    covariance = (
+        sum(
+            (r - sum(daily_returns) / days)
+            * (market_return - sum(daily_returns) / days)
+            for r in daily_returns
+        )
+        / days
+    )
     market_variance = 0.0004  # Market variance
     portfolio_beta = covariance / market_variance if market_variance != 0 else 1.0
 
     # Risk score actuel (basé sur volatilité récente)
-    recent_volatility = volatility * (1 + abs(total_return))  # Augmente si performance récente mauvaise
+    recent_volatility = volatility * (
+        1 + abs(total_return)
+    )  # Augmente si performance récente mauvaise
     risk_score = min(1.0, recent_volatility / 0.05)  # Normalisé sur 5% vol
 
     return {
@@ -71,49 +81,63 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
         "market_volatility": round(volatility, 4),
         "current_drawdown": round(max_drawdown, 4),
         "var_95": round(var_95, 4),
-        "avg_leverage": round(1 + abs(portfolio_value) / 50000 * 4, 2),  # Jusqu'à 5x pour gros portefeuilles
-        "risk_level": "LOW" if risk_score < 0.3 else "MEDIUM" if risk_score < 0.7 else "HIGH",
+        "avg_leverage": round(
+            1 + abs(portfolio_value) / 50000 * 4, 2
+        ),  # Jusqu'à 5x pour gros portefeuilles
+        "risk_level": (
+            "LOW" if risk_score < 0.3 else "MEDIUM" if risk_score < 0.7 else "HIGH"
+        ),
         "portfolio_beta": round(portfolio_beta, 3),
         "current_risk_score": round(risk_score, 3),
         "alerts_count": random.randint(0, 3),
         "positions_monitored": len(positions),
         "alerts": generate_risk_alerts(risk_score, max_drawdown, volatility),
-        "error": None
+        "error": None,
     }
+
 
 def generate_risk_alerts(risk_score: float, drawdown: float, volatility: float) -> list:
     """Générer des alertes de risque réelles"""
     alerts = []
 
     if risk_score > 0.7:
-        alerts.append({
-            "level": "warning",
-            "message": f"High risk score: {risk_score:.2f} - Reduce position sizes",
-            "metric": "risk_score"
-        })
+        alerts.append(
+            {
+                "level": "warning",
+                "message": f"High risk score: {risk_score:.2f} - Reduce position sizes",
+                "metric": "risk_score",
+            }
+        )
 
     if drawdown > 0.1:
-        alerts.append({
-            "level": "critical" if drawdown > 0.2 else "warning",
-            "message": f"Maximum drawdown: {drawdown:.1%} - Consider stopping losses",
-            "metric": "drawdown"
-        })
+        alerts.append(
+            {
+                "level": "critical" if drawdown > 0.2 else "warning",
+                "message": f"Maximum drawdown: {drawdown:.1%} - Consider stopping losses",
+                "metric": "drawdown",
+            }
+        )
 
     if volatility > 0.04:
-        alerts.append({
-            "level": "info",
-            "message": f"High market volatility: {volatility:.2%} - Adjust leverage",
-            "metric": "volatility"
-        })
+        alerts.append(
+            {
+                "level": "info",
+                "message": f"High market volatility: {volatility:.2%} - Adjust leverage",
+                "metric": "volatility",
+            }
+        )
 
     if not alerts:
-        alerts.append({
-            "level": "success",
-            "message": "Risk parameters within normal range",
-            "metric": "overall"
-        })
+        alerts.append(
+            {
+                "level": "success",
+                "message": "Risk parameters within normal range",
+                "metric": "overall",
+            }
+        )
 
     return alerts
+
 
 def main():
     if len(sys.argv) < 2:
@@ -129,7 +153,7 @@ def main():
             {"symbol": "BTC", "size": 0.05, "value": portfolio_value * 0.4},
             {"symbol": "ETH", "size": 1.2, "value": portfolio_value * 0.3},
             {"symbol": "SOL", "size": 15, "value": portfolio_value * 0.2},
-            {"symbol": "BNB", "size": 2, "value": portfolio_value * 0.1}
+            {"symbol": "BNB", "size": 2, "value": portfolio_value * 0.1},
         ]
 
         risk_data = calculate_portfolio_risk(portfolio_value, positions)
@@ -137,6 +161,7 @@ def main():
         risk_data["data_source"] = "real_risk_calculator"
 
         print(json.dumps(risk_data, indent=2))
+
 
 if __name__ == "__main__":
     main()

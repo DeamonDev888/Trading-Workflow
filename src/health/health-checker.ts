@@ -57,7 +57,7 @@ export class HealthChecker {
     totalRequests: 0,
     totalResponseTime: 0,
     totalErrors: 0,
-    lastMinuteRequests: [] as number[]
+    lastMinuteRequests: [] as number[],
   };
 
   constructor(
@@ -76,7 +76,7 @@ export class HealthChecker {
       total: 0,
       passed: 0,
       failed: 0,
-      warnings: 0
+      warnings: 0,
     };
 
     // Vérifier les services internes
@@ -100,7 +100,7 @@ export class HealthChecker {
       dependencies: this.dependencies,
       metrics,
       alerts: this.alerts,
-      checks
+      checks,
     };
   }
 
@@ -114,7 +114,7 @@ export class HealthChecker {
       { name: 'API Server', check: () => this.checkApiServer() },
       { name: 'Agent Manager', check: () => this.checkAgentManager() },
       { name: 'Cache', check: () => this.checkCache() },
-      { name: 'HyperLiquid API', check: () => this.checkHyperLiquidAPI() }
+      { name: 'HyperLiquid API', check: () => this.checkHyperLiquidAPI() },
     ];
 
     this.services = [];
@@ -125,7 +125,7 @@ export class HealthChecker {
         const health = await serviceCheck.check();
         this.services.push({
           name: serviceCheck.name,
-          ...health
+          ...health,
         });
 
         if (health.status === 'healthy') {
@@ -135,14 +135,13 @@ export class HealthChecker {
         } else {
           checks.failed++;
         }
-
       } catch (error) {
         checks.failed++;
         this.services.push({
           name: serviceCheck.name,
           status: 'unhealthy',
           message: (error as Error).message,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         });
       }
     }
@@ -167,14 +166,13 @@ export class HealthChecker {
         } else {
           checks.warnings++;
         }
-
       } catch (error) {
         checks.failed++;
         this.dependencies.push({
           name: dependency,
           status: 'unavailable',
           message: (error as Error).message,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         } as DependencyHealth);
       }
     }
@@ -189,7 +187,7 @@ export class HealthChecker {
     try {
       // Simulation de check de base de données
       // Dans un vrai projet, ce serait une vraie connexion
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       return {
         status: 'healthy',
@@ -197,15 +195,15 @@ export class HealthChecker {
         lastCheck: new Date(),
         metadata: {
           connectionCount: Math.floor(Math.random() * 50) + 10,
-          queryTime: Math.random() * 5
-        }
+          queryTime: Math.random() * 5,
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         message: (error as Error).message,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -223,7 +221,7 @@ export class HealthChecker {
 
       const response = await fetch('http://localhost:7002', {
         method: 'GET',
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -237,15 +235,15 @@ export class HealthChecker {
           lastCheck: new Date(),
           metadata: {
             port: 7002,
-            protocol: 'ws'
-          }
+            protocol: 'ws',
+          },
         };
       } else {
         return {
           status: 'degraded',
           message: `WebSocket returned status ${response.status}`,
           responseTime,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         };
       }
     } catch (error) {
@@ -253,7 +251,7 @@ export class HealthChecker {
         status: 'unhealthy',
         message: `WebSocket unavailable: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -270,7 +268,7 @@ export class HealthChecker {
 
       const response = await fetch('http://localhost:7000/api/health', {
         method: 'GET',
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -284,14 +282,14 @@ export class HealthChecker {
           message: (data as any).status || 'Unknown',
           responseTime,
           lastCheck: new Date(),
-          metadata: data
+          metadata: data,
         };
       } else {
         return {
           status: 'unhealthy',
           message: `API returned status ${response.status}`,
           responseTime,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         };
       }
     } catch (error) {
@@ -299,7 +297,7 @@ export class HealthChecker {
         status: 'unhealthy',
         message: `API server unavailable: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -316,7 +314,7 @@ export class HealthChecker {
 
       const response = await fetch('http://localhost:7000/api/agents', {
         method: 'GET',
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -325,7 +323,9 @@ export class HealthChecker {
       const data = await response.json();
 
       if (response.ok && (data as any).agents) {
-        const activeAgents = (data as any).agents.filter((agent: any) => agent.status === 'active').length;
+        const activeAgents = (data as any).agents.filter(
+          (agent: any) => agent.status === 'active'
+        ).length;
 
         return {
           status: activeAgents > 0 ? 'healthy' : 'degraded',
@@ -338,16 +338,16 @@ export class HealthChecker {
             agents: (data as any).agents.map((agent: any) => ({
               id: agent.id,
               name: agent.name,
-              status: agent.status
-            }))
-          }
+              status: agent.status,
+            })),
+          },
         };
       } else {
         return {
           status: 'unhealthy',
           message: 'Agent manager responded incorrectly',
           responseTime,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         };
       }
     } catch (error) {
@@ -355,7 +355,7 @@ export class HealthChecker {
         status: 'unhealthy',
         message: `Agent manager unavailable: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -371,7 +371,7 @@ export class HealthChecker {
       const cacheSize = Math.floor(Math.random() * 1000000) + 100000;
       const hitRate = Math.random() * 0.9 + 0.1;
 
-      await new Promise(resolve => setTimeout(resolve, 5));
+      await new Promise((resolve) => setTimeout(resolve, 5));
 
       return {
         status: 'healthy',
@@ -381,15 +381,15 @@ export class HealthChecker {
         metadata: {
           size: cacheSize,
           hitRate,
-          type: 'memory'
-        }
+          type: 'memory',
+        },
       };
     } catch (error) {
       return {
         status: 'degraded',
         message: `Cache check failed: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -404,10 +404,13 @@ export class HealthChecker {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch('http://localhost:7000/api/hyperliquid/price/BTC', {
-        method: 'GET',
-        signal: controller.signal
-      });
+      const response = await fetch(
+        'http://localhost:7000/api/hyperliquid/price/BTC',
+        {
+          method: 'GET',
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeoutId);
 
@@ -424,15 +427,15 @@ export class HealthChecker {
             exchange: 'HyperLiquid',
             price: data.data?.price,
             symbol: 'BTC',
-            responseTime: data.data?.responseTime
-          }
+            responseTime: data.data?.responseTime,
+          },
         };
       } else {
         return {
           status: 'degraded',
           message: `HyperLiquid API returned status ${response.status}`,
           responseTime,
-          lastCheck: new Date()
+          lastCheck: new Date(),
         };
       }
     } catch (error) {
@@ -440,7 +443,7 @@ export class HealthChecker {
         status: 'unhealthy',
         message: `HyperLiquid API unavailable: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -448,7 +451,9 @@ export class HealthChecker {
   /**
    * 🔌 Vérifier une dépendance externe générique
    */
-  private async checkExternalDependency(name: string): Promise<Omit<DependencyHealth, 'name'>> {
+  private async checkExternalDependency(
+    name: string
+  ): Promise<Omit<DependencyHealth, 'name'>> {
     const startTime = Date.now();
 
     try {
@@ -456,20 +461,22 @@ export class HealthChecker {
       const success = Math.random() > 0.1; // 90% de succès
       const responseTime = Math.random() * 1000 + 50;
 
-      await new Promise(resolve => setTimeout(resolve, responseTime));
+      await new Promise((resolve) => setTimeout(resolve, responseTime));
 
       return {
         status: success ? 'available' : 'degraded',
-        message: success ? 'Service responding normally' : 'Service responding slowly',
+        message: success
+          ? 'Service responding normally'
+          : 'Service responding slowly',
         responseTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     } catch (error) {
       return {
         status: 'unavailable',
         message: `Dependency unreachable: ${(error as Error).message}`,
         responseTime: Date.now() - startTime,
-        lastCheck: new Date()
+        lastCheck: new Date(),
       };
     }
   }
@@ -484,14 +491,19 @@ export class HealthChecker {
 
     // Calculer les métriques de performance
     const now = Date.now();
-    this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(time => now - time < 60000);
-    this.metrics.requestsPerSecond = this.metrics.lastMinuteRequests.length / 60;
-    this.metrics.averageResponseTime = this.metrics.totalRequests > 0
-      ? this.metrics.totalResponseTime / this.metrics.totalRequests
-      : 0;
-    this.metrics.errorRate = this.metrics.totalRequests > 0
-      ? this.metrics.totalErrors / this.metrics.totalRequests
-      : 0;
+    this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(
+      (time) => now - time < 60000
+    );
+    this.metrics.requestsPerSecond =
+      this.metrics.lastMinuteRequests.length / 60;
+    this.metrics.averageResponseTime =
+      this.metrics.totalRequests > 0
+        ? this.metrics.totalResponseTime / this.metrics.totalRequests
+        : 0;
+    this.metrics.errorRate =
+      this.metrics.totalRequests > 0
+        ? this.metrics.totalErrors / this.metrics.totalRequests
+        : 0;
 
     return {
       cpuUsage,
@@ -500,25 +512,30 @@ export class HealthChecker {
       requestsPerSecond: this.metrics.requestsPerSecond,
       averageResponseTime: this.metrics.averageResponseTime,
       errorRate: this.metrics.errorRate,
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 
   /**
    * 🎯 Calculer le statut global
    */
-  private calculateOverallStatus(checks: any, metrics: HealthMetrics): 'healthy' | 'degraded' | 'unhealthy' {
+  private calculateOverallStatus(
+    checks: any,
+    metrics: HealthMetrics
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     // Si des checks critiques ont échoué
     if (checks.failed > 0) {
       return 'unhealthy';
     }
 
     // Si des warnings ou métriques dégradées
-    if (checks.warnings > 0 ||
-        metrics.cpuUsage > 80 ||
-        metrics.memoryUsage > 80 ||
-        metrics.errorRate > 0.1 ||
-        metrics.averageResponseTime > 1000) {
+    if (
+      checks.warnings > 0 ||
+      metrics.cpuUsage > 80 ||
+      metrics.memoryUsage > 80 ||
+      metrics.errorRate > 0.1 ||
+      metrics.averageResponseTime > 1000
+    ) {
       return 'degraded';
     }
 
@@ -539,7 +556,9 @@ export class HealthChecker {
 
     // Nettoyer les vieilles requêtes
     const now = Date.now();
-    this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(time => now - time < 60000);
+    this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(
+      (time) => now - time < 60000
+    );
   }
 
   /**
@@ -562,7 +581,7 @@ export class HealthChecker {
     const health = await this.runHealthChecks();
     return {
       status: health.status,
-      timestamp: health.timestamp
+      timestamp: health.timestamp,
     };
   }
 }

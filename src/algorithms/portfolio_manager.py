@@ -5,13 +5,13 @@ Mode Simulation vs Mode Mainnet (MetaMask)
 """
 
 import json
-import sys
-import requests
 import random
-import hashlib
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-from decimal import Decimal
+import sys
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+import requests
+
 
 class PortfolioManager:
     def __init__(self, mode: str = "simulation", wallet_address: Optional[str] = None):
@@ -60,26 +60,21 @@ class PortfolioManager:
                 if response.status_code == 200:
                     data = response.json()
                     coin = symbol.replace("USDT", "")
-                    prices[coin] = float(data['price'])
+                    prices[coin] = float(data["price"])
 
             return prices
         except Exception:
             # Fallback prices if API fails
-            return {
-                'BTC': 103500.0,
-                'ETH': 3400.0,
-                'SOL': 160.0,
-                'BNB': 950.0
-            }
+            return {"BTC": 103500.0, "ETH": 3400.0, "SOL": 160.0, "BNB": 950.0}
 
     def get_simulation_portfolio(self, prices: Dict[str, float]) -> Dict[str, Any]:
         """Generate realistic simulation portfolio"""
         # Simulate a realistic trading portfolio
         base_allocation = {
-            'BTC': {'percentage': 0.40, 'leverage': 2},
-            'ETH': {'percentage': 0.30, 'leverage': 1.5},
-            'SOL': {'percentage': 0.20, 'leverage': 3},
-            'BNB': {'percentage': 0.10, 'leverage': 1}
+            "BTC": {"percentage": 0.40, "leverage": 2},
+            "ETH": {"percentage": 0.30, "leverage": 1.5},
+            "SOL": {"percentage": 0.20, "leverage": 3},
+            "BNB": {"percentage": 0.10, "leverage": 1},
         }
 
         total_portfolio_value = random.uniform(10000, 50000)
@@ -88,51 +83,55 @@ class PortfolioManager:
         total_pnl = 0
 
         for symbol, alloc in base_allocation.items():
-            position_value = total_portfolio_value * alloc['percentage']
-            position_size = position_value / prices[symbol] * alloc['leverage']
+            position_value = total_portfolio_value * alloc["percentage"]
+            position_size = position_value / prices[symbol] * alloc["leverage"]
 
             # Simulate realistic P&L based on recent market movements
             pnl_pct = random.gauss(0.02, 0.05)  # 2% avg return, 5% std
             pnl = position_value * pnl_pct
 
-            positions.append({
-                'symbol': symbol,
-                'side': 'long',
-                'size': round(position_size, 6),
-                'entry_price': round(prices[symbol] * (1 - pnl_pct), 2),
-                'current_price': round(prices[symbol], 2),
-                'pnl': round(pnl, 2),
-                'pnl_percentage': round(pnl_pct * 100, 2),
-                'leverage': alloc['leverage'],
-                'value': round(position_value, 2)
-            })
+            positions.append(
+                {
+                    "symbol": symbol,
+                    "side": "long",
+                    "size": round(position_size, 6),
+                    "entry_price": round(prices[symbol] * (1 - pnl_pct), 2),
+                    "current_price": round(prices[symbol], 2),
+                    "pnl": round(pnl, 2),
+                    "pnl_percentage": round(pnl_pct * 100, 2),
+                    "leverage": alloc["leverage"],
+                    "value": round(position_value, 2),
+                }
+            )
 
             total_value += position_value
             total_pnl += pnl
 
         return {
-            'mode': 'simulation',
-            'total_balance': round(total_value, 2),
-            'available_balance': round(total_value * 0.3, 2),
-            'margin_used': round(total_value * 0.7, 2),
-            'unrealized_pnl': round(total_pnl, 2),
-            'daily_pnl': round(total_pnl * 0.1, 2),
-            'positions_count': len(positions),
-            'positions': positions,
-            'leverage_used': round(sum(p['leverage'] for p in positions) / len(positions), 2),
-            'risk_score': round(min(1.0, abs(total_pnl) / total_value * 2), 3),
-            'connected': True,
-            'last_update': datetime.now().isoformat()
+            "mode": "simulation",
+            "total_balance": round(total_value, 2),
+            "available_balance": round(total_value * 0.3, 2),
+            "margin_used": round(total_value * 0.7, 2),
+            "unrealized_pnl": round(total_pnl, 2),
+            "daily_pnl": round(total_pnl * 0.1, 2),
+            "positions_count": len(positions),
+            "positions": positions,
+            "leverage_used": round(
+                sum(p["leverage"] for p in positions) / len(positions), 2
+            ),
+            "risk_score": round(min(1.0, abs(total_pnl) / total_value * 2), 3),
+            "connected": True,
+            "last_update": datetime.now().isoformat(),
         }
 
     def get_mainnet_portfolio(self, prices: Dict[str, float]) -> Dict[str, Any]:
         """Get real MetaMask portfolio from HyperLiquid"""
         if not self.connected or not self.wallet_address:
             return {
-                'mode': 'mainnet',
-                'connected': False,
-                'error': 'Wallet not connected',
-                'wallet_address': self.wallet_address
+                "mode": "mainnet",
+                "connected": False,
+                "error": "Wallet not connected",
+                "wallet_address": self.wallet_address,
             }
 
         try:
@@ -151,63 +150,85 @@ class PortfolioManager:
                 total_pnl = 0
                 margin_used = 0
 
-                for pos in data.get('assetPositions', []):
-                    if pos['position']['size'] != 0:
-                        symbol = pos['position']['coin']
+                for pos in data.get("assetPositions", []):
+                    if pos["position"]["size"] != 0:
+                        symbol = pos["position"]["coin"]
                         if symbol in prices:
-                            size = float(pos['position']['size'])
-                            entry_price = float(pos['position']['entryPx'])
+                            size = float(pos["position"]["size"])
+                            entry_price = float(pos["position"]["entryPx"])
                             current_price = prices[symbol]
 
                             pnl = size * (current_price - entry_price)
                             total_pnl += pnl
-                            margin_used += abs(size * current_price * 0.1)  # 10% margin requirement
+                            margin_used += abs(
+                                size * current_price * 0.1
+                            )  # 10% margin requirement
 
-                            positions.append({
-                                'symbol': symbol,
-                                'side': 'long' if size > 0 else 'short',
-                                'size': abs(size),
-                                'entry_price': entry_price,
-                                'current_price': current_price,
-                                'pnl': round(pnl, 2),
-                                'pnl_percentage': round((current_price - entry_price) / entry_price * 100, 2),
-                                'leverage': abs(size * current_price) / (abs(size * current_price) * 0.1),
-                                'value': round(abs(size * current_price), 2)
-                            })
+                            positions.append(
+                                {
+                                    "symbol": symbol,
+                                    "side": "long" if size > 0 else "short",
+                                    "size": abs(size),
+                                    "entry_price": entry_price,
+                                    "current_price": current_price,
+                                    "pnl": round(pnl, 2),
+                                    "pnl_percentage": round(
+                                        (current_price - entry_price)
+                                        / entry_price
+                                        * 100,
+                                        2,
+                                    ),
+                                    "leverage": abs(size * current_price)
+                                    / (abs(size * current_price) * 0.1),
+                                    "value": round(abs(size * current_price), 2),
+                                }
+                            )
 
                 # Get wallet balance
-                total_balance = float(data.get('crossMarginSummary', {}).get('accountValue', 0))
+                total_balance = float(
+                    data.get("crossMarginSummary", {}).get("accountValue", 0)
+                )
                 available_balance = total_balance - margin_used
 
                 return {
-                    'mode': 'mainnet',
-                    'connected': True,
-                    'wallet_address': self.wallet_address,
-                    'total_balance': round(total_balance, 2),
-                    'available_balance': round(available_balance, 2),
-                    'margin_used': round(margin_used, 2),
-                    'unrealized_pnl': round(total_pnl, 2),
-                    'daily_pnl': round(total_pnl * 0.05, 2),  # Estimate 5% of total P&L is daily
-                    'positions_count': len(positions),
-                    'positions': positions,
-                    'leverage_used': round(sum(p['leverage'] for p in positions) / len(positions), 2) if positions else 1,
-                    'risk_score': round(min(1.0, abs(total_pnl) / total_balance * 2), 3) if total_balance > 0 else 0,
-                    'last_update': datetime.now().isoformat()
+                    "mode": "mainnet",
+                    "connected": True,
+                    "wallet_address": self.wallet_address,
+                    "total_balance": round(total_balance, 2),
+                    "available_balance": round(available_balance, 2),
+                    "margin_used": round(margin_used, 2),
+                    "unrealized_pnl": round(total_pnl, 2),
+                    "daily_pnl": round(
+                        total_pnl * 0.05, 2
+                    ),  # Estimate 5% of total P&L is daily
+                    "positions_count": len(positions),
+                    "positions": positions,
+                    "leverage_used": (
+                        round(sum(p["leverage"] for p in positions) / len(positions), 2)
+                        if positions
+                        else 1
+                    ),
+                    "risk_score": (
+                        round(min(1.0, abs(total_pnl) / total_balance * 2), 3)
+                        if total_balance > 0
+                        else 0
+                    ),
+                    "last_update": datetime.now().isoformat(),
                 }
             else:
                 return {
-                    'mode': 'mainnet',
-                    'connected': False,
-                    'error': 'Failed to fetch portfolio data',
-                    'wallet_address': self.wallet_address
+                    "mode": "mainnet",
+                    "connected": False,
+                    "error": "Failed to fetch portfolio data",
+                    "wallet_address": self.wallet_address,
                 }
 
         except Exception as e:
             return {
-                'mode': 'mainnet',
-                'connected': False,
-                'error': str(e),
-                'wallet_address': self.wallet_address
+                "mode": "mainnet",
+                "connected": False,
+                "error": str(e),
+                "wallet_address": self.wallet_address,
             }
 
     def get_portfolio_data(self) -> Dict[str, Any]:
@@ -219,7 +240,9 @@ class PortfolioManager:
         else:
             return self.get_mainnet_portfolio(prices)
 
-    def switch_mode(self, new_mode: str, wallet_address: Optional[str] = None) -> Dict[str, Any]:
+    def switch_mode(
+        self, new_mode: str, wallet_address: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Switch between simulation and mainnet modes"""
         old_mode = self.mode
         self.mode = new_mode
@@ -232,12 +255,13 @@ class PortfolioManager:
             self.connected = True
 
         return {
-            'switched': True,
-            'old_mode': old_mode,
-            'new_mode': new_mode,
-            'connected': self.connected,
-            'wallet_address': self.wallet_address
+            "switched": True,
+            "old_mode": old_mode,
+            "new_mode": new_mode,
+            "connected": self.connected,
+            "wallet_address": self.wallet_address,
         }
+
 
 def main():
     if len(sys.argv) < 2:
@@ -265,7 +289,7 @@ def main():
 
     if command == "--get-portfolio":
         portfolio_data = manager.get_portfolio_data()
-        portfolio_data['data_source'] = f"portfolio_manager_{mode}"
+        portfolio_data["data_source"] = f"portfolio_manager_{mode}"
         print(json.dumps(portfolio_data, indent=2))
 
     elif command == "--switch-mode":
@@ -276,12 +300,18 @@ def main():
         print(json.dumps(result, indent=2))
 
     elif command == "--get-status":
-        print(json.dumps({
-            'mode': manager.mode,
-            'connected': manager.connected,
-            'wallet_address': manager.wallet_address,
-            'last_check': datetime.now().isoformat()
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "mode": manager.mode,
+                    "connected": manager.connected,
+                    "wallet_address": manager.wallet_address,
+                    "last_check": datetime.now().isoformat(),
+                },
+                indent=2,
+            )
+        )
+
 
 if __name__ == "__main__":
     main()

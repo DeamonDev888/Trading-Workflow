@@ -91,7 +91,7 @@ export class StructuredLogger {
           timestamp,
           level,
           message,
-          ...meta
+          ...meta,
         };
 
         // Ajouter le contexte global
@@ -123,7 +123,8 @@ export class StructuredLogger {
       // Console pour développement
       new winston.transports.Console({
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-        format: process.env.NODE_ENV === 'production' ? logFormat : consoleFormat
+        format:
+          process.env.NODE_ENV === 'production' ? logFormat : consoleFormat,
       }),
 
       // Fichiers de logs avec rotation quotidienne
@@ -133,7 +134,7 @@ export class StructuredLogger {
         maxSize: '50m',
         maxFiles: '30d',
         level: 'info',
-        format: logFormat
+        format: logFormat,
       }),
 
       // Fichier d'erreurs séparé
@@ -143,7 +144,7 @@ export class StructuredLogger {
         maxSize: '20m',
         maxFiles: '30d',
         level: 'error',
-        format: logFormat
+        format: logFormat,
       }),
 
       // Fichier de logs de trading
@@ -157,7 +158,7 @@ export class StructuredLogger {
         // Filtrer uniquement les logs de trading
         filter: (info) => {
           return info.business?.symbol || info.component === 'trading';
-        }
+        },
       }),
 
       // Fichier de logs de sécurité
@@ -170,7 +171,7 @@ export class StructuredLogger {
         format: logFormat,
         filter: (info) => {
           return info.security || info.component === 'security';
-        }
+        },
       }),
 
       // Fichier de logs de performance
@@ -183,8 +184,8 @@ export class StructuredLogger {
         format: logFormat,
         filter: (info) => {
           return info.performance || info.component === 'performance';
-        }
-      })
+        },
+      }),
     ];
 
     // Ajouter le transport pour les logs d'audit en production
@@ -198,8 +199,11 @@ export class StructuredLogger {
           level: 'info',
           format: logFormat,
           filter: (info) => {
-            return info.audit || ['trading', 'auth', 'admin'].includes(info.component || '');
-          }
+            return (
+              info.audit ||
+              ['trading', 'auth', 'admin'].includes(info.component || '')
+            );
+          },
         })
       );
     }
@@ -215,8 +219,8 @@ export class StructuredLogger {
           datePattern: 'YYYY-MM-DD',
           maxSize: '20m',
           maxFiles: '30d',
-          format: logFormat
-        })
+          format: logFormat,
+        }),
       ],
       // Gérer les rejets de promesses non capturés
       rejectionHandlers: [
@@ -225,9 +229,9 @@ export class StructuredLogger {
           datePattern: 'YYYY-MM-DD',
           maxSize: '20m',
           maxFiles: '30d',
-          format: logFormat
-        })
-      ]
+          format: logFormat,
+        }),
+      ],
     });
   }
 
@@ -270,7 +274,7 @@ export class StructuredLogger {
         name: error.name,
         message: error.message,
         stack: error.stack,
-        code: (error as any).code
+        code: (error as any).code,
       };
     }
 
@@ -280,7 +284,11 @@ export class StructuredLogger {
   /**
    * 📊 Logger les métriques de performance
    */
-  performance(operation: string, duration: number, context?: Partial<LogContext>): void {
+  performance(
+    operation: string,
+    duration: number,
+    context?: Partial<LogContext>
+  ): void {
     const memUsage = process.memoryUsage();
 
     this.log('info', `Performance: ${operation}`, {
@@ -289,22 +297,25 @@ export class StructuredLogger {
       performance: {
         duration,
         memoryUsage: memUsage.heapUsed,
-        cpuUsage: process.cpuUsage().user
-      }
+        cpuUsage: process.cpuUsage().user,
+      },
     });
   }
 
   /**
    * 💰 Logger les activités de trading
    */
-  trading(action: string, context: Partial<LogContext> & {
-    symbol?: string;
-    side?: string;
-    size?: number;
-    price?: number;
-    orderId?: string;
-    tradeId?: string;
-  }): void {
+  trading(
+    action: string,
+    context: Partial<LogContext> & {
+      symbol?: string;
+      side?: string;
+      size?: number;
+      price?: number;
+      orderId?: string;
+      tradeId?: string;
+    }
+  ): void {
     this.log('info', `Trading: ${action}`, {
       context,
       component: 'trading',
@@ -314,29 +325,32 @@ export class StructuredLogger {
         size: context.size,
         price: context.price,
         orderId: context.orderId,
-        tradeId: context.tradeId
+        tradeId: context.tradeId,
       },
-      audit: true
+      audit: true,
     });
   }
 
   /**
    * 🔐 Logger les événements de sécurité
    */
-  security(event: string, context: Partial<LogContext> & {
-    threat?: string;
-    source?: string;
-    blocked?: boolean;
-  }): void {
+  security(
+    event: string,
+    context: Partial<LogContext> & {
+      threat?: string;
+      source?: string;
+      blocked?: boolean;
+    }
+  ): void {
     this.log('warn', `Security: ${event}`, {
       context,
       component: 'security',
       security: {
         threat: context.threat,
         source: context.source,
-        blocked: context.blocked
+        blocked: context.blocked,
       },
-      audit: true
+      audit: true,
     });
   }
 
@@ -346,7 +360,7 @@ export class StructuredLogger {
   agent(agentId: string, action: string, context?: Partial<LogContext>): void {
     this.log('info', `Agent ${agentId}: ${action}`, {
       context: { ...context, agentId },
-      component: 'agent'
+      component: 'agent',
     });
   }
 
@@ -356,7 +370,7 @@ export class StructuredLogger {
   websocket(event: string, context?: Partial<LogContext>): void {
     this.log('info', `WebSocket: ${event}`, {
       context,
-      component: 'websocket'
+      component: 'websocket',
     });
   }
 
@@ -366,7 +380,7 @@ export class StructuredLogger {
   health(service: string, status: string, context?: Partial<LogContext>): void {
     this.log('info', `Health Check: ${service} - ${status}`, {
       context,
-      component: 'health'
+      component: 'health',
     });
   }
 
@@ -376,7 +390,7 @@ export class StructuredLogger {
   metric(metric: string, value: number, context?: Partial<LogContext>): void {
     this.log('debug', `Metric: ${metric} = ${value}`, {
       context,
-      component: 'metrics'
+      component: 'metrics',
     });
   }
 
@@ -400,8 +414,9 @@ export class StructuredLogger {
   static createRequestLogger() {
     return (req: Request, res: Response, next: NextFunction) => {
       const startTime = Date.now();
-      const requestId = req.headers['x-request-id'] as string ||
-                       `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const requestId =
+        (req.headers['x-request-id'] as string) ||
+        `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Créer un logger avec contexte de requête
       const logger = StructuredLogger.getInstance();
@@ -410,7 +425,7 @@ export class StructuredLogger {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         method: req.method,
-        url: req.url
+        url: req.url,
       });
 
       // Logger le début de la requête
@@ -418,7 +433,7 @@ export class StructuredLogger {
         method: req.method,
         url: req.url,
         ip: req.ip,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
       });
 
       // Intercepter la fin de la réponse
@@ -430,7 +445,7 @@ export class StructuredLogger {
           url: req.url,
           statusCode: res.statusCode,
           duration,
-          requestId
+          requestId,
         });
 
         // Logger les performances pour les requêtes lentes
@@ -438,7 +453,7 @@ export class StructuredLogger {
           logger.performance(`${req.method} ${req.url}`, duration, {
             method: req.method,
             url: req.url,
-            statusCode: res.statusCode
+            statusCode: res.statusCode,
           });
         }
 
@@ -462,7 +477,7 @@ export class StructuredLogger {
         url: req.url,
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        statusCode: res.statusCode
+        statusCode: res.statusCode,
       });
 
       next(error);
@@ -486,13 +501,13 @@ export class StructuredLogger {
           pid: process.pid,
           version: process.version,
           environment: process.env['NODE_ENV'] || 'development',
-          uptime
+          uptime,
         },
         performance: {
           duration: uptime,
           memoryUsage: memUsage.heapUsed,
-          cpuUsage: process.cpuUsage().user
-        }
+          cpuUsage: process.cpuUsage().user,
+        },
       });
     }, intervalMs);
   }

@@ -7,12 +7,14 @@ Exploite les différences de taux de funding entre les exchanges
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Tuple
-from decimal import Decimal
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import requests
+from decimal import Decimal
+from typing import Dict, List
+
 import numpy as np
+import requests
+
 
 @dataclass
 class FundingRate:
@@ -22,6 +24,7 @@ class FundingRate:
     next_funding_time: datetime
     predicted_rate: float
     annualized_rate: float
+
 
 @dataclass
 class ArbitrageOpportunity:
@@ -36,6 +39,7 @@ class ArbitrageOpportunity:
     min_amount: Decimal
     max_amount: Decimal
 
+
 @dataclass
 class FundingPosition:
     symbol: str
@@ -47,10 +51,11 @@ class FundingPosition:
     accrued_funding: Decimal
     entry_time: datetime
 
+
 class FundingAgent:
     """Agent spécialisé dans le funding rate arbitrage"""
 
-    def __init__(self, initial_capital: Decimal = Decimal('10000')):
+    def __init__(self, initial_capital: Decimal = Decimal("10000")):
         self.initial_capital = initial_capital
         self.current_capital = initial_capital
         self.logger = logging.getLogger("FundingAgent")
@@ -62,35 +67,49 @@ class FundingAgent:
                 "api_url": "https://api.hyperliquid.xyz/info",
                 "funding_interval": 1,  # heures
                 "fee_rate": 0.0002,  # 0.02% fee
-                "min_amount": 10
+                "min_amount": 10,
             },
             "binance": {
                 "name": "Binance Futures",
                 "api_url": "https://fapi.binance.com/fapi/v1",
                 "funding_interval": 8,
                 "fee_rate": 0.0004,
-                "min_amount": 5
+                "min_amount": 5,
             },
             "bybit": {
                 "name": "Bybit",
                 "api_url": "https://api.bybit.com/v5/market",
                 "funding_interval": 8,
                 "fee_rate": 0.00055,
-                "min_amount": 1
-            }
+                "min_amount": 1,
+            },
         }
 
         # Symboles supportés pour funding arbitrage
         self.funding_symbols = [
-            "BTC", "ETH", "SOL", "BNB", "AVAX", "MATIC", "DOT", "LINK",
-            "UNI", "AAVE", "SUSHI", "CRV", "LDO", "INJ", "ATOM", "OP"
+            "BTC",
+            "ETH",
+            "SOL",
+            "BNB",
+            "AVAX",
+            "MATIC",
+            "DOT",
+            "LINK",
+            "UNI",
+            "AAVE",
+            "SUSHI",
+            "CRV",
+            "LDO",
+            "INJ",
+            "ATOM",
+            "OP",
         ]
 
         # Seuils de trading
         self.min_funding_spread = 0.0001  # 0.01% spread minimum
-        self.max_position_size_pct = 0.2   # 20% max du capital par position
-        self.max_total_exposure = 0.6      # 60% max exposition totale
-        self.min_yield_threshold = 0.001   # 0.1% yield minimum annualisé
+        self.max_position_size_pct = 0.2  # 20% max du capital par position
+        self.max_total_exposure = 0.6  # 60% max exposition totale
+        self.min_yield_threshold = 0.001  # 0.1% yield minimum annualisé
 
         # Positions actives
         self.active_positions: List[FundingPosition] = []
@@ -107,14 +126,18 @@ class FundingAgent:
             try:
                 rates = await self._fetch_exchange_funding_rates(exchange_id)
                 all_rates[exchange_id] = rates
-                self.logger.info(f"📊 {exchange_config['name']}: {len(rates)} taux récupérés")
+                self.logger.info(
+                    f"📊 {exchange_config['name']}: {len(rates)} taux récupérés"
+                )
             except Exception as e:
                 self.logger.error(f"Erreur récupération taux {exchange_id}: {e}")
                 all_rates[exchange_id] = []
 
         return all_rates
 
-    async def _fetch_exchange_funding_rates(self, exchange_id: str) -> List[FundingRate]:
+    async def _fetch_exchange_funding_rates(
+        self, exchange_id: str
+    ) -> List[FundingRate]:
         """Récupérer les taux de funding d'un exchange spécifique"""
         try:
             if exchange_id == "hyperliquid":
@@ -136,17 +159,21 @@ class FundingAgent:
             # Simuler pour l'instant - à remplacer avec vraie API
             mock_rates = []
             for symbol in self.funding_symbols:
-                rate = np.random.normal(0.0001, 0.0005)  # Taux aléatoire autour de 0.01%
+                rate = np.random.normal(
+                    0.0001, 0.0005
+                )  # Taux aléatoire autour de 0.01%
                 next_funding = datetime.now() + timedelta(hours=1)
 
-                mock_rates.append(FundingRate(
-                    exchange="hyperliquid",
-                    symbol=symbol,
-                    rate=float(rate),
-                    next_funding_time=next_funding,
-                    predicted_rate=float(rate * np.random.normal(1.0, 0.1)),
-                    annualized_rate=float(rate * 24 * 365)  # Toutes les heures
-                ))
+                mock_rates.append(
+                    FundingRate(
+                        exchange="hyperliquid",
+                        symbol=symbol,
+                        rate=float(rate),
+                        next_funding_time=next_funding,
+                        predicted_rate=float(rate * np.random.normal(1.0, 0.1)),
+                        annualized_rate=float(rate * 24 * 365),  # Toutes les heures
+                    )
+                )
 
             return mock_rates
 
@@ -170,14 +197,19 @@ class FundingAgent:
                         rate = float(item.get("lastFundingRate", 0))
                         next_funding = int(item.get("nextFundingTime", 0))
 
-                        rates.append(FundingRate(
-                            exchange="binance",
-                            symbol=symbol,
-                            rate=rate,
-                            next_funding_time=datetime.fromtimestamp(next_funding / 1000),
-                            predicted_rate=rate,  # Binance ne fournit pas de prédiction
-                            annualized_rate=rate * (365 * 3)  # 8 heures = 3 fois par jour
-                        ))
+                        rates.append(
+                            FundingRate(
+                                exchange="binance",
+                                symbol=symbol,
+                                rate=rate,
+                                next_funding_time=datetime.fromtimestamp(
+                                    next_funding / 1000
+                                ),
+                                predicted_rate=rate,  # Binance ne fournit pas de prédiction
+                                annualized_rate=rate
+                                * (365 * 3),  # 8 heures = 3 fois par jour
+                            )
+                        )
 
                 return rates
 
@@ -202,14 +234,19 @@ class FundingAgent:
                             rate = float(item.get("fundingRate", 0))
                             next_funding = int(item.get("fundingRateTimestamp", 0))
 
-                            rates.append(FundingRate(
-                                exchange="bybit",
-                                symbol=symbol,
-                                rate=rate,
-                                next_funding_time=datetime.fromtimestamp(next_funding / 1000),
-                                predicted_rate=rate,
-                                annualized_rate=rate * (365 * 3)  # 8 heures = 3 fois par jour
-                            ))
+                            rates.append(
+                                FundingRate(
+                                    exchange="bybit",
+                                    symbol=symbol,
+                                    rate=rate,
+                                    next_funding_time=datetime.fromtimestamp(
+                                        next_funding / 1000
+                                    ),
+                                    predicted_rate=rate,
+                                    annualized_rate=rate
+                                    * (365 * 3),  # 8 heures = 3 fois par jour
+                                )
+                            )
 
                 return rates
 
@@ -217,7 +254,9 @@ class FundingAgent:
             self.logger.error(f"Erreur Bybit funding: {e}")
             return []
 
-    async def identify_arbitrage_opportunities(self, funding_rates: Dict[str, List[FundingRate]]) -> List[ArbitrageOpportunity]:
+    async def identify_arbitrage_opportunities(
+        self, funding_rates: Dict[str, List[FundingRate]]
+    ) -> List[ArbitrageOpportunity]:
         """Identifier les opportunités d'arbitrage de funding"""
         opportunities = []
 
@@ -248,8 +287,10 @@ class FundingAgent:
                     annualized_yield = spread * 365 * 24  # Toutes les heures
 
                     # Soustraire les fees
-                    total_fees = (self.exchanges[exchange_long]["fee_rate"] +
-                                self.exchanges[exchange_short]["fee_rate"])
+                    total_fees = (
+                        self.exchanges[exchange_long]["fee_rate"]
+                        + self.exchanges[exchange_short]["fee_rate"]
+                    )
                     net_yield = annualized_yield - (total_fees * 365 * 24)
 
                     if net_yield < self.min_yield_threshold:
@@ -261,39 +302,53 @@ class FundingAgent:
                     # Calculer les tailles de position
                     min_amount = max(
                         self.exchanges[exchange_long]["min_amount"],
-                        self.exchanges[exchange_short]["min_amount"]
+                        self.exchanges[exchange_short]["min_amount"],
                     )
-                    max_amount = self.current_capital * Decimal(str(self.max_position_size_pct))
+                    max_amount = self.current_capital * Decimal(
+                        str(self.max_position_size_pct)
+                    )
 
-                    opportunities.append(ArbitrageOpportunity(
-                        symbol=symbol,
-                        exchange_long=exchange_long,
-                        exchange_short=exchange_short,
-                        long_rate=rate_long.rate,
-                        short_rate=rate_short.rate,
-                        spread=spread,
-                        annualized_yield=net_yield,
-                        confidence=confidence,
-                        min_amount=Decimal(str(min_amount)),
-                        max_amount=max_amount
-                    ))
+                    opportunities.append(
+                        ArbitrageOpportunity(
+                            symbol=symbol,
+                            exchange_long=exchange_long,
+                            exchange_short=exchange_short,
+                            long_rate=rate_long.rate,
+                            short_rate=rate_short.rate,
+                            spread=spread,
+                            annualized_yield=net_yield,
+                            confidence=confidence,
+                            min_amount=Decimal(str(min_amount)),
+                            max_amount=max_amount,
+                        )
+                    )
 
         # Trier par rendement décroissant
         opportunities.sort(key=lambda x: x.annualized_yield, reverse=True)
         return opportunities[:10]  # Top 10 opportunités
 
-    def _calculate_confidence(self, rate_long: FundingRate, rate_short: FundingRate) -> float:
+    def _calculate_confidence(
+        self, rate_long: FundingRate, rate_short: FundingRate
+    ) -> float:
         """Calculer la confiance dans l'opportunité d'arbitrage"""
         try:
             # Facteurs de confiance
-            spread_confidence = min(1.0, (rate_short.rate - rate_long.rate) / 0.001)  # Spread vs 0.1%
+            spread_confidence = min(
+                1.0, (rate_short.rate - rate_long.rate) / 0.001
+            )  # Spread vs 0.1%
             time_confidence = 1.0  # Les deux ont des intervalles similaires
 
             # Prédiction de stabilité
-            stability_long = 1.0 - abs(rate_long.predicted_rate - rate_long.rate) / max(abs(rate_long.rate), 0.0001)
-            stability_short = 1.0 - abs(rate_short.predicted_rate - rate_short.rate) / max(abs(rate_short.rate), 0.0001)
+            stability_long = 1.0 - abs(rate_long.predicted_rate - rate_long.rate) / max(
+                abs(rate_long.rate), 0.0001
+            )
+            stability_short = 1.0 - abs(
+                rate_short.predicted_rate - rate_short.rate
+            ) / max(abs(rate_short.rate), 0.0001)
 
-            confidence = (spread_confidence + time_confidence + stability_long + stability_short) / 4
+            confidence = (
+                spread_confidence + time_confidence + stability_long + stability_short
+            ) / 4
             return max(0.0, min(1.0, confidence))
 
         except Exception as e:
@@ -308,56 +363,58 @@ class FundingAgent:
             # Calculer la taille de position optimale
             position_size = min(
                 opportunity.max_amount,
-                self.current_capital * Decimal('0.1'),  # 10% max par trade
-                opportunity.min_amount * Decimal('2')    # Au moins 2x le minimum
+                self.current_capital * Decimal("0.1"),  # 10% max par trade
+                opportunity.min_amount * Decimal("2"),  # Au moins 2x le minimum
             )
 
             # Vérifier l'exposition totale
             current_exposure = sum(pos.size for pos in self.active_positions)
-            if current_exposure + position_size > self.current_capital * Decimal(str(self.max_total_exposure)):
+            if current_exposure + position_size > self.current_capital * Decimal(
+                str(self.max_total_exposure)
+            ):
                 self.logger.warning("Exposition maximale atteinte")
                 return False
 
             # Exécuter les trades (simulation pour l'instant)
             success_long = await self._execute_position_trade(
-                opportunity.exchange_long,
-                opportunity.symbol,
-                "long",
-                position_size
+                opportunity.exchange_long, opportunity.symbol, "long", position_size
             )
 
             success_short = await self._execute_position_trade(
-                opportunity.exchange_short,
-                opportunity.symbol,
-                "short",
-                position_size
+                opportunity.exchange_short, opportunity.symbol, "short", position_size
             )
 
             if success_long and success_short:
                 # Enregistrer les positions
-                self.active_positions.append(FundingPosition(
-                    symbol=opportunity.symbol,
-                    exchange=opportunity.exchange_long,
-                    side="long",
-                    size=position_size,
-                    entry_rate=opportunity.long_rate,
-                    current_rate=opportunity.long_rate,
-                    accrued_funding=Decimal('0'),
-                    entry_time=datetime.now()
-                ))
+                self.active_positions.append(
+                    FundingPosition(
+                        symbol=opportunity.symbol,
+                        exchange=opportunity.exchange_long,
+                        side="long",
+                        size=position_size,
+                        entry_rate=opportunity.long_rate,
+                        current_rate=opportunity.long_rate,
+                        accrued_funding=Decimal("0"),
+                        entry_time=datetime.now(),
+                    )
+                )
 
-                self.active_positions.append(FundingPosition(
-                    symbol=opportunity.symbol,
-                    exchange=opportunity.exchange_short,
-                    side="short",
-                    size=position_size,
-                    entry_rate=opportunity.short_rate,
-                    current_rate=opportunity.short_rate,
-                    accrued_funding=Decimal('0'),
-                    entry_time=datetime.now()
-                ))
+                self.active_positions.append(
+                    FundingPosition(
+                        symbol=opportunity.symbol,
+                        exchange=opportunity.exchange_short,
+                        side="short",
+                        size=position_size,
+                        entry_rate=opportunity.short_rate,
+                        current_rate=opportunity.short_rate,
+                        accrued_funding=Decimal("0"),
+                        entry_time=datetime.now(),
+                    )
+                )
 
-                self.logger.info(f"✅ Arbitrage exécuté: {opportunity.symbol} - Yield: {opportunity.annualized_yield:.2%}")
+                self.logger.info(
+                    f"✅ Arbitrage exécuté: {opportunity.symbol} - Yield: {opportunity.annualized_yield:.2%}"
+                )
                 return True
             else:
                 self.logger.error("❌ Échec exécution arbitrage")
@@ -367,7 +424,9 @@ class FundingAgent:
             self.logger.error(f"Erreur exécution arbitrage: {e}")
             return False
 
-    async def _execute_position_trade(self, exchange: str, symbol: str, side: str, size: Decimal) -> bool:
+    async def _execute_position_trade(
+        self, exchange: str, symbol: str, side: str, size: Decimal
+    ) -> bool:
         """Exécuter un trade de position (simulation)"""
         try:
             # Simuler l'exécution du trade
@@ -395,21 +454,31 @@ class FundingAgent:
 
                 if current_rate:
                     # Calculer le funding accumulé
-                    time_delta = (datetime.now() - position.entry_time).total_seconds() / 3600  # heures
-                    funding_earned = position.size * Decimal(str(current_rate.rate)) * Decimal(str(time_delta))
+                    time_delta = (
+                        datetime.now() - position.entry_time
+                    ).total_seconds() / 3600  # heures
+                    funding_earned = (
+                        position.size
+                        * Decimal(str(current_rate.rate))
+                        * Decimal(str(time_delta))
+                    )
 
                     position.current_rate = current_rate.rate
                     position.accrued_funding += funding_earned
 
                     # Vérifier s'il faut fermer la position
-                    should_close = await self._should_close_position(position, current_rate)
+                    should_close = await self._should_close_position(
+                        position, current_rate
+                    )
                     if should_close:
                         await self.close_position(position)
 
         except Exception as e:
             self.logger.error(f"Erreur monitoring positions: {e}")
 
-    async def _should_close_position(self, position: FundingPosition, current_rate: FundingRate) -> bool:
+    async def _should_close_position(
+        self, position: FundingPosition, current_rate: FundingRate
+    ) -> bool:
         """Déterminer s'il faut fermer une position"""
         try:
             # Fermer si le spread s'est inversé
@@ -424,7 +493,9 @@ class FundingAgent:
                 return True
 
             # Fermer si perte maximale
-            if position.accrued_funding < -position.size * Decimal('0.01'):  # 1% max perte
+            if position.accrued_funding < -position.size * Decimal(
+                "0.01"
+            ):  # 1% max perte
                 return True
 
             return False
@@ -436,7 +507,9 @@ class FundingAgent:
     async def close_position(self, position: FundingPosition):
         """Fermer une position de funding"""
         try:
-            self.logger.info(f"🔒 Fermeture position: {position.symbol} {position.side}")
+            self.logger.info(
+                f"🔒 Fermeture position: {position.symbol} {position.side}"
+            )
 
             # Simuler la fermeture
             success = True  # await self._execute_close_trade(position)
@@ -448,7 +521,9 @@ class FundingAgent:
                 # Mettre à jour le capital
                 self.current_capital += position.accrued_funding
 
-                self.logger.info(f"✅ Position fermée - PnL funding: ${position.accrued_funding}")
+                self.logger.info(
+                    f"✅ Position fermée - PnL funding: ${position.accrued_funding}"
+                )
 
         except Exception as e:
             self.logger.error(f"Erreur fermeture position: {e}")
@@ -464,26 +539,31 @@ class FundingAgent:
             "total_accrued_funding": float(total_accrued),
             "realized_pnl": float(closed_pnl),
             "current_capital": float(self.current_capital),
-            "total_return": float((self.current_capital - self.initial_capital) / self.initial_capital),
-            "active_exposure": float(sum(pos.size for pos in self.active_positions))
+            "total_return": float(
+                (self.current_capital - self.initial_capital) / self.initial_capital
+            ),
+            "active_exposure": float(sum(pos.size for pos in self.active_positions)),
         }
+
 
 # Instance globale
 _funding_agent = None
 
-def get_funding_agent(initial_capital: Decimal = Decimal('10000')) -> FundingAgent:
+
+def get_funding_agent(initial_capital: Decimal = Decimal("10000")) -> FundingAgent:
     """Récupérer ou créer l'agent de funding"""
     global _funding_agent
     if _funding_agent is None:
         _funding_agent = FundingAgent(initial_capital)
     return _funding_agent
 
+
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     async def main():
-        agent = FundingAgent(Decimal('10000'))
+        agent = FundingAgent(Decimal("10000"))
 
         if len(sys.argv) > 1:
             command = sys.argv[1]
@@ -500,11 +580,7 @@ if __name__ == "__main__":
                         "best_yield": 0.025,  # Test data
                         "active_opportunities": 3,
                         "total_exposure": summary["active_exposure"],
-                        "current_rates": {
-                            "BTC": 0.0001,
-                            "ETH": 0.00015,
-                            "SOL": 0.0002
-                        }
+                        "current_rates": {"BTC": 0.0001, "ETH": 0.00015, "SOL": 0.0002},
                     }
                     print(json.dumps(summary_data))
                 except Exception as e:
@@ -522,7 +598,9 @@ if __name__ == "__main__":
 
                 if opportunities:
                     best = opportunities[0]
-                    print(f"Meilleure opportunité: {best.symbol} - Yield: {best.annualized_yield:.2%}")
+                    print(
+                        f"Meilleure opportunité: {best.symbol} - Yield: {best.annualized_yield:.2%}"
+                    )
 
                 await agent.monitor_funding_positions()
                 summary = agent.get_funding_summary()

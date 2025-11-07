@@ -15,17 +15,18 @@ Fonctionnalités :
 Built with love by Moon Dev 🚀
 """
 
-import json
 import asyncio
-import numpy as np
+import json
+import time
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from collections import defaultdict, deque
-import time
+from typing import Any, Dict, List, Optional
 
-from termcolor import cprint, colored
+import numpy as np
+from termcolor import cprint
+
 from src.logger import get_logger
 
 logger = get_logger("metrics_collector")
@@ -34,6 +35,7 @@ logger = get_logger("metrics_collector")
 @dataclass
 class AgentMetrics:
     """Métriques d'un agent pour un cycle"""
+
     agent_name: str
     timestamp: str
     status: str
@@ -47,6 +49,7 @@ class AgentMetrics:
 @dataclass
 class CycleAggregateMetrics:
     """Métriques agrégées d'un cycle"""
+
     cycle_id: str
     timestamp: str
     duration_ms: float
@@ -64,6 +67,7 @@ class CycleAggregateMetrics:
 @dataclass
 class DashboardMetrics:
     """Métriques pour le dashboard temps réel"""
+
     timestamp: str
     current_cycle: Optional[str]
     next_cycle: Optional[str]
@@ -105,7 +109,7 @@ class MetricsCollector:
             current_decision=None,
             performance_stats={},
             recent_cycles=[],
-            alerts=[]
+            alerts=[],
         )
 
         # Compteurs globaux
@@ -114,7 +118,7 @@ class MetricsCollector:
             "total_agents_runs": 0,
             "total_llm_calls": 0,
             "system_uptime_seconds": 0,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
 
         cprint(f"\n{'='*80}", "cyan")
@@ -126,7 +130,9 @@ class MetricsCollector:
         cprint(f"   📊 Max history: {max_history} éléments", "blue")
         cprint("\n")
 
-    async def collect_agent_metrics(self, agent_name: str, metrics: Dict[str, Any]) -> AgentMetrics:
+    async def collect_agent_metrics(
+        self, agent_name: str, metrics: Dict[str, Any]
+    ) -> AgentMetrics:
         """
         🎯 COLLECTE LES MÉTRIQUES D'UN AGENT
         """
@@ -138,7 +144,7 @@ class MetricsCollector:
             llm_metrics=metrics.get("llm_calls", 0),
             execution_time_ms=metrics.get("execution_time_ms", 0.0),
             data=metrics.get("data", {}),
-            backtest_validation=metrics.get("backtest_validation")
+            backtest_validation=metrics.get("backtest_validation"),
         )
 
         # Ajouter à l'historique
@@ -149,16 +155,21 @@ class MetricsCollector:
         self.global_stats["total_llm_calls"] += agent_metrics.llm_metrics
 
         # Logger
-        logger.info(f"Métriques agent collectées: {agent_name}", extra={
-            "agent": agent_name,
-            "status": agent_metrics.status,
-            "confidence": agent_metrics.confidence,
-            "llm_calls": agent_metrics.llm_metrics
-        })
+        logger.info(
+            f"Métriques agent collectées: {agent_name}",
+            extra={
+                "agent": agent_name,
+                "status": agent_metrics.status,
+                "confidence": agent_metrics.confidence,
+                "llm_calls": agent_metrics.llm_metrics,
+            },
+        )
 
         return agent_metrics
 
-    async def collect_cycle_metrics(self, cycle_data: Dict[str, Any]) -> CycleAggregateMetrics:
+    async def collect_cycle_metrics(
+        self, cycle_data: Dict[str, Any]
+    ) -> CycleAggregateMetrics:
         """
         🔄 COLLECTE LES MÉTRIQUES D'UN CYCLE
         """
@@ -184,11 +195,15 @@ class MetricsCollector:
             agents_status=agents_status,
             combined_decision=cycle_data.get("combined_decision", "UNKNOWN"),
             decision_confidence=cycle_data.get("decision_confidence", 0.0),
-            backtests_passed=cycle_data.get("backtests_validation", {}).get("strategies_passed", 0),
-            backtests_failed=cycle_data.get("backtests_validation", {}).get("strategies_failed", 0),
+            backtests_passed=cycle_data.get("backtests_validation", {}).get(
+                "strategies_passed", 0
+            ),
+            backtests_failed=cycle_data.get("backtests_validation", {}).get(
+                "strategies_failed", 0
+            ),
             total_llm_calls=total_llm_calls,
             total_execution_time_ms=total_execution_time,
-            performance_score=performance_score
+            performance_score=performance_score,
         )
 
         # Ajouter à l'historique
@@ -199,12 +214,15 @@ class MetricsCollector:
         self.global_stats["total_llm_calls"] += total_llm_calls
 
         # Logger
-        logger.info(f"Métriques cycle collectées: {cycle_metrics.cycle_id}", extra={
-            "cycle_id": cycle_metrics.cycle_id,
-            "decision": cycle_metrics.combined_decision,
-            "confidence": cycle_metrics.decision_confidence,
-            "performance_score": cycle_metrics.performance_score
-        })
+        logger.info(
+            f"Métriques cycle collectées: {cycle_metrics.cycle_id}",
+            extra={
+                "cycle_id": cycle_metrics.cycle_id,
+                "decision": cycle_metrics.combined_decision,
+                "confidence": cycle_metrics.decision_confidence,
+                "performance_score": cycle_metrics.performance_score,
+            },
+        )
 
         return cycle_metrics
 
@@ -218,7 +236,9 @@ class MetricsCollector:
         # 1. Statut des agents (40% du score)
         agents_results = cycle_data.get("agents_results", [])
         if agents_results:
-            success_count = sum(1 for r in agents_results if r.get("status") == "SUCCESS")
+            success_count = sum(
+                1 for r in agents_results if r.get("status") == "SUCCESS"
+            )
             agent_score = success_count / len(agents_results)
             score += agent_score * 0.4
             total_weight += 0.4
@@ -259,7 +279,9 @@ class MetricsCollector:
         now = datetime.now()
 
         # Calculer le temps de fonctionnement
-        self.global_stats["system_uptime_seconds"] = time.time() - self.global_stats["start_time"]
+        self.global_stats["system_uptime_seconds"] = (
+            time.time() - self.global_stats["start_time"]
+        )
 
         # Déterminer le statut du système
         system_status = self.determine_system_status()
@@ -273,7 +295,7 @@ class MetricsCollector:
                     "confidence": agent_metrics.confidence,
                     "llm_calls": agent_metrics.llm_metrics,
                     "last_update": agent_metrics.timestamp,
-                    "execution_time_ms": agent_metrics.execution_time_ms
+                    "execution_time_ms": agent_metrics.execution_time_ms,
                 }
 
         # Décision actuelle
@@ -283,20 +305,30 @@ class MetricsCollector:
                 "decision": cycle_data.get("combined_decision"),
                 "confidence": cycle_data.get("decision_confidence"),
                 "summary": cycle_data.get("execution_summary", {}),
-                "timestamp": cycle_data.get("end_time")
+                "timestamp": cycle_data.get("end_time"),
             }
 
         # Cycles récents
         recent_cycles = []
         for cycle_metrics in list(self.cycles_history)[-10:]:  # 10 derniers cycles
-            recent_cycles.append({
-                "cycle_id": cycle_metrics.cycle_id,
-                "timestamp": cycle_metrics.timestamp,
-                "decision": cycle_metrics.combined_decision,
-                "confidence": cycle_metrics.decision_confidence,
-                "performance_score": cycle_metrics.performance_score,
-                "status": "SUCCESS" if cycle_metrics.performance_score > 0.7 else "WARNING" if cycle_metrics.performance_score > 0.4 else "FAIL"
-            })
+            recent_cycles.append(
+                {
+                    "cycle_id": cycle_metrics.cycle_id,
+                    "timestamp": cycle_metrics.timestamp,
+                    "decision": cycle_metrics.combined_decision,
+                    "confidence": cycle_metrics.decision_confidence,
+                    "performance_score": cycle_metrics.performance_score,
+                    "status": (
+                        "SUCCESS"
+                        if cycle_metrics.performance_score > 0.7
+                        else (
+                            "WARNING"
+                            if cycle_metrics.performance_score > 0.4
+                            else "FAIL"
+                        )
+                    ),
+                }
+            )
 
         # Alertes
         alerts = self.generate_alerts()
@@ -307,14 +339,22 @@ class MetricsCollector:
         # Mettre à jour les données du dashboard
         self.dashboard_data = DashboardMetrics(
             timestamp=now.isoformat(),
-            current_cycle=cycle_data.get("cycle_id") if cycle_data else self.dashboard_data.current_cycle,
-            next_cycle=cycle_data.get("next_cycle_time") if cycle_data else self.dashboard_data.next_cycle,
+            current_cycle=(
+                cycle_data.get("cycle_id")
+                if cycle_data
+                else self.dashboard_data.current_cycle
+            ),
+            next_cycle=(
+                cycle_data.get("next_cycle_time")
+                if cycle_data
+                else self.dashboard_data.next_cycle
+            ),
             system_status=system_status,
             active_agents=active_agents,
             current_decision=current_decision,
             performance_stats=performance_stats,
             recent_cycles=recent_cycles,
-            alerts=alerts
+            alerts=alerts,
         )
 
         # Sauvegarder pour le backend
@@ -331,11 +371,14 @@ class MetricsCollector:
 
         # Analyser les 5 derniers cycles
         recent_cycles = list(self.cycles_history)[-5:]
-        avg_performance = sum(c.performance_score for c in recent_cycles) / len(recent_cycles)
+        avg_performance = sum(c.performance_score for c in recent_cycles) / len(
+            recent_cycles
+        )
 
         # Compter les erreurs récentes
         errors_count = sum(
-            1 for c in recent_cycles
+            1
+            for c in recent_cycles
             if c.combined_decision == "EMERGENCY_STOP" or c.performance_score < 0.3
         )
 
@@ -358,33 +401,41 @@ class MetricsCollector:
 
         # Alerte système critique
         if self.dashboard_data.system_status == "CRITICAL":
-            alerts.append({
-                "type": "CRITICAL",
-                "message": "Système en état critique - Vérification manuelle requise",
-                "timestamp": datetime.now().isoformat(),
-                "severity": "high"
-            })
+            alerts.append(
+                {
+                    "type": "CRITICAL",
+                    "message": "Système en état critique - Vérification manuelle requise",
+                    "timestamp": datetime.now().isoformat(),
+                    "severity": "high",
+                }
+            )
 
         # Alerte performance faible
         if self.cycles_history:
             recent_cycles = list(self.cycles_history)[-3:]
             if all(c.performance_score < 0.5 for c in recent_cycles):
-                alerts.append({
-                    "type": "PERFORMANCE",
-                    "message": "Performance faible détectée sur les 3 derniers cycles",
-                    "timestamp": datetime.now().isoformat(),
-                    "severity": "medium"
-                })
+                alerts.append(
+                    {
+                        "type": "PERFORMANCE",
+                        "message": "Performance faible détectée sur les 3 derniers cycles",
+                        "timestamp": datetime.now().isoformat(),
+                        "severity": "medium",
+                    }
+                )
 
         # Alerte trop d'appels LLM
-        avg_llm_calls = self.global_stats["total_llm_calls"] / max(1, self.global_stats["total_agents_runs"])
+        avg_llm_calls = self.global_stats["total_llm_calls"] / max(
+            1, self.global_stats["total_agents_runs"]
+        )
         if avg_llm_calls > 10:
-            alerts.append({
-                "type": "USAGE",
-                "message": f"Usage LLM élevé: {avg_llm_calls:.1f} appels en moyenne",
-                "timestamp": datetime.now().isoformat(),
-                "severity": "low"
-            })
+            alerts.append(
+                {
+                    "type": "USAGE",
+                    "message": f"Usage LLM élevé: {avg_llm_calls:.1f} appels en moyenne",
+                    "timestamp": datetime.now().isoformat(),
+                    "severity": "low",
+                }
+            )
 
         return alerts
 
@@ -397,12 +448,15 @@ class MetricsCollector:
                 "total_cycles": self.global_stats["total_cycles"],
                 "total_agents_runs": self.global_stats["total_agents_runs"],
                 "total_llm_calls": self.global_stats["total_llm_calls"],
-                "system_uptime_hours": self.global_stats["system_uptime_seconds"] / 3600,
-                "start_time": datetime.fromtimestamp(self.global_stats["start_time"]).isoformat()
+                "system_uptime_hours": self.global_stats["system_uptime_seconds"]
+                / 3600,
+                "start_time": datetime.fromtimestamp(
+                    self.global_stats["start_time"]
+                ).isoformat(),
             },
             "cycles": {},
             "agents": {},
-            "backtests": {}
+            "backtests": {},
         }
 
         # Statistiques des cycles
@@ -410,11 +464,15 @@ class MetricsCollector:
             cycles_list = list(self.cycles_history)
             stats["cycles"] = {
                 "count": len(cycles_list),
-                "avg_performance_score": sum(c.performance_score for c in cycles_list) / len(cycles_list),
-                "avg_duration_ms": sum(c.duration_ms for c in cycles_list) / len(cycles_list),
-                "avg_llm_calls": sum(c.total_llm_calls for c in cycles_list) / len(cycles_list),
-                "success_rate": sum(1 for c in cycles_list if c.performance_score > 0.6) / len(cycles_list),
-                "last_cycle": cycles_list[-1].cycle_id
+                "avg_performance_score": sum(c.performance_score for c in cycles_list)
+                / len(cycles_list),
+                "avg_duration_ms": sum(c.duration_ms for c in cycles_list)
+                / len(cycles_list),
+                "avg_llm_calls": sum(c.total_llm_calls for c in cycles_list)
+                / len(cycles_list),
+                "success_rate": sum(1 for c in cycles_list if c.performance_score > 0.6)
+                / len(cycles_list),
+                "last_cycle": cycles_list[-1].cycle_id,
             }
 
         # Statistiques des agents
@@ -429,7 +487,7 @@ class MetricsCollector:
                 agent_name: {
                     "runs": len(confidences),
                     "avg_confidence": sum(confidences) / len(confidences),
-                    "last_run": agents_list[-1].timestamp if agents_list else None
+                    "last_run": agents_list[-1].timestamp if agents_list else None,
                 }
                 for agent_name, confidences in agent_stats.items()
             }
@@ -440,9 +498,11 @@ class MetricsCollector:
         """
         💾 SAUVEGARDE LES DONNÉES DU DASHBOARD
         """
-        dashboard_file = Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
+        dashboard_file = (
+            Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
+        )
 
-        with open(dashboard_file, 'w', encoding='utf-8') as f:
+        with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(asdict(self.dashboard_data), f, indent=2, ensure_ascii=False)
 
     async def get_trending_metrics(self, hours: int = 24) -> Dict[str, Any]:
@@ -453,7 +513,8 @@ class MetricsCollector:
 
         # Filtrer les cycles récents
         recent_cycles = [
-            c for c in self.cycles_history
+            c
+            for c in self.cycles_history
             if datetime.fromisoformat(c.timestamp) > cutoff_time
         ]
 
@@ -476,8 +537,8 @@ class MetricsCollector:
                 return "STABLE"
 
             # Calcul simple de tendance
-            first_half = np.mean(values[:len(values)//2])
-            second_half = np.mean(values[len(values)//2:])
+            first_half = np.mean(values[: len(values) // 2])
+            second_half = np.mean(values[len(values) // 2 :])
 
             diff = second_half - first_half
             if diff > 0.05:
@@ -494,16 +555,20 @@ class MetricsCollector:
                 "trend": calculate_trend(performance_trend),
                 "avg": np.mean(performance_trend),
                 "min": np.min(performance_trend),
-                "max": np.max(performance_trend)
+                "max": np.max(performance_trend),
             },
             "confidence": {
                 "trend": calculate_trend(confidence_trend),
                 "avg": np.mean(confidence_trend),
                 "min": np.min(confidence_trend),
-                "max": np.max(confidence_trend)
+                "max": np.max(confidence_trend),
             },
             "decisions": dict(decision_trends),
-            "top_decision": max(decision_trends.items(), key=lambda x: x[1])[0] if decision_trends else None
+            "top_decision": (
+                max(decision_trends.items(), key=lambda x: x[1])[0]
+                if decision_trends
+                else None
+            ),
         }
 
     async def export_metrics(self, format: str = "json") -> str:
@@ -516,12 +581,15 @@ class MetricsCollector:
             "dashboard_data": asdict(self.dashboard_data),
             "agents_history": [asdict(m) for m in self.agents_history],
             "cycles_history": [asdict(m) for m in self.cycles_history],
-            "backtests_history": [asdict(m) for m in self.backtests_history]
+            "backtests_history": [asdict(m) for m in self.backtests_history],
         }
 
         if format.lower() == "json":
-            export_file = self.metrics_dir / f"metrics_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(export_file, 'w', encoding='utf-8') as f:
+            export_file = (
+                self.metrics_dir
+                / f"metrics_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
+            with open(export_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
             return str(export_file)
 
@@ -540,8 +608,10 @@ class MetricsCollector:
             "recent_alerts": len(self.dashboard_data.alerts),
             "last_update": self.dashboard_data.timestamp,
             "performance_score": (
-                self.dashboard_data.performance_stats.get("cycles", {}).get("avg_performance_score", 0.0)
-            )
+                self.dashboard_data.performance_stats.get("cycles", {}).get(
+                    "avg_performance_score", 0.0
+                )
+            ),
         }
 
 
@@ -552,21 +622,27 @@ async def main():
     collector = MetricsCollector()
 
     # Simuler des données d'agents
-    await collector.collect_agent_metrics("risk_agent", {
-        "status": "SUCCESS",
-        "confidence": 0.85,
-        "llm_calls": 2,
-        "execution_time_ms": 150.5,
-        "data": {"risk_score": 0.15}
-    })
+    await collector.collect_agent_metrics(
+        "risk_agent",
+        {
+            "status": "SUCCESS",
+            "confidence": 0.85,
+            "llm_calls": 2,
+            "execution_time_ms": 150.5,
+            "data": {"risk_score": 0.15},
+        },
+    )
 
-    await collector.collect_agent_metrics("strategy_agent", {
-        "status": "SUCCESS",
-        "confidence": 0.92,
-        "llm_calls": 1,
-        "execution_time_ms": 230.8,
-        "data": {"signals_count": 3}
-    })
+    await collector.collect_agent_metrics(
+        "strategy_agent",
+        {
+            "status": "SUCCESS",
+            "confidence": 0.92,
+            "llm_calls": 1,
+            "execution_time_ms": 230.8,
+            "data": {"signals_count": 3},
+        },
+    )
 
     # Mettre à jour le dashboard
     dashboard_data = await collector.update_dashboard_data()

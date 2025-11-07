@@ -5,12 +5,13 @@ Configuration et exécution pour trading réel avec argent réel
 """
 
 import asyncio
-import json
-import os
-from typing import Dict, List, Optional
-from decimal import Decimal
 import logging
-from hyperliquid_agent import HyperLiquidAgent, OrderResult, Position
+import os
+from decimal import Decimal
+from typing import Dict, List, Optional
+
+from hyperliquid_agent import HyperLiquidAgent, OrderResult
+
 
 class HyperLiquidMainnetAgent(HyperLiquidAgent):
     """Agent spécialisé pour le trading sur le mainnet HyperLiquid"""
@@ -21,20 +22,22 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             secret_key=secret_key,
             base_url="https://api.hyperliquid.xyz/info",
             ws_url="wss://api.hyperliquid.xyz/ws",
-            testnet=False  # MAINNET - ARGENT RÉEL
+            testnet=False,  # MAINNET - ARGENT RÉEL
         )
 
         self.logger = logging.getLogger("HyperLiquidMainnetAgent")
         self.risk_settings = {
             "max_position_size_usd": 1000,  # Max $1000 par position
-            "max_total_exposure": 5000,     # Max $5000 total exposure
-            "min_account_balance": 100,     # Minimum $100 restant
-            "max_leverage": 10,             # Max 10x levier
-            "stop_loss_pct": 0.02,          # 2% stop loss
-            "take_profit_pct": 0.05         # 5% take profit
+            "max_total_exposure": 5000,  # Max $5000 total exposure
+            "min_account_balance": 100,  # Minimum $100 restant
+            "max_leverage": 10,  # Max 10x levier
+            "stop_loss_pct": 0.02,  # 2% stop loss
+            "take_profit_pct": 0.05,  # 5% take profit
         }
 
-    async def validate_risk_limits(self, symbol: str, size: Decimal, price: Decimal) -> bool:
+    async def validate_risk_limits(
+        self, symbol: str, size: Decimal, price: Decimal
+    ) -> bool:
         """Valider les limites de risque avant trading"""
         try:
             # Calculer la valeur de la position en USD
@@ -42,7 +45,9 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
 
             # Vérifier limite par position
             if position_value > self.risk_settings["max_position_size_usd"]:
-                self.logger.warning(f"Position trop grande: ${position_value} > ${self.risk_settings['max_position_size_usd']}")
+                self.logger.warning(
+                    f"Position trop grande: ${position_value} > ${self.risk_settings['max_position_size_usd']}"
+                )
                 return False
 
             # Vérifier exposition totale
@@ -54,14 +59,20 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             self.logger.error(f"Erreur validation risque: {e}")
             return False
 
-    async def place_safe_order(self, symbol: str, side: str, order_type: str,
-                             size: Decimal, price: Optional[Decimal] = None,
-                             leverage: int = 5) -> OrderResult:
+    async def place_safe_order(
+        self,
+        symbol: str,
+        side: str,
+        order_type: str,
+        size: Decimal,
+        price: Optional[Decimal] = None,
+        leverage: int = 5,
+    ) -> OrderResult:
         """Placer un ordre avec validation de risque"""
         try:
             # Obtenir le prix actuel
             prices = await self.get_all_mids()
-            current_price = prices.get(symbol, Decimal('0'))
+            current_price = prices.get(symbol, Decimal("0"))
 
             if current_price == 0:
                 return OrderResult(success=False, error="Prix non disponible")
@@ -71,7 +82,9 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 return OrderResult(success=False, error="Limite de risque dépassée")
 
             # Placer l'ordre avec stop loss et take profit
-            self.logger.info(f"🔥 MAINNET ORDER: {side} {size} {symbol} @ {price or 'MARKET'}")
+            self.logger.info(
+                f"🔥 MAINNET ORDER: {side} {size} {symbol} @ {price or 'MARKET'}"
+            )
 
             result = await self.place_order(
                 symbol=symbol,
@@ -79,7 +92,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 order_type=order_type,
                 size=size,
                 price=price,
-                leverage=min(leverage, self.risk_settings["max_leverage"])
+                leverage=min(leverage, self.risk_settings["max_leverage"]),
             )
 
             if result.success:
@@ -95,7 +108,9 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             self.logger.error(f"Erreur place_safe_order: {e}")
             return OrderResult(success=False, error=str(e))
 
-    async def _place_risk_orders(self, symbol: str, side: str, size: Decimal, entry_price: Decimal):
+    async def _place_risk_orders(
+        self, symbol: str, side: str, size: Decimal, entry_price: Decimal
+    ):
         """Placer les ordres stop loss et take profit"""
         try:
             # Calculer stop loss et take profit prices
@@ -115,7 +130,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 order_type="stop",
                 size=size,
                 price=stop_price,
-                reduce_only=True
+                reduce_only=True,
             )
 
             # Placer take profit
@@ -125,7 +140,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 order_type="limit",
                 size=size,
                 price=take_price,
-                reduce_only=True
+                reduce_only=True,
             )
 
             self.logger.info(f"🛡️ RISK ORDERS PLACÉS: SL={stop_price}, TP={take_price}")
@@ -145,7 +160,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             # Récupérer les prix actuels
             prices = await self.get_all_mids()
 
-            total_value = Decimal('0')
+            total_value = Decimal("0")
             portfolio_breakdown = []
 
             # Valeur des balances
@@ -153,31 +168,35 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 if token == "USDC":
                     value = balance
                 else:
-                    price = prices.get(token, Decimal('0'))
+                    price = prices.get(token, Decimal("0"))
                     value = balance * price
 
-                portfolio_breakdown.append({
-                    "asset": token,
-                    "amount": float(balance),
-                    "value": float(value),
-                    "type": "balance"
-                })
+                portfolio_breakdown.append(
+                    {
+                        "asset": token,
+                        "amount": float(balance),
+                        "value": float(value),
+                        "type": "balance",
+                    }
+                )
                 total_value += value
 
             # Valeur des positions
             for position in positions:
-                mark_price = prices.get(position.symbol, Decimal('0'))
+                mark_price = prices.get(position.symbol, Decimal("0"))
                 position_value = position.size * mark_price
 
-                portfolio_breakdown.append({
-                    "asset": position.symbol,
-                    "amount": float(position.size),
-                    "value": float(position_value),
-                    "pnl": float(position.pnl),
-                    "type": "position",
-                    "side": position.side,
-                    "leverage": position.leverage
-                })
+                portfolio_breakdown.append(
+                    {
+                        "asset": position.symbol,
+                        "amount": float(position.size),
+                        "value": float(position_value),
+                        "pnl": float(position.pnl),
+                        "type": "position",
+                        "side": position.side,
+                        "leverage": position.leverage,
+                    }
+                )
                 total_value += position_value
 
             return {
@@ -185,14 +204,16 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 "positions_count": len(positions),
                 "assets_count": len(balances),
                 "breakdown": portfolio_breakdown,
-                "timestamp": int(asyncio.get_event_loop().time())
+                "timestamp": int(asyncio.get_event_loop().time()),
             }
 
         except Exception as e:
             self.logger.error(f"Erreur calcul portfolio: {e}")
             return {"total_value_usd": 0, "error": str(e)}
 
-    async def execute_trading_signals(self, signals: List[Dict], user_address: str) -> List[OrderResult]:
+    async def execute_trading_signals(
+        self, signals: List[Dict], user_address: str
+    ) -> List[OrderResult]:
         """Exécuter des signaux de trading réels"""
         results = []
 
@@ -218,22 +239,26 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                     side=action,
                     order_type="market",
                     size=position_size,
-                    leverage=5
+                    leverage=5,
                 )
 
-                results.append({
-                    "signal": signal,
-                    "result": result,
-                    "executed_at": int(asyncio.get_event_loop().time())
-                })
+                results.append(
+                    {
+                        "signal": signal,
+                        "result": result,
+                        "executed_at": int(asyncio.get_event_loop().time()),
+                    }
+                )
 
             except Exception as e:
                 self.logger.error(f"Erreur exécution signal: {e}")
-                results.append({
-                    "signal": signal,
-                    "result": OrderResult(success=False, error=str(e)),
-                    "executed_at": int(asyncio.get_event_loop().time())
-                })
+                results.append(
+                    {
+                        "signal": signal,
+                        "result": OrderResult(success=False, error=str(e)),
+                        "executed_at": int(asyncio.get_event_loop().time()),
+                    }
+                )
 
         return results
 
@@ -247,7 +272,9 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
 
             # Logger les résultats
             successful_closes = sum(1 for r in results if r.success)
-            self.logger.info(f"🔒 POSITIONS FERMÉES: {successful_closes}/{len(results)}")
+            self.logger.info(
+                f"🔒 POSITIONS FERMÉES: {successful_closes}/{len(results)}"
+            )
 
             return successful_closes > 0
 
@@ -274,17 +301,23 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 "short_positions": len(short_positions),
                 "total_pnl": float(total_pnl),
                 "account_balance": {k: float(v) for k, v in balances.items()},
-                "leverage_used": max([p.leverage for p in positions]) if positions else 0,
-                "risk_level": "HIGH" if len(positions) > 5 else "MEDIUM" if positions else "LOW",
-                "timestamp": int(asyncio.get_event_loop().time())
+                "leverage_used": (
+                    max([p.leverage for p in positions]) if positions else 0
+                ),
+                "risk_level": (
+                    "HIGH" if len(positions) > 5 else "MEDIUM" if positions else "LOW"
+                ),
+                "timestamp": int(asyncio.get_event_loop().time()),
             }
 
         except Exception as e:
             self.logger.error(f"Erreur statistiques: {e}")
             return {"error": str(e)}
 
+
 # Instance globale mainnet
 _mainnet_agent = None
+
 
 def get_mainnet_agent() -> Optional[HyperLiquidMainnetAgent]:
     """Récupérer l'agent mainnet configuré"""
@@ -302,9 +335,11 @@ def get_mainnet_agent() -> Optional[HyperLiquidMainnetAgent]:
 
     return _mainnet_agent
 
+
 if __name__ == "__main__":
     # Test de l'agent mainnet
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()

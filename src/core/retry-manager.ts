@@ -41,7 +41,7 @@ export class RetryManager {
         'EHOSTUNREACH',
         'NetworkError',
         'TimeoutError',
-        'FetchError'
+        'FetchError',
       ],
       nonRetryableErrors: [
         'ValidationError',
@@ -49,9 +49,9 @@ export class RetryManager {
         'AuthorizationError',
         'ForbiddenError',
         'NotFoundError',
-        'BadRequest'
+        'BadRequest',
       ],
-      ...config
+      ...config,
     };
   }
 
@@ -71,19 +71,25 @@ export class RetryManager {
 
         if (attempt > 1) {
           const totalTime = Date.now() - startTime;
-          console.log(`[RetryManager] ✅ ${operationName} succeeded on attempt ${attempt}/${this.config.maxAttempts} (${totalTime}ms total)`);
+          console.log(
+            `[RetryManager] ✅ ${operationName} succeeded on attempt ${attempt}/${this.config.maxAttempts} (${totalTime}ms total)`
+          );
         }
 
         return result;
-
       } catch (error) {
         const err = error as Error;
 
         // Vérifier si l'erreur est retryable
-        if (!this.isRetryableError(err) || attempt === this.config.maxAttempts) {
+        if (
+          !this.isRetryableError(err) ||
+          attempt === this.config.maxAttempts
+        ) {
           if (attempt > 1) {
             const totalTime = Date.now() - startTime;
-            console.error(`[RetryManager] ❌ ${operationName} failed after ${attempt} attempts (${totalTime}ms total)`);
+            console.error(
+              `[RetryManager] ❌ ${operationName} failed after ${attempt} attempts (${totalTime}ms total)`
+            );
           }
           throw err;
         }
@@ -92,7 +98,9 @@ export class RetryManager {
         const delay = this.calculateDelay(attempt);
         retryDelays.push(delay);
 
-        console.warn(`[RetryManager] 🔄 ${operationName} attempt ${attempt}/${this.config.maxAttempts} failed (${err.message}) - retrying in ${delay}ms`);
+        console.warn(
+          `[RetryManager] 🔄 ${operationName} attempt ${attempt}/${this.config.maxAttempts} failed (${err.message}) - retrying in ${delay}ms`
+        );
 
         // Attendre avant le prochain retry
         await this.sleep(delay);
@@ -100,7 +108,9 @@ export class RetryManager {
     }
 
     // Ne devrait jamais atteindre ce point
-    throw new Error(`Operation ${operationName} failed after ${this.config.maxAttempts} attempts`);
+    throw new Error(
+      `Operation ${operationName} failed after ${this.config.maxAttempts} attempts`
+    );
   }
 
   /**
@@ -122,19 +132,21 @@ export class RetryManager {
           result,
           attempts: attempt,
           totalTime: Date.now() - startTime,
-          retryDelays
+          retryDelays,
         };
-
       } catch (error) {
         const err = error as Error;
 
-        if (!this.isRetryableError(err) || attempt === this.config.maxAttempts) {
+        if (
+          !this.isRetryableError(err) ||
+          attempt === this.config.maxAttempts
+        ) {
           return {
             success: false,
             error: err,
             attempts: attempt,
             totalTime: Date.now() - startTime,
-            retryDelays
+            retryDelays,
           };
         }
 
@@ -150,7 +162,7 @@ export class RetryManager {
       error: new Error(`Failed after ${this.config.maxAttempts} attempts`),
       attempts: this.config.maxAttempts,
       totalTime: Date.now() - startTime,
-      retryDelays
+      retryDelays,
     };
   }
 
@@ -162,15 +174,20 @@ export class RetryManager {
     const errorName = error.constructor.name;
 
     // Vérifier les erreurs non-retryables
-    if (this.config.nonRetryableErrors.some(nonRetryable =>
-      errorMessage.includes(nonRetryable) || errorName.includes(nonRetryable)
-    )) {
+    if (
+      this.config.nonRetryableErrors.some(
+        (nonRetryable) =>
+          errorMessage.includes(nonRetryable) ||
+          errorName.includes(nonRetryable)
+      )
+    ) {
       return false;
     }
 
     // Vérifier les erreurs retryables
-    return this.config.retryableErrors.some(retryable =>
-      errorMessage.includes(retryable) || errorName.includes(retryable)
+    return this.config.retryableErrors.some(
+      (retryable) =>
+        errorMessage.includes(retryable) || errorName.includes(retryable)
     );
   }
 
@@ -179,7 +196,9 @@ export class RetryManager {
    */
   private calculateDelay(attempt: number): number {
     // Backoff exponentiel
-    let delay = this.config.baseDelay * Math.pow(this.config.backoffMultiplier, attempt - 1);
+    let delay =
+      this.config.baseDelay *
+      Math.pow(this.config.backoffMultiplier, attempt - 1);
 
     // Limiter au délai maximum
     delay = Math.min(delay, this.config.maxDelay);
@@ -197,7 +216,7 @@ export class RetryManager {
    * 😴 Fonction sleep utilitaire
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

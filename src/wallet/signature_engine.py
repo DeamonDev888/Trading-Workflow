@@ -4,11 +4,9 @@ Secure transaction signing for Hyperliquid API operations
 Built with love by Moon Dev 🚀
 """
 
-import hashlib
-import hmac
 import json
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from eth_account import Account
 from eth_account.messages import encode_defunct

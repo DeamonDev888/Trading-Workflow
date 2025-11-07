@@ -6,8 +6,7 @@ Built with love by Moon Dev 🚀
 
 import asyncio
 import json
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import websockets
 from termcolor import cprint

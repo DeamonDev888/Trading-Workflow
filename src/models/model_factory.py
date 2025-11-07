@@ -12,7 +12,7 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="ignore")
     sys.stderr.reconfigure(encoding="utf-8", errors="ignore")
 from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import Dict, Optional
 
 from dotenv import load_dotenv
 from termcolor import cprint

@@ -3,7 +3,10 @@
  * Protection contre les abus et les attaques par déni de service
  */
 
-import rateLimit, { RateLimitRequestHandler, Options } from 'express-rate-limit';
+import rateLimit, {
+  RateLimitRequestHandler,
+  Options,
+} from 'express-rate-limit';
 import { MemoryStore } from 'express-rate-limit';
 
 export interface RateLimitConfig {
@@ -33,14 +36,16 @@ export class RateLimiterService {
   /**
    * 🎯 Créer un rate limiter de base
    */
-  static createBasic(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createBasic(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     const defaultConfig: RateLimitConfig = {
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // 100 requêtes par fenêtre
       message: 'Too many requests from this IP, please try again later.',
       standardHeaders: true,
       legacyHeaders: false,
-      ...config
+      ...config,
     };
 
     return rateLimit({
@@ -53,51 +58,61 @@ export class RateLimiterService {
       skipSuccessfulRequests: defaultConfig.skipSuccessfulRequests,
       skipFailedRequests: defaultConfig.skipFailedRequests,
       keyGenerator: defaultConfig.keyGenerator,
-      handler: defaultConfig.handler || ((req, res) => {
-        res.status(429).json({
-          error: 'Rate limit exceeded',
-          message: typeof defaultConfig.message === 'string'
-            ? defaultConfig.message
-            : defaultConfig.message.error,
-          retryAfter: Math.ceil(defaultConfig.windowMs / 1000 / 60) + ' minutes',
-          timestamp: new Date().toISOString(),
-          ip: req.ip || req.connection.remoteAddress,
-          path: req.path
-        });
-      })
+      handler:
+        defaultConfig.handler ||
+        ((req, res) => {
+          res.status(429).json({
+            error: 'Rate limit exceeded',
+            message:
+              typeof defaultConfig.message === 'string'
+                ? defaultConfig.message
+                : defaultConfig.message.error,
+            retryAfter:
+              Math.ceil(defaultConfig.windowMs / 1000 / 60) + ' minutes',
+            timestamp: new Date().toISOString(),
+            ip: req.ip || req.connection.remoteAddress,
+            path: req.path,
+          });
+        }),
     });
   }
 
   /**
    * 🔐 Créer un rate limiter strict pour les endpoints critiques
    */
-  static createStrict(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createStrict(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 10, // 10 requêtes par fenêtre
       message: 'Too many requests to this critical endpoint',
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
-      ...config
+      ...config,
     });
   }
 
   /**
    * 🚀 Créer un rate limiter permissif pour les endpoints publics
    */
-  static createPermissive(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createPermissive(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 1000, // 1000 requêtes par fenêtre
       message: 'Too many requests, please slow down',
-      ...config
+      ...config,
     });
   }
 
   /**
    * 💰 Créer un rate limiter pour les endpoints de trading
    */
-  static createTradingLimiter(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createTradingLimiter(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 60 * 1000, // 1 minute
       max: 30, // 30 trades par minute
@@ -108,27 +123,31 @@ export class RateLimiterService {
         // Utiliser l'ID utilisateur si disponible, sinon l'IP
         return req.user?.id || req.ip || 'unknown';
       },
-      ...config
+      ...config,
     });
   }
 
   /**
    * 📊 Créer un rate limiter pour les API de données
    */
-  static createDataLimiter(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createDataLimiter(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 1 * 60 * 1000, // 1 minute
       max: 200, // 200 requêtes par minute
       message: 'Data API rate limit exceeded',
       skipSuccessfulRequests: false,
-      ...config
+      ...config,
     });
   }
 
   /**
    * 🤖 Créer un rate limiter pour les agents IA
    */
-  static createAgentLimiter(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createAgentLimiter(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 5 * 60 * 1000, // 5 minutes
       max: 50, // 50 actions d'agent par 5 minutes
@@ -137,14 +156,16 @@ export class RateLimiterService {
         // Utiliser l'ID de l'agent depuis les params
         return `agent:${req.params.agentId || 'unknown'}`;
       },
-      ...config
+      ...config,
     });
   }
 
   /**
    * 🔍 Créer un rate limiter basé sur l'utilisateur
    */
-  static createUserBasedLimiter(config: Partial<RateLimitConfig> = {}): RateLimitRequestHandler {
+  static createUserBasedLimiter(
+    config: Partial<RateLimitConfig> = {}
+  ): RateLimitRequestHandler {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 500, // 500 requêtes par utilisateur par 15 minutes
@@ -153,7 +174,7 @@ export class RateLimiterService {
         // Prioriser l'ID utilisateur authentifié
         return req.user?.id || req.ip || 'anonymous';
       },
-      ...config
+      ...config,
     });
   }
 
@@ -169,7 +190,7 @@ export class RateLimiterService {
           max: tier.max,
           message: tier.message,
           skipSuccessfulRequests: tier.skipSuccessfulRequests,
-          skipFailedRequests: tier.skipFailedRequests
+          skipFailedRequests: tier.skipFailedRequests,
         });
 
         // Stocker le limiter pour cette tier
@@ -196,14 +217,17 @@ export class RateLimiterService {
     windowMs: number;
     checkInterval: number;
   }): RateLimitRequestHandler {
-    const requestCounts = new Map<string, { count: number; lastReset: number }>();
+    const requestCounts = new Map<
+      string,
+      { count: number; lastReset: number }
+    >();
     const loadFactor = { current: 1 }; // Facteur de charge actuel
 
     // Ajuster le facteur de charge périodiquement
     setInterval(() => {
       // Simuler une charge système (dans un vrai projet, utiliser des métriques réelles)
       const simulatedLoad = Math.random();
-      loadFactor.current = 1 + (simulatedLoad * config.maxMultiplier);
+      loadFactor.current = 1 + simulatedLoad * config.maxMultiplier;
     }, config.checkInterval);
 
     return (req, res, next) => {
@@ -211,7 +235,10 @@ export class RateLimiterService {
       const now = Date.now();
 
       // Réinitialiser le compteur si nécessaire
-      if (!requestCounts.has(key) || now - requestCounts.get(key)!.lastReset > config.windowMs) {
+      if (
+        !requestCounts.has(key) ||
+        now - requestCounts.get(key)!.lastReset > config.windowMs
+      ) {
         requestCounts.set(key, { count: 0, lastReset: now });
       }
 
@@ -221,12 +248,12 @@ export class RateLimiterService {
       if (counter.count >= adjustedMax) {
         return res.status(429).json({
           error: 'Adaptive rate limit exceeded',
-          message: `System under load, please try again later`,
+          message: 'System under load, please try again later',
           currentLimit: adjustedMax,
           baseLimit: config.baseMax,
           loadFactor: loadFactor.current.toFixed(2),
           retryAfter: Math.ceil(config.windowMs / 1000) + ' seconds',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -248,7 +275,7 @@ export class RateLimiterService {
   static getStats(): { activeLimiters: number; types: string[] } {
     return {
       activeLimiters: this.instances.size,
-      types: Array.from(this.instances.keys())
+      types: Array.from(this.instances.keys()),
     };
   }
 
@@ -264,7 +291,7 @@ export class RateLimiterService {
       skip: (req) => {
         const clientIp = req.ip || req.connection.remoteAddress;
         return whitelist.includes(clientIp!);
-      }
+      },
     });
   }
 
@@ -289,14 +316,14 @@ export class RateLimiterService {
           return res.status(403).json({
             error: 'Forbidden',
             message: 'Access denied from this IP address',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         }
         res.status(429).json({
           error: 'Too many requests',
-          message: config.message || 'Rate limit exceeded'
+          message: config.message || 'Rate limit exceeded',
         });
-      }
+      },
     }) as any;
   }
 }
@@ -309,8 +336,8 @@ export const rateLimiters = {
     max: 1000, // 1000 requêtes par 15 minutes
     message: {
       error: 'General API rate limit exceeded',
-      retryAfter: '15 minutes'
-    }
+      retryAfter: '15 minutes',
+    },
   }),
 
   // Limiter strict pour les endpoints critiques
@@ -320,8 +347,8 @@ export const rateLimiters = {
     message: {
       error: 'Authentication rate limit exceeded',
       retryAfter: '15 minutes',
-      type: 'auth_limit'
-    }
+      type: 'auth_limit',
+    },
   }),
 
   // Limiter pour les trades
@@ -333,8 +360,8 @@ export const rateLimiters = {
     max: 300, // 300 requêtes par minute
     message: {
       error: 'Market data rate limit exceeded',
-      retryAfter: '1 minute'
-    }
+      retryAfter: '1 minute',
+    },
   }),
 
   // Limiter pour les agents
@@ -347,8 +374,8 @@ export const rateLimiters = {
     message: {
       error: 'WebSocket connection rate limit exceeded',
       retryAfter: '1 minute',
-      type: 'websocket_limit'
-    }
+      type: 'websocket_limit',
+    },
   }),
 
   // Limiter pour les health checks (très permissif)
@@ -357,9 +384,9 @@ export const rateLimiters = {
     max: 60, // 60 health checks par minute
     message: {
       error: 'Health check rate limit exceeded',
-      retryAfter: '1 minute'
-    }
-  })
+      retryAfter: '1 minute',
+    },
+  }),
 };
 
 export default RateLimiterService;

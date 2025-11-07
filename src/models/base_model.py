@@ -9,7 +9,7 @@ import random
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from termcolor import cprint
 
@@ -66,7 +66,6 @@ class BaseModel(ABC):
     @abstractmethod
     def initialize_client(self, **kwargs) -> None:
         """Initialize the model's client"""
-        pass
 
     def generate_response(
         self, system_prompt, user_content, temperature=0.7, max_tokens=None
@@ -101,4 +100,3 @@ class BaseModel(ABC):
     @abstractmethod
     def is_available(self) -> bool:
         """Check if the model is available and properly configured"""
-        pass

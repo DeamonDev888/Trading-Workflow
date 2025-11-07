@@ -2,13 +2,13 @@
 """
 Base Agent Class for NOVAQUOTE Trading Platform
 Provides common functionality for all agents
-Built with love by Moon Dev 🚀
+Built with love by Moon Dev [ROCKET]
 """
 
-import time
 import json
-from typing import Dict, Optional, Any
+import time
 from pathlib import Path
+from typing import Any, Dict
 
 
 class BaseAgent:
@@ -17,7 +17,7 @@ class BaseAgent:
     Provides common functionality like logging, state management, etc.
     """
 
-    def __init__(self, agent_type: str):
+    def __init__(self, agent_type: str, enable_postgres: bool = False):
         """Initialize the base agent"""
         self.agent_type = agent_type
         self.name = f"{agent_type.title()} Agent"
@@ -25,6 +25,7 @@ class BaseAgent:
         self.last_update = time.time()
         self.is_running = False
         self.state = {}
+        self.enable_postgres = enable_postgres
 
         # Create data directory
         self.data_dir = Path(__file__).parent.parent / "data" / agent_type
@@ -50,10 +51,10 @@ class BaseAgent:
             "start_time": self.start_time,
             "last_update": self.last_update,
             "is_running": self.is_running,
-            "state": self.state
+            "state": self.state,
         }
 
-        with open(state_file, 'w') as f:
+        with open(state_file, "w") as f:
             json.dump(state_data, f, indent=2)
 
         self.log(f"State saved to {state_file}")
@@ -66,7 +67,7 @@ class BaseAgent:
         state_file = self.data_dir / filename
 
         if state_file.exists():
-            with open(state_file, 'r') as f:
+            with open(state_file, "r") as f:
                 state_data = json.load(f)
 
             self.start_time = state_data.get("start_time", time.time())
@@ -107,5 +108,5 @@ class BaseAgent:
             "is_running": self.is_running,
             "uptime": self.get_uptime(),
             "last_update": self.last_update,
-            "state": self.state
+            "state": self.state,
         }
