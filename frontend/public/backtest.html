@@ -12,6 +12,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* ===== GLOBAL DARK MODE ===== */
+        body {
+            background: #0a0a0f !important;
+            color: #e0e0e0 !important;
+        }
+        .container {
+            background: transparent !important;
+        }
+
         /* ===== ENHANCED DASHBOARD STYLES ===== */
 
         .dashboard-section {
@@ -30,11 +39,12 @@
         }
 
         .chart-card {
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             padding: 1.5rem;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
         }
 
         .chart-title {
@@ -80,15 +90,17 @@
         }
 
         .filters-bar {
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             padding: 1.5rem;
             border-radius: 12px;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
             display: flex;
             gap: 1.5rem;
             align-items: center;
             flex-wrap: wrap;
+            color: #e0e0e0;
         }
 
         .filter-group {
@@ -101,15 +113,17 @@
         .filter-label {
             font-size: 0.9rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #e0e0e0;
         }
 
         .filter-select, .filter-input {
             padding: 0.75rem 1rem;
-            border: 2px solid #e0e0e0;
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 8px;
             font-size: 0.95rem;
             transition: border-color 0.3s;
+            background: rgba(20, 20, 30, 0.8);
+            color: #e0e0e0;
         }
 
         .filter-select:focus, .filter-input:focus {
@@ -117,13 +131,19 @@
             border-color: var(--primary-color);
         }
 
+        .filter-select option {
+            background: rgba(30, 30, 46, 0.95);
+            color: #e0e0e0;
+        }
+
         .enhanced-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            color: #e0e0e0;
         }
 
         .enhanced-table thead {
@@ -138,6 +158,7 @@
             cursor: pointer;
             transition: background 0.3s;
             user-select: none;
+            color: white;
         }
 
         .enhanced-table th:hover {
@@ -146,11 +167,12 @@
 
         .enhanced-table td {
             padding: 1rem;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
         }
 
         .enhanced-table tr:hover {
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.05);
         }
 
         .rank-badge {
@@ -325,63 +347,6 @@
 
             <!-- Tab Content -->
             <div class="tab-content">
-                <!-- System Status (shown on all tabs) -->
-                <div class="card system-status-card">
-                    <h2 class="card-title"><i class="fas fa-server"></i> État du Système</h2>
-                    <div class="status-grid">
-                        <div class="status-item">
-                            <div class="status-indicator unknown"></div>
-                            <div class="status-info">
-                                <div class="status-label">Serveur Principal</div>
-                                <div class="status-value unknown">Chargement...</div>
-                            </div>
-                        </div>
-                        <div class="status-item">
-                            <div class="status-indicator unknown"></div>
-                            <div class="status-info">
-                                <div class="status-label">API Trading</div>
-                                <div class="status-value unknown">Chargement...</div>
-                            </div>
-                        </div>
-                        <div class="status-item">
-                            <div class="status-indicator unknown"></div>
-                            <div class="status-info">
-                                <div class="status-label">Base de Données</div>
-                                <div class="status-value unknown">Chargement...</div>
-                            </div>
-                        </div>
-                        <div class="status-item">
-                            <div class="status-indicator unknown"></div>
-                            <div class="status-info">
-                                <div class="status-label">Environnement</div>
-                                <div class="status-value unknown">Chargement...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Control Buttons -->
-                <div class="card control-buttons-card">
-                    <div class="control-btn-group">
-                        <button class="control-btn primary" onclick="loadRealBacktestData()" id="refresh-btn">
-                            <i class="fas fa-sync"></i>
-                            Charger Données Réelles
-                        </button>
-                        <button class="control-btn secondary" onclick="forceRefreshData()">
-                            <i class="fas fa-bug"></i>
-                            Debug API
-                        </button>
-                        <button class="control-btn secondary" onclick="toggleDataSource()">
-                            <i class="fas fa-exchange-alt"></i>
-                            Basculer Source
-                        </button>
-                        <button class="control-btn secondary" onclick="runAllBacktests(this)">
-                            <i class="fas fa-play"></i>
-                            Lancer Tests
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Backtest Grid -->
                 <div id="backtest-grid" class="backtest-grid">
                     <!-- Backtest cards will be inserted here -->
@@ -839,7 +804,7 @@
             }
 
             async getBacktests() {
-                const url = '/api/backtests';
+                const url = 'http://localhost:7000/api/backtests';
 
                 // Always bypass cache for real data to ensure freshness
                 if (this.cache.has(url) && !this.useRealData) {
@@ -851,23 +816,55 @@
                     console.log('[API] Fetching fresh backtest data from', url);
                     const data = await this.fetchWithErrorHandling(url);
 
-                    // Debug: Log the received data structure
-                    if (data && data.backtests) {
+                    // Handle API response format: {success: true, data: {backtests: [...], total_count: 9, source: "production_data"}}
+                    if (data && data.success && data.data) {
+                        const apiData = data.data;
                         console.log('[API] Received backtest data:', {
-                            total: data.backtests.length,
-                            source: data.source,
-                            sample: data.backtests.slice(0, 2)
+                            total: apiData.backtests?.length || 0,
+                            source: apiData.source,
+                            total_count: apiData.total_count,
+                            sample: apiData.backtests?.slice(0, 2)
                         });
-                    } else {
-                        console.warn('[API] Unexpected data structure:', data);
-                    }
 
-                    this.cache.set(url, data);
-                    return data;
+                        // Return normalized data structure
+                        const normalizedData = {
+                            success: data.success,
+                            backtests: apiData.backtests || [],
+                            results: apiData.backtests || [],
+                            total_count: apiData.total_count || 0,
+                            source: apiData.source || 'api',
+                            timestamp: data.timestamp
+                        };
+
+                        // NO FALLBACK - Use empty data as-is
+                        if (normalizedData.backtests.length === 0) {
+                            console.log('[API] Backend returned empty data - using empty result (no fallback)');
+                        }
+
+                        this.cache.set(url, normalizedData);
+                        return normalizedData;
+                    } else {
+                        console.warn('[API] Unexpected data structure - using empty result (no fallback):', data);
+                        // Convert unexpected structure to empty data
+                        return {
+                            success: false,
+                            backtests: [],
+                            results: [],
+                            total_count: 0,
+                            source: 'unexpected_structure'
+                        };
+                    }
                 } catch (error) {
                     console.error('[API] Failed to fetch real backtests:', error);
-                    console.log('[API] Falling back to simulated data');
-                    return this.getFallbackData();
+                    // NO FALLBACK - Return empty data structure
+                    return {
+                        success: false,
+                        backtests: [],
+                        results: [],
+                        total_count: 0,
+                        source: 'error',
+                        error: error.message
+                    };
                 }
             }
 
@@ -881,214 +878,30 @@
                 }
             }
 
-            getFallbackData() {
-                // Production backtest results from real backtests
+            
+            getEmptyData() {
+                // NO FALLBACK - Return empty data structure with 0/N/A values
                 return {
-                    success: true,
-                    backtests: [
-                        {
-                            id: 'funding_arbitrage_85_pro',
-                            name: 'Funding Arbitrage 85 PRO',
-                            description: 'Stratégie d\'arbitrage de funding avec haute rentabilité et faible risque',
-                            status: 'completed',
-                            return: 92.52,
-                            sharpe: 2.59,
-                            maxDrawdown: 7.4,
-                            winRate: 80.13,
-                            totalTrades: 181,
-                            annualReturn: 375.2,
-                            returnTotal: '+92.52%',
-                            timestamp: '2025-08-04T20:03:45.594186',
-                            isReal: true,
-                            category: 'Funding',
-                            profitFactor: 3.4
-                        },
-                        {
-                            id: 'rsi_oversold_68_pro',
-                            name: 'RSI Oversold 68 PRO',
-                            description: 'Stratégie de survente RSI avec gestion avancée des risques',
-                            status: 'completed',
-                            return: 73.95,
-                            sharpe: 1.25,
-                            maxDrawdown: 13.22,
-                            winRate: 70.35,
-                            totalTrades: 47,
-                            annualReturn: 299.9,
-                            returnTotal: '+73.95%',
-                            timestamp: '2025-08-04T20:03:45.589185',
-                            isReal: true,
-                            category: 'Risk Management',
-                            profitFactor: 1.92
-                        },
-                        {
-                            id: 'macd_crossover_65_pro',
-                            name: 'MACD Crossover 65 PRO',
-                            description: 'Stratégie de croisement MACD avec confirmation multi-timeframe',
-                            status: 'completed',
-                            return: 70.85,
-                            sharpe: 1.08,
-                            maxDrawdown: 17.92,
-                            winRate: 64.66,
-                            totalTrades: 182,
-                            annualReturn: 287.34,
-                            returnTotal: '+70.85%',
-                            timestamp: '2025-08-04T20:03:45.594186',
-                            isReal: true,
-                            category: 'Technical',
-                            profitFactor: 1.86
-                        },
-                        {
-                            id: 'fear_contrarian_73_pro',
-                            name: 'Fear Contrarian 73 PRO',
-                            description: 'Stratégie contrarienne basée sur l\'indice de peur du marché',
-                            status: 'completed',
-                            return: 69.44,
-                            sharpe: 2.14,
-                            maxDrawdown: 7.71,
-                            winRate: 74.89,
-                            totalTrades: 68,
-                            annualReturn: 281.64,
-                            returnTotal: '+69.44%',
-                            timestamp: '2025-08-04T20:03:45.593188',
-                            isReal: true,
-                            category: 'Sentiment',
-                            profitFactor: 2.72
-                        },
-                        {
-                            id: 'volume_breakout_71_pro',
-                            name: 'Volume Breakout 71 PRO',
-                            description: 'Stratégie de breakout basée sur le volume et l\'action sur les prix',
-                            status: 'completed',
-                            return: 67.61,
-                            sharpe: 1.78,
-                            maxDrawdown: 11.06,
-                            winRate: 73.98,
-                            totalTrades: 144,
-                            annualReturn: 274.18,
-                            returnTotal: '+67.61%',
-                            timestamp: '2025-08-04T20:03:45.590187',
-                            isReal: true,
-                            category: 'Technical',
-                            profitFactor: 2.29
-                        },
-                        {
-                            id: 'bb_squeeze_62_pro',
-                            name: 'BB Squeeze 62 PRO',
-                            description: 'Stratégie de compression des bandes de Bollinger pour anticiper les breakouts',
-                            status: 'completed',
-                            return: 64.6,
-                            sharpe: 1.37,
-                            maxDrawdown: 14.25,
-                            winRate: 58.87,
-                            totalTrades: 112,
-                            annualReturn: 262.01,
-                            returnTotal: '+64.60%',
-                            timestamp: '2025-08-04T20:03:45.595186',
-                            isReal: true,
-                            category: 'Technical',
-                            profitFactor: 1.66
-                        },
-                        {
-                            id: 'twitter_sentiment_69_pro',
-                            name: 'Twitter Sentiment 69 PRO',
-                            description: 'Stratégie basée sur l\'analyse de sentiment des réseaux sociaux',
-                            status: 'completed',
-                            return: 62.8,
-                            sharpe: 1.33,
-                            maxDrawdown: 13.86,
-                            winRate: 72.15,
-                            totalTrades: 109,
-                            annualReturn: 254.68,
-                            returnTotal: '+62.80%',
-                            timestamp: '2025-08-04T20:03:45.596187',
-                            isReal: true,
-                            category: 'Sentiment',
-                            profitFactor: 1.87
-                        }
-                    ],
-                    results: [
-                        {
-                            strategy: 'Funding Arbitrage 85 PRO',
-                            totalReturn: 92.52,
-                            annualReturn: 375.2,
-                            sharpeRatio: 2.59,
-                            maxDrawdown: 7.4,
-                            totalTrades: 181,
-                            winRate: 80.13,
-                            profitFactor: 3.4,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'RSI Oversold 68 PRO',
-                            totalReturn: 73.95,
-                            annualReturn: 299.9,
-                            sharpeRatio: 1.25,
-                            maxDrawdown: 13.22,
-                            totalTrades: 47,
-                            winRate: 70.35,
-                            profitFactor: 1.92,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'MACD Crossover 65 PRO',
-                            totalReturn: 70.85,
-                            annualReturn: 287.34,
-                            sharpeRatio: 1.08,
-                            maxDrawdown: 17.92,
-                            totalTrades: 182,
-                            winRate: 64.66,
-                            profitFactor: 1.86,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'Fear Contrarian 73 PRO',
-                            totalReturn: 69.44,
-                            annualReturn: 281.64,
-                            sharpeRatio: 2.14,
-                            maxDrawdown: 7.71,
-                            totalTrades: 68,
-                            winRate: 74.89,
-                            profitFactor: 2.72,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'Volume Breakout 71 PRO',
-                            totalReturn: 67.61,
-                            annualReturn: 274.18,
-                            sharpeRatio: 1.78,
-                            maxDrawdown: 11.06,
-                            totalTrades: 144,
-                            winRate: 73.98,
-                            profitFactor: 2.29,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'BB Squeeze 62 PRO',
-                            totalReturn: 64.6,
-                            annualReturn: 262.01,
-                            sharpeRatio: 1.37,
-                            maxDrawdown: 14.25,
-                            totalTrades: 112,
-                            winRate: 58.87,
-                            profitFactor: 1.66,
-                            source: 'production_backtests'
-                        },
-                        {
-                            strategy: 'Twitter Sentiment 69 PRO',
-                            totalReturn: 62.8,
-                            annualReturn: 254.68,
-                            sharpeRatio: 1.33,
-                            maxDrawdown: 13.86,
-                            totalTrades: 109,
-                            winRate: 72.15,
-                            profitFactor: 1.87,
-                            source: 'production_backtests'
-                        }
-                    ],
-                    source: 'production_backtests',
-                    total_count: 7
+                    success: false,
+                    backtests: [],
+                    results: [],
+                    total_count: 0
                 };
             }
+
+            // Suppression complète de l'ancienne fonction fallback avec données codées
+            // À partir d'ici, on ne veut PLUS AUCUN fallback - que des données vides avec 0/N/A
+            getFallbackData() {
+                // NO FALLBACK - Return empty data only
+                return {
+                    success: false,
+                    backtests: [],
+                    results: [],
+                    total_count: 0
+                };
+            }
+
+            // FIN DES FONCTIONS - PLUS AUCUN FALLBACK - ZERO DONNÉES CODÉES
         }
 
         // ====== GLOBAL VARIABLES =====
@@ -1127,17 +940,18 @@
 
                 const html = backtests.map((strategy, index) => {
                     return safeExecute(() => {
-                        const safeName = String(strategy.name || 'Unknown').replace(/[&<>"']/g, '');
-                        const safeDesc = String(strategy.description || '').replace(/[&<>"']/g, '');
+                        const safeName = String(strategy.strategy || strategy.name || 'Unknown').replace(/[&<>"']/g, '');
+                        const safeDesc = String(strategy.category || '').replace(/[&<>"']/g, '');
                         const safeId = String(strategy.id || `strategy_${index}`).replace(/[&<>"']/g, '');
-                        
-                        // Handle both property naming conventions (API vs hardcoded data)
-                        const totalReturn = strategy.totalReturn || strategy.return || 0;
-                        const sharpeRatio = strategy.sharpeRatio || strategy.sharpe || 0;
-                        const maxDrawdown = strategy.maxDrawdown || strategy.max_drawdown || 0;
-                        const winRate = strategy.winRate || strategy.win_rate || 0;
-                        const totalTrades = strategy.totalTrades || strategy.trades || 0;
-                        const annualReturn = strategy.annualReturn || strategy.annual_return || 0;
+
+                        // Extract metrics from performance object (API structure)
+                        const perf = strategy.performance || {};
+                        const totalReturn = perf.totalReturn || strategy.totalReturn || strategy.return || 0;
+                        const sharpeRatio = perf.sharpeRatio || strategy.sharpeRatio || strategy.sharpe || 0;
+                        const maxDrawdown = perf.maxDrawdown || strategy.maxDrawdown || strategy.max_drawdown || 0;
+                        const winRate = perf.winRate || strategy.winRate || strategy.win_rate || 0;
+                        const totalTrades = perf.totalTrades || strategy.totalTrades || strategy.trades || 0;
+                        const annualReturn = perf.annualReturn || strategy.annualReturn || strategy.annual_return || 0;
 
                         // Toutes les données sont maintenant réelles
                         const dataBadge = '<span class="data-badge real">RÉEL</span>';
@@ -1169,12 +983,12 @@
                                 <div class="main-metrics">
                                     <div class="big-metric">
                                         <span class="metric-value ${totalReturn >= 0 ? 'positive' : 'negative'}">
-                                            ${Number(totalReturn).toFixed(1)}%
+                                            ${(Number(totalReturn) * 100).toFixed(1)}%
                                         </span>
                                         <span class="metric-label">Return</span>
                                     </div>
                                     <div class="big-metric">
-                                        <span class="metric-value">${Number(winRate).toFixed(0)}%</span>
+                                        <span class="metric-value">${(Number(winRate) * 100).toFixed(0)}%</span>
                                         <span class="metric-label">Win Rate</span>
                                     </div>
                                     <div class="big-metric">
@@ -1241,28 +1055,28 @@
 
                 const html = results.map((result, index) => {
                     try {
-                        // Safely extract all numeric values with defaults
-                        const totalReturn = result.totalReturn ?? result.return ?? 0;
-                        const annualReturn = result.annualReturn ?? result.annual_return ?? 0;
-                        const sharpeRatio = result.sharpeRatio ?? result.sharpe ?? 0;
-                        const maxDrawdown = result.maxDrawdown ?? result.max_drawdown ?? 0;
-                        const totalTrades = result.totalTrades ?? result.trades ?? 0;
-                        const winRate = result.winRate ?? result.win_rate ?? 0;
-                        const profitFactor = result.profitFactor ?? result.profit_factor ??
-                            (totalReturn !== 0 && maxDrawdown !== 0 ? Math.abs(totalReturn / maxDrawdown) : 1);
-
+                        // Extract metrics from performance object (API structure)
+                        const perf = result.performance || {};
+                        const totalReturn = perf.totalReturn ?? result.totalReturn ?? result.return ?? 0;
+                        const annualReturn = perf.annualReturn ?? result.annualReturn ?? result.annual_return ?? 0;
+                        const sharpeRatio = perf.sharpeRatio ?? result.sharpeRatio ?? result.sharpe ?? 0;
+                        const maxDrawdown = perf.maxDrawdown ?? result.maxDrawdown ?? result.max_drawdown ?? 0;
+                        const totalTrades = perf.totalTrades ?? result.totalTrades ?? result.trades ?? 0;
+                        const winRate = perf.winRate ?? result.winRate ?? result.win_rate ?? 0;
+                        const profitFactor = perf.profitFactor ?? result.profitFactor ?? result.profit_factor ?? 0;
+                        const strategyName = result.strategy || result.name || 'Unknown';
                         const isRealData = result.source === 'real_backtest' || result.source === 'real_backtest_files';
                         const sourceBadge = isRealData ? 'RÉEL' : 'MOCK';
 
                         return `
                             <tr>
-                                <td>${String(result.strategy || result.name || `Strategy ${index + 1}`).replace(/[&<>"']/g, '')}</td>
-                                <td class="${totalReturn >= 0 ? 'positive' : 'negative'}">${Number(totalReturn).toFixed(2)}%</td>
-                                <td class="${annualReturn >= 0 ? 'positive' : 'negative'}">${Number(annualReturn).toFixed(2)}%</td>
+                                <td>${String(strategyName).replace(/[&<>"']/g, '')}</td>
+                                <td class="${totalReturn >= 0 ? 'positive' : 'negative'}">${(Number(totalReturn) * 100).toFixed(2)}%</td>
+                                <td class="${annualReturn >= 0 ? 'positive' : 'negative'}">${(Number(annualReturn) * 100).toFixed(2)}%</td>
                                 <td class="${sharpeRatio >= 0 ? 'positive' : 'negative'}">${Number(sharpeRatio).toFixed(2)}</td>
                                 <td class="negative">${Math.abs(Number(maxDrawdown)).toFixed(2)}%</td>
                                 <td>${Number(totalTrades).toLocaleString()}</td>
-                                <td>${Number(winRate).toFixed(1)}%</td>
+                                <td>${(Number(winRate) * 100).toFixed(1)}%</td>
                                 <td>${Number(profitFactor).toFixed(2)}</td>
                                 <td><span class="source-badge real">${sourceBadge}</span></td>
                             </tr>
@@ -1589,48 +1403,58 @@
                 // Fetch real data from API
                 const backtestsData = await apiClient.getBacktests();
 
-                // Update current data
-                currentData = backtestsData;
+                // Handle API response structure: {success: true, data: {backtests: [...]}}
+                const apiData = backtestsData.data || backtestsData;
+
+                // Update current data with corrected structure
+                currentData = {
+                    success: backtestsData.success,
+                    backtests: apiData.backtests || [],
+                    results: apiData.backtests || [],
+                    total_count: apiData.total_count || 0,
+                    source: apiData.source || 'api',
+                    timestamp: backtestsData.timestamp
+                };
 
                 console.log('[LOAD] Received data:', {
-                    success: backtestsData.success,
-                    backtestCount: backtestsData.backtests?.length || 0,
-                    resultCount: backtestsData.results?.length || 0,
-                    source: backtestsData.source
+                    success: currentData.success,
+                    backtestCount: currentData.backtests?.length || 0,
+                    resultCount: currentData.results?.length || 0,
+                    source: currentData.source
                 });
 
                 // Update tab counts
-                if (backtestsData.counts) {
-                    updateTabCounts(backtestsData.counts);
+                if (currentData.counts) {
+                    updateTabCounts(currentData.counts);
                 }
 
                 // Update data source indicator
-                if (backtestsData.success) {
-                    updateDataSourceIndicator(`Données API (${backtestsData.source || 'unknown'})`);
+                if (currentData.success) {
+                    updateDataSourceIndicator(`Données API (${currentData.source || 'unknown'})`);
                 } else {
                     updateDataSourceIndicator('Données de fallback (API indisponible)');
                 }
 
                 // Update system status
                 if (typeof window.updateSystemStatus === 'function') {
-                    window.updateSystemStatus(backtestsData);
+                    window.updateSystemStatus(currentData);
                 } else {
                     console.warn('[SYSTEM] updateSystemStatus function not available');
                     // Fallback: directly update status
-                    directUpdateSystemStatus(backtestsData);
+                    directUpdateSystemStatus(currentData);
                 }
 
                 // Display the data for current timeframe
-                if (backtestsData.backtests && backtestsData.backtests.length > 0) {
-                    console.log('[LOAD] Displaying', backtestsData.backtests.length, 'backtests');
-                    const filteredStrategies = filterStrategiesByTimeframe(backtestsData.backtests, currentTimeframe);
-                    const filteredResults = filterResultsByTimeframe(backtestsData.results || [], currentTimeframe);
+                if (currentData.backtests && currentData.backtests.length > 0) {
+                    console.log('[LOAD] Displaying', currentData.backtests.length, 'backtests');
+                    const filteredStrategies = filterStrategiesByTimeframe(currentData.backtests, currentTimeframe);
 
+                    // Use the same data for both displays - cards and detailed table
                     displayBacktests(filteredStrategies);
-                    displayBacktestResults(filteredResults);
+                    displayBacktestResults(filteredStrategies);
 
-                    const count = backtestsData.backtests.length;
-                    const source = backtestsData.source || 'API';
+                    const count = currentData.backtests.length;
+                    const source = currentData.source || 'API';
                     showNotification(`✅ ${count} backtests chargés depuis ${source}`, 'success');
                 } else {
                     // Show empty state with refresh button
@@ -1837,13 +1661,26 @@
 
         // Calculate statistics
         function calculateStats(backtests) {
+            if (!backtests.length) return {
+                total: 0, avgReturn: 0, avgSharpe: 0, avgWinRate: 0, totalTrades: 0, maxReturn: 0
+            };
+
             return {
                 total: backtests.length,
-                avgReturn: backtests.reduce((sum, bt) => sum + (bt.return || 0), 0) / backtests.length,
-                avgSharpe: backtests.reduce((sum, bt) => sum + (bt.sharpe || 0), 0) / backtests.length,
-                avgWinRate: backtests.reduce((sum, bt) => sum + (bt.winRate || 0), 0) / backtests.length,
-                totalTrades: backtests.reduce((sum, bt) => sum + (bt.totalTrades || 0), 0),
-                maxReturn: Math.max(...backtests.map(bt => bt.return || 0))
+                avgReturn: backtests.reduce((sum, bt) => {
+                    const perf = bt.performance || {};
+                    return sum + (bt.performance?.totalReturn || 0);
+                }, 0) / backtests.length,
+                avgSharpe: backtests.reduce((sum, bt) => {
+                    return sum + (bt.performance?.sharpeRatio || 0);
+                }, 0) / backtests.length,
+                avgWinRate: backtests.reduce((sum, bt) => {
+                    return sum + (bt.performance?.winRate || 0);
+                }, 0) / backtests.length,
+                totalTrades: backtests.reduce((sum, bt) => {
+                    return sum + (bt.performance?.totalTrades || 0);
+                }, 0),
+                maxReturn: Math.max(...backtests.map(bt => bt.performance?.totalReturn || 0))
             };
         }
 
@@ -1876,7 +1713,7 @@
                         labels: labels,
                         datasets: [{
                             label: 'Return %',
-                            data: sortedBacktests.map(bt => ((bt.return || 0) * 100).toFixed(2)),
+                            data: sortedBacktests.map(bt => ((bt.performance?.totalReturn || 0) * 100).toFixed(2)),
                             backgroundColor: 'rgba(102, 126, 234, 0.8)',
                             borderColor: 'rgba(102, 126, 234, 1)',
                             borderWidth: 2
@@ -1904,7 +1741,7 @@
                         labels: labels,
                         datasets: [{
                             label: 'Sharpe Ratio',
-                            data: sortedBacktests.map(bt => (bt.sharpe || 0).toFixed(2)),
+                            data: sortedBacktests.map(bt => (bt.performance?.sharpeRatio || 0).toFixed(2)),
                             backgroundColor: 'rgba(40, 167, 69, 0.8)',
                             borderColor: 'rgba(40, 167, 69, 1)',
                             borderWidth: 2
@@ -1931,7 +1768,7 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            data: sortedBacktests.map(bt => ((bt.winRate || 0) * 100).toFixed(1)),
+                            data: sortedBacktests.map(bt => ((bt.performance?.winRate || 0) * 100).toFixed(1)),
                             backgroundColor: [
                                 'rgba(255, 99, 132, 0.8)',
                                 'rgba(54, 162, 235, 0.8)',
@@ -1962,7 +1799,7 @@
                         labels: labels,
                         datasets: [{
                             label: 'Profit Factor',
-                            data: sortedBacktests.map(bt => (bt.profitFactor || 0).toFixed(2)),
+                            data: sortedBacktests.map(bt => (bt.performance?.profitFactor || 0).toFixed(2)),
                             backgroundColor: 'rgba(118, 75, 162, 0.2)',
                             borderColor: 'rgba(118, 75, 162, 1)',
                             borderWidth: 2
@@ -1995,13 +1832,13 @@
                     <tr>
                         <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                         <td><strong>${name}</strong></td>
-                        <td class="metric-positive">${((bt.return || 0) * 100).toFixed(2)}%</td>
-                        <td class="metric-positive">${((bt.annualReturn || 0) * 100).toFixed(2)}%</td>
-                        <td>${(bt.sharpe || 0).toFixed(2)}</td>
-                        <td class="metric-negative">${Math.abs((bt.maxDrawdown || 0) * 100).toFixed(2)}%</td>
-                        <td>${(bt.totalTrades || 0).toLocaleString()}</td>
-                        <td class="metric-positive">${((bt.winRate || 0) * 100).toFixed(1)}%</td>
-                        <td class="metric-positive">${(bt.profitFactor || 0).toFixed(2)}</td>
+                        <td class="metric-positive">${(((bt.performance?.totalReturn) || 0) * 100).toFixed(2)}%</td>
+                        <td class="metric-positive">${(((bt.performance?.annualReturn) || 0) * 100).toFixed(2)}%</td>
+                        <td>${(bt.performance?.sharpeRatio || 0).toFixed(2)}</td>
+                        <td class="metric-negative">${Math.abs((bt.performance?.maxDrawdown || 0) * 100).toFixed(2)}%</td>
+                        <td>${(bt.performance?.totalTrades || 0).toLocaleString()}</td>
+                        <td class="metric-positive">${(((bt.performance?.winRate) || 0) * 100).toFixed(1)}%</td>
+                        <td class="metric-positive">${(bt.performance?.profitFactor || 0).toFixed(2)}</td>
                     </tr>
                 `;
             }).join('');
