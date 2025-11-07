@@ -241,7 +241,7 @@ export class MetricsService {
   private static updateTradeSuccessRate(symbol: string, success: boolean): void {
     // Cette méthode nécessite de suivre les stats globales
     // Pour simplifier, on utilise une approximation
-    const currentRate = tradeSuccessRate.get({ symbol, timeframe: '5m' }) || 0;
+    const currentRate = tradeSuccessRate.get({ symbol, timeframe: '5m' })?.value || 0;
     const alpha = 0.1; // Facteur de lissage
     const newRate = alpha * (success ? 1 : 0) + (1 - alpha) * currentRate;
     tradeSuccessRate.set({ symbol, timeframe: '5m' }, newRate);

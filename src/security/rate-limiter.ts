@@ -37,10 +37,7 @@ export class RateLimiterService {
     const defaultConfig: RateLimitConfig = {
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // 100 requêtes par fenêtre
-      message: {
-        error: 'Too many requests from this IP, please try again later.',
-        retryAfter: '15 minutes'
-      },
+      message: 'Too many requests from this IP, please try again later.',
       standardHeaders: true,
       legacyHeaders: false,
       ...config
@@ -78,10 +75,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 10, // 10 requêtes par fenêtre
-      message: {
-        error: 'Too many requests to this critical endpoint',
-        retryAfter: '15 minutes'
-      },
+      message: 'Too many requests to this critical endpoint',
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
       ...config
@@ -95,10 +89,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 1000, // 1000 requêtes par fenêtre
-      message: {
-        error: 'Too many requests, please slow down',
-        retryAfter: '15 minutes'
-      },
+      message: 'Too many requests, please slow down',
       ...config
     });
   }
@@ -110,11 +101,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 60 * 1000, // 1 minute
       max: 30, // 30 trades par minute
-      message: {
-        error: 'Trading rate limit exceeded',
-        retryAfter: '1 minute',
-        type: 'trading_limit'
-      },
+      message: 'Trading rate limit exceeded',
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
       keyGenerator: (req) => {
@@ -132,11 +119,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 1 * 60 * 1000, // 1 minute
       max: 200, // 200 requêtes par minute
-      message: {
-        error: 'Data API rate limit exceeded',
-        retryAfter: '1 minute',
-        type: 'data_limit'
-      },
+      message: 'Data API rate limit exceeded',
       skipSuccessfulRequests: false,
       ...config
     });
@@ -149,11 +132,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 5 * 60 * 1000, // 5 minutes
       max: 50, // 50 actions d'agent par 5 minutes
-      message: {
-        error: 'Agent rate limit exceeded',
-        retryAfter: '5 minutes',
-        type: 'agent_limit'
-      },
+      message: 'Agent rate limit exceeded',
       keyGenerator: (req) => {
         // Utiliser l'ID de l'agent depuis les params
         return `agent:${req.params.agentId || 'unknown'}`;
@@ -169,10 +148,7 @@ export class RateLimiterService {
     return this.createBasic({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 500, // 500 requêtes par utilisateur par 15 minutes
-      message: {
-        error: 'User rate limit exceeded',
-        retryAfter: '15 minutes'
-      },
+      message: 'User rate limit exceeded',
       keyGenerator: (req) => {
         // Prioriser l'ID utilisateur authentifié
         return req.user?.id || req.ip || 'anonymous';
@@ -299,21 +275,29 @@ export class RateLimiterService {
     config: Partial<RateLimitConfig>,
     blacklist: string[] = []
   ): RateLimitRequestHandler {
-    return (req, res, next) => {
-      const clientIp = req.ip || req.connection.remoteAddress;
-
-      if (blacklist.includes(clientIp!)) {
-        return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Access denied from this IP address',
-          timestamp: new Date().toISOString()
+    return rateLimit({
+      windowMs: config.windowMs || 15 * 60 * 1000,
+      max: config.max || 100,
+      message: config.message || 'Rate limit exceeded',
+      skip: (req) => {
+        const clientIp = req.ip || req.connection.remoteAddress;
+        return blacklist.includes(clientIp || '');
+      },
+      handler: (req, res) => {
+        const clientIp = req.ip || req.connection.remoteAddress;
+        if (blacklist.includes(clientIp || '')) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Access denied from this IP address',
+            timestamp: new Date().toISOString()
+          });
+        }
+        res.status(429).json({
+          error: 'Too many requests',
+          message: config.message || 'Rate limit exceeded'
         });
       }
-
-      // Appliquer le rate limiter normal
-      const limiter = this.createBasic(config);
-      return limiter(req, res, next);
-    };
+    }) as any;
   }
 }
 

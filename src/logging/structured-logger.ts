@@ -205,7 +205,7 @@ export class StructuredLogger {
     }
 
     return winston.createLogger({
-      level: process.env.LOG_LEVEL || 'info',
+      level: process.env['LOG_LEVEL'] || 'info',
       format: logFormat,
       transports,
       // Gérer les exceptions non capturées
@@ -485,7 +485,7 @@ export class StructuredLogger {
           hostname: require('os').hostname(),
           pid: process.pid,
           version: process.version,
-          environment: process.env.NODE_ENV || 'development',
+          environment: process.env['NODE_ENV'] || 'development',
           uptime
         },
         performance: {

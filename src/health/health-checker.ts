@@ -175,7 +175,7 @@ export class HealthChecker {
           status: 'unavailable',
           message: (error as Error).message,
           lastCheck: new Date()
-        });
+        } as DependencyHealth);
       }
     }
   }
@@ -218,10 +218,15 @@ export class HealthChecker {
 
     try {
       // Vérifier si le serveur WebSocket fonctionne
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+
       const response = await fetch('http://localhost:7002', {
         method: 'GET',
-        timeout: 1000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
 
@@ -260,18 +265,23 @@ export class HealthChecker {
     const startTime = Date.now();
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch('http://localhost:7000/api/health', {
         method: 'GET',
-        timeout: 5000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
       const data = await response.json();
 
       if (response.ok) {
         return {
-          status: data.status === 'healthy' ? 'healthy' : 'degraded',
-          message: data.status,
+          status: (data as any).status === 'healthy' ? 'healthy' : 'degraded',
+          message: (data as any).status || 'Unknown',
           responseTime,
           lastCheck: new Date(),
           metadata: data
@@ -301,26 +311,31 @@ export class HealthChecker {
     const startTime = Date.now();
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
       const response = await fetch('http://localhost:7000/api/agents', {
         method: 'GET',
-        timeout: 3000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
       const data = await response.json();
 
-      if (response.ok && data.agents) {
-        const activeAgents = data.agents.filter((agent: any) => agent.status === 'active').length;
+      if (response.ok && (data as any).agents) {
+        const activeAgents = (data as any).agents.filter((agent: any) => agent.status === 'active').length;
 
         return {
           status: activeAgents > 0 ? 'healthy' : 'degraded',
-          message: `${activeAgents}/${data.agents.length} agents active`,
+          message: `${activeAgents}/${(data as any).agents.length} agents active`,
           responseTime,
           lastCheck: new Date(),
           metadata: {
-            totalAgents: data.agents.length,
+            totalAgents: (data as any).agents.length,
             activeAgents,
-            agents: data.agents.map((agent: any) => ({
+            agents: (data as any).agents.map((agent: any) => ({
               id: agent.id,
               name: agent.name,
               status: agent.status
@@ -386,10 +401,15 @@ export class HealthChecker {
     const startTime = Date.now();
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch('http://localhost:7000/api/hyperliquid/price/BTC', {
         method: 'GET',
-        timeout: 5000
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
       const data = await response.json();

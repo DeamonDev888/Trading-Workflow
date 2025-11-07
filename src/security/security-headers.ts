@@ -82,17 +82,17 @@ export class SecurityHeadersService {
 
     // Politique d'ouverture cross-origin
     crossOriginOpenerPolicy: {
-      policy: "same-origin"
+      policy: "same-origin" as any
     },
 
     // Politique de ressource cross-origin
     crossOriginResourcePolicy: {
-      policy: "cross-origin"
+      policy: "cross-origin" as any
     },
 
     // Contrôle du DNS prefetching
     dnsPrefetchControl: {
-      allow: false
+      allow: false as any
     },
 
     // Protection contre le clickjacking
@@ -284,7 +284,7 @@ export class SecurityHeadersService {
     return {
       ...this.config,
       contentSecurityPolicy: false, // Désactivé pour les tests
-      hsts: false,
+      hsts: false as any,
       frameguard: { action: 'sameorigin' } // Moins strict pour les tests
     };
   }
@@ -292,7 +292,7 @@ export class SecurityHeadersService {
   /**
    * 🎯 Obtenir la configuration appropriée selon l'environnement
    */
-  static getConfigForEnvironment(env: string = process.env.NODE_ENV || 'development'): SecurityConfig {
+  static getConfigForEnvironment(env: string = process.env['NODE_ENV'] || 'development'): SecurityConfig {
     switch (env.toLowerCase()) {
       case 'production':
         return this.getProductionConfig();
@@ -355,7 +355,7 @@ export class SecurityHeadersService {
       ];
 
       // En développement, autoriser localhost avec n'importe quel port
-      const isDevelopment = process.env.NODE_ENV === 'development';
+      const isDevelopment = process.env['NODE_ENV'] === 'development';
       const isAllowedOrigin = isDevelopment && origin?.startsWith('http://localhost:') ||
                             allowedOrigins.includes(origin || '');
 

@@ -1357,9 +1357,9 @@ app.get('/api/stats', async (req: Request, res: Response) => {
       active_positions: (realData.portfolio_metrics as any)?.active_positions || 0,
       available_balance: (realData.portfolio_metrics as any)?.available_balance || 0,
       margin_used: (realData.portfolio_metrics as any)?.margin_used || 0,
-      daily_pnl: (realData.performance_stats as any)?.net_profit || 0,
-      total_trades: (realData.performance_stats as any)?.total_cycles || 0,
-      win_rate: (realData.performance_stats as any)?.success_rate || 0,
+      daily_pnl: (realData.portfolio_metrics as any)?.daily_pnl || 0,
+      total_trades: (realData.portfolio_metrics as any)?.total_trades || 0,
+      win_rate: (realData.portfolio_metrics as any)?.win_rate || 0,
       system_status: realData.system_status || 'UNKNOWN',
       uptime: process.uptime(),
       timestamp: new Date().toISOString()
