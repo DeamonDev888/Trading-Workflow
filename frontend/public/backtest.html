@@ -502,15 +502,15 @@
                         <!-- Performance principale -->
                         <div class="perf-summary">
                             <div class="big-number">
-                                <span class="value ${strategy.return >= 0 ? 'positive' : 'negative'}">${Number(strategy.return || 0).toFixed(1)}%</span>
+                                <span class="value ${(strategy.performance?.totalReturn || 0) >= 0 ? 'positive' : 'negative'}">${Number(strategy.performance?.totalReturn || 0).toFixed(1)}%</span>
                                 <span class="label">Return Total</span>
                             </div>
                             <div class="big-number">
-                                <span class="value">${Number(strategy.winRate || 0).toFixed(0)}%</span>
+                                <span class="value">${Number(strategy.performance?.winRate || 0) * 100}%</span>
                                 <span class="label">Taux de réussite</span>
                             </div>
                             <div class="big-number">
-                                <span class="value">${Number(strategy.sharpe || 0).toFixed(2)}</span>
+                                <span class="value">${Number(strategy.performance?.sharpeRatio || 0).toFixed(2)}</span>
                                 <span class="label">Ratio de Sharpe</span>
                             </div>
                         </div>
@@ -534,11 +534,11 @@
                                 </div>
                                 <div class="feature">
                                     <i class="fas fa-chart-bar"></i>
-                                    <span><strong>Trades:</strong> ${Number(strategy.totalTrades || 0)}</span>
+                                    <span><strong>Trades:</strong> ${Number(strategy.performance?.totalTrades || 0)}</span>
                                 </div>
                                 <div class="feature">
                                     <i class="fas fa-exclamation-triangle"></i>
-                                    <span><strong>Risque max:</strong> ${Math.abs(Number(strategy.maxDrawdown || 0)).toFixed(1)}%</span>
+                                    <span><strong>Risque max:</strong> ${Math.abs(Number(strategy.performance?.maxDrawdown || 0)).toFixed(1)}%</span>
                                 </div>
                             </div>
                         </div>
@@ -975,7 +975,7 @@
                                     </div>
                                 </div>
 
-                                <div class="card-description">
+                                <div class="card-description" style="margin-bottom: 1.5rem;">
                                     <p>${safeDesc || 'Stratégie de trading testée et validée'}</p>
                                 </div>
 
@@ -983,7 +983,7 @@
                                 <div class="main-metrics">
                                     <div class="big-metric">
                                         <span class="metric-value ${totalReturn >= 0 ? 'positive' : 'negative'}">
-                                            ${(Number(totalReturn) * 100).toFixed(1)}%
+                                            ${Number(totalReturn).toFixed(1)}%
                                         </span>
                                         <span class="metric-label">Return</span>
                                     </div>
@@ -1453,6 +1453,9 @@
                     displayBacktests(filteredStrategies);
                     displayBacktestResults(filteredStrategies);
 
+                    // Update the dashboard with charts and table
+                    updateDashboard(filteredStrategies);
+
                     const count = currentData.backtests.length;
                     const source = currentData.source || 'API';
                     showNotification(`✅ ${count} backtests chargés depuis ${source}`, 'success');
@@ -1668,7 +1671,6 @@
             return {
                 total: backtests.length,
                 avgReturn: backtests.reduce((sum, bt) => {
-                    const perf = bt.performance || {};
                     return sum + (bt.performance?.totalReturn || 0);
                 }, 0) / backtests.length,
                 avgSharpe: backtests.reduce((sum, bt) => {
@@ -1686,8 +1688,8 @@
 
         // Update statistics display
         function updateStatsDisplay(stats) {
-            document.getElementById('bestPerformer').textContent = `${(stats.maxReturn * 100).toFixed(1)}%`;
-            document.getElementById('avgReturn').textContent = `${(stats.avgReturn * 100).toFixed(1)}%`;
+            document.getElementById('bestPerformer').textContent = `${stats.maxReturn.toFixed(1)}%`;
+            document.getElementById('avgReturn').textContent = `${stats.avgReturn.toFixed(1)}%`;
             document.getElementById('avgSharpe').textContent = stats.avgSharpe.toFixed(2);
             document.getElementById('avgWinRate').textContent = `${(stats.avgWinRate * 100).toFixed(1)}%`;
             document.getElementById('totalTrades').textContent = stats.totalTrades.toLocaleString();
@@ -1702,7 +1704,7 @@
             dashboardCharts = {};
 
             const sortedBacktests = [...backtests].sort((a, b) => (b.return || 0) - (a.return || 0)).slice(0, 7);
-            const labels = sortedBacktests.map(bt => (bt.name || bt.fullName || '').replace(/_/g, ' ').substring(0, 20));
+            const labels = sortedBacktests.map(bt => (bt.strategy || bt.name || bt.fullName || '').replace(/_/g, ' ').substring(0, 20));
 
             // Return Chart
             const returnCtx = document.getElementById('returnChart');
@@ -1713,7 +1715,7 @@
                         labels: labels,
                         datasets: [{
                             label: 'Return %',
-                            data: sortedBacktests.map(bt => ((bt.performance?.totalReturn || 0) * 100).toFixed(2)),
+                            data: sortedBacktests.map(bt => (bt.performance?.totalReturn || 0).toFixed(2)),
                             backgroundColor: 'rgba(102, 126, 234, 0.8)',
                             borderColor: 'rgba(102, 126, 234, 1)',
                             borderWidth: 2
@@ -1821,23 +1823,23 @@
             const tbody = document.getElementById('enhancedResultsBody');
             if (!tbody) return;
 
-            const sortedBacktests = [...backtests].sort((a, b) => (b.return || 0) - (a.return || 0));
+            const sortedBacktests = [...backtests].sort((a, b) => (b.performance?.totalReturn || 0) - (a.performance?.totalReturn || 0));
 
             const html = sortedBacktests.map((bt, index) => {
                 const rank = index + 1;
                 const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
-                const name = (bt.name || bt.fullName || '').replace(/_/g, ' ');
+                const name = (bt.strategy || bt.name || bt.fullName || '').replace(/_/g, ' ');
 
                 return `
                     <tr>
                         <td><span class="rank-badge ${rankClass}">${rank}</span></td>
                         <td><strong>${name}</strong></td>
-                        <td class="metric-positive">${(((bt.performance?.totalReturn) || 0) * 100).toFixed(2)}%</td>
-                        <td class="metric-positive">${(((bt.performance?.annualReturn) || 0) * 100).toFixed(2)}%</td>
+                        <td class="metric-positive">${(bt.performance?.totalReturn || 0).toFixed(2)}%</td>
+                        <td class="metric-positive">${(bt.performance?.annualReturn || 0).toFixed(2)}%</td>
                         <td>${(bt.performance?.sharpeRatio || 0).toFixed(2)}</td>
-                        <td class="metric-negative">${Math.abs((bt.performance?.maxDrawdown || 0) * 100).toFixed(2)}%</td>
+                        <td class="metric-negative">${Math.abs(bt.performance?.maxDrawdown || 0).toFixed(2)}%</td>
                         <td>${(bt.performance?.totalTrades || 0).toLocaleString()}</td>
-                        <td class="metric-positive">${(((bt.performance?.winRate) || 0) * 100).toFixed(1)}%</td>
+                        <td class="metric-positive">${((bt.performance?.winRate || 0) * 100).toFixed(1)}%</td>
                         <td class="metric-positive">${(bt.performance?.profitFactor || 0).toFixed(2)}</td>
                     </tr>
                 `;

@@ -1,82 +1,59 @@
 """
-💰 Deamon Dev's Funding Rate Monitor
+💰 Deamon Dev's Funding Agent
 Built with love by Deamon Dev 🚀
 
-Fran the Funding Agent tracks funding rate changes across different timeframes
-and announces significant changes via OpenAI TTS.
+Funding Agent tracks funding rate changes across different timeframes
+and executes funding arbitrage strategies using Claude Code Sub-Agents.
 
-
+Version 2.0: Utilise Claude Code Sub-Agents exclusively (no external APIs)
 """
 
-import asyncio
+import json
 import os
-import re
+import subprocess
 import time
 import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
 
-import anthropic
-import openai
 import pandas as pd
 from dotenv import load_dotenv
 from termcolor import cprint
 
 from src import config
-from src.agents.api import DeamonDevAPI
 from src.agents.base_agent import BaseAgent
 from src.agents.strategy_library import PROVEN_STRATEGIES
 from src.hyperliquid import HyperliquidClient
-
-# Model override settings
-# Set to "0" to use config.py's AI_MODEL setting
-# Available models:
-# - "deepseek-chat" (DeepSeek's V3 model - fast & efficient)
-# - "deepseek-reasoner" (DeepSeek's R1 reasoning model)
-# - "0" (Use config.py's AI_MODEL setting)
-MODEL_OVERRIDE = "deepseek-chat"  # Set to "deepseek-chat" to use DeepSeek
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
+from src.config import *
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Configuration
-CHECK_INTERVAL_MINUTES = 15  # How often to check funding rates
-NEGATIVE_THRESHOLD = -5  # AI Run & Alert if annual rate below -1%
-POSITIVE_THRESHOLD = 20  # AI Run & Alert if annual rate above 20%
+# Funding Analysis Prompt for Claude Sub-Agent
+FUNDING_ANALYSIS_PROMPT = """
+You are Deamon Dev's Funding Rate Analysis Assistant
 
-# OHLCV Data Settings
-TIMEFRAME = "15m"  # Candlestick timeframe
-LOOKBACK_BARS = 100  # Number of candles to analyze
+Analyze the funding rate opportunity and provide a trading recommendation:
 
-# Symbol to name mapping
-SYMBOL_NAMES = {
-    # 'BTC': 'Bitcoin',
-    # 'ETH': 'Ethereum',
-    # 'SOL': 'Solana',
-    # 'WIF': 'Wif',
-    # 'BNB': 'BNB',
-    "FARTCOIN": "Fart Coin"
-}
+Symbol: {symbol}
+Current Funding Rate: {rate}% (annualized: {annual_rate}%)
+Market Context: {context}
 
-# Only set these if you want to override config.py settings
-AI_MODEL = False  # Set to model name to override config.AI_MODEL
-AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
-AI_MAX_TOKENS = 25  # Set > 0 to override config.AI_MAX_TOKENS
+Evaluate:
+1. Is this a profitable arbitrage opportunity?
+2. Risk/reward ratio
+3. Recommended action: BUY/SELL/NOTHING
+4. Position size suggestion
+5. Expected duration
 
-# Voice settings
-VOICE_MODEL = "tts-1"
-VOICE_NAME = "fable"  # Options: alloy, echo, fable, onyx, nova, shimmer
-VOICE_SPEED = 1
-
-# AI Analysis Prompt
-FUNDING_ANALYSIS_PROMPT = """You must respond in exactly 3 lines:
-Line 1: Only write BUY, SELL, or NOTHING
-Line 2: One short reason why
-Line 3: Only write "Confidence: X%" where X is 0-100
-
-Analyze {symbol} with {rate}% funding rate:
+Respond in this format:
+1. First line: BUY, SELL, or NOTHING
+2. Brief reasoning (1-2 lines)
+3. Confidence: X%
+4. Position size recommendation
+5. Risk factors
+"""
 
 Below is Bitcoin (BTC) market data which shows overall market direction:
 {market_data}
@@ -93,58 +70,17 @@ Remember:
 
 
 class FundingAgent(BaseAgent):
-    """Fran the Funding Rate Monitor 💰"""
+    """Funding Agent - Utilise Claude Code Sub-Agents"""
 
     def __init__(self):
-        """Initialize Fran the Funding Agent"""
-        super().__init__("funding")
+        """Initialize Deamon Dev's Funding Agent"""
+        super().__init__("funding", enable_postgres=True)
 
-        # Set active model - use override if set, otherwise use config
-        self.active_model = MODEL_OVERRIDE if MODEL_OVERRIDE != "0" else config.AI_MODEL
+        # Configuration pour le sub-agent
+        self.subagent_name = "claude-funding-advisor"
 
-        load_dotenv()
-
-        # Initialize OpenAI client for voice only
-        openai_key = os.getenv("OPENAI_KEY")
-        if not openai_key:
-            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
-        openai.api_key = openai_key
-
-        # Initialize Anthropic for Claude models
-        anthropic_key = os.getenv("ANTHROPIC_KEY")
-        if not anthropic_key:
-            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
-        self.anthropic_client = anthropic.Anthropic(api_key=anthropic_key)
-
-        # Initialize DeepSeek client if needed
-        if "deepseek" in self.active_model.lower():
-            deepseek_key = os.getenv("DEEPSEEK_KEY")
-            if deepseek_key:
-                self.deepseek_client = openai.OpenAI(
-                    api_key=deepseek_key, base_url=DEEPSEEK_BASE_URL
-                )
-                cprint(
-                    "🚀 Deamon Dev's Funding Agent using DeepSeek override!", "green"
-                )
-            else:
-                self.deepseek_client = None
-                cprint(
-                    "⚠️ DEEPSEEK_KEY not found - DeepSeek model will not be available",
-                    "yellow",
-                )
-        else:
-            self.deepseek_client = None
-            cprint(
-                f"🎯 Deamon Dev's Funding Agent using Claude model: {self.active_model}!",
-                "green",
-            )
-
-        self.api = DeamonDevAPI()
-
-        # Create data directories if they don't exist
-        self.audio_dir = PROJECT_ROOT / "src" / "audio"
+        # Create data directories
         self.data_dir = PROJECT_ROOT / "src" / "data"
-        self.audio_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize or load historical data
@@ -154,11 +90,64 @@ class FundingAgent(BaseAgent):
         # 🏆 VALIDATE FUNDING STRATEGY FROM LIBRARY
         self._validate_funding_strategy()
 
-        print("💰 Fran the Funding Agent initialized!")
-        print(
-            f"🎯 Alerting on funding rates: below {NEGATIVE_THRESHOLD}% or above {POSITIVE_THRESHOLD}%"
+        cprint(
+            "[OK] Funding Agent initialized with Claude Code Sub-Agents!",
+            "white",
+            "on_blue",
         )
-        print(f"📊 Analyzing {LOOKBACK_BARS} {TIMEFRAME} candles for context")
+
+    def call_subagent(self, prompt: str, context_data: dict = None) -> str:
+        """
+        Appeler le sub-agent claude-funding-advisor via Claude Code CLI
+
+        Args:
+            prompt: Le prompt pour le sub-agent
+            context_data: Données contextuelles (funding rates, market data, etc.)
+
+        Returns:
+            Réponse du sub-agent
+
+        Raises:
+            RuntimeError: Si l'appel au sub-agent échoue
+        """
+        full_prompt = f"""Use the claude-funding-advisor subagent to analyze this funding opportunity:
+
+{prompt}
+
+Context Data:
+{json.dumps(context_data, indent=2) if context_data else 'N/A'}
+
+Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommendations."""
+
+        # Exécuter Claude Code avec le sub-agent
+        cmd = [
+            "claude",
+            "--dangerously-skip-permissions",
+            "--agent",
+            "claude-funding-advisor",
+            full_prompt,
+        ]
+
+        cprint(
+            f"[INFO] Calling sub-agent: claude-funding-advisor (skipping permissions)",
+            "cyan",
+        )
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minutes timeout
+            cwd=os.getcwd(),
+        )
+
+        if result.returncode != 0:
+            error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
+            cprint(error_msg, "red")
+            raise RuntimeError(error_msg)
+
+        cprint("[OK] Sub-agent response received", "green")
+        return result.stdout
 
     def _validate_funding_strategy(self):
         """Validate that funding strategy is in the proven library"""
@@ -240,7 +229,7 @@ class FundingAgent(BaseAgent):
         }
 
     async def _analyze_opportunity(self, symbol, funding_data, market_data):
-        """Get AI analysis of the opportunity - UPDATED FOR NEW MODULE"""
+        """Get AI analysis of the opportunity using Claude Sub-Agent"""
         try:
             # Debug print raw funding rate
             rate = funding_data["annual_rate"].iloc[0]
@@ -313,45 +302,18 @@ class FundingAgent(BaseAgent):
                 funding_data=funding_data.to_string(),
             )
 
-            print(f"\n🤖 Analyzing {symbol} with AI...")
+            print(f"\n🤖 Analyzing {symbol} with Claude Sub-Agent...")
 
-            # Use either DeepSeek or Claude based on active_model
-            if "deepseek" in self.active_model.lower():
-                if not self.deepseek_client:
-                    raise ValueError(
-                        "🚨 DeepSeek client not initialized - check DEEPSEEK_KEY"
-                    )
+            # Prepare context data
+            context_data = {
+                "symbol": symbol,
+                "funding_rate": rate,
+                "btc_trend": btc_trend,
+                "active_model": self.active_model,
+            }
 
-                cprint(f"🤖 Using DeepSeek model: {self.active_model}", "cyan")
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": FUNDING_ANALYSIS_PROMPT},
-                        {"role": "user", "content": context},
-                    ],
-                    max_tokens=(
-                        AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
-                    ),
-                    temperature=(
-                        AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-                    ),
-                    stream=False,
-                )
-                content = response.choices[0].message.content.strip()
-            else:
-                cprint(f"🤖 Using Claude model: {self.active_model}", "cyan")
-                response = self.anthropic_client.messages.create(
-                    model=self.active_model,
-                    max_tokens=(
-                        AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
-                    ),
-                    temperature=(
-                        AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
-                    ),
-                    system=FUNDING_ANALYSIS_PROMPT,
-                    messages=[{"role": "user", "content": context}],
-                )
-                content = response.content[0].text
+            # Call the Claude sub-agent
+            content = self.call_subagent(context, context_data)
 
             # Debug: Print raw response
             print("\n🔍 Raw response:")
@@ -365,7 +327,7 @@ class FundingAgent(BaseAgent):
             lines = [line.strip() for line in content.split("\n") if line.strip()]
 
             if not lines:
-                print("❌ Empty response from AI")
+                print("❌ Empty response from sub-agent")
                 return None
 
             # First line should be the action
@@ -381,6 +343,7 @@ class FundingAgent(BaseAgent):
             confidence = 50  # Default confidence
             if len(lines) > 2:
                 try:
+                    import re
                     matches = re.findall(r"(\d+)%", lines[2])
                     if matches:
                         confidence = int(matches[0])
@@ -489,27 +452,13 @@ class FundingAgent(BaseAgent):
             return None
 
     def _announce(self, message):
-        """Announce message using OpenAI TTS"""
+        """Announce message to console (TTS removed - using Claude Sub-Agent only)"""
         if not message:
             return
 
         try:
-            print(f"\n📢 Announcing: {message}")
-
-            # Generate speech
-            response = openai.audio.speech.create(
-                model=VOICE_MODEL, voice=VOICE_NAME, input=message, speed=VOICE_SPEED
-            )
-
-            # Save audio file
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            audio_file = self.audio_dir / f"funding_alert_{timestamp}.mp3"
-
-            response.stream_to_file(audio_file)
-
-            # Play audio using system command
-            os.system(f"afplay {audio_file}")
-
+            print(f"\n📢 Funding Alert: {message}")
+            print("=" * 80)
         except Exception as e:
             print(f"❌ Error in announcement: {str(e)}")
 

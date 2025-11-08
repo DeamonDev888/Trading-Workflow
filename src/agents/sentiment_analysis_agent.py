@@ -2,12 +2,10 @@
 [OK] Deamon Dev's Sentiment Analysis Agent
 Built with love by Deamon Dev [ROCKET]
 
-SentimentAnalysisAgent monitors Twitter sentiment for our token list using twikit.
-It analyzes sentiment using HuggingFace models and tracks mentioned tokens.
+SentimentAnalysisAgent monitors social media sentiment using Claude Code Sub-Agents.
+It analyzes sentiment and provides trading signals based on market emotion.
 
-Required:
-1. First run twitter_login.py to generate cookies located: src/scripts/twitter_login.py
-2. Make sure your .env has the Twitter credentials, example added to .env.example
+Version 2.0: Utilise Claude Code Sub-Agents exclusively (no external APIs)
 """
 
 # Configuration
@@ -20,19 +18,41 @@ SENTIMENT_HISTORY_FILE = (
 IGNORE_LIST = ["t.co", "discord", "join", "telegram", "discount", "pay"]
 CHECK_INTERVAL_MINUTES = 15  # How often to run sentiment analysis
 
-# Sentiment settings
-SENTIMENT_ANNOUNCE_THRESHOLD = (
-    0.4  # Announce vocally if abs(sentiment) > this value (-1 to 1 scale)
-)
+# Sentiment Analysis Prompt for Claude Sub-Agent
+SENTIMENT_ANALYSIS_PROMPT = """
+You are Deamon Dev's Sentiment Analysis Assistant
 
-# Voice settings (copied from whale agent)
-VOICE_MODEL = "tts-1"  # or tts-1-hd for higher quality
-VOICE_NAME = "nova"  # Options: alloy, echo, fable, onyx, nova, shimmer
-VOICE_SPEED = 1  # 0.25 to 4.0
+Analyze the following social media data and provide sentiment-based trading signals:
+
+Social Media Data:
+{sentiment_data}
+
+Market Context:
+{market_context}
+
+Token: {token}
+
+Evaluate:
+1. Overall sentiment (VERY_BEARISH/BEARISH/NEUTRAL/BULLISH/VERY_BULLISH)
+2. Sentiment strength (0-100%)
+3. Trading signal (BUY/SELL/HOLD)
+4. Confidence level (0-100%)
+5. Key emotional indicators
+
+Respond in this format:
+1. First line: sentiment label
+2. Sentiment strength: X%
+3. Action: BUY/SELL/HOLD
+4. Confidence: X%
+5. Key factors:
+6. Risk assessment
+"""
 
 import asyncio
+import json
 import os
 import pathlib
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
@@ -41,12 +61,12 @@ from random import randint
 
 import httpx
 import numpy as np
-import openai
 import pandas as pd
-import torch
 from dotenv import load_dotenv
 from termcolor import cprint
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from src.agents.base_agent import BaseAgent
+from src.config import *
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -56,9 +76,6 @@ pathlib.Path(DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
 # Load environment variables
 load_dotenv()
-
-# Get OpenAI key for voice
-openai.api_key = os.getenv("OPENAI_KEY")
 
 # Patch httpx
 original_client = httpx.Client
@@ -105,17 +122,14 @@ httpx.Client = patched_client
 # imports
 from twikit import Client, TooManyRequests
 
-from src.agents.base_agent import BaseAgent
-
-
 class SentimentAnalysisAgent(BaseAgent):
     def __init__(self):
         """Initialize the Sentiment Analysis Agent"""
-        super().__init__("sentiment")
+        super().__init__("sentiment", enable_postgres=True)
 
-        self.client = None
-        self.tokenizer = None
-        self.model = None
+        # Configuration pour le sub-agent
+        self.subagent_name = "claude-sentiment-advisor"
+
         self.audio_dir = Path("src/audio")
         self.audio_dir.mkdir(parents=True, exist_ok=True)
 
@@ -125,11 +139,11 @@ class SentimentAnalysisAgent(BaseAgent):
                 SENTIMENT_HISTORY_FILE, index=False
             )
 
-        # Load the sentiment model at initialization
-        cprint("[AI] Loading sentiment model...", "cyan")
-        self.init_sentiment_model()
-
-        cprint("[OK] Deamon Dev's Sentiment Analysis Agent initialized!", "green")
+        cprint(
+            "[OK] Sentiment Analysis Agent initialized with Claude Code Sub-Agents!",
+            "white",
+            "on_blue",
+        )
 
     def call_subagent(self, prompt: str, context_data: dict = None) -> str:
         """
@@ -277,88 +291,62 @@ Remember:
             "source": "subagent",
         }
 
-    def init_sentiment_model(self):
-        """Initialize the BERT model for sentiment analysis"""
-        if self.model is None:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                "finiteautomata/bertweet-base-sentiment-analysis"
-            )
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                "finiteautomata/bertweet-base-sentiment-analysis"
-            )
-            cprint("[OK] Sentiment model loaded!", "green")
-
     def analyze_sentiment(self, texts):
-        """Analyze sentiment of a batch of texts"""
-        self.init_sentiment_model()
+        """Analyze sentiment of a batch of texts using Claude Sub-Agent"""
+        if not texts:
+            return 0.0
 
-        sentiments = []
-        batch_size = 8  # Process in small batches to avoid memory issues
+        # Prepare the text data for the sub-agent
+        text_sample = "\n".join([f"- {text[:200]}" for text in texts[:20]])
 
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i : i + batch_size]
-            inputs = self.tokenizer(
-                batch_texts,
-                padding=True,
-                truncation=True,
-                max_length=128,
-                return_tensors="pt",
-            )
+        # Prepare the prompt
+        prompt = f"""
+Analyze the sentiment of these social media texts and return a score from -1 to 1:
 
-            with torch.no_grad():
-                outputs = self.model(**inputs)
-                predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
-                sentiments.extend(predictions.tolist())
+{text_sample}
 
-        # Convert to sentiment scores (-1 to 1)
-        scores = []
-        for sentiment in sentiments:
-            # NEG, NEU, POS
-            neg, neu, pos = sentiment
-            # Convert to -1 to 1 scale
-            score = pos - neg  # Will be between -1 and 1
-            scores.append(score)
+Return ONLY a number between -1 and 1 where:
+-1 = Very Bearish/Negative
+0 = Neutral
+1 = Very Bullish/Positive
 
-        return np.mean(scores)
+Do not include any other text, just the number.
+"""
 
-    def _announce(self, message, is_important=False):
-        """Announce a message using text-to-speech"""
         try:
-            print(f"\n[SPEECH] {message}")
+            # Call the Claude sub-agent
+            response = self.call_subagent(prompt, {"num_texts": len(texts)})
 
-            # Only use voice for important messages
-            if not is_important:
-                return
-
-            # Generate unique filename based on timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            speech_file = self.audio_dir / f"sentiment_audio_{timestamp}.mp3"
-
-            # Generate speech using OpenAI
-            response = openai.audio.speech.create(
-                model=VOICE_MODEL, voice=VOICE_NAME, speed=VOICE_SPEED, input=message
-            )
-
-            # Save and play the audio
-            with open(speech_file, "wb") as f:
-                for chunk in response.iter_bytes():
-                    f.write(chunk)
-
-            # Play the audio
-            if os.name == "posix":  # macOS/Linux
-                os.system(f"afplay {speech_file}")
-            else:  # Windows
-                os.system(f"start {speech_file}")
-                time.sleep(5)
-
-            # Clean up
+            # Parse the response to get a numeric score
             try:
-                speech_file.unlink()
-            except Exception as e:
-                print(f"[WARNING] Couldn't delete audio file: {e}")
+                # Extract the first number from the response
+                import re
+                match = re.search(r'-?\d+\.?\d*', response.strip())
+                if match:
+                    score = float(match.group())
+                    # Clamp the score to -1 to 1 range
+                    return max(-1.0, min(1.0, score))
+            except:
+                pass
+
+            # Default to neutral if parsing fails
+            return 0.0
 
         except Exception as e:
-            print(f"[ERROR] Error in text-to-speech: {str(e)}")
+            cprint(f"[ERROR] Error analyzing sentiment: {str(e)}", "red")
+            return 0.0
+
+    def _announce(self, message, is_important=False):
+        """Announce a message to console (TTS removed - using Claude Sub-Agent only)"""
+        try:
+            print(f"\n[ANNOUNCEMENT] {message}")
+
+            # Only add extra formatting for important messages
+            if is_important:
+                print("=" * 80)
+
+        except Exception as e:
+            print(f"[ERROR] Error in announcement: {str(e)}")
 
     def save_sentiment_score(self, sentiment_score, num_tweets):
         """Save sentiment score to history"""

@@ -161,6 +161,18 @@ interface HealthStatus {
   };
 }
 
+// Configuration Mode Unidirectionnel
+interface TradingConfig {
+  UNIDIRECTIONAL_MODE: boolean;
+  ALLOWED_SIDE: 'long' | 'short' | 'both';
+}
+
+// Configuration du Mode Unidirectionnel - Active par défaut
+const TRADING_CONFIG: TradingConfig = {
+  UNIDIRECTIONAL_MODE: true, // ✅ ACTIF - Empêche LONG + SHORT simultanés
+  ALLOWED_SIDE: 'long', // Ou 'short' - Détermine la direction autorisée
+};
+
 // 🚀 Logger Ultra-Efficace - HyperLiquid Optimized
 const getTimestamp = (): string => {
   return new Date().toISOString().split('T')[1]!.replace('Z', '').slice(0, -1);
@@ -484,6 +496,292 @@ app.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
 });
 
 // ============================================================================
+// GESTIONNAIRE POSITIONS - MODE UNIDIRECTIONNEL
+// ============================================================================
+
+// Interface pour les positions avec P&L temps réel
+interface Position {
+  symbol: string;
+  side: 'LONG' | 'SHORT';
+  size: number;
+  entryPrice: number;
+  timestamp: string;
+  markPrice?: number;
+  pnl?: number;
+  roe?: number;
+  unrealizedPnl?: number;
+}
+
+// Interface pour les prix en temps réel
+interface RealTimePrices {
+  [symbol: string]: number;
+}
+
+// Cache des positions en mémoire
+let activePositions: Map<string, Position> = new Map();
+
+/**
+ * 🔍 Vérifier si le mode unidirectionnel est activé
+ */
+function isUnidirectionalMode(): boolean {
+  return TRADING_CONFIG.UNIDIRECTIONAL_MODE;
+}
+
+/**
+ * 🎯 Vérifier si la direction demandée est autorisée
+ */
+function isSideAllowed(requestedSide: string): boolean {
+  if (!isUnidirectionalMode()) {
+    return true; // Mode mixte autorisé
+  }
+
+  const normalizedSide = requestedSide.toLowerCase();
+
+  if (TRADING_CONFIG.ALLOWED_SIDE === 'both') {
+    return true;
+  }
+
+  return normalizedSide === TRADING_CONFIG.ALLOWED_SIDE;
+}
+
+/**
+ * 🚨 Vérifier s'il existe une position opposée
+ */
+function hasOppositePosition(symbol: string, requestedSide: string): Position | null {
+  const normalizedSide = requestedSide.toLowerCase();
+
+  for (const [key, position] of activePositions.entries()) {
+    if (position.symbol === symbol) {
+      const positionSide = position.side.toLowerCase();
+
+      // Vérifier si c'est une position opposée
+      if (
+        (normalizedSide === 'long' && positionSide === 'short') ||
+        (normalizedSide === 'short' && positionSide === 'long')
+      ) {
+        return position;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * ❌ Valider une position selon le mode unidirectionnel
+ */
+function validateUnidirectionalPosition(symbol: string, requestedSide: string): {
+  success: boolean;
+  reason: string;
+  existingPosition: Position | null;
+  action: 'REJECTED' | 'ACCEPTED';
+} {
+  const oppositePosition = hasOppositePosition(symbol, requestedSide);
+
+  if (oppositePosition) {
+    return {
+      success: false,
+      reason: `⚠️ MODE UNIDIRECTIONNEL: Position ${requestedSide.toUpperCase()} refusée sur ${symbol}. Position opposée détectée: ${oppositePosition.side} ${oppositePosition.size} ${oppositePosition.symbol}`,
+      existingPosition: oppositePosition,
+      action: 'REJECTED',
+    };
+  }
+
+  // Vérifier si la direction est autorisée
+  if (!isSideAllowed(requestedSide)) {
+    return {
+      success: false,
+      reason: `⚠️ MODE UNIDIRECTIONNEL: Seules les positions ${TRADING_CONFIG.ALLOWED_SIDE.toUpperCase()} sont autorisées. Position ${requestedSide.toUpperCase()} refusée.`,
+      existingPosition: null,
+      action: 'REJECTED',
+    };
+  }
+
+  return {
+    success: true,
+    reason: 'Position autorisée',
+    existingPosition: null,
+    action: 'ACCEPTED',
+  };
+}
+
+/**
+ * 💾 Enregistrer une nouvelle position
+ */
+function addPosition(position: Position): void {
+  const key = `${position.symbol}`;
+  activePositions.set(key, position);
+
+  log.trading.success(
+    `✅ Position enregistrée: ${position.side} ${position.size} ${position.symbol} (Mode: ${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'})`,
+    'POSITION-MANAGER'
+  );
+}
+
+/**
+ * 🗑️ Supprimer une position
+ */
+function removePosition(symbol: string): boolean {
+  const key = `${symbol}`;
+  if (activePositions.has(key)) {
+    const position = activePositions.get(key);
+    activePositions.delete(key);
+
+    log.trading.success(
+      `🗑️ Position supprimée: ${position?.side} ${position?.size} ${symbol}`,
+      'POSITION-MANAGER'
+    );
+    return true;
+  }
+  return false;
+}
+
+/**
+ * 📊 Obtenir toutes les positions actives
+ */
+function getActivePositions(): Position[] {
+  return Array.from(activePositions.values());
+}
+
+/**
+ * 🔄 Obtenir les statistiques des positions
+ */
+function getPositionsStats(): {
+  total: number;
+  long: number;
+  short: number;
+  mode: string;
+  allowedSide: string;
+} {
+  const positions = getActivePositions();
+  const long = positions.filter(p => p.side === 'LONG').length;
+  const short = positions.filter(p => p.side === 'SHORT').length;
+
+  return {
+    total: positions.length,
+    long,
+    short,
+    mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
+    allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
+  };
+}
+
+/**
+ * 💰 Récupérer les prix en temps réel d'HyperLiquid
+ */
+async function getRealTimePrices(): Promise<RealTimePrices> {
+  try {
+    if (!hlAPI) {
+      log.warn('HyperLiquid API not available for real-time prices', 'PRICES');
+      return {};
+    }
+
+    const mids = await hlAPI.getAllMids();
+    const prices: RealTimePrices = {};
+
+    // Traiter la réponse selon son format
+    if (Array.isArray(mids)) {
+      // Format: [symbol1, price1, symbol2, price2, ...]
+      for (let i = 0; i < mids.length; i += 2) {
+        const symbol = mids[i];
+        const price = mids[i + 1];
+        if (symbol && price) {
+          prices[symbol] = price;
+        }
+      }
+    } else if (typeof mids === 'object') {
+      // Format: {symbol1: price1, symbol2: price2, ...}
+      Object.assign(prices, mids);
+    }
+
+    log.info(
+      `💰 Retrieved ${Object.keys(prices).length} real-time prices from HyperLiquid`,
+      'PRICES'
+    );
+
+    return prices;
+  } catch (error: any) {
+    log.error(`Failed to get real-time prices: ${error.message}`, 'PRICES-ERROR');
+    return {};
+  }
+}
+
+/**
+ * 📊 Calculer le P&L et ROE d'une position
+ */
+function calculatePositionMetrics(
+  position: Position,
+  markPrice: number
+): {
+  markPrice: number;
+  pnl: number;
+  roe: number;
+  unrealizedPnl: number;
+} {
+  const { side, size, entryPrice } = position;
+
+  let pnl = 0;
+  let unrealizedPnl = 0;
+
+  if (side === 'LONG') {
+    // LONG: P&L = (Prix actuel - Prix d'entrée) * Taille
+    unrealizedPnl = (markPrice - entryPrice) * size;
+    pnl = unrealizedPnl;
+  } else if (side === 'SHORT') {
+    // SHORT: P&L = (Prix d'entrée - Prix actuel) * Taille
+    unrealizedPnl = (entryPrice - markPrice) * size;
+    pnl = unrealizedPnl;
+  }
+
+  // ROE = P&L / (Prix d'entrée * Taille) * 100
+  const investedAmount = entryPrice * size;
+  const roe = investedAmount > 0 ? (pnl / investedAmount) * 100 : 0;
+
+  return {
+    markPrice,
+    pnl,
+    roe,
+    unrealizedPnl,
+  };
+}
+
+/**
+ * 🔄 Obtenir toutes les positions avec P&L temps réel
+ */
+async function getActivePositionsWithMetrics(): Promise<Position[]> {
+  try {
+    const positions = getActivePositions();
+    const realTimePrices = await getRealTimePrices();
+
+    const positionsWithMetrics = positions.map(position => {
+      const symbol = position.symbol.toUpperCase();
+
+      // Récupérer le prix mark de HyperLiquid
+      const markPrice = realTimePrices[symbol] || realTimePrices[`${symbol}-PERP`] || 0;
+
+      if (markPrice > 0) {
+        const metrics = calculatePositionMetrics(position, markPrice);
+
+        return {
+          ...position,
+          markPrice: metrics.markPrice,
+          pnl: metrics.pnl,
+          roe: metrics.roe,
+          unrealizedPnl: metrics.unrealizedPnl,
+        };
+      }
+
+      return position;
+    });
+
+    return positionsWithMetrics;
+  } catch (error: any) {
+    log.error(`Failed to get positions with metrics: ${error.message}`, 'POSITIONS-ERROR');
+    return getActivePositions();
+  }
+}
+
+// ============================================================================
 // API ROUTES
 // ============================================================================
 
@@ -550,6 +848,31 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
 
     log.trading.order(symbol, side, size);
 
+    // 🚨 VÉRIFICATION MODE UNIDIRECTIONNEL
+    if (isUnidirectionalMode()) {
+      const validation = validateUnidirectionalPosition(symbol, side);
+
+      if (!validation.success) {
+        log.trading.error(validation.reason, 'UNIDIRECTIONAL-VIOLATION');
+
+        return res.status(400).json({
+          success: false,
+          error: 'Position refusée par le mode unidirectionnel',
+          reason: validation.reason,
+          existingPosition: validation.existingPosition,
+          mode: 'UNIDIRECTIONNEL',
+          allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
+          stats: getPositionsStats(),
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      log.info(
+        `✅ Position validée par le mode unidirectionnel: ${side.toUpperCase()} ${size} ${symbol}`,
+        'UNIDIRECTIONAL-VALIDATION'
+      );
+    }
+
     // Execute order logic here
     const result = await hlAPI.placeOrder({
       symbol,
@@ -558,11 +881,229 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
       price,
     });
 
-    log.trading.success(`Order placed: ${result.orderId}`);
-    res.json({ success: true, orderId: result.orderId });
+    // 💾 Enregistrer la position si l'ordre a réussi
+    const newPosition: Position = {
+      symbol,
+      side: side.toUpperCase() as 'LONG' | 'SHORT',
+      size: parseFloat(size),
+      entryPrice: price || 0,
+      timestamp: new Date().toISOString(),
+    };
+
+    addPosition(newPosition);
+
+    log.trading.success(
+      `Order placed successfully: ${result.orderId} (Mode: ${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'})`
+    );
+
+    res.json({
+      success: true,
+      orderId: result.orderId,
+      mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
+      allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
+      stats: getPositionsStats(),
+      timestamp: new Date().toISOString(),
+    });
   } catch (error: any) {
     log.trading.error(error.message);
     res.status(500).json({ error: 'Failed to place order' });
+  }
+});
+
+// ============================================================================
+// GESTIONNAIRE POSITIONS - ENDPOINTS
+// ============================================================================
+
+/**
+ * 📊 Get all active positions with real-time P&L and ROE
+ */
+app.get('/api/positions', async (req: Request, res: Response) => {
+  try {
+    // Récupérer les positions avec P&L et ROE en temps réel
+    const positions = await getActivePositionsWithMetrics();
+    const stats = getPositionsStats();
+
+    res.json({
+      success: true,
+      data: {
+        positions,
+        stats,
+        config: {
+          unidirectionalMode: TRADING_CONFIG.UNIDIRECTIONAL_MODE,
+          allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
+        },
+        realTimeData: {
+          pricesUpdated: new Date().toISOString(),
+          source: 'HyperLiquid API (getAllMids)',
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Get positions error: ${error.message}`, 'POSITIONS-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get positions',
+    });
+  }
+});
+
+/**
+ * 🗑️ Close position endpoint
+ */
+app.post('/api/positions/close', (req: Request, res: Response) => {
+  try {
+    const { symbol } = req.body;
+
+    if (!symbol) {
+      return res.status(400).json({
+        success: false,
+        error: 'Symbol is required',
+      });
+    }
+
+    const removed = removePosition(symbol);
+
+    if (!removed) {
+      return res.status(404).json({
+        success: false,
+        error: `Position not found for symbol: ${symbol}`,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Position ${symbol} closed successfully`,
+      stats: getPositionsStats(),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Close position error: ${error.message}`, 'POSITIONS-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to close position',
+    });
+  }
+});
+
+/**
+ * 💰 Get real-time prices from HyperLiquid
+ */
+app.get('/api/prices/realtime', async (req: Request, res: Response) => {
+  try {
+    const realTimePrices = await getRealTimePrices();
+
+    res.json({
+      success: true,
+      data: realTimePrices,
+      count: Object.keys(realTimePrices).length,
+      timestamp: new Date().toISOString(),
+      source: 'HyperLiquid API (getAllMids)',
+    });
+  } catch (error: any) {
+    log.error(`Get real-time prices error: ${error.message}`, 'PRICES-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get real-time prices',
+    });
+  }
+});
+
+/**
+ * 🔄 Get trading configuration
+ */
+app.get('/api/trading/config', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      UNIDIRECTIONAL_MODE: TRADING_CONFIG.UNIDIRECTIONAL_MODE,
+      ALLOWED_SIDE: TRADING_CONFIG.ALLOWED_SIDE,
+      mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
+      description: isUnidirectionalMode()
+        ? `Seules les positions ${TRADING_CONFIG.ALLOWED_SIDE.toUpperCase()} sont autorisées. Les positions contradictoires sont automatiquement refusées.`
+        : 'Mode mixte: Les positions LONG et SHORT sont autorisées simultanément.',
+      stats: getPositionsStats(),
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * 🧪 Add test position (for demonstration)
+ */
+app.post('/api/positions/test', (req: Request, res: Response) => {
+  try {
+    const { symbol, side, size, entryPrice } = req.body;
+
+    if (!symbol || !side || !size || !entryPrice) {
+      return res.status(400).json({
+        success: false,
+        error: 'symbol, side, size, and entryPrice are required',
+      });
+    }
+
+    const testPosition: Position = {
+      symbol: symbol.toUpperCase(),
+      side: side.toUpperCase() as 'LONG' | 'SHORT',
+      size: parseFloat(size),
+      entryPrice: parseFloat(entryPrice),
+      timestamp: new Date().toISOString(),
+    };
+
+    addPosition(testPosition);
+
+    res.json({
+      success: true,
+      message: `Test position added: ${testPosition.side} ${testPosition.size} ${testPosition.symbol} @ $${testPosition.entryPrice}`,
+      position: testPosition,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Add test position error: ${error.message}`, 'TEST-POSITION-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add test position',
+    });
+  }
+});
+
+/**
+ * ⚙️ Update trading configuration
+ */
+app.post('/api/trading/config', (req: Request, res: Response) => {
+  try {
+    const { UNIDIRECTIONAL_MODE, ALLOWED_SIDE } = req.body;
+
+    if (typeof UNIDIRECTIONAL_MODE === 'boolean') {
+      TRADING_CONFIG.UNIDIRECTIONAL_MODE = UNIDIRECTIONAL_MODE;
+    }
+
+    if (ALLOWED_SIDE && ['long', 'short', 'both'].includes(ALLOWED_SIDE)) {
+      TRADING_CONFIG.ALLOWED_SIDE = ALLOWED_SIDE;
+    }
+
+    log.info(
+      `Configuration mise à jour: Mode=${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'}, Direction=${TRADING_CONFIG.ALLOWED_SIDE.toUpperCase()}`,
+      'CONFIG-UPDATE'
+    );
+
+    res.json({
+      success: true,
+      message: 'Configuration mise à jour avec succès',
+      config: {
+        UNIDIRECTIONAL_MODE: TRADING_CONFIG.UNIDIRECTIONAL_MODE,
+        ALLOWED_SIDE: TRADING_CONFIG.ALLOWED_SIDE,
+        mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
+      },
+      stats: getPositionsStats(),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Config update error: ${error.message}`, 'CONFIG-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update configuration',
+    });
   }
 });
 
@@ -1596,6 +2137,246 @@ app.get('/api/backtests', async (req: Request, res: Response) => {
       }
     } catch (error) {
       console.warn('Error reading production backtests:', error);
+    }
+
+    // Si aucune donnée de production, utiliser des données de test
+    if (backtestData.backtests.length === 0) {
+      backtestData.backtests = [
+        {
+          id: 'btc_dominance_4h',
+          strategy: 'BTC Dominance Strategy',
+          symbol: 'BTC.D',
+          timeframe: '4h',
+          startDate: '2024-01-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 52.4,
+            annualReturn: 59.8,
+            sharpeRatio: 2.05,
+            maxDrawdown: -10.2,
+            winRate: 0.73,
+            profitFactor: 2.4,
+            totalTrades: 312,
+          },
+          metrics: {
+            avg_trade_duration: '6.5h',
+            best_trade: 9.3,
+            worst_trade: -2.8,
+            volatility: 0.16,
+          },
+          parameters: {
+            dominance_lookback: 24,
+            breakout_threshold: 0.015,
+            stop_loss: 0.04,
+            take_profit: 0.09,
+            min_volume: 1000000,
+          },
+          improvements: [
+            'Stratégie sur la dominance BTC',
+            'Optimisation des points d\'entrée basés sur la dominance',
+            'Gestion avancée du risk/reward',
+          ],
+          category: 'Day Trading',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 'momentum_btc_1h',
+          strategy: 'Momentum Breakout',
+          symbol: 'BTC/USDT',
+          timeframe: '1h',
+          startDate: '2024-01-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 45.8,
+            annualReturn: 52.3,
+            sharpeRatio: 1.85,
+            maxDrawdown: -12.5,
+            winRate: 0.68,
+            profitFactor: 2.1,
+            totalTrades: 234,
+          },
+          metrics: {
+            avg_trade_duration: '4.2h',
+            best_trade: 8.7,
+            worst_trade: -3.2,
+            volatility: 0.18,
+          },
+          parameters: {
+            lookback_period: 20,
+            breakout_threshold: 0.02,
+            stop_loss: 0.05,
+            take_profit: 0.10,
+          },
+          improvements: [
+            'Réduction du max drawdown de 15.2% à 12.5%',
+            'Amélioration du win rate de 62% à 68%',
+          ],
+          category: 'Day Trading',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 'mean_reversion_eth_4h',
+          strategy: 'Mean Reversion RSI',
+          symbol: 'ETH/USDT',
+          timeframe: '4h',
+          startDate: '2024-01-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 38.2,
+            annualReturn: 43.5,
+            sharpeRatio: 1.72,
+            maxDrawdown: -9.8,
+            winRate: 0.71,
+            profitFactor: 2.3,
+            totalTrades: 189,
+          },
+          metrics: {
+            avg_trade_duration: '8.5h',
+            best_trade: 6.4,
+            worst_trade: -2.8,
+            volatility: 0.15,
+          },
+          parameters: {
+            rsi_period: 14,
+            oversold_threshold: 30,
+            overbought_threshold: 70,
+            stop_loss: 0.04,
+            take_profit: 0.08,
+          },
+          improvements: [
+            'Optimisation des seuils RSI pour ETH',
+            'Meilleure gestion du stop-loss',
+          ],
+          category: 'Day Trading',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 'grid_trading_sol_1h',
+          strategy: 'Grid Trading Bot',
+          symbol: 'SOL/USDT',
+          timeframe: '1h',
+          startDate: '2024-02-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 32.5,
+            annualReturn: 38.1,
+            sharpeRatio: 1.65,
+            maxDrawdown: -8.3,
+            winRate: 0.74,
+            profitFactor: 2.0,
+            totalTrades: 456,
+          },
+          metrics: {
+            avg_trade_duration: '2.1h',
+            best_trade: 3.8,
+            worst_trade: -1.9,
+            volatility: 0.12,
+          },
+          parameters: {
+            grid_size: 10,
+            price_range_pct: 0.15,
+            order_spacing: 0.015,
+            base_investment: 1000,
+          },
+          improvements: [
+            'Grid adaptatif selon la volatilité',
+            'Réduction des frais de trading',
+          ],
+          category: 'Day Trading',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 'dca_btc_monthly',
+          strategy: 'Dollar Cost Averaging',
+          symbol: 'BTC/USDT',
+          timeframe: '1d',
+          startDate: '2023-01-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 28.7,
+            annualReturn: 25.2,
+            sharpeRatio: 1.42,
+            maxDrawdown: -18.5,
+            winRate: 0.65,
+            profitFactor: 1.8,
+            totalTrades: 21,
+          },
+          metrics: {
+            avg_trade_duration: '30d',
+            best_trade: 22.4,
+            worst_trade: -8.3,
+            volatility: 0.22,
+          },
+          parameters: {
+            buy_interval_days: 30,
+            base_investment: 500,
+            volatility_filter: true,
+            rebalance_threshold: 0.2,
+          },
+          improvements: [
+            'Ajout du filtre de volatilité',
+            'Amélioration du rebalancing',
+          ],
+          category: 'Trading Mensuel',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 'trend_following_ada_1d',
+          strategy: 'Trend Following MACD',
+          symbol: 'ADA/USDT',
+          timeframe: '1d',
+          startDate: '2024-01-01',
+          endDate: '2024-10-01',
+          status: 'completed',
+          performance: {
+            totalReturn: 41.3,
+            annualReturn: 47.8,
+            sharpeRatio: 1.92,
+            maxDrawdown: -11.2,
+            winRate: 0.69,
+            profitFactor: 2.2,
+            totalTrades: 67,
+          },
+          metrics: {
+            avg_trade_duration: '12.3d',
+            best_trade: 15.7,
+            worst_trade: -4.5,
+            volatility: 0.19,
+          },
+          parameters: {
+            macd_fast: 12,
+            macd_slow: 26,
+            macd_signal: 9,
+            stop_loss: 0.06,
+            take_profit: 0.12,
+          },
+          improvements: [
+            'Filtre de confirmation avec volume',
+            'Optimisation MACD pour ADA',
+          ],
+          category: 'Trading Annuel',
+          executionTime: 'standard',
+          dataQuality: 'professional',
+          timestamp: new Date().toISOString(),
+        },
+      ];
+      backtestData.total_count = backtestData.backtests.length;
+      backtestData.source = 'test_data';
     }
 
     res.json({

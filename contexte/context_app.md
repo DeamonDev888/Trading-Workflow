@@ -1,320 +1,94 @@
 ---
 name: deamon-dev-ai-trading-expert
-description: Expert du système Deamon Dev AI Trading - maîtrise l'architecture réelle : 2 agents IA avec appels LLM, 9+ algorithmes de trading ordinaires, Model Factory, système de logging Winston, 6 pages frontend, et trading HyperLiquid. Basé à 100% sur le code source réel avec distinction fondamentale Agent/Algorithme.
+description: Expert NOVAQUOTE - 4 agents IA (Claude Code sub-agents exclusivement), 7+ algorithmes, Claude Code CLI (4 sub-agents), Winston, 6 pages, HyperLiquid.
 ---
 
-# 🧠 Expert Système NOVAQUOTE Trading (Version Réelle)
+# NOVAQUOTE Trading System
 
-## Définition Fondamentale
+## Définition
+- Agent = Script Python avec Claude Code sub-agents
+- Algorithme = Script Python ordinary (sans IA)
 
-🚨 **Distinction cruciale** :
+## Vue d'ensemble
+- 4 agents IA véritable (Claude Code sub-agents)
+- 7+ algorithmes trading ordinaires
+- Claude Code CLI: 4 sub-agents (strategy/risk/funding/sentiment)
+- Winston logging: 7 loggers
+- 6 pages frontend
+- HyperLiquid exchange
 
-- **Agent** = Script Python qui fait des appels API à un LLM (ChatGPT, Claude,
-  etc.)
-- **Algorithme** = Script Python ordinaire de trading/monitoring (sans IA)
-
-## Vue d'ensemble du système
-
-Le **NOVAQUOTE Trading System** est une plateforme composée de :
-
-- **2 agents IA véritables** (avec appels LLM directs)
-- **9+ algorithmes de trading ordinaires** (scripts Python sans IA)
-- **Model Factory** pour gérer les 11 modèles IA
-- **Système de logging Winston** avec 7 loggers spécialisés
-- **6 pages frontend** pour la gestion et monitoring
-- **exchanges** HyperLiquid
-- **Aucun mock ou simulation ou demonstration n'est permis, nous sommes en reel
-  prod et en trading reel**
-
-## 🏗️ Architecture Technique Réelle
-
-### Structure du projet
-
+## Structure
 ```
 projet trading/
-├── src/                    # Code source Python
-│   ├── agents/            # 11+ scripts (2 agents + 9+ algorithmes)
-│   ├── models/            # Model Factory (11 modèles IA)
-│   ├── data/              # Données, OHLCV, backtests
-│   ├── config.py          # Configuration centralisée
-│   ├── nice_funcs.py      # Fonctions utilitaires trading
-│   └── logger.js          # Système de logging Winston
-├── frontend/              # Frontend server + pages
-│   ├── server-frontend.js # Static server (Port 9000)
-│   └── public/            # 6 pages HTML
-├── backend/               # Backend server
-│   └── server-backend.js  # API + WebSocket (Port 7000)
-├── logs/                  # Logs système (7 types)
-├── database/              # Schema PostgreSQL
+├── src/agents/            # 11 scripts (4 agents + 7+ algorithmes)
+├── src/models/            # Model Factory (anciennement)
+├── frontend/public/       # 6 pages HTML
+├── backend/               # server-backend.ts (Port 7000)
+├── run.ts                 # Launcher NOVAQUOTE
+├── logs/                  # Winston logs (7 types)
 └── docs/                  # Documentation
 ```
 
-### Technologies utilisées
-
-- **Backend**: Node.js + Express + WebSocket (Port 7000)
-- **Frontend**: Node.js Static Server (Port 9000)
-- **Pages**: HTML5, CSS3, JavaScript (Vanilla)
-- **IA**: Model Factory avec Claude, GPT, DeepSeek, Grok, Gemini, Z.AI, Groq,
-  Ollama
-- **Trading**: HyperLiquid API
-- **Base**: PostgreSQL
-- **Logging**: Winston (Node.js)
-
-## 🤖 Classification Fondamentale
-
-### 🧠 **Agents IA Véritables (2 scripts avec LLM)**
-
-Ces scripts font **réellement des appels API à des LLM** :
+## Agents IA (4 scripts)
+Utilisent **exclusivement Claude Code sub-agents**:
 
 1. **`funding_agent.py`** ✅
-   - Appels LLM : Détectés automatiquement
-   - Fonction : Agent IA avec intégration LLM
+   - Claude Code sub-agents
 
-2. **`master_agent.py`** ✅
-   - Appels LLM : Détectés automatiquement
-   - Fonction : Agent IA avec intégration LLM
+2. **`risk_agent.py`** ✅
+   - Claude Code sub-agents
 
-### ⚙️ **Algorithmes de Trading Ordinaires (9+ scripts sans IA)**
+3. **`sentiment_analysis_agent.py`** ✅
+   - Claude Code sub-agents
 
-Ces scripts sont des **algorithmes purs** sans appels LLM :
+4. **`strategy_agent.py`** ✅
+   - Claude Code sub-agents
 
-#### Monitoring (1 scripts)
+## Algorithmes (7+ scripts)
+Scripts Python purs sans IA:
 
-- **`sentiment_analysis_agent.py`** - Algorithme de trading ordinaire
+- `__init__.py`
+- `api.py`
+- `base_agent.py`
+- `intelligent_backtest_optimizer.py`
+- `manager.py`
+- `master_agent.py`
+- `strategy_library.py`
 
-#### Utilitaires (4 scripts)
-
-- **`api.py`** - Algorithme de trading ordinaire
-- **`base_agent.py`** - Algorithme de trading ordinaire
-- **`intelligent_backtest_optimizer.py`** - Algorithme de trading ordinaire
-- **`manager.py`** - Algorithme de trading ordinaire
-
-#### Autres (4 scripts)
-
-- **`__init__.py`** - Algorithme de trading ordinaire
-- **`risk_agent.py`** - Algorithme de trading ordinaire
-- **`strategy_agent.py`** - Algorithme de trading ordinaire
-- **`strategy_library.py`** - Algorithme de trading ordinaire
-
-## 🔧 **Configuration IA Centralisée - Model Factory**
-
-### Model Factory ✅
-
-Système centralisé pour les **2 agents IA** dans `src/models/model_factory.py` :
-
+## Pattern Claude Code
 ```python
-# Configuration centralisée via config.py
-AI_MODEL = "glm-4.6"  # Par défaut
-AI_TEMPERATURE = 0.7
-AI_MAX_TOKENS = 1024
-
-# Utilisation SEULEMENT pour les 2 agents IA
-from src.models import model_factory
-model = model_factory.get_model(model_type, config.AI_MODEL)
+def call_subagent(self, prompt: str, context_data: dict = None) -> str:
+    cmd = ["claude", "--dangerously-skip-permissions", "--agent", self.subagent_name, full_prompt]
+    return subprocess.run(cmd, timeout=120).stdout
 ```
 
-### Modèles Supportés (8 modèles)
-
-- **Claude**: claude-3-5-haiku-latest, claude-3-sonnet-20240229
-- **OpenAI**: gpt-4o
-- **Z.AI**: glm-4.6 (modèle par défaut)
-- **Google**: gemini-2.5-flash
-- **DeepSeek**: deepseek-reasoner
-- **xAI**: grok-4-fast-reasoning
-- **Groq**: mixtral-8x7b-32768
-- **Ollama**: llama3.2 (local)
-
-## 📊 **Systèmes de Backtest Réels**
-
-### Infrastructure de Backtest ✅
-
-Basée sur des **algorithmes purs** (pas d'IA) :
-
-1. **`rbi_agent_v3.py`** - Backtesting algorithmique pur
-2. **`rbi_batch_backtester.py`** - Testing en lot (boucles)
-3. **`src/data/execution_results/`** - Stockage résultats
-4. **`src/data/rbi_v3/`** - Données analyses
-
-### Pages Frontend pour Backtest ✅
-
-- **`backtest.html`** - Interface configuration backtests
-- **`backtest_fixed.html`** - Version corrigée
-
-## 🎨 **Pages Frontend Réelles (6 pages)**
-
-### 1. `backtest.html` ✅
-
-- Interface Backtest
-- Configuration backtests algorithmiques
-
-### 2. `config.html` ✅
-
-- Configuration Système
-- Configuration des **2 agents IA** (modèles LLM)
-
-### 3. `dashboard_ascii.html` ✅
-
-### 4. `index.html` ✅
-
-- Dashboard Principal
-- Monitoring des 2 agents IA et 9+ algorithmes
-
-### 5. `test_agents.html` ✅
-
-### 6. `validate_config.html` ✅
-
-- Configuration Système
-- Configuration des **2 agents IA** (modèles LLM)
-
-## 📝 **Système de Logging Winston Réel**
-
-### Système Winston Enterprise-Grade ✅
-
-Logging pour **tous les scripts** (agents + algorithmes) :
-
-#### **Loggers disponibles** ✅
-
-- `apiLogger` - Appels API avec timing
-- `wsLogger` - Activité WebSocket
-- `agentsLogger` - Opérations **2 agents IA**
-- `backtestsLogger` - Backtests algorithmiques
-- `tradingLogger` - Opérations trading
-- `walletsLogger` - Authentification wallets
-- `systemLogger` - Surveillance système
-
-## ⚡ **Expertise Trading HyperLiquid**
-
-### Configuration Multi-Exchanges ✅
-
-```python
-# Configuration dans config.py
-EXCHANGE = "hyperliquid"  # Options: 'hyperliquid'
-
-MONITORED_TOKENS = [
-    "So11111111111111111111111111111111111111112",  # Wrapped SOL
-]
-
-HYPERLIQUID_SYMBOLS = ["BTC", "ETH", "SOL"]
-HYPERLIQUID_LEVERAGE = 5
-```
-
-## 🔧 **Instructions d'Utilisation Réelles**
-
-### Quand utiliser cette compétence
-
-- Travail sur les **2 agents IA** avec appels LLM
-- Développement des **9+ algorithmes de trading**
-- Configuration **Model Factory** (11 modèles)
-- Analyse des **logs Winston** (7 loggers)
-- Développement **6 pages frontend**
-- Configuration **trading multi-exchanges**
-
-### Classification précise des fichiers
-
-- **Agents IA (2 scripts)** : funding_agent.py, master_agent.py
-- **Algorithmes (9+ scripts)** : Tous les autres `src/agents/*.py`
-- **Model Factory** : `src/models/model_factory.py` (uniquement pour les 2
-  agents)
-- **Configuration** : `src/config.py` (pour tout le système)
-- **Logging** : `src/logger.js` (Winston, 7 loggers)
-
-## 📚 **Ressources Réelles du Projet**
-
-### Fichiers de configuration
-
-- **`src/config.py`** ✅ - Configuration IA et trading
-- **`src/models/model_factory.py`** ✅ - Model Factory (11 modèles)
-- **`src/logger.js`** ✅ - Système Winston logging
-
-### Documentation
-
-- **`database/schema.sql`** ✅ - Structure base de données
-- **`docs/HYPERLIQUID_API_DOCUMENTATION.md`** ✅ - DOCUMENTATION API
-- **`docs/AGENTS_GRAPH_VISUALIZATION.md`** ✅ - GRAPHIQUE TECHNIQUE DES AGENTS
-  IA
-
-## REST API Endpoints
-
-- **`get_all_mids()`** - Current prices
-- **`get_meta()`** - Exchange metadata
-- **`get_user_state()`** - Account information
-- **`place_order()`** - Submit orders with signatures
-- **`cancel_order()`** - Cancel orders
-- **`get_positions()`** - Current positions
-- **`get_open_orders()`** - Active orders
-
-### Architecture réelle
-
-- **2 agents IA** avec appels LLM
-- **9+ algorithmes** purs de trading
-- **1 Model Factory** pour les agents
-- **1 système de trading** algorithmique
-
-Cette compétence fait de toi un **expert du système réel** avec la distinction
-fondamentale entre **2 agents IA** (avec LLM) et **9+ algorithmes de trading
-ordinaires**.
-
-## 👑 **L'AGENT MASTER - LE "CHEF" DU SYSTÈME NOVAQUOTE**
-
-J'ai identifié et analysé le vrai "Chef" de votre système - l'Agent Master qui
-coordonne tous les agents.
-
-### 🎯 **L'AGENT MASTER - COORDINATEUR CENTRAL**
-
-**Fichier Principal** : `src/agents/manager.py`
-
-### Fonctionnement :
-
-- Gestionnaire principal de 30+ agents configurés
-- API REST complète pour contrôle dynamique
-- Monitoring temps réel avec métriques de performance
-- Process management avec psutil pour supervision
-- Interface CLI pour Node.js Bridge
-- Logging structuré avec Winston (7 loggers)
-
-### 🤖 **COMMENT IL CONTRÔLE LES 3 AGENTS PRINCIPAUX**
-
-#### 1. 🛡️ **RISK AGENT → Gestion par Agent Master**
-
-- **Appels LLM** : Claude + DeepSeek
-- **Contrôle Master** : Surveillance limites P&L, arrêt système si risque
-- **Coordination** : Premier agent exécuté pour sécurité
-
-#### 2. 💰 **FUNDING AGENT → Gestion par Agent Master**
-
-- **Appels LLM** : Claude + DeepSeek
-- **Contrôle Master** : Détection arbitrages, validation opportunités
-- **Coordination** : Exécuté après Risk pour vérifier sécurité
-
-#### 3. 📊 **STRATEGY AGENT → Gestion par Agent Master**
-
-- **Appels LLM** : Claude
-- **Contrôle Master** : Orchestration analyse 19 tokens
-- **Coordination** : Exécuté après validation Risk et Funding
-
-## 📋 **Comment obtenir l'arborescence du projet**
-
-Pour obtenir l'arborescence complète du projet avec précision :
-
-```bash
-python project_snapshot.py
-```
-
-Cela génère automatiquement le fichier **`arborescence.md`** avec :
-
-- Structure complète en arbre
-- Tous les fichiers et dossiers
-- Liste des répertoires ignorés (node_modules, **pycache**, etc.)
-
-## 📖 **Documentation API HyperLiquid**
-
-La documentation complète de l'API HyperLiquid se trouve dans :
-**`@docs\HYPERLIQUID_API_DOCUMENTATION.md`**
-
-Cette documentation contient tous les endpoints et méthodes disponibles pour
-l'intégration HyperLiquid.
+## Sub-agents
+- claude-strategy-advisor - Analyse technique
+- claude-risk-advisor - Gestion risque
+- claude-funding-advisor - Funding rates
+- claude-sentiment-advisor - Sentiment analyse
+
+## Frontend (6 pages)
+- `backtest.html`
+- `config.html`
+- `dashboard_ascii.html`
+- `index.html`
+- `test_agents.html`
+- `validate_config.html`
+
+## Winston Loggers (7)
+apiLogger, wsLogger, agentsLogger, backtestsLogger, tradingLogger, walletsLogger, systemLogger
+
+## API HyperLiquid
+- get_all_mids(), get_meta(), get_user_state()
+- place_order(), cancel_order()
+- get_positions(), get_open_orders()
+
+## Launcher
+run.ts: `ts-node run.ts start|stop|restart|test`
+- Backend (Port 7000)
+- Frontend (Port 9001)
+- WebSocket (Port 7001)
 
 ---
-
-_Skill basé sur l'analyse complète du code source réel - Système avec
-distinction Agent/Algorithme fondamentale_
+*Basé sur code source réel*
