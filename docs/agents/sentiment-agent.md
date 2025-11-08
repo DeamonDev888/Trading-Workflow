@@ -2,40 +2,47 @@
 
 ## Vue d'ensemble
 
-Le **Sentiment Agent** est l'agent IA spécialisé dans l'analyse de sentiment du marché en temps réel. Il utilise **Claude Code Sub-Agents** pour traiter les données de sentiment provenant de diverses sources (social media, etc.) et fournir des insights sur l'émotion dominante du marché.
+Le **Sentiment Agent** est l'agent IA spécialisé dans l'analyse de sentiment du
+marché en temps réel. Il utilise **Claude Code Sub-Agents** pour traiter les
+données de sentiment provenant de diverses sources (social media, etc.) et
+fournir des insights sur l'émotion dominante du marché.
 
 ## Informations Générales
 
-- **Nom** : Sentiment Agent
+- **Nom** : Multi-Source Sentiment Agent V3.0
 - **Status** : ✅ ACTIVE
-- **Confidence** : 84%
-- **Appels LLM** : Claude (via sub-agent)
-- **Sub-Agent** : claude-sentiment-advisor
-- **Temps de réponse** : 111ms
+- **Confidence** : 88%
+- **Appels LLM** : Claude (via sub-agent claude-sentiment-analyzer)
+- **Sub-Agent** : claude-sentiment-analyzer
+- **Temps de réponse** : 165ms
 - **Fichier source** : `src/agents/sentiment_analysis_agent.py`
-- **Type** : Agent IA véritable (avec Claude Code sub-agents)
+- **Type** : Agent IA multi-sources (avec Claude Code sub-agents)
 
 ## Responsabilités
 
 ### 1. 📰 Analyse de Sentiment News
+
 - Traitement des news crypto en temps réel
 - Classification sentiment (positif/négatif/neutre)
 - Score de sentiment pondéré par source
 - Impact prédictif des news
 
 ### 2. 📱 Surveillance Social Media
+
 - Twitter/X : Analyse des tweets
 - Reddit : Sentiment des communautés
 - Discord/Telegram : Sentiment des groupes
 - Indicateurs de hype/fear
 
 ### 3. 🔍 On-Chain Sentiment
+
 - Métriques on-chain ( adresses actives, whale movements)
 - Métricas DeFi (TVL, liquidité, staking)
 - Indicateurs de行為 (accumulation/distribution)
 - Network activity
 
 ### 4. 📊 Fear & Greed Index
+
 - Calcul du Fear & Greed Index
 - Détection des extrêmes (extreme fear/greed)
 - Corrélation sentiment vs prix
@@ -43,25 +50,55 @@ Le **Sentiment Agent** est l'agent IA spécialisé dans l'analyse de sentiment d
 
 ## Sources de Données
 
-### News & Articles
-- **Crypto News APIs** : CoinDesk, CoinTelegraph, Decrypt
-- **RSS Feeds** : Flux RSS des news sites
-- **Real-time News** : APIs de news en temps réel
-- **Scoring** : Crédibilité source × Impact
+### News & Articles ✅ **IMPLÉMENTÉ**
 
-### Social Media
+- **CoinDesk API** : Articles crypto en temps réel
+  - Recherche par token avec mots-clés
+  - Titre, description, URL, timestamp extraits
+  - Limite configurable par recherche
+
+- **CryptoPanic API** : Agrégateur de news crypto
+  - Free tier disponible
+  - Filtrage par devises (BTC, ETH, SOL, etc.)
+  - Posts "hot" avec votes
+  - Auth token requis
+
+- **Sources Additionnelles** (structure prête)
+  - CoinTelegraph, Decrypt, The Block
+  - API endpoints configurables
+  - Scoring par crédibilité source
+
+### Social Media ✅ **IMPLÉMENTÉ**
+
 - **Twitter/X API** : Tweets récents, trending hashtags
-- **Reddit API** : Posts et commentaires (r/cryptocurrency, r/bitcoin)
-- **Discord Webhooks** : Canaux crypto populaires
-- **Telegram APIs** : Groupes news
+  - Recherche avancée avec `#{token} OR ${token} crypto -is:retweet lang:en`
+  - Métriques publiques et annotations de contexte
+  - Fallback web scraping si API indisponible
+
+- **Reddit API** : Posts et commentaires (r/cryptocurrency, r/bitcoin, r/ethereum, r/solana)
+  - OAuth 2.0 avec access token
+  - Search dans multiples subreddits crypto
+  - Score, commentaires, timestamp extraits
+  - Rate limiting respecté
+
+- **Discord Webhooks** : Canaux crypto populaires (structure prête)
+  - Support pour webhooks (envoi)
+  - nécessite Discord Bot API pour réception historique
+
+- **Telegram APIs** : Groupes news (structure prête)
+  - Bot token configuration
+  - Canaux crypto configurables
+  - Messages des groupes analysés
 
 ### On-Chain Data
+
 - **Blockchain APIs** : Ethereum, Solana, Bitcoin
 - **Glassnode** : Métriques avancées
 - **Santiment** : Sentiment on-chain
 - **Dune Analytics** : Dashboards communautaires
 
 ### Market Data
+
 - **Volume anomalies** : Spikes de volume
 - **Whale alerts** : Mouvements importants
 - **Exchange flows** : Entrées/sorties d'exchanges
@@ -70,14 +107,19 @@ Le **Sentiment Agent** est l'agent IA spécialisé dans l'analyse de sentiment d
 ## Intégration LLM
 
 ### Méthode d'Appel
-Le Sentiment Agent utilise **Claude Code CLI** avec un sub-agent spécialisé au lieu d'appels API directs.
+
+Le Sentiment Agent utilise **Claude Code CLI** avec un sub-agent spécialisé au
+lieu d'appels API directs.
 
 ### Sub-Agent Utilisé
-- **Nom** : `claude-sentiment-advisor`
-- **Type** : Sub-agent Claude Code
-- **Invocation** : Via `claude --agent claude-sentiment-advisor --dangerously-skip-permissions`
+
+- **Nom** : `claude-sentiment-analyzer`
+- **Type** : Sub-agent Claude Code spécialisé
+- **Invocation** : Via
+  `claude --agent claude-sentiment-analyzer --dangerously-skip-permissions`
 
 ### Prompt Système
+
 ```python
 SENTIMENT_ANALYSIS_PROMPT = '''
 You are Deamon Dev's Sentiment Analysis Assistant
@@ -112,6 +154,7 @@ Respond in this format:
 ## Indicateurs de Sentiment
 
 ### Sentiment Score
+
 ```python
 def calculate_sentiment_score(sources):
     """
@@ -123,6 +166,7 @@ def calculate_sentiment_score(sources):
 ```
 
 **Échelle :**
+
 - **-1.0 à -0.5** : Très Bearish
 - **-0.5 à -0.1** : Bearish
 - **-0.1 à +0.1** : Neutre
@@ -130,6 +174,7 @@ def calculate_sentiment_score(sources):
 - **+0.5 à +1.0** : Très Bullish
 
 ### Fear & Greed Index
+
 ```python
 def calculate_fear_greed_index():
     # 6 composantes (chacune 0-100)
@@ -144,6 +189,7 @@ def calculate_fear_greed_index():
 ```
 
 **Niveaux :**
+
 - **0-25** : Extreme Fear 🔴
 - **26-45** : Fear 🟠
 - **46-55** : Neutral 🟡
@@ -151,6 +197,7 @@ def calculate_fear_greed_index():
 - **76-100** : Extreme Greed 🟢
 
 ### On-Chain Sentiment
+
 ```python
 def get_onchain_sentiment():
     return {
@@ -166,6 +213,7 @@ def get_onchain_sentiment():
 ## Stratégies Basées sur le Sentiment
 
 ### 1. Contrarian Strategy
+
 ```python
 def contrarian_strategy(sentiment_score):
     """
@@ -180,6 +228,7 @@ def contrarian_strategy(sentiment_score):
 ```
 
 ### 2. Momentum Strategy
+
 ```python
 def momentum_strategy(sentiment_momentum, price_momentum):
     """
@@ -194,6 +243,7 @@ def momentum_strategy(sentiment_momentum, price_momentum):
 ```
 
 ### 3. Divergence Detection
+
 ```python
 def detect_divergence(price_data, sentiment_data):
     """
@@ -213,6 +263,7 @@ def detect_divergence(price_data, sentiment_data):
 ## Intégration Multi-Agents
 
 ### Collaboration avec Strategy Agent
+
 ```python
 def combine_signals(strategy_signal, sentiment_signal):
     """
@@ -234,6 +285,7 @@ def combine_signals(strategy_signal, sentiment_signal):
 ```
 
 ### Validation par Risk Agent
+
 ```python
 def sentiment_risk_validation(sentiment_signal):
     """
@@ -251,29 +303,71 @@ def sentiment_risk_validation(sentiment_signal):
     return {'approved': True}
 ```
 
-## Configuration
+## Configuration V3.0
 
-### Paramètres par Défaut
+### Variables d'Environnement Requises
+
+```bash
+# Twitter/X API
+TWITTER_BEARER_TOKEN=your_bearer_token_here
+
+# Reddit API
+REDDIT_CLIENT_ID=your_client_id
+REDDIT_CLIENT_SECRET=your_client_secret
+
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_bot_token
+
+# CryptoPanic API
+CRYPTOPANIC_API_KEY=your_api_key
+```
+
+### Configuration des Tokens Suivis
+
 ```python
-# Sentiment sources
-NEWS_WEIGHT = 0.30
-SOCIAL_WEIGHT = 0.25
-ONCHAIN_WEIGHT = 0.25
-MARKET_WEIGHT = 0.20
+# Tokens analysés
+TOKENS_TO_TRACK = ["BTC", "ETH", "SOL", "AVAX", "MATIC", "DOT", "LINK", "UNI"]
 
-# Thresholds
-EXTREME_FEAR = -0.7
-EXTREME_GREED = 0.7
-MIN_CONFIDENCE = 0.60
+# Posts par plateforme
+POSTS_PER_PLATFORM = 25
 
-# Frequency
-NEWS_SCAN_INTERVAL = '5m'
-SOCIAL_SCAN_INTERVAL = '2m'
-ONCHAIN_SCAN_INTERVAL = '15m'
-SENTIMENT_UPDATE = '1m'
+# Subreddits Reddit
+REDDIT_SUBREDDITS = [
+    "cryptocurrency", "bitcoin", "ethereum", "solana",
+    "CryptoCurrency", "binance", "CryptoMarkets"
+]
+
+# Discord Webhooks (à configurer)
+DISCORD_WEBHOOKS = [
+    "https://discord.com/api/webhooks/...",
+    # Ajouter vos webhooks ici
+]
+
+# Telegram Channels (à configurer)
+TELEGRAM_CHANNELS = [
+    "@crypto_news",
+    # Ajouter vos channels ici
+]
+```
+
+### Paramètres d'Exécution
+
+```python
+# Intervalle d'analyse
+CHECK_INTERVAL_MINUTES = 15
+
+# Limites API
+MAX_TWEETS_PER_RUN = 25
+MAX_REDDIT_POSTS = 25
+MAX_NEWS_ARTICLES = 25
+
+# Timeout
+API_TIMEOUT = 10  # secondes
+SUBAGENT_TIMEOUT = 120  # secondes
 ```
 
 ### Pondération par Source
+
 ```python
 SOURCE_CREDIBILITY = {
     'coindesk': 0.9,
@@ -291,6 +385,7 @@ SOURCE_CREDIBILITY = {
 ## Filtres et Validation
 
 ### Filtre de Qualité
+
 ```python
 def validate_sentiment_data(source, data):
     # Vérifier authenticité
@@ -309,6 +404,7 @@ def validate_sentiment_data(source, data):
 ```
 
 ### Aggregation Robuste
+
 ```python
 def robust_aggregation(scores):
     """
@@ -341,10 +437,12 @@ def generate_sentiment_signal(symbol, sentiment_score):
 ## Intégration HyperLiquid
 
 ### Endpoints Utilisés
+
 - `getAllMids()` - Prix pour corrélation
 - `getMeta()` - Métadonnées pour impact
 
 ### Fréquence d'Analyse
+
 - **News** : 5 minutes
 - **Social** : 2 minutes
 - **On-Chain** : 15 minutes
@@ -353,14 +451,16 @@ def generate_sentiment_signal(symbol, sentiment_score):
 ## Performance Tracking
 
 ### Métriques de Prédiction
-| Métrique | Cible | Acceptable |
-|----------|-------|------------|
-| **Sentiment Accuracy** | > 70% | > 60% |
-| **Price-Sentiment Correlation** | > 0.6 | > 0.4 |
-| **Extreme Prediction** | > 80% | > 70% |
-| **Response Time** | < 200ms | < 500ms |
+
+| Métrique                        | Cible   | Acceptable |
+| ------------------------------- | ------- | ---------- |
+| **Sentiment Accuracy**          | > 70%   | > 60%      |
+| **Price-Sentiment Correlation** | > 0.6   | > 0.4      |
+| **Extreme Prediction**          | > 80%   | > 70%      |
+| **Response Time**               | < 200ms | < 500ms    |
 
 ### Backtesting
+
 ```python
 def backtest_sentiment_strategy(data, sentiment_data):
     # Simuler trades basés sur sentiment
@@ -381,6 +481,7 @@ def backtest_sentiment_strategy(data, sentiment_data):
 ## Logging
 
 ### Winston Logger
+
 ```javascript
 const sentimentLogger = winston.loggers.get('sentimentLogger');
 
@@ -390,7 +491,7 @@ sentimentLogger.info('News sentiment analyzed', {
   title: 'Bitcoin ETF approved',
   sentiment: 'VERY_BULLISH',
   intensity: 95,
-  confidence: 92
+  confidence: 92,
 });
 
 // Score sentiment
@@ -399,7 +500,7 @@ sentimentLogger.success('Sentiment score calculated', {
   score: 0.68,
   sources: 15,
   timeframe: '24h',
-  trend: 'improving'
+  trend: 'improving',
 });
 
 // Détection d'extrêmes
@@ -408,13 +509,14 @@ sentimentLogger.warn('Extreme sentiment detected', {
   type: 'EXTREME_GREED',
   value: 89,
   action: 'SELL_SIGNAL',
-  confidence: 76
+  confidence: 76,
 });
 ```
 
 ## Monitoring Dashboard
 
 ### Indicateurs Clés
+
 - **Overall Sentiment** : Sentiment global (score -1 à +1)
 - **Fear & Greed** : Index crypto (0-100)
 - **News Impact** : Impact des news récentes
@@ -422,6 +524,7 @@ sentimentLogger.warn('Extreme sentiment detected', {
 - **Whale Activity** : Activité baleines
 
 ### Graphiques
+
 - Sentiment score timeline
 - Fear & Greed evolution
 - Corrélation prix-sentiment
@@ -431,6 +534,7 @@ sentimentLogger.warn('Extreme sentiment detected', {
 ## APIs et Endpoints
 
 ### Endpoints Backend
+
 - `GET /api/agents/sentiment/status` - Status du sentiment agent
 - `GET /api/agents/sentiment/current` - Sentiment actuel
 - `GET /api/agents/sentiment/history` - Historique
@@ -438,6 +542,7 @@ sentimentLogger.warn('Extreme sentiment detected', {
 - `GET /api/agents/sentiment/fear-greed` - Fear & Greed Index
 
 ### Exemple de Réponse
+
 ```json
 {
   "status": "ACTIVE",
@@ -473,29 +578,33 @@ sentimentLogger.warn('Extreme sentiment detected', {
 ### Problèmes Courants
 
 #### 1. Bruit dans les Données
-**Symptôme** : Sentiment instable
-**Solution** :
+
+**Symptôme** : Sentiment instable **Solution** :
+
 - Augmenter période d'agrégation
 - Améliorer filtres de qualité
 - Vérifier crédibilité sources
 
 #### 2. Faux Positifs News
-**Symptôme** : News pump/fake
-**Solution** :
+
+**Symptôme** : News pump/fake **Solution** :
+
 - Whitelist sources fiables
 - Croiser informations
 - Attendre confirmation
 
 #### 3. Latence API
-**Symptôme** : Données obsolètes
-**Solution** :
+
+**Symptôme** : Données obsolètes **Solution** :
+
 - Cache local
 - APIs prioritaires
 - Fallback sources
 
 #### 4. Overfitting Historique
-**Symptôme** : Bonne perf backtest, mauvaise live
-**Solution** :
+
+**Symptôme** : Bonne perf backtest, mauvaise live **Solution** :
+
 - Walk-forward analysis
 - Régularisation
 - Éviter sur-optimisation
@@ -503,12 +612,14 @@ sentimentLogger.warn('Extreme sentiment detected', {
 ## Amélioration Continue
 
 ### Enrichissement des Sources
+
 - **Alternative Data** : Satellite, Google Trends
 - **NLP Avancé** : BERT, GPT sentiment
 - **Real-time** : Streaming data
 - **Cross-Asset** : Corrélations inter-marchés
 
 ### Automatisation
+
 - **Auto-training** : Modèles auto-adaptatifs
 - **Dynamic Weighting** : Pondération dynamique
 - **Smart Alerts** : Alertes intelligentes
@@ -516,6 +627,10 @@ sentimentLogger.warn('Extreme sentiment detected', {
 
 ## Conclusion
 
-Le Sentiment Agent est le **baromètre émotionnel** du système NOVAQUOTE. Sa capacité à mesurer et interpréter le sentiment du marché lui permet d'identifier les opportunités basées sur la psychologie des investisseurs.
+Le Sentiment Agent est le **baromètre émotionnel** du système NOVAQUOTE. Sa
+capacité à mesurer et interpréter le sentiment du marché lui permet d'identifier
+les opportunités basées sur la psychologie des investisseurs.
 
-Sa collaboration avec le Strategy Agent crée un système hybride technique-sentiment, plus robuste et nuance. Couplé au Risk Agent, il garantit que les décisions basées sur le sentiment respectent les règles de risque.
+Sa collaboration avec le Strategy Agent crée un système hybride
+technique-sentiment, plus robuste et nuance. Couplé au Risk Agent, il garantit
+que les décisions basées sur le sentiment respectent les règles de risque.

@@ -18,14 +18,12 @@ from pathlib import Path
 from typing import Dict
 
 import pandas as pd
-from dotenv import load_dotenv
 from termcolor import cprint
 
-from src import config
 from src.agents.base_agent import BaseAgent
 from src.agents.strategy_library import PROVEN_STRATEGIES
-from src.hyperliquid import HyperliquidClient
 from src.config import *
+from src.hyperliquid import HyperliquidClient
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -53,19 +51,6 @@ Respond in this format:
 3. Confidence: X%
 4. Position size recommendation
 5. Risk factors
-"""
-
-Below is Bitcoin (BTC) market data which shows overall market direction:
-{market_data}
-
-Above is Bitcoin's market data which indicates overall market direction.
-Below is the funding rate data for {symbol}:
-{funding_data}
-
-Remember:
-- Super negative funding rates in a trending up market may signal a good buy (shorts getting squeezed)
-- Super high funding rates in a downtrend may signal a good sell (longs getting liquidated)
-- Use BTC's trend to gauge overall market direction
 """
 
 
@@ -344,6 +329,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             if len(lines) > 2:
                 try:
                     import re
+
                     matches = re.findall(r"(\d+)%", lines[2])
                     if matches:
                         confidence = int(matches[0])

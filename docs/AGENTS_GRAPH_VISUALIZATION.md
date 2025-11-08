@@ -24,6 +24,7 @@ graph TD
 ```
 
 ## Pattern Technique
+
 ```python
 def call_subagent(self, prompt, context_data=None):
     cmd = ["claude", "--dangerously-skip-permissions", "--agent", self.subagent_name, prompt]
@@ -31,13 +32,16 @@ def call_subagent(self, prompt, context_data=None):
 ```
 
 ## Architecture
+
 Market Data → Claude Sub-Agents → Strategy Library → Order Execution
 
 ## Métriques
+
 - **funding_agent.py**: Sub-agent claude-funding-advisor
 - **risk_agent.py**: Sub-agent claude-risk-advisor
 - **sentiment_analysis_agent.py**: Sub-agent claude-sentiment_analysis-advisor
 - **strategy_agent.py**: Sub-agent claude-strategy-advisor
 
 ---
-*Claude Code sub-agents exclusivement*
+
+_Claude Code sub-agents exclusivement_

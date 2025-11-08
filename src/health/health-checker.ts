@@ -159,7 +159,7 @@ export class HealthChecker {
       checks.total++;
       try {
         const health = await this.checkExternalDependency(dependency);
-        this.dependencies.push(health);
+        this.dependencies.push({ name: dependency, ...health });
 
         if (health.status === 'available') {
           checks.passed++;
@@ -415,7 +415,7 @@ export class HealthChecker {
       clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
-      const data = await response.json();
+      const data = await response.json() as { success: boolean; data?: { price?: number; responseTime?: number } };
 
       if (response.ok && data.success) {
         return {
@@ -494,13 +494,12 @@ export class HealthChecker {
     this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(
       (time) => now - time < 60000
     );
-    this.metrics.requestsPerSecond =
-      this.metrics.lastMinuteRequests.length / 60;
-    this.metrics.averageResponseTime =
+    const requestsPerSecond = this.metrics.lastMinuteRequests.length / 60;
+    const averageResponseTime =
       this.metrics.totalRequests > 0
         ? this.metrics.totalResponseTime / this.metrics.totalRequests
         : 0;
-    this.metrics.errorRate =
+    const errorRate =
       this.metrics.totalRequests > 0
         ? this.metrics.totalErrors / this.metrics.totalRequests
         : 0;
@@ -509,9 +508,9 @@ export class HealthChecker {
       cpuUsage,
       memoryUsage: (memUsage.heapUsed / memUsage.heapTotal) * 100,
       activeConnections,
-      requestsPerSecond: this.metrics.requestsPerSecond,
-      averageResponseTime: this.metrics.averageResponseTime,
-      errorRate: this.metrics.errorRate,
+      requestsPerSecond,
+      averageResponseTime,
+      errorRate,
       uptime: process.uptime(),
     };
   }

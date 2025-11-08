@@ -2,7 +2,10 @@
 
 ## Vue d'ensemble
 
-Le **Strategy Agent** est l'agent IA responsable de l'analyse technique et de la génération de signaux de trading dans le système NOVAQUOTE. Il utilise des appels LLM (Claude) pour interpréter les données de marché et générer des stratégies de trading optimisées.
+Le **Strategy Agent** est l'agent IA responsable de l'analyse technique et de la
+génération de signaux de trading dans le système NOVAQUOTE. Il utilise des
+appels LLM (Claude) pour interpréter les données de marché et générer des
+stratégies de trading optimisées.
 
 ## Informations Générales
 
@@ -18,24 +21,28 @@ Le **Strategy Agent** est l'agent IA responsable de l'analyse technique et de la
 ## Responsabilités
 
 ### 1. 📊 Analyse Technique
+
 - Analyse des chandeliers et patterns
 - Calcul d'indicateurs techniques (RSI, MACD, Bollinger, etc.)
 - Détection de supports et résistances
 - Identification des trends et retournements
 
 ### 2. 🎯 Génération de Signaux
+
 - Signaux d'achat (BUY)
 - Signaux de vente (SELL)
 - Signaux de maintien (HOLD)
 - Niveaux d'entrée et de sortie optimaux
 
 ### 3. 🧠 Optimisation des Stratégies
+
 - Backtesting automatisé
 - Ajustement des paramètres
 - Sélection des meilleures configurations
 - Adaptation aux conditions de marché
 
 ### 4. 🔄 Multi-Timeframe Analysis
+
 - Analyse courte période (1m, 5m)
 - Analyse moyenne période (15m, 1h)
 - Analyse longue période (4h, 1d)
@@ -44,6 +51,7 @@ Le **Strategy Agent** est l'agent IA responsable de l'analyse technique et de la
 ## Stratégies Implémentées
 
 ### 1. Moving Average Crossover (MA Cross)
+
 ```python
 def ma_crossover_strategy(data, fast=9, slow=21):
     # Signal: MA rapide > MA lente = BUY
@@ -51,11 +59,13 @@ def ma_crossover_strategy(data, fast=9, slow=21):
 ```
 
 **Paramètres :**
+
 - Fast MA : 9, 12, 18
 - Slow MA : 21, 26, 50
 - Timeframes : 1h, 4h
 
 ### 2. RSI Mean Reversion
+
 ```python
 def rsi_strategy(data, period=14, oversold=30, overbought=70):
     # Signal: RSI < 30 = BUY (oversold)
@@ -63,11 +73,13 @@ def rsi_strategy(data, period=14, oversold=30, overbought=70):
 ```
 
 **Paramètres :**
+
 - Période RSI : 14, 21
 - Seuil oversold : 25, 30
 - Seuil overbought : 70, 75
 
 ### 3. MACD Divergence
+
 ```python
 def macd_strategy(data, fast=12, slow=26, signal=9):
     # Signal: MACD > Signal = BUY
@@ -76,6 +88,7 @@ def macd_strategy(data, fast=12, slow=26, signal=9):
 ```
 
 ### 4. Bollinger Bands Squeeze
+
 ```python
 def bollinger_strategy(data, period=20, std=2):
     # Signal: Squeeze breakout = direction de rupture
@@ -83,6 +96,7 @@ def bollinger_strategy(data, period=20, std=2):
 ```
 
 ### 5. Volume Profile Analysis
+
 ```python
 def volume_strategy(data, lookback=20):
     # Signal: Volume spike = confirmation
@@ -90,6 +104,7 @@ def volume_strategy(data, lookback=20):
 ```
 
 ### 6. Support/Resistance Breakout
+
 ```python
 def sr_strategy(data, lookback=50):
     # Signal: Breakout au-dessus résistance = BUY
@@ -97,6 +112,7 @@ def sr_strategy(data, lookback=50):
 ```
 
 ### 7. Multi-Indicator Confluence
+
 ```python
 def confluence_strategy(indicators):
     # Signal: 3+ indicateurs alignés = signal fort
@@ -106,15 +122,21 @@ def confluence_strategy(indicators):
 ## Intégration LLM
 
 ### Méthode d'Appel
-Le Strategy Agent utilise **Claude Code CLI** avec un sub-agent spécialisé au lieu d'appels API directs.
+
+Le Strategy Agent utilise **Claude Code CLI** avec un sub-agent spécialisé au
+lieu d'appels API directs.
 
 ### Sub-Agent Utilisé
+
 - **Nom** : `claude-strategy-advisor`
 - **Type** : Sub-agent Claude Code
-- **Invocation** : Via `claude --agent claude-strategy-advisor --dangerously-skip-permissions`
+- **Invocation** : Via
+  `claude --agent claude-strategy-advisor --dangerously-skip-permissions`
 
 ### Modèle de Configuration
+
 Le système récupère sa configuration depuis `config.py` :
+
 - **AI_MODEL** : Modèle configuré (ex: "glm-4.6", "claude-3-5-haiku-latest")
 - **AI_TEMPERATURE** : Température des réponses (ex: 0.7)
 - **AI_MAX_TOKENS** : Nombre maximum de tokens (ex: 1024)
@@ -144,6 +166,7 @@ Remember: Deamon Dev prioritizes risk management! [SHIELD]
 ```
 
 #### Analyse de Pattern
+
 ```
 Analyse le graphique suivant pour {symbol} sur {timeframe}:
 
@@ -168,6 +191,7 @@ Analyse:
 ```
 
 #### Génération de Signal
+
 ```
 Génère un signal de trading pour {symbol}:
 
@@ -191,17 +215,19 @@ Décision requise:
 ## Indicateurs Techniques
 
 ### Indicateurs Principaux
-| Indicateur | Période | Signal | Interpretation |
-|------------|---------|--------|----------------|
-| **RSI** | 14 | < 30 / > 70 | Oversold / Overbought |
-| **MACD** | 12,26,9 | Signal line cross | Momentum change |
-| **SMA** | 9,21,50 | Price cross | Trend direction |
-| **EMA** | 12,26 | Price cross | Trend + weighted |
-| **Bollinger** | 20, 2σ | Band touch/break | Volatility |
-| **ATR** | 14 | Volatility | Stop-loss distance |
-| **Volume** | 20 | Spike/dry | Confirmation |
+
+| Indicateur    | Période | Signal            | Interpretation        |
+| ------------- | ------- | ----------------- | --------------------- |
+| **RSI**       | 14      | < 30 / > 70       | Oversold / Overbought |
+| **MACD**      | 12,26,9 | Signal line cross | Momentum change       |
+| **SMA**       | 9,21,50 | Price cross       | Trend direction       |
+| **EMA**       | 12,26   | Price cross       | Trend + weighted      |
+| **Bollinger** | 20, 2σ  | Band touch/break  | Volatility            |
+| **ATR**       | 14      | Volatility        | Stop-loss distance    |
+| **Volume**    | 20      | Spike/dry         | Confirmation          |
 
 ### Indicateurs Avancés
+
 - **Ichimoku Cloud** : Trend + momentum
 - **Stochastic** : Oscillateur
 - **Williams %R** : Momentum
@@ -212,6 +238,7 @@ Décision requise:
 ## Configuration des Stratégies
 
 ### Paramètres Globaux
+
 ```python
 # Stratégies
 ACTIVE_STRATEGIES = [
@@ -236,6 +263,7 @@ CONFIRMATION_TIMEFRAMES = ['5m', '1d']
 ```
 
 ### Pondération des Signaux
+
 ```python
 SIGNAL_WEIGHTS = {
     'ma_crossover': 0.15,
@@ -253,6 +281,7 @@ SIGNAL_WEIGHTS = {
 ## Filtres et Validation
 
 ### Filtres de Qualité
+
 ```python
 # Filtre volatilité
 MIN_VOLATILITY = 0.02   # 2%
@@ -269,6 +298,7 @@ MIN_LIQUIDITY = 100000  # $100k
 ```
 
 ### Validation Croisée
+
 ```python
 def validate_signal(signal):
     # Minimum 2 stratégies alignées
@@ -290,15 +320,17 @@ def validate_signal(signal):
 ## Backtesting Intégré
 
 ### Métriques de Performance
-| Métrique | Cible | Acceptable |
-|----------|-------|------------|
-| **Win Rate** | > 60% | > 50% |
-| **Sharpe Ratio** | > 1.5 | > 1.0 |
-| **Max Drawdown** | < 10% | < 15% |
-| **Profit Factor** | > 1.5 | > 1.2 |
-| **Avg Trade** | > 0.5% | > 0.2% |
+
+| Métrique          | Cible  | Acceptable |
+| ----------------- | ------ | ---------- |
+| **Win Rate**      | > 60%  | > 50%      |
+| **Sharpe Ratio**  | > 1.5  | > 1.0      |
+| **Max Drawdown**  | < 10%  | < 15%      |
+| **Profit Factor** | > 1.5  | > 1.2      |
+| **Avg Trade**     | > 0.5% | > 0.2%     |
 
 ### Optimisation Automatique
+
 ```python
 def optimize_parameters(strategy, data):
     # Grid search sur les paramètres
@@ -335,12 +367,14 @@ def generate_signal(symbol, timeframe):
 ## Intégration HyperLiquid
 
 ### Endpoints Utilisés
+
 - `getAllMids()` - Prix mark
 - `getMeta()` - Métadonnées symboles
 - `getCandleSnapshot()` - Données OHLCV (si disponible)
 - `placeOrder()` - Exécution signaux
 
 ### Fréquence d'Analyse
+
 - **Signaux** : 1 minute
 - **Backtest** : 1 heure
 - **Optimisation** : 1 jour
@@ -349,6 +383,7 @@ def generate_signal(symbol, timeframe):
 ## Logging
 
 ### Winston Logger
+
 ```javascript
 const strategyLogger = winston.loggers.get('strategyLogger');
 
@@ -358,7 +393,7 @@ strategyLogger.info('Signal generated', {
   action: 'BUY',
   strength: 8,
   confidence: 85,
-  strategies: ['macd', 'ma_cross', 'confluence']
+  strategies: ['macd', 'ma_cross', 'confluence'],
 });
 
 // Backtest terminé
@@ -366,7 +401,7 @@ strategyLogger.success('Backtest completed', {
   strategy: 'rsi_reversion',
   period: '30d',
   win_rate: 0.68,
-  sharpe: 1.8
+  sharpe: 1.8,
 });
 
 // Optimisation
@@ -374,13 +409,14 @@ strategyLogger.info('Parameters optimized', {
   strategy: 'bollinger_squeeze',
   old_params: { period: 20, std: 2 },
   new_params: { period: 18, std: 2.2 },
-  improvement: 0.12
+  improvement: 0.12,
 });
 ```
 
 ## Monitoring Dashboard
 
 ### Indicateurs Clés
+
 - **Active Strategies** : 7 stratégies actives
 - **Signals Today** : Signaux générés aujourd'hui
 - **Win Rate** : Taux de réussite
@@ -388,6 +424,7 @@ strategyLogger.info('Parameters optimized', {
 - **Best Performing** : Stratégie la plus performante
 
 ### Graphiques
+
 - Performance par stratégie
 - Signaux générés (timeline)
 - Win rate évolution
@@ -397,6 +434,7 @@ strategyLogger.info('Parameters optimized', {
 ## APIs et Endpoints
 
 ### Endpoints Backend
+
 - `GET /api/agents/strategy/status` - Status du strategy agent
 - `POST /api/agents/strategy/config` - Configurer stratégies
 - `GET /api/agents/strategy/signals` - Signaux récents
@@ -404,10 +442,11 @@ strategyLogger.info('Parameters optimized', {
 - `GET /api/agents/strategy/backtest` - Résultats backtest
 
 ### Exemple de Réponse
+
 ```json
 {
   "status": "ACTIVE",
-  "confidence": 0.80,
+  "confidence": 0.8,
   "active_strategies": 7,
   "signals_today": 23,
   "win_rate": 0.67,
@@ -430,29 +469,33 @@ strategyLogger.info('Parameters optimized', {
 ### Problèmes Courants
 
 #### 1. Trop de Faux Signaux
-**Symptôme** : Win rate < 50%
-**Solution** :
+
+**Symptôme** : Win rate < 50% **Solution** :
+
 - Augmenter le seuil de force du signal
 - Ajouter plus de filtres de validation
 - Réduire le nombre de stratégies
 
 #### 2. Signaux Retardés
-**Symptôme** : Entrée tardive sur les mouvements
-**Solution** :
+
+**Symptôme** : Entrée tardive sur les mouvements **Solution** :
+
 - Réduire la période des indicateurs
 - Ajouter des timeframes plus courts
 - Implémenter la détection précoce
 
 #### 3. Conflits entre Stratégies
-**Symptôme** : Signaux contradictoires
-**Solution** :
+
+**Symptôme** : Signaux contradictoires **Solution** :
+
 - Améliorer l'algorithme de pondération
 - Ajouter un système de vote
 - Prioriser certaines stratégies
 
 #### 4. Sur-Optimisation
-**Symptôme** : Bonne perf backtest, mauvaise perf live
-**Solution** :
+
+**Symptôme** : Bonne perf backtest, mauvaise perf live **Solution** :
+
 - Utiliser plus de données out-of-sample
 - Implémenter walk-forward analysis
 - Ajouter de la régularisation
@@ -460,6 +503,7 @@ strategyLogger.info('Parameters optimized', {
 ## Amélioration Continue
 
 ### Cycle d'Amélioration
+
 1. **Collecte** : Signaux et résultats
 2. **Analyse** : Performance par stratégie
 3. **Optimisation** : Ajustement paramètres
@@ -467,6 +511,7 @@ strategyLogger.info('Parameters optimized', {
 5. **Déploiement** : Mise en production
 
 ### Nouvelles Stratégies
+
 - **Machine Learning** : Intégration de modèles ML
 - **Deep Learning** : Réseaux de neurones
 - **NLP** : Analyse de sentiment news
@@ -474,6 +519,10 @@ strategyLogger.info('Parameters optimized', {
 
 ## Conclusion
 
-Le Strategy Agent est le **cerveau analytique** du système NOVAQUOTE. Sa capacité à générer des signaux de trading basés sur l'analyse technique avancée et l'IA lui permet d'identifier les meilleures opportunités de marché.
+Le Strategy Agent est le **cerveau analytique** du système NOVAQUOTE. Sa
+capacité à générer des signaux de trading basés sur l'analyse technique avancée
+et l'IA lui permet d'identifier les meilleures opportunités de marché.
 
-Sa collaboration avec le Risk Agent garantit que tous les signaux respectent les règles de risque et le mode unidirectionnel, créant un système de trading équilibré et performant.
+Sa collaboration avec le Risk Agent garantit que tous les signaux respectent les
+règles de risque et le mode unidirectionnel, créant un système de trading
+équilibré et performant.

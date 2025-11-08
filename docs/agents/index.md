@@ -4,12 +4,12 @@
 
 ### Agents IA Principaux
 
-| Agent | Status | Confidence | LLM | Description |
-|-------|--------|------------|-----|-------------|
-| **[🛡️ Risk Agent](risk-agent.md)** | ✅ ACTIVE | 85% | Claude + DeepSeek | Gestion du risque en temps réel |
-| **[📈 Strategy Agent](strategy-agent.md)** | ✅ ACTIVE | 80% | Claude (sub-agent) | Analyse technique et signaux |
-| **[💰 Funding Agent](funding-agent.md)** | ✅ ACTIVE | 78% | Claude (sub-agent) | Arbitrage de funding |
-| **[🗣️ Sentiment Agent](sentiment-agent.md)** | ✅ ACTIVE | 84% | Claude (sub-agent) | Analyse de sentiment marché |
+| Agent                                        | Status    | Confidence | LLM                | Description                     |
+| -------------------------------------------- | --------- | ---------- | ------------------ | ------------------------------- |
+| **[🛡️ Risk Agent](risk-agent.md)**           | ✅ ACTIVE | 85%        | Claude + DeepSeek  | Gestion du risque en temps réel |
+| **[📈 Strategy Agent](strategy-agent.md)**   | ✅ ACTIVE | 80%        | Claude (sub-agent) | Analyse technique et signaux    |
+| **[💰 Funding Agent](funding-agent.md)**     | ✅ ACTIVE | 78%        | Claude (sub-agent) | Arbitrage de funding            |
+| **[🗣️ Sentiment Agent](sentiment-agent.md)** | ✅ ACTIVE | 84%        | Claude (sub-agent) | Analyse de sentiment marché     |
 
 ### Documentation Générale
 
@@ -21,12 +21,14 @@
 ## Liens Utiles
 
 ### Dashboard & Monitoring
+
 - **Dashboard Principal** : http://localhost:9001/
 - **API Health** : http://localhost:7000/api/health
 - **Positions** : http://localhost:7000/api/positions
 - **Prix Temps Réel** : http://localhost:7000/api/prices/realtime
 
 ### Fichiers Sources
+
 - **Risk Agent** : `src/agents/risk_agent.py`
 - **Strategy Agent** : `src/agents/strategy_agent.py`
 - **Funding Agent** : `src/agents/funding_agent.py`
@@ -34,6 +36,7 @@
 - **Model Factory** : `src/models/model_factory.py`
 
 ### Configuration
+
 - **Trading Config** : http://localhost:7000/api/trading/config
 - **Unidirectional Mode** : Mode actif (LONG uniquement par défaut)
 
@@ -193,6 +196,7 @@ Les positions affichent le **P&L et ROE calculés en temps réel** :
 ## Logs et Debugging
 
 ### Emplacement des Logs
+
 - **Dossier** : `logs/`
 - **Loggers spécialisés** :
   - `riskLogger` - Agent de risque
@@ -202,6 +206,7 @@ Les positions affichent le **P&L et ROE calculés en temps réel** :
   - `tradingLogger` - Opérations trading
 
 ### Commande de Debug
+
 ```bash
 # Voir les logs en temps réel
 tail -f logs/agents.log
@@ -213,12 +218,14 @@ grep "ERROR" logs/system.log
 ## Support
 
 ### Problèmes Courants
+
 1. **Agents inactifs** → Vérifier les API keys LLM
 2. **Pas de prix** → Vérifier connectivité HyperLiquid
 3. **Positions non mises à jour** → Redémarrer le backend
 4. **Erreur LLM** → Vérifier Model Factory
 
 ### Contacts
+
 - **Documentation** : `docs/agents/`
 - **Code Source** : `src/agents/`
 - **Logs** : `logs/`
@@ -226,6 +233,5 @@ grep "ERROR" logs/system.log
 
 ---
 
-**Dernière mise à jour** : 2025-11-08 00:24:57 UTC
-**Version** : NOVAQUOTE v2.0.0
-**Système** : HyperLiquid Trading System
+**Dernière mise à jour** : 2025-11-08 00:24:57 UTC **Version** : NOVAQUOTE
+v2.0.0 **Système** : HyperLiquid Trading System

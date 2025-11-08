@@ -2,14 +2,17 @@
 
 ## Vue d'ensemble
 
-Le **Risk Agent** est l'agent IA principal responsable de la gestion du risque en temps réel dans le système NOVAQUOTE. Il utilise des appels LLM (Claude + DeepSeek) pour prendre des décisions intelligentes de protection du portefeuille.
+Le **Risk Agent** est l'agent IA principal responsable de la gestion du risque
+en temps réel dans le système NOVAQUOTE. Il utilise des appels LLM (Claude +
+DeepSeek) pour prendre des décisions intelligentes de protection du
+portefeuille.
 
 ## Informations Générales
 
 - **Nom** : Risk Agent
 - **Status** : ✅ ACTIVE
 - **Confidence** : 85%
-- **Appels LLM** : Claude + DeepSeek
+- **Appels LLM** : Claude
 - **Temps de réponse** : 115ms
 - **Fichier source** : `src/agents/risk_agent.py`
 - **Type** : Agent IA véritable (avec appels LLM)
@@ -17,24 +20,28 @@ Le **Risk Agent** est l'agent IA principal responsable de la gestion du risque e
 ## Responsabilités
 
 ### 1. 🛡️ Surveillance du Risque en Temps Réel
+
 - Monitoring continu des positions actives
 - Calcul du risque de portefeuille (VaR, drawdown)
 - Surveillance de la volatilité du marché
 - Analyse de corrélation entre positions
 
 ### 2. 🎯 Gestion des Stop-Loss
+
 - Calcul automatique des niveaux de stop-loss
 - Ajustement dynamique basé sur la volatilité
 - Exécution automatique en cas de dépassement
 - Protection contre les glissements de marché
 
 ### 3. ⚖️ Contrôle de l'Exposition
+
 - Limitation de l'exposition par actif
 - Vérification de l'exposition totale du portefeuille
 - Respect des limites de levier (max 50x sur HyperLiquid)
 - Alertes en cas de dépassement
 
 ### 4. 🚨 Détection des Anomalies
+
 - Détection de patterns de trading suspects
 - Identification de comportements anormaux
 - Surveillance des spreads et slippage
@@ -43,12 +50,14 @@ Le **Risk Agent** est l'agent IA principal responsable de la gestion du risque e
 ## Intégration LLM
 
 ### Modèles Utilisés
+
 - **Claude** : Analyse de risque complexe, prise de décision
 - **DeepSeek** : Calculs quantitatifs, modélisation mathématique
 
 ### Prompts Typiques
 
 #### Analyse de Risque
+
 ```
 Analyse le risque de la position suivante:
 - Symbol: {symbol}
@@ -67,6 +76,7 @@ Analyse le risque de la position suivante:
 ```
 
 #### Décision d'Urgence
+
 ```
 🚨 ALERTE RISQUE DÉTECTÉE 🚨
 
@@ -86,15 +96,17 @@ Décision urgente requise:
 ## Métriques Surveillées
 
 ### Métriques de Risque
-| Métrique | Seuil d'Alerte | Seuil Critique |
-|----------|----------------|----------------|
-| **VaR 95%** | > 5% du portefeuille | > 10% du portefeuille |
-| **Drawdown Max** | > 8% | > 15% |
-| **Exposition par Actif** | > 30% | > 50% |
-| **Leverage Total** | > 5x | > 10x |
-| **Volatilité Portfolio** | > 20% | > 30% |
+
+| Métrique                 | Seuil d'Alerte       | Seuil Critique        |
+| ------------------------ | -------------------- | --------------------- |
+| **VaR 95%**              | > 5% du portefeuille | > 10% du portefeuille |
+| **Drawdown Max**         | > 8%                 | > 15%                 |
+| **Exposition par Actif** | > 30%                | > 50%                 |
+| **Leverage Total**       | > 5x                 | > 10x                 |
+| **Volatilité Portfolio** | > 20%                | > 30%                 |
 
 ### Métriques de Performance
+
 - **Win Rate** : Pourcentage de décisions correctes
 - **Average Response Time** : 115ms (cible < 200ms)
 - **Risk-Adjusted Return** : Return ajusté du risque
@@ -104,16 +116,18 @@ Décision urgente requise:
 ## Actions Automatiques
 
 ### Niveau 1 - Information
+
 - Alerte dans les logs
 - Notification dashboard
 - Monitoring renforcé
 
 ### Niveau 2 - Avertissement
-- Email/SMS d'alerte
+
 - Ajustement stop-loss
 - Réduction position (50%)
 
 ### Niveau 3 - Critique
+
 - Fermeture automatique position
 - Arrêt du trading
 - Isolation des risques
@@ -121,6 +135,7 @@ Décision urgente requise:
 ## Configuration
 
 ### Paramètres par Défaut
+
 ```python
 # Risque
 MAX_PORTFOLIO_RISK = 0.15  # 15% max
@@ -138,6 +153,7 @@ ATR_PERIOD = 14  # 14 périodes
 ```
 
 ### Personnalisation
+
 ```python
 # Mode Conservateur
 MAX_PORTFOLIO_RISK = 0.10
@@ -155,6 +171,7 @@ MAX_LEVERAGE = 20
 Le Risk Agent est le **gardien** du mode unidirectionnel :
 
 ### Validation Pré-Trade
+
 ```python
 def validate_position(symbol, side, size):
     # Vérifier position opposée existante
@@ -180,6 +197,7 @@ def validate_position(symbol, side, size):
 ## Intégration HyperLiquid
 
 ### Endpoints Utilisés
+
 - `getAllMids()` - Prix mark en temps réel
 - `getMeta()` - Métadonnées des symboles
 - `getUserState()` - État du compte
@@ -187,6 +205,7 @@ def validate_position(symbol, side, size):
 - `placeOrder()` / `cancelOrder()` - Exécution ordonnances
 
 ### Fréquence de Mise à Jour
+
 - **Prix** : Temps réel (WebSocket)
 - **Positions** : 1 seconde
 - **Risk Metrics** : 5 secondes
@@ -195,6 +214,7 @@ def validate_position(symbol, side, size):
 ## Logging
 
 ### Winston Logger
+
 ```javascript
 const riskLogger = winston.loggers.get('riskLogger');
 
@@ -202,25 +222,26 @@ const riskLogger = winston.loggers.get('riskLogger');
 riskLogger.info('Risk analysis completed', {
   position: 'BTC-LONG',
   riskScore: 0.65,
-  recommendation: 'MAINTAIN'
+  recommendation: 'MAINTAIN',
 });
 
 riskLogger.warn('Risk threshold exceeded', {
   metric: 'VaR',
   value: 0.12,
-  threshold: 0.10
+  threshold: 0.1,
 });
 
 riskLogger.error('Critical risk detected', {
   action: 'POSITION_CLOSED',
   symbol: 'ETH',
-  reason: 'Drawdown exceeded'
+  reason: 'Drawdown exceeded',
 });
 ```
 
 ## Monitoring Dashboard
 
 ### Indicateurs Clés
+
 - **Risk Score** : Score global de risque (0-100)
 - **Active Alerts** : Nombre d'alertes actives
 - **Positions Monitored** : Positions sous surveillance
@@ -228,6 +249,7 @@ riskLogger.error('Critical risk detected', {
 - **Avg Response Time** : Temps de réponse moyen
 
 ### Graphiques
+
 - Evolution du risk score
 - Drawdown en temps réel
 - Exposition par actif (pie chart)
@@ -238,22 +260,25 @@ riskLogger.error('Critical risk detected', {
 ### Problèmes Courants
 
 #### 1. LLM Timeout
-**Symptôme** : Response time > 500ms
-**Solution** :
+
+**Symptôme** : Response time > 500ms **Solution** :
+
 - Vérifier la connectivité API
 - Réduire la complexité des prompts
 - Augmenter le timeout
 
 #### 2. Faux Positifs
-**Symptôme** : Alertes excessives
-**Solution** :
+
+**Symptôme** : Alertes excessives **Solution** :
+
 - Ajuster les seuils de risque
 - Améliorer les prompts LLM
 - Ajouter des filtres de bruit
 
 #### 3. Décisions Contradictoires
-**Symptôme** : Actions incohérentes
-**Solution** :
+
+**Symptôme** : Actions incohérentes **Solution** :
+
 - Vérifier la logique LLM
 - Ajouter une validation croisée
 - Implémenter un système de vote
@@ -261,12 +286,14 @@ riskLogger.error('Critical risk detected', {
 ## Amélioration Continue
 
 ### Feedback Loop
+
 1. Collecter les résultats des décisions
 2. Analyser la performance (true/false positives)
 3. Ajuster les seuils et prompts
 4. Redéployer avec les améliorations
 
 ### A/B Testing
+
 - Tester différentes configurations
 - Comparer les performances
 - Sélectionner les meilleurs paramètres
@@ -274,12 +301,14 @@ riskLogger.error('Critical risk detected', {
 ## APIs et Endpoints
 
 ### Endpoints Backend
+
 - `GET /api/agents/risk/status` - Status du risk agent
 - `POST /api/agents/risk/config` - Modifier la configuration
 - `GET /api/agents/risk/metrics` - Métriques détaillées
 - `GET /api/agents/risk/history` - Historique des décisions
 
 ### Exemple de Réponse
+
 ```json
 {
   "status": "ACTIVE",
@@ -300,6 +329,10 @@ riskLogger.error('Critical risk detected', {
 
 ## Conclusion
 
-Le Risk Agent est le **pilier de sécurité** du système NOVAQUOTE. Sa capacité à analyser le risque en temps réel et à prendre des décisions éclairées via LLM garantit la protection du capital et la conformité aux règles de trading définies.
+Le Risk Agent est le **pilier de sécurité** du système NOVAQUOTE. Sa capacité à
+analyser le risque en temps réel et à prendre des décisions éclairées via LLM
+garantit la protection du capital et la conformité aux règles de trading
+définies.
 
-Sa collaboration avec les autres agents (Strategy, Funding, Sentiment) crée un écosystème de trading intelligent et sécurisé.
+Sa collaboration avec les autres agents (Strategy, Funding, Sentiment) crée un
+écosystème de trading intelligent et sécurisé.
