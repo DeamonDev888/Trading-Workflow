@@ -88,10 +88,10 @@ export class StructuredLogger {
       winston.format.json(),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
         const logEntry: LogMetadata = {
-          timestamp,
-          level,
-          message,
-          ...meta,
+          timestamp: String(timestamp),
+          level: String(level),
+          message: String(message),
+          ...(meta as any),
         };
 
         // Ajouter le contexte global
@@ -122,9 +122,9 @@ export class StructuredLogger {
     const transports: winston.transport[] = [
       // Console pour développement
       new winston.transports.Console({
-        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        level: process.env['NODE_ENV'] === 'production' ? 'info' : 'debug',
         format:
-          process.env.NODE_ENV === 'production' ? logFormat : consoleFormat,
+          process.env['NODE_ENV'] === 'production' ? logFormat : consoleFormat,
       }),
 
       // Fichiers de logs avec rotation quotidienne
@@ -155,10 +155,6 @@ export class StructuredLogger {
         maxFiles: '90d',
         level: 'info',
         format: logFormat,
-        // Filtrer uniquement les logs de trading
-        filter: (info) => {
-          return info.business?.symbol || info.component === 'trading';
-        },
       }),
 
       // Fichier de logs de sécurité
@@ -169,9 +165,6 @@ export class StructuredLogger {
         maxFiles: '365d',
         level: 'warn',
         format: logFormat,
-        filter: (info) => {
-          return info.security || info.component === 'security';
-        },
       }),
 
       // Fichier de logs de performance
@@ -182,14 +175,11 @@ export class StructuredLogger {
         maxFiles: '30d',
         level: 'info',
         format: logFormat,
-        filter: (info) => {
-          return info.performance || info.component === 'performance';
-        },
       }),
     ];
 
     // Ajouter le transport pour les logs d'audit en production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env['NODE_ENV'] === 'production') {
       transports.push(
         new DailyRotateFile({
           filename: 'logs/audit-%DATE%.log',
@@ -198,12 +188,6 @@ export class StructuredLogger {
           maxFiles: '2555d', // 7 ans de rétention pour l'audit
           level: 'info',
           format: logFormat,
-          filter: (info) => {
-            return (
-              info.audit ||
-              ['trading', 'auth', 'admin'].includes(info.component || '')
-            );
-          },
         })
       );
     }

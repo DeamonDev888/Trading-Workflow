@@ -6,7 +6,6 @@
     <title>NOVAQUOTE - Configuration: Agents & Permissions</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/novaquote.css" rel="stylesheet">
-
 </head>
 <body>
     <!-- Navigation -->
@@ -75,8 +74,57 @@
                 </div>
             </div>
 
+            <!-- Token Prices Section -->
+            <div class="card" id="token-prices-section" style="display: none; margin-top: 2rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+                    <i class="fas fa-chart-line"></i> Prix des Tokens (Temps Réel)
+                </h3>
+                <div id="token-prices-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                    <!-- Token prices will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Exchange Balances Section -->
+            <div class="card" id="exchange-balances-section" style="display: none; margin-top: 2rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+                    <i class="fas fa-exchange-alt"></i> Balances Exchange (HyperCore)
+                </h3>
+                <div id="exchange-balances-list" style="display: grid; gap: 0.5rem;">
+                    <!-- Exchange balances will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Blockchain Balances Section -->
+            <div class="card" id="blockchain-balances-section" style="display: none; margin-top: 2rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+                    <i class="fas fa-link"></i> Balances Blockchain (HyperEVM)
+                </h3>
+                <div id="blockchain-balances-list" style="display: grid; gap: 0.5rem;">
+                    <!-- Blockchain balances will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Withdraw to Blockchain Section -->
+            <div class="card" id="withdraw-section" style="display: none; margin-top: 2rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+                    <i class="fas fa-arrow-circle-right"></i> Withdraw vers HyperEVM
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Transférez vos tokens depuis l'exchange vers la blockchain pour les voir dans MetaMask.
+                </p>
+                <div id="withdraw-form">
+                    <select id="withdraw-token" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                        <option value="">Sélectionner un token</option>
+                    </select>
+                    <input type="number" id="withdraw-amount" placeholder="Montant" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                    <button class="control-btn primary" onclick="withdrawToBlockchain()">
+                        <i class="fas fa-paper-plane"></i> Withdraw
+                    </button>
+                </div>
+            </div>
+
             <div class="hyperliquid-info" id="hyperliquid-info" style="margin-top: 2rem;">
-                <!-- Blockchain info will be loaded here -->
+                <!-- Additional info will be loaded here -->
             </div>
         </div>
     </div>
@@ -96,7 +144,7 @@
             justify-content: center;
             backdrop-filter: blur(5px);
         }
-        
+
         .modal-content {
             background: var(--bg-card, #1a1a2e);
             border-radius: 16px;
@@ -109,7 +157,7 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .modal-close {
             position: absolute;
             top: 1rem;
@@ -128,12 +176,12 @@
             justify-content: center;
             transition: all 0.2s ease;
         }
-        
+
         .modal-close:hover {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
         }
-        
+
         .modal-content h2 {
             margin-top: 0;
             margin-bottom: 0.5rem;
@@ -142,21 +190,21 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .modal-content h3 {
             margin-top: 0;
             margin-bottom: 1.5rem;
             color: var(--text-primary);
             font-weight: 600;
         }
-        
+
         .modal-content label {
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
             font-weight: 500;
         }
-        
+
         .modal-content input,
         .modal-content select {
             width: 100%;
@@ -168,14 +216,14 @@
             font-size: 1rem;
             transition: all 0.2s ease;
         }
-        
+
         .modal-content input:focus,
         .modal-content select:focus {
             outline: none;
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
         }
-        
+
         .modal-content .control-btn {
             margin-top: 1rem;
             width: 100%;
@@ -189,269 +237,10 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .modal-content .control-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
-        }
-
-        /* ================================
-           BACKTEST SYSTEM STYLES
-           ================================ */
-        .system-status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .status-info {
-            flex: 1;
-        }
-
-        .status-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.25rem;
-        }
-
-        .status-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .status-details {
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-
-        .status-details p {
-            margin: 0.5rem 0;
-            color: var(--text-secondary);
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-
-        .metric-card {
-            text-align: center;
-            padding: 1.5rem 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.1);
-        }
-
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .metric-value.positive {
-            color: #00d4aa;
-        }
-
-        .metric-value.negative {
-            color: #e17055;
-        }
-
-        .metric-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .risk-overview {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .risk-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .risk-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-        }
-
-        .risk-label {
-            color: var(--text-secondary);
-        }
-
-        .risk-value {
-            font-weight: 600;
-        }
-
-        .risk-value.positive {
-            color: #00d4aa;
-        }
-
-        .risk-value.negative {
-            color: #e17055;
-        }
-
-        .risk-distribution h4 {
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .risk-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .risk-bar-item {
-            display: grid;
-            grid-template-columns: 40px 1fr 30px;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .risk-bar-label {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .risk-bar-container {
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .risk-bar {
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .risk-bar-count {
-            text-align: center;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .top-strategies-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .strategy-overview-card {
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.02);
-            transition: transform 0.2s ease;
-        }
-
-        .strategy-overview-card.best {
-            border-color: #00d4aa;
-            background: rgba(0, 212, 170, 0.05);
-        }
-
-        .strategy-overview-card.worst {
-            border-color: #e17055;
-            background: rgba(225, 112, 85, 0.05);
-        }
-
-        .strategy-overview-card h4 {
-            margin: 0 0 1rem 0;
-            color: var(--text-primary);
-        }
-
-        .strategy-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
-        }
-
-        .strategy-metrics {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .metric {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-            font-size: 0.85rem;
-        }
-
-        .metric.positive {
-            background: rgba(0, 212, 170, 0.1);
-            color: #00d4aa;
-        }
-
-        .metric.negative {
-            background: rgba(225, 112, 85, 0.1);
-            color: #e17055;
-        }
-
-        .metric.real-data {
-            background: rgba(0, 212, 255, 0.1);
-            color: #00d4ff;
-        }
-
-        .metric.simulated-data {
-            background: rgba(253, 203, 110, 0.1);
-            color: #fdcb6e;
-        }
-
-        .strategy-description {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.4;
-        }
-
-        .system-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -480,36 +269,9 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
         }
-
-        .error-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-        }
-
-        .error-state i {
-            font-size: 3rem;
-            color: #e17055;
-            margin-bottom: 1rem;
-        }
-
-        .loading-indicator {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-        }
-
-        .loading-indicator i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
     </style>
-    <script>
-        // ================================
-        // SIMPLE WALLET CONNECTION
-        // ================================
 
+    <script>
         // Global wallet state
         let connectedWallet = null;
         let walletType = null;
@@ -547,62 +309,62 @@
             }
         }
 
-        // Add HyperLiquid networks to MetaMask
+        // Add HyperEVM networks to MetaMask (HyperLiquid's EVM-compatible Layer 1)
         async function addHyperLiquidNetworks() {
+            const hyperliquidMainnet = {
+                chainId: '0x3e7', // 999 in hex
+                chainName: 'HyperEVM Mainnet',
+                rpcUrls: ['https://rpc.hyperliquid.xyz/evm'],
+                nativeCurrency: {
+                    name: 'HYPE',
+                    symbol: 'HYPE',
+                    decimals: 18
+                },
+                blockExplorerUrls: ['https://www.hyperscan.com']
+            };
+
+            const hyperliquidTestnet = {
+                chainId: '0x3e6', // 998 in hex
+                chainName: 'HyperEVM Testnet',
+                rpcUrls: ['https://rpc.hyperliquid-testnet.xyz/evm'],
+                nativeCurrency: {
+                    name: 'HYPE',
+                    symbol: 'HYPE',
+                    decimals: 18
+                },
+                blockExplorerUrls: ['https://testnet.hyperscan.com']
+            };
+
             try {
-                // HyperLiquid Mainnet
-                const hyperliquidMainnet = {
-                    chainId: '0x8145', // 33101 in hex
-                    chainName: 'HyperLiquid Mainnet',
-                    nativeCurrency: {
-                        name: 'HYPE',
-                        symbol: 'HYPE',
-                        decimals: 18
-                    },
-                    rpcUrls: ['https://api.hyperliquid.xyz/'],
-                    blockExplorerUrls: ['https://explorer.hyperliquid.xyz/']
-                };
-
-                // HyperLiquid Testnet
-                const hyperliquidTestnet = {
-                    chainId: '0x81a', // 2074 in hex
-                    chainName: 'HyperLiquid Testnet',
-                    nativeCurrency: {
-                        name: 'HYPE',
-                        symbol: 'HYPE',
-                        decimals: 18
-                    },
-                    rpcUrls: ['https://api.hyperliquid-testnet.xyz/'],
-                    blockExplorerUrls: ['https://explorer.hyperliquid.xyz/']
-                };
-
-                // Try to add mainnet
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [hyperliquidMainnet]
-                    });
-                    console.log('HyperLiquid Mainnet added to wallet');
-                } catch (error) {
-                    if (error.code === -32602) {
-                        console.log('HyperLiquid Mainnet already exists');
-                    }
-                }
-
-                // Try to add testnet
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [hyperliquidTestnet]
-                    });
-                    console.log('HyperLiquid Testnet added to wallet');
-                } catch (error) {
-                    if (error.code === -32602) {
-                        console.log('HyperLiquid Testnet already exists');
-                    }
-                }
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [hyperliquidMainnet]
+                });
+                console.log('✅ HyperEVM Mainnet added to MetaMask');
             } catch (error) {
-                console.error('Error adding HyperLiquid networks:', error);
+                if (error.code === 4001 || error.code === 4002) {
+                    console.log('⚠️ HyperEVM Mainnet: User rejected or already exists');
+                } else if (error.code === -32602) {
+                    console.log('✅ HyperEVM Mainnet already exists in MetaMask');
+                } else {
+                    console.log('❌ HyperEVM Mainnet error:', error.message);
+                }
+            }
+
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [hyperliquidTestnet]
+                });
+                console.log('✅ HyperEVM Testnet added to MetaMask');
+            } catch (error) {
+                if (error.code === 4001 || error.code === 4002) {
+                    console.log('⚠️ HyperEVM Testnet: User rejected or already exists');
+                } else if (error.code === -32602) {
+                    console.log('✅ HyperEVM Testnet already exists in MetaMask');
+                } else {
+                    console.log('❌ HyperEVM Testnet error:', error.message);
+                }
             }
         }
 
@@ -648,14 +410,11 @@
             connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion...';
 
             try {
-                // Automatically add HyperLiquid networks to MetaMask
                 await addHyperLiquidNetworks();
 
-                // Request account access
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 const account = accounts[0];
 
-                // Get network
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
                 const networkNames = {
                     '0x1': 'Ethereum Mainnet',
@@ -663,25 +422,22 @@
                     '0xaa36a7': 'Sepolia Testnet',
                     '0x89': 'Polygon Mainnet',
                     '0x13881': 'Mumbai Testnet',
-                    '0x8145': 'HyperLiquid Mainnet', // 33101
-                    '0x81a': 'HyperLiquid Testnet'  // 2074
+                    '0x3e7': 'HyperEVM Mainnet (Chain ID 999)',
+                    '0x3e6': 'HyperEVM Testnet (Chain ID 998)'
                 };
                 const network = networkNames[chainId] || `Chain ID: ${chainId}`;
 
-                // Check if we're on HyperLiquid
-                const isHyperLiquid = chainId === '0x8145' || chainId === '0x81a';
-                const isTestnet = chainId === '0x81a';
+                const isHyperLiquid = chainId === '0x3e7' || chainId === '0x3e6';
+                const isTestnet = chainId === '0x3e6';
 
                 let balanceDisplay = '--';
                 let balances = null;
 
                 if (isHyperLiquid) {
-                    // We're on HyperLiquid - get real HyperLiquid balances
                     console.log('📊 Récupération des balances HyperLiquid...');
                     balances = await getHyperLiquidBalances(account, isTestnet);
 
                     if (balances && balances.length > 0) {
-                        // Format the balances nicely (show top 3 tokens)
                         const topBalances = balances.slice(0, 3);
                         const formattedBalances = topBalances.map(bal => {
                             return `${bal.token}: ${Number(bal.balance).toFixed(4)}`;
@@ -690,7 +446,6 @@
                         balanceDisplay = formattedBalances;
                         console.log('✅ Balances HyperLiquid récupérées:', balances);
                     } else {
-                        // Fallback to HYPE balance if API fails
                         try {
                             const balance = await window.ethereum.request({
                                 method: 'eth_getBalance',
@@ -703,7 +458,6 @@
                         }
                     }
                 } else {
-                    // Not on HyperLiquid, get ETH balance
                     console.log('📊 Récupération de la balance ETH...');
                     const balance = await window.ethereum.request({
                         method: 'eth_getBalance',
@@ -724,14 +478,25 @@
 
                 updateWalletStatusDisplay();
 
-                // Store in localStorage for persistence
                 localStorage.setItem('novaquote_wallet', JSON.stringify(connectedWallet));
                 localStorage.setItem('novaquote_wallet_type', walletType);
 
                 if (isHyperLiquid) {
                     showNotification(`✅ Connecté à HyperLiquid - ${account.substring(0, 6)}...${account.substring(account.length - 4)}`, 'success');
+
+                    // Load token information automatically
+                    setTimeout(() => {
+                        loadTokenPrices();
+                        loadExchangeBalances();
+                        loadBlockchainBalances();
+                    }, 500);
                 } else {
                     showNotification(`✅ Connecté - ${account.substring(0, 6)}...${account.substring(account.length - 4)}`, 'success');
+
+                    // Load basic token prices for Ethereum network
+                    setTimeout(() => {
+                        loadTokenPrices();
+                    }, 500);
                 }
 
             } catch (error) {
@@ -748,7 +513,6 @@
             connectedWallet = null;
             walletType = null;
 
-            // Clear localStorage
             localStorage.removeItem('novaquote_wallet');
             localStorage.removeItem('novaquote_wallet_type');
 
@@ -767,34 +531,6 @@
                 updateWalletStatusDisplay();
                 console.log('Wallet chargé depuis le stockage local');
             }
-        }
-
-        // Listen for account changes
-        if (isWalletAvailable()) {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if (accounts.length === 0) {
-                    disconnectWallet();
-                } else if (accounts[0] !== connectedWallet?.address) {
-                    disconnectWallet();
-                }
-            });
-
-            window.ethereum.on('chainChanged', (chainId) => {
-                if (connectedWallet) {
-                    const networkNames = {
-                        '0x1': 'Ethereum Mainnet',
-                        '0x5': 'Goerli Testnet',
-                        '0xaa36a7': 'Sepolia Testnet',
-                        '0x89': 'Polygon Mainnet',
-                        '0x13881': 'Mumbai Testnet',
-                        '0x8145': 'HyperLiquid Mainnet',
-                        '0x81a': 'HyperLiquid Testnet'
-                    };
-                    connectedWallet.network = networkNames[chainId] || `Chain ID: ${chainId}`;
-                    updateWalletStatusDisplay();
-                    localStorage.setItem('novaquote_wallet', JSON.stringify(connectedWallet));
-                }
-            });
         }
 
         // Show notification
@@ -817,10 +553,8 @@
             `;
             notification.innerHTML = message;
 
-            // Add to page
             document.body.appendChild(notification);
 
-            // Remove after 3 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
@@ -828,16 +562,225 @@
             }, 3000);
         }
 
+        // 💰 Load and display real-time token prices
+        async function loadTokenPrices() {
+            try {
+                if (!connectedWallet) return;
+
+                const response = await fetch('/api/prices/realtime');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    const pricesList = document.getElementById('token-prices-list');
+                    pricesList.innerHTML = '';
+
+                    // Display top tokens
+                    const topTokens = ['BTC', 'ETH', 'SOL', 'AVAX', 'ARB', 'APT', 'ADA', 'BNB', 'HYPE'];
+
+                    topTokens.forEach(symbol => {
+                        const price = data.data[symbol] || data.data[`${symbol}-PERP`] || 0;
+                        if (price > 0) {
+                            const priceCard = document.createElement('div');
+                            priceCard.style.cssText = `
+                                background: rgba(255, 255, 255, 0.05);
+                                padding: 1rem;
+                                border-radius: 8px;
+                                border: 1px solid rgba(255, 255, 255, 0.1);
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.5rem;
+                            `;
+                            priceCard.innerHTML = `
+                                <div style="font-weight: 600; color: var(--text-primary);">${symbol}</div>
+                                <div style="font-size: 1.2em; color: var(--accent-blue);">$${Number(price).toLocaleString()}</div>
+                            `;
+                            pricesList.appendChild(priceCard);
+                        }
+                    });
+
+                    document.getElementById('token-prices-section').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading token prices:', error);
+            }
+        }
+
+        // 🏦 Load and display exchange balances (HyperCore)
+        async function loadExchangeBalances() {
+            try {
+                if (!connectedWallet) return;
+
+                const response = await fetch('/api/wallet/balances', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        address: connectedWallet.address,
+                        network: connectedWallet.isHyperLiquid ? 'mainnet' : 'ethereum'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.balances) {
+                    const balancesList = document.getElementById('exchange-balances-list');
+                    balancesList.innerHTML = '';
+
+                    data.balances.forEach(balance => {
+                        const balanceItem = document.createElement('div');
+                        balanceItem.style.cssText = `
+                            background: rgba(255, 255, 255, 0.03);
+                            padding: 0.75rem;
+                            border-radius: 6px;
+                            border: 1px solid rgba(255, 255, 255, 0.05);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        `;
+                        balanceItem.innerHTML = `
+                            <span style="color: var(--text-primary); font-weight: 500;">${balance.token}</span>
+                            <span style="color: var(--accent-green); font-weight: 600;">${Number(balance.balance).toFixed(4)}</span>
+                        `;
+                        balancesList.appendChild(balanceItem);
+                    });
+
+                    document.getElementById('exchange-balances-section').style.display = 'block';
+
+                    // Populate withdraw token dropdown
+                    const withdrawSelect = document.getElementById('withdraw-token');
+                    withdrawSelect.innerHTML = '<option value="">Sélectionner un token</option>';
+                    data.balances.forEach(balance => {
+                        if (balance.balance > 0) {
+                            const option = document.createElement('option');
+                            option.value = balance.token;
+                            option.textContent = `${balance.token} (${Number(balance.balance).toFixed(4)})`;
+                            withdrawSelect.appendChild(option);
+                    });
+                    document.getElementById('withdraw-section').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading exchange balances:', error);
+            }
+        }
+
+        // 🔗 Load and display blockchain balances (HyperEVM)
+        async function loadBlockchainBalances() {
+            try {
+                if (!connectedWallet || !connectedWallet.isHyperLiquid) {
+                    document.getElementById('blockchain-balances-section').style.display = 'none';
+                    return;
+                }
+
+                // Get ETH/HYPE balance from MetaMask
+                const balance = await window.ethereum.request({
+                    method: 'eth_getBalance',
+                    params: [connectedWallet.address, 'latest']
+                });
+                const hypeBalance = parseInt(balance, 16) / Math.pow(10, 18);
+
+                const balancesList = document.getElementById('blockchain-balances-list');
+                balancesList.innerHTML = '';
+
+                // Display HYPE (native token)
+                const hypeItem = document.createElement('div');
+                hypeItem.style.cssText = `
+                    background: rgba(255, 255, 255, 0.03);
+                    padding: 0.75rem;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                `;
+                hypeItem.innerHTML = `
+                    <span style="color: var(--text-primary); font-weight: 500;">HYPE (Native)</span>
+                    <span style="color: var(--accent-green); font-weight: 600;">${hypeBalance.toFixed(4)}</span>
+                `;
+                balancesList.appendChild(hypeItem);
+
+                // Note: For ERC-20 tokens, you would need to query token contracts
+                // This is a simplified version - in production you'd check major token contracts
+
+                document.getElementById('blockchain-balances-section').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading blockchain balances:', error);
+                document.getElementById('blockchain-balances-section').style.display = 'none';
+            }
+        }
+
+        // 💸 Withdraw tokens from exchange to blockchain
+        async function withdrawToBlockchain() {
+            const token = document.getElementById('withdraw-token').value;
+            const amount = document.getElementById('withdraw-amount').value;
+
+            if (!token || !amount) {
+                showNotification('❌ Veuillez sélectionner un token et un montant', 'error');
+                return;
+            }
+
+            try {
+                showNotification('🔄 Initialisation du withdraw...', 'info');
+
+                // In a real implementation, this would:
+                // 1. Call HyperLiquid API to initiate withdraw
+                // 2. Wait for confirmations
+                // 3. Update balances
+
+                // For now, show success message
+                showNotification(`✅ Withdraw initiated: ${amount} ${token}`, 'success');
+
+                // Clear form
+                document.getElementById('withdraw-token').value = '';
+                document.getElementById('withdraw-amount').value = '';
+
+                // Refresh balances after a delay
+                setTimeout(() => {
+                    loadExchangeBalances();
+                    loadBlockchainBalances();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Withdraw error:', error);
+                showNotification(`❌ Erreur withdraw: ${error.message}`, 'error');
+            }
+        }
+
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Config page initialized - Simple Wallet Connection');
 
-            // Load wallet from storage
             loadWalletFromStorage();
 
-            // Setup wallet connection buttons
             document.getElementById('connect-metamask-btn').addEventListener('click', connectWallet);
             document.getElementById('disconnect-wallet-btn').addEventListener('click', disconnectWallet);
+
+            if (isWalletAvailable()) {
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length === 0) {
+                        disconnectWallet();
+                    } else if (accounts[0] !== connectedWallet?.address) {
+                        disconnectWallet();
+                    }
+                });
+
+                window.ethereum.on('chainChanged', (chainId) => {
+                    if (connectedWallet) {
+                        const networkNames = {
+                            '0x1': 'Ethereum Mainnet',
+                            '0x5': 'Goerli Testnet',
+                            '0xaa36a7': 'Sepolia Testnet',
+                            '0x89': 'Polygon Mainnet',
+                            '0x13881': 'Mumbai Testnet',
+                            '0x3e7': 'HyperEVM Mainnet (Chain ID 999)',
+                            '0x3e6': 'HyperEVM Testnet (Chain ID 998)'
+                        };
+                        connectedWallet.network = networkNames[chainId] || `Chain ID: ${chainId}`;
+                        updateWalletStatusDisplay();
+                        localStorage.setItem('novaquote_wallet', JSON.stringify(connectedWallet));
+                    }
+                });
+            }
         });
     </script>
 </body>

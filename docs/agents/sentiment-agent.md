@@ -75,7 +75,8 @@ fournir des insights sur l'émotion dominante du marché.
   - Métriques publiques et annotations de contexte
   - Fallback web scraping si API indisponible
 
-- **Reddit API** : Posts et commentaires (r/cryptocurrency, r/bitcoin, r/ethereum, r/solana)
+- **Reddit API** : Posts et commentaires (r/cryptocurrency, r/bitcoin,
+  r/ethereum, r/solana)
   - OAuth 2.0 avec access token
   - Search dans multiples subreddits crypto
   - Score, commentaires, timestamp extraits

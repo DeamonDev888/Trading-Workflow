@@ -415,7 +415,10 @@ export class HealthChecker {
       clearTimeout(timeoutId);
 
       const responseTime = Date.now() - startTime;
-      const data = await response.json() as { success: boolean; data?: { price?: number; responseTime?: number } };
+      const data = (await response.json()) as {
+        success: boolean;
+        data?: { price?: number; responseTime?: number };
+      };
 
       if (response.ok && data.success) {
         return {

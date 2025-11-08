@@ -11,18 +11,14 @@ SentimentAnalysisAgent monitors sentiment across MULTIPLE platforms:
 Version 3.0: Multi-source sentiment analysis with real-time data aggregation
 """
 
-import json
-import time
 import asyncio
-import aiohttp
-import requests
 import os
-import subprocess
-import sys
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
-from termcolor import cprint
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+from termcolor import cprint
 
 # Configuration
 TOKENS_TO_TRACK = ["BTC", "ETH", "SOL", "AVAX", "MATIC", "DOT", "LINK", "UNI"]
@@ -32,7 +28,15 @@ SENTIMENT_HISTORY_FILE = "src/data/sentiment_history.csv"
 CHECK_INTERVAL_MINUTES = 15
 
 # Platform-specific configurations
-REDDIT_SUBREDDITS = ["cryptocurrency", "bitcoin", "ethereum", "solana", "CryptoCurrency", "binance", "CryptoMarkets"]
+REDDIT_SUBREDDITS = [
+    "cryptocurrency",
+    "bitcoin",
+    "ethereum",
+    "solana",
+    "CryptoCurrency",
+    "binance",
+    "CryptoMarkets",
+]
 DISCORD_WEBHOOKS = [
     # Add your Discord webhook URLs here
 ]
@@ -51,11 +55,15 @@ class TwitterSentimentCollector:
         self.base_url = "https://api.x.com/2"
         self.bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
 
-    async def collect_tweets(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
+    async def collect_tweets(
+        self, token: str, limit: int = POSTS_PER_PLATFORM
+    ) -> List[Dict]:
         """Collect recent tweets about specific token"""
         try:
             if not self.bearer_token:
-                print("[WARNING] Twitter Bearer token not found, using web scraping fallback")
+                print(
+                    "[WARNING] Twitter Bearer token not found, using web scraping fallback"
+                )
                 return await self._web_scrape_fallback(token, limit)
 
             headers = {"Authorization": f"Bearer {self.bearer_token}"}
@@ -66,23 +74,27 @@ class TwitterSentimentCollector:
                 "query": query,
                 "max_results": min(limit, 100),
                 "tweet.fields": "created_at,public_metrics,context_annotations",
-                "expansions": "author_id"
+                "expansions": "author_id",
             }
 
             async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(f"{self.base_url}/tweets/search/recent", params=params) as response:
+                async with session.get(
+                    f"{self.base_url}/tweets/search/recent", params=params
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         tweets = []
 
                         for tweet in data.get("data", []):
-                            tweets.append({
-                                "platform": "twitter",
-                                "text": tweet.get("text", ""),
-                                "created_at": tweet.get("created_at", ""),
-                                "metrics": tweet.get("public_metrics", {}),
-                                "token": token
-                            })
+                            tweets.append(
+                                {
+                                    "platform": "twitter",
+                                    "text": tweet.get("text", ""),
+                                    "created_at": tweet.get("created_at", ""),
+                                    "metrics": tweet.get("public_metrics", {}),
+                                    "token": token,
+                                }
+                            )
 
                         print(f"[OK] Collected {len(tweets)} tweets for {token}")
                         return tweets
@@ -113,7 +125,9 @@ class RedditSentimentCollector:
         self.client_secret = os.getenv("REDDIT_CLIENT_SECRET")
         self.user_agent = "SentimentAnalysisAgent/1.0"
 
-    async def collect_posts(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
+    async def collect_posts(
+        self, token: str, limit: int = POSTS_PER_PLATFORM
+    ) -> List[Dict]:
         """Collect posts from crypto subreddits about token"""
         posts = []
 
@@ -126,7 +140,7 @@ class RedditSentimentCollector:
 
             headers = {
                 "Authorization": f"Bearer {access_token}",
-                "User-Agent": self.user_agent
+                "User-Agent": self.user_agent,
             }
 
             # Search in subreddits
@@ -141,7 +155,7 @@ class RedditSentimentCollector:
                             "sort": "new",
                             "t": "day",
                             "limit": min(limit // 3, 25),
-                            "type": "link"
+                            "type": "link",
                         }
 
                         async with session.get(url, params=params) as response:
@@ -150,16 +164,22 @@ class RedditSentimentCollector:
 
                                 for post in data.get("data", {}).get("children", []):
                                     post_data = post.get("data", {})
-                                    posts.append({
-                                        "platform": "reddit",
-                                        "subreddit": subreddit,
-                                        "title": post_data.get("title", ""),
-                                        "text": post_data.get("selftext", ""),
-                                        "score": post_data.get("score", 0),
-                                        "comments": post_data.get("num_comments", 0),
-                                        "created_at": datetime.fromtimestamp(post_data.get("created_utc", 0)).isoformat(),
-                                        "token": token
-                                    })
+                                    posts.append(
+                                        {
+                                            "platform": "reddit",
+                                            "subreddit": subreddit,
+                                            "title": post_data.get("title", ""),
+                                            "text": post_data.get("selftext", ""),
+                                            "score": post_data.get("score", 0),
+                                            "comments": post_data.get(
+                                                "num_comments", 0
+                                            ),
+                                            "created_at": datetime.fromtimestamp(
+                                                post_data.get("created_utc", 0)
+                                            ).isoformat(),
+                                            "token": token,
+                                        }
+                                    )
 
                         await asyncio.sleep(1)  # Rate limiting
 
@@ -186,9 +206,7 @@ class RedditSentimentCollector:
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    "https://www.reddit.com/api/v1/access_token",
-                    auth=auth,
-                    data=data
+                    "https://www.reddit.com/api/v1/access_token", auth=auth, data=data
                 ) as response:
                     if response.status == 200:
                         token_data = await response.json()
@@ -208,7 +226,9 @@ class DiscordSentimentCollector:
     def __init__(self):
         self.webhooks = DISCORD_WEBHOOKS
 
-    async def collect_messages(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
+    async def collect_messages(
+        self, token: str, limit: int = POSTS_PER_PLATFORM
+    ) -> List[Dict]:
         """Collect messages from Discord channels"""
         messages = []
 
@@ -236,7 +256,9 @@ class TelegramSentimentCollector:
     def __init__(self):
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 
-    async def collect_messages(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
+    async def collect_messages(
+        self, token: str, limit: int = POSTS_PER_PLATFORM
+    ) -> List[Dict]:
         """Collect messages from Telegram crypto channels"""
         messages = []
 
@@ -261,10 +283,12 @@ class NewsSentimentCollector:
     def __init__(self):
         self.news_apis = {
             "coindesk": "https://api.coindesk.com/v1/news/search",
-            "cryptonews": "https://crypto-news-api.herokuapp.com/news"
+            "cryptonews": "https://crypto-news-api.herokuapp.com/news",
         }
 
-    async def collect_news(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
+    async def collect_news(
+        self, token: str, limit: int = POSTS_PER_PLATFORM
+    ) -> List[Dict]:
         """Collect news articles about token"""
         articles = []
 
@@ -274,20 +298,22 @@ class NewsSentimentCollector:
                 try:
                     async with session.get(
                         f"https://api.coindesk.com/v1/news/search",
-                        params={"q": token, "limit": limit}
+                        params={"q": token, "limit": limit},
                     ) as response:
                         if response.status == 200:
                             data = await response.json()
-                            for article in data.get("data", [])[:limit//2]:
-                                articles.append({
-                                    "platform": "news",
-                                    "source": "coindesk",
-                                    "title": article.get("title", ""),
-                                    "description": article.get("description", ""),
-                                    "url": article.get("url", ""),
-                                    "published_at": article.get("published_at", ""),
-                                    "token": token
-                                })
+                            for article in data.get("data", [])[: limit // 2]:
+                                articles.append(
+                                    {
+                                        "platform": "news",
+                                        "source": "coindesk",
+                                        "title": article.get("title", ""),
+                                        "description": article.get("description", ""),
+                                        "url": article.get("url", ""),
+                                        "published_at": article.get("published_at", ""),
+                                        "token": token,
+                                    }
+                                )
                 except:
                     pass
 
@@ -299,21 +325,23 @@ class NewsSentimentCollector:
                             "auth_token": os.getenv("CRYPTOPANIC_API_KEY"),
                             "currencies": token.lower(),
                             "filter": "hot",
-                            "limit": limit//2
-                        }
+                            "limit": limit // 2,
+                        },
                     ) as response:
                         if response.status == 200:
                             data = await response.json()
                             for post in data.get("results", []):
-                                articles.append({
-                                    "platform": "news",
-                                    "source": "cryptopanic",
-                                    "title": post.get("title", ""),
-                                    "url": post.get("url", ""),
-                                    "published_at": post.get("published_at", ""),
-                                    "votes": post.get("votes", {}),
-                                    "token": token
-                                })
+                                articles.append(
+                                    {
+                                        "platform": "news",
+                                        "source": "cryptopanic",
+                                        "title": post.get("title", ""),
+                                        "url": post.get("url", ""),
+                                        "published_at": post.get("published_at", ""),
+                                        "votes": post.get("votes", {}),
+                                        "token": token,
+                                    }
+                                )
                 except:
                     pass
 
@@ -329,11 +357,11 @@ class SentimentAnalysisAgent:
     """Multi-Source Sentiment Analysis Agent V3.0"""
 
     def __init__(self):
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("[AI] MULTI-SOURCE SENTIMENT ANALYSIS AGENT V3.0")
-        print("="*80)
+        print("=" * 80)
         print("[PLATFORMS] Twitter/X, Reddit, News, Discord, Telegram")
-        print("="*80)
+        print("=" * 80)
 
         # Initialize collectors
         self.twitter_collector = TwitterSentimentCollector()
@@ -345,7 +373,7 @@ class SentimentAnalysisAgent:
         print("[OK] All sentiment collectors initialized")
         print(f"[INFO] Tracking tokens: {', '.join(TOKENS_TO_TRACK)}")
         print(f"[INFO] Posts per platform: {POSTS_PER_PLATFORM}")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
     async def collect_all_sentiment_data(self, token: str) -> Dict[str, List]:
         """Collect sentiment data from ALL platforms"""
@@ -356,7 +384,7 @@ class SentimentAnalysisAgent:
             "reddit": [],
             "discord": [],
             "telegram": [],
-            "news": []
+            "news": [],
         }
 
         # Collect from all platforms concurrently
@@ -365,7 +393,7 @@ class SentimentAnalysisAgent:
             self.reddit_collector.collect_posts(token),
             self.discord_collector.collect_messages(token),
             self.telegram_collector.collect_messages(token),
-            self.news_collector.collect_news(token)
+            self.news_collector.collect_news(token),
         ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -387,7 +415,6 @@ class SentimentAnalysisAgent:
 
     def call_subagent(self, prompt: str) -> str:
         """Appeler le sub-agent Claude pour l'analyse de sentiment"""
-        import json
         import subprocess
 
         full_prompt = f"""Use the claude-sentiment-analyzer subagent to analyze this sentiment data:
@@ -448,7 +475,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     "action": "HOLD",
                     "confidence": 0,
                     "sources": sentiment_data,
-                    "error": "No data collected"
+                    "error": "No data collected",
                 }
 
             # Create analysis prompt
@@ -487,7 +514,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     platform: len(data) for platform, data in sentiment_data.items()
                 },
                 "total_items": sum(len(data) for data in sentiment_data.values()),
-                "sources": sentiment_data
+                "sources": sentiment_data,
             }
 
             # Display results
@@ -501,7 +528,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 "token": token,
                 "error": str(e),
                 "sentiment": "NEUTRAL",
-                "action": "HOLD"
+                "action": "HOLD",
             }
 
     def _prepare_sentiment_text(self, sentiment_data: Dict[str, List]) -> str:
@@ -518,8 +545,10 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         if sentiment_data["reddit"]:
             text_parts.append("=== REDDIT ===")
             for item in sentiment_data["reddit"][:10]:
-                text_parts.append(f"r/{item.get('subreddit', '')}: {item.get('title', '')}")
-                if item.get('text'):
+                text_parts.append(
+                    f"r/{item.get('subreddit', '')}: {item.get('title', '')}"
+                )
+                if item.get("text"):
                     text_parts.append(f"Content: {item['text'][:200]}...")
 
         # News data
@@ -527,7 +556,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             text_parts.append("=== CRYPTO NEWS ===")
             for item in sentiment_data["news"][:10]:
                 text_parts.append(f"{item.get('source', '')}: {item.get('title', '')}")
-                if item.get('description'):
+                if item.get("description"):
                     text_parts.append(f"Summary: {item['description'][:200]}...")
 
         return "\n".join(text_parts)
@@ -537,7 +566,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         parsed = {}
 
         try:
-            lines = response.strip().split('\n')
+            lines = response.strip().split("\n")
 
             for line in lines:
                 line = line.strip()
@@ -555,7 +584,10 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     # Collect subsequent lines as factors
                     factors = []
                     idx = lines.index(line) + 1
-                    while idx < len(lines) and (lines[idx].strip().startswith("-") or lines[idx].strip().startswith("•")):
+                    while idx < len(lines) and (
+                        lines[idx].strip().startswith("-")
+                        or lines[idx].strip().startswith("•")
+                    ):
                         factors.append(lines[idx].strip())
                         idx += 1
                     parsed["key_factors"] = factors
@@ -574,32 +606,32 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         print(f"{'='*80}")
 
         # Color-coded sentiment
-        sentiment = result.get('sentiment', 'NEUTRAL')
+        sentiment = result.get("sentiment", "NEUTRAL")
         color = {
-            'VERY_BULLISH': 'green',
-            'BULLISH': 'cyan',
-            'NEUTRAL': 'yellow',
-            'BEARISH': 'red',
-            'VERY_BEARISH': 'magenta'
-        }.get(sentiment, 'white')
+            "VERY_BULLISH": "green",
+            "BULLISH": "cyan",
+            "NEUTRAL": "yellow",
+            "BEARISH": "red",
+            "VERY_BEARISH": "magenta",
+        }.get(sentiment, "white")
 
         cprint(f"🎯 SENTIMENT: {sentiment}", color)
         cprint(f"💪 STRENGTH: {result.get('strength', 0):.0f}%", color)
         cprint(f"📊 ACTION: {result.get('action', 'HOLD')}", color)
-        cprint(f"🎲 CONFIDENCE: {result.get('confidence', 0):.0f}%", 'blue')
+        cprint(f"🎲 CONFIDENCE: {result.get('confidence', 0):.0f}%", "blue")
 
         print(f"\n📈 Sources Summary:")
-        for platform, count in result.get('sources_summary', {}).items():
+        for platform, count in result.get("sources_summary", {}).items():
             print(f"   • {platform.title()}: {count} items")
 
         print(f"\n📋 Total Items Analyzed: {result.get('total_items', 0)}")
 
-        if result.get('key_factors'):
+        if result.get("key_factors"):
             print(f"\n🔍 Key Factors:")
-            for factor in result['key_factors']:
+            for factor in result["key_factors"]:
                 print(f"   • {factor}")
 
-        if result.get('risk_assessment'):
+        if result.get("risk_assessment"):
             print(f"\n⚠️ Risk Assessment: {result['risk_assessment']}")
 
         print(f"{'='*80}\n")
@@ -621,7 +653,9 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             # Generate overall market sentiment
             self._generate_market_summary(all_results)
 
-            print(f"\n[COMPLETE] Sentiment analysis completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(
+                f"\n[COMPLETE] Sentiment analysis completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            )
 
             return all_results
 
@@ -646,10 +680,10 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             valid_results = 0
 
             for result in results:
-                if result.get('sentiment') and result.get('confidence', 0) > 0:
-                    sentiment = result['sentiment']
+                if result.get("sentiment") and result.get("confidence", 0) > 0:
+                    sentiment = result["sentiment"]
                     sentiment_counts[sentiment] = sentiment_counts.get(sentiment, 0) + 1
-                    total_confidence += result['confidence']
+                    total_confidence += result["confidence"]
                     valid_results += 1
 
             if valid_results == 0:
@@ -670,15 +704,15 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             if sentiment_counts:
                 dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
                 color = {
-                    'VERY_BULLISH': 'green',
-                    'BULLISH': 'cyan',
-                    'NEUTRAL': 'yellow',
-                    'BEARISH': 'red',
-                    'VERY_BEARISH': 'magenta'
-                }.get(dominant_sentiment, 'white')
+                    "VERY_BULLISH": "green",
+                    "BULLISH": "cyan",
+                    "NEUTRAL": "yellow",
+                    "BEARISH": "red",
+                    "VERY_BEARISH": "magenta",
+                }.get(dominant_sentiment, "white")
 
                 cprint(f"\n🎯 OVERALL MARKET SENTIMENT: {dominant_sentiment}", color)
-                cprint(f"📊 Market Confidence: {avg_confidence:.1f}%", 'blue')
+                cprint(f"📊 Market Confidence: {avg_confidence:.1f}%", "blue")
 
             print(f"{'='*80}\n")
 

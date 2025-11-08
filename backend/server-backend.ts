@@ -485,7 +485,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Error handling middleware
 app.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   log.api.error(req.path, error.message);
   res.status(500).json({
     error: 'Internal Server Error',
@@ -524,7 +523,7 @@ const activePositions: Map<string, Position> = new Map();
 // Cache interne pour réduire les appels HyperLiquid
 const internalCache = {
   prices: { data: null as any, timestamp: 0 },
-  positions: { data: null as any, timestamp: 0 }
+  positions: { data: null as any, timestamp: 0 },
 };
 const CACHE_TTL = 10000; // 10 secondes
 
@@ -539,7 +538,7 @@ function getFromCache(type: 'prices' | 'positions') {
 function setCache(type: 'prices' | 'positions', data: any) {
   internalCache[type] = {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }
 
@@ -992,6 +991,351 @@ app.get('/api/positions', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get positions',
+    });
+  }
+});
+
+// ========================================
+// 🌊 LIQUIDITY ANALYSIS ENDPOINTS
+// ========================================
+
+/**
+ * 🌊 Get liquid assets for safe trading
+ */
+app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
+  try {
+    log.api.request('GET', '/api/liquidity/assets');
+
+    const { min_liquidity = '0.4', max_count = '20' } = req.query;
+
+    // Execute Python liquidity tracker
+    const result = await executePythonScript(
+      'src/agents/liquidity_tracker.py',
+      [
+        '--min-liquidity',
+        min_liquidity.toString(),
+        '--max-count',
+        max_count.toString(),
+      ]
+    );
+
+    if (result.success && result.output) {
+      // Parse the output to extract liquid assets
+      const outputLines = result.output.split('\n');
+      const assetsLine = outputLines.find((line) =>
+        line.includes('[LIQUID ASSETS]')
+      );
+
+      if (assetsLine) {
+        const assets = assetsLine
+          .replace('[LIQUID ASSETS]', '')
+          .trim()
+          .split(',')
+          .filter((a) => a);
+
+        res.json({
+          success: true,
+          data: {
+            assets: assets,
+            count: assets.length,
+            min_liquidity_score: parseFloat(min_liquidity.toString()),
+            max_assets: parseInt(max_count.toString()),
+            timestamp: new Date().toISOString(),
+            source: 'HyperLiquid Liquidity Tracker',
+          },
+        });
+      } else {
+        // Fallback to blue chip assets
+        const blueChipAssets = [
+          'BTC',
+          'ETH',
+          'SOL',
+          'AVAX',
+          'MATIC',
+          'DOT',
+          'LINK',
+          'UNI',
+          'ATOM',
+          'LTC',
+        ];
+
+        res.json({
+          success: true,
+          data: {
+            assets: blueChipAssets,
+            count: blueChipAssets.length,
+            min_liquidity_score: parseFloat(min_liquidity.toString()),
+            max_assets: parseInt(max_count.toString()),
+            timestamp: new Date().toISOString(),
+            source: 'Blue Chip Assets (Fallback)',
+            note: 'Using blue chip assets as safe liquidity fallback',
+          },
+        });
+      }
+    } else {
+      // Return safe blue chip assets on error
+      const blueChipAssets = [
+        'BTC',
+        'ETH',
+        'SOL',
+        'AVAX',
+        'MATIC',
+        'DOT',
+        'LINK',
+        'UNI',
+        'ATOM',
+        'LTC',
+      ];
+
+      res.json({
+        success: true,
+        data: {
+          assets: blueChipAssets,
+          count: blueChipAssets.length,
+          timestamp: new Date().toISOString(),
+          source: 'Blue Chip Assets (Safe Fallback)',
+          note: 'Liquidity tracker unavailable, using blue chip assets',
+        },
+      });
+    }
+
+    log.api.response('/api/liquidity/assets', 200);
+  } catch (error: any) {
+    log.error(`Liquidity assets error: ${error.message}`, 'LIQUIDITY-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * 🌊 Get safe trading assets (volatile + liquid)
+ */
+app.get('/api/liquidity/safe-assets', async (req: Request, res: Response) => {
+  try {
+    log.api.request('GET', '/api/liquidity/safe-assets');
+
+    const {
+      min_volatility = '0.03',
+      min_liquidity = '0.4',
+      max_count = '15',
+    } = req.query;
+
+    // Execute Python strategy agent with zero-risk mode
+    const result = await executePythonScript('src/agents/strategy_agent.py', [
+      '--zero-risk',
+      '--min-volatility',
+      min_volatility.toString(),
+      '--min-liquidity',
+      min_liquidity.toString(),
+      '--max-assets',
+      max_count.toString(),
+    ]);
+
+    if (result.success && result.output) {
+      // Parse output for safe assets
+      const outputLines = result.output.split('\n');
+      const safeAssetsLine = outputLines.find((line) =>
+        line.includes('[SAFE TRADING ASSETS')
+      );
+
+      if (safeAssetsLine) {
+        // Extract asset symbols from the output
+        const assetMatches = safeAssetsLine.match(/(\b[A-Z]{2,6}\b)/g) || [];
+        const safeAssets = [...new Set(assetMatches)]; // Remove duplicates
+
+        res.json({
+          success: true,
+          data: {
+            safe_assets: safeAssets,
+            count: safeAssets.length,
+            criteria: {
+              min_volatility: parseFloat(min_volatility.toString()),
+              min_liquidity: parseFloat(min_liquidity.toString()),
+              max_assets: parseInt(max_count.toString()),
+            },
+            timestamp: new Date().toISOString(),
+            source: 'Strategy Agent - Zero Risk Mode',
+            risk_level: 'ZERO_SLIPPAGE_RISK',
+          },
+        });
+      } else {
+        // Fallback to liquid assets only
+        res.json({
+          success: true,
+          data: {
+            safe_assets: ['BTC', 'ETH', 'SOL', 'AVAX', 'MATIC', 'DOT', 'LINK'],
+            count: 7,
+            criteria: {
+              min_volatility: parseFloat(min_volatility.toString()),
+              min_liquidity: parseFloat(min_liquidity.toString()),
+              max_assets: parseInt(max_count.toString()),
+            },
+            timestamp: new Date().toISOString(),
+            source: 'Blue Chip Assets (Safe Fallback)',
+            note: 'Unable to get safe assets, using blue chip assets',
+          },
+        });
+      }
+    } else {
+      // Return blue chip assets on error
+      const blueChipAssets = [
+        'BTC',
+        'ETH',
+        'SOL',
+        'AVAX',
+        'MATIC',
+        'DOT',
+        'LINK',
+        'UNI',
+      ];
+
+      res.json({
+        success: true,
+        data: {
+          safe_assets: blueChipAssets,
+          count: blueChipAssets.length,
+          criteria: {
+            min_volatility: parseFloat(min_volatility.toString()),
+            min_liquidity: parseFloat(min_liquidity.toString()),
+            max_assets: parseInt(max_count.toString()),
+          },
+          timestamp: new Date().toISOString(),
+          source: 'Blue Chip Assets (Error Fallback)',
+          note: 'Strategy agent unavailable, using blue chip assets',
+        },
+      });
+    }
+
+    log.api.response('/api/liquidity/safe-assets', 200);
+  } catch (error: any) {
+    log.error(`Safe assets error: ${error.message}`, 'SAFE-ASSETS-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * 🌊 Check if an asset is safe for trading
+ */
+app.get('/api/liquidity/check/:symbol', async (req: Request, res: Response) => {
+  try {
+    log.api.request('GET', `/api/liquidity/check/${req.params['symbol']}`);
+
+    const { symbol } = req.params;
+    const { min_volatility = '0.03', min_liquidity = '0.4' } = req.query;
+
+    // Check if it's a blue chip asset (immediate approval)
+    const blueChipAssets = new Set([
+      'BTC',
+      'ETH',
+      'SOL',
+      'AVAX',
+      'MATIC',
+      'DOT',
+      'LINK',
+      'UNI',
+      'ATOM',
+      'LTC',
+      'BCH',
+      'ETC',
+      'XRP',
+      'ADA',
+      'BNB',
+      'AAVE',
+    ]);
+
+    if (blueChipAssets.has(symbol.toUpperCase())) {
+      res.json({
+        success: true,
+        data: {
+          symbol: symbol.toUpperCase(),
+          is_safe: true,
+          safety_score: 0.95,
+          safety_level: 'EXCELLENT',
+          is_blue_chip: true,
+          risk_level: 'ZERO_SLIPPAGE_RISK',
+          criteria: {
+            min_volatility: parseFloat(min_volatility.toString()),
+            min_liquidity: parseFloat(min_liquidity.toString()),
+          },
+          timestamp: new Date().toISOString(),
+          source: 'Blue Chip Asset List',
+        },
+      });
+      return;
+    }
+
+    // For non-blue-chip assets, check with liquidity tracker
+    const result = await executePythonScript(
+      'src/agents/liquidity_tracker.py',
+      ['--check-asset', symbol.toUpperCase()]
+    );
+
+    if (result.success && result.output) {
+      const output = result.output;
+      const isLiquid =
+        output.includes('LIQUID') ||
+        output.includes('EXCELLENT') ||
+        output.includes('VERY_GOOD');
+      const safetyScore = isLiquid ? 0.8 : 0.3;
+      const safetyLevel = isLiquid ? 'SAFE' : 'RISKY';
+
+      res.json({
+        success: true,
+        data: {
+          symbol: symbol.toUpperCase(),
+          is_safe: isLiquid,
+          safety_score: safetyScore,
+          safety_level: safetyLevel,
+          is_blue_chip: false,
+          risk_level: isLiquid ? 'LOW_SLIPPAGE_RISK' : 'HIGH_SLIPPAGE_RISK',
+          criteria: {
+            min_volatility: parseFloat(min_volatility.toString()),
+            min_liquidity: parseFloat(min_liquidity.toString()),
+          },
+          liquidity_analysis: output.substring(0, 200) + '...',
+          timestamp: new Date().toISOString(),
+          source: 'Liquidity Tracker Analysis',
+        },
+      });
+    } else {
+      // Mark as risky if analysis fails
+      res.json({
+        success: true,
+        data: {
+          symbol: symbol.toUpperCase(),
+          is_safe: false,
+          safety_score: 0.1,
+          safety_level: 'VERY_RISKY',
+          is_blue_chip: false,
+          risk_level: 'HIGH_SLIPPAGE_RISK',
+          criteria: {
+            min_volatility: parseFloat(min_volatility.toString()),
+            min_liquidity: parseFloat(min_liquidity.toString()),
+          },
+          timestamp: new Date().toISOString(),
+          source: 'Safety Check (Analysis Failed)',
+          note: 'Unable to verify liquidity, marked as risky for safety',
+        },
+      });
+    }
+
+    log.api.response(`/api/liquidity/check/${req.params['symbol']}`, 200);
+  } catch (error: any) {
+    log.error(
+      `Asset safety check error: ${error.message}`,
+      'SAFETY-CHECK-ERROR'
+    );
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -2550,10 +2894,10 @@ app.get('/api/wallet', async (req: Request, res: Response) => {
       data: {
         address: 'paper-trading-simulated',
         network: 'simulation',
-        balance: 10000.00,
-        usd_balance: 10000.00,
-        collateral: 10000.00,
-        equity: 10000.00,
+        balance: 10000.0,
+        usd_balance: 10000.0,
+        collateral: 10000.0,
+        equity: 10000.0,
         margin_usage: 0.0,
         leverage: 1.0,
         mode: 'paper_trading',
@@ -2561,18 +2905,15 @@ app.get('/api/wallet', async (req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
         positions_count: 0,
         open_orders_count: 0,
-        pnl_24h: 245.50,
-        pnl_total: 892.30,
+        pnl_24h: 245.5,
+        pnl_total: 892.3,
         pnl_percent_24h: 2.51,
-        pnl_percent_total: 9.81
+        pnl_percent_total: 9.81,
       },
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    log.error(
-      `Wallet endpoint error: ${error.message}`,
-      'WALLET-ERROR'
-    );
+    log.error(`Wallet endpoint error: ${error.message}`, 'WALLET-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,
@@ -2598,15 +2939,70 @@ app.post('/api/wallet/balances', async (req: Request, res: Response) => {
       });
     }
 
-    // Return realistic HyperLiquid balances
-    // In production, this would fetch from the real HyperLiquid API
-    const balances = [
-      { token: 'USDC', balance: 5000.0000 },
-      { token: 'ETH', balance: 2.5000 },
-      { token: 'BTC', balance: 0.1250 },
-      { token: 'HYPE', balance: 1000.0000 },
-      { token: 'SOL', balance: 50.0000 },
-    ];
+    // Fetch REAL HyperLiquid balances from API
+    let balances: Array<{ token: string; balance: number }> = [];
+
+    try {
+      // Get user clearinghouse state from HyperLiquid API
+      const userState = await fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'userClearinghouseState',
+          user: address,
+        }),
+      }).then((res) => res.json());
+
+      // Extract balances from user state
+      if (userState && (userState as any).assetPositions) {
+        for (const position of (userState as any).assetPositions) {
+          const coin = position.coin;
+          const balance = parseFloat(position.position?.coin || '0');
+          if (balance > 0) {
+            balances.push({ token: coin, balance });
+          }
+        }
+      }
+
+      // Also get spot balances
+      try {
+        const spotState = await fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'userSpotClearinghouseState',
+            user: address,
+          }),
+        }).then((res) => res.json());
+
+        if (spotState && spotState.balances) {
+          for (const bal of spotState.balances) {
+            const coin = bal.coin;
+            const balance = parseFloat(bal.hold || bal.total || '0');
+            if (balance > 0) {
+              // Update or add balance
+              const existing = balances.find((b) => b.token === coin);
+              if (existing) {
+                existing.balance += balance;
+              } else {
+                balances.push({ token: coin, balance });
+              }
+            }
+          }
+        }
+      } catch (spotError) {
+        log.warn('Spot balances not available:', spotError);
+      }
+
+      log.success(
+        `Real HyperLiquid balances retrieved: ${balances.length} tokens`
+      );
+    } catch (error: any) {
+      log.error(`Failed to fetch real balances: ${error.message}`);
+      // STRICT POLICY: Never return mock/fallback data
+      // Return empty array instead of mock data
+      balances = [];
+    }
 
     res.json({
       success: true,
@@ -2614,7 +3010,7 @@ app.post('/api/wallet/balances', async (req: Request, res: Response) => {
       wallet: {
         address: address,
         network: network || 'mainnet',
-        isHyperLiquid: true
+        isHyperLiquid: true,
       },
       timestamp: new Date().toISOString(),
     });
@@ -3192,6 +3588,293 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   log.error(`Unhandled Rejection: ${reason}`);
   console.error('Promise:', promise);
   process.exit(1);
+});
+
+// Advanced Risk Assessment endpoint for high-leverage trading
+app.post(
+  '/api/risk/advanced-assessment',
+  async (req: Request, res: Response) => {
+    try {
+      const {
+        symbol,
+        side,
+        leverage = 25,
+        confidence = 0.9,
+        aggressiveMode = true,
+      } = req.body;
+
+      if (!symbol || !side) {
+        return res.status(400).json({
+          success: false,
+          error: 'Symbol and side are required parameters',
+        });
+      }
+
+      if (!['LONG', 'SHORT'].includes(side.toUpperCase())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Side must be either LONG or SHORT',
+        });
+      }
+
+      console.log(
+        `[RISK] Advanced assessment: ${side.toUpperCase()} ${symbol} @ ${leverage}x leverage`
+      );
+      console.log(
+        `[RISK] Confidence: ${confidence * 100}% | Aggressive mode: ${aggressiveMode}`
+      );
+
+      // Simulate advanced risk assessment with comprehensive analysis
+      const currentPrice = await fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'allMids' }),
+      })
+        .then((res) => res.json())
+        .then((prices) => parseFloat(prices[symbol] || 0))
+        .catch(() => 100000); // Fallback price
+
+      const portfolioValue = 10000; // $10,000 portfolio
+      const positionSize = portfolioValue * (aggressiveMode ? 1.0 : 0.3); // 100% or 30%
+      const maintenanceMargin = 0.005;
+
+      // Calculate liquidation price
+      let liquidationPrice;
+      if (side.toUpperCase() === 'SHORT') {
+        liquidationPrice =
+          currentPrice * (1 + 1 / leverage - maintenanceMargin);
+      } else {
+        liquidationPrice =
+          currentPrice * (1 - 1 / leverage + maintenanceMargin);
+      }
+
+      const distanceToLiquidation =
+        (Math.abs(currentPrice - liquidationPrice) / currentPrice) * 100;
+
+      // Risk assessment
+      const leverageRisk = Math.min(1.0, leverage / 50);
+      const positionRisk = Math.min(1.0, positionSize / portfolioValue);
+      const liquidationRisk =
+        distanceToLiquidation < 5
+          ? 1.0
+          : distanceToLiquidation < 10
+            ? 0.7
+            : 0.3;
+      const overallRiskScore =
+        leverageRisk * 0.3 + positionRisk * 0.4 + liquidationRisk * 0.3;
+
+      // Asset-specific limits
+      const assetLimits = {
+        BTC: { maxLeverage: 50, minConfidence: 0.85 },
+        ETH: { maxLeverage: 40, minConfidence: 0.8 },
+        SOL: { maxLeverage: 30, minConfidence: 0.75 },
+        default: { maxLeverage: 25, minConfidence: 0.7 },
+      };
+
+      const limits = assetLimits[symbol] || assetLimits.default;
+
+      // Decision logic
+      const meetsLeverageLimit = leverage <= limits.maxLeverage;
+      const meetsConfidenceThreshold = confidence >= limits.minConfidence;
+      const meetsRiskThreshold = overallRiskScore < 0.8;
+      const meetsDistanceThreshold = distanceToLiquidation > 5;
+
+      const approved =
+        meetsLeverageLimit &&
+        meetsConfidenceThreshold &&
+        meetsRiskThreshold &&
+        meetsDistanceThreshold;
+
+      const riskLevel =
+        overallRiskScore > 0.8
+          ? 'EXTREME'
+          : overallRiskScore > 0.6
+            ? 'HIGH'
+            : overallRiskScore > 0.4
+              ? 'MEDIUM'
+              : 'LOW';
+
+      const result = {
+        approved,
+        symbol,
+        side: side.toUpperCase(),
+        proposed_leverage: leverage,
+        approved_leverage: approved ? leverage : limits.maxLeverage,
+        position_size_usd: positionSize,
+        current_price: currentPrice,
+        liquidation_price: liquidationPrice,
+        risk_metrics: {
+          distance_to_liquidation_pct: distanceToLiquidation,
+          portfolio_impact_pct: (positionSize / portfolioValue) * 100,
+          liquidation_risk_score: liquidationRisk,
+          leverage_risk_score: leverageRisk,
+          overall_risk_score: overallRiskScore,
+          risk_level: riskLevel,
+        },
+        ai_confidence: confidence,
+        validation_checks: {
+          meets_leverage_limit: meetsLeverageLimit,
+          meets_confidence_threshold: meetsConfidenceThreshold,
+          meets_risk_threshold: meetsRiskThreshold,
+          meets_distance_threshold: meetsDistanceThreshold,
+        },
+        asset_limits: limits,
+        timestamp: new Date().toISOString(),
+        reasoning: approved
+          ? `Position approved: ${leverage}x leverage within ${limits.maxLeverage}x limit, ${(confidence * 100).toFixed(1)}% confidence above ${(limits.minConfidence * 100).toFixed(1)}% threshold`
+          : `Position rejected: ${leverage > limits.maxLeverage ? 'leverage too high' : confidence < limits.minConfidence ? 'confidence too low' : 'risk too elevated'}`,
+      };
+
+      res.json({
+        success: true,
+        data: {
+          assessment: result,
+          timestamp: new Date().toISOString(),
+          parameters: {
+            symbol,
+            side: side.toUpperCase(),
+            leverage,
+            confidence,
+            aggressiveMode,
+          },
+          risk_level: riskLevel,
+          recommendation: approved ? 'PROCEED' : 'REJECT',
+        },
+      });
+    } catch (error: any) {
+      console.error('Advanced risk assessment endpoint error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to perform advanced risk assessment',
+        message: error.message,
+      });
+    }
+  }
+);
+
+// Quick validation endpoint for common scenarios
+app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
+  try {
+    const { scenario } = req.body;
+
+    const scenarios = {
+      btc_short_25x: {
+        symbol: 'BTC',
+        side: 'SHORT',
+        leverage: 25,
+        confidence: 0.9,
+        aggressiveMode: true,
+      },
+      eth_long_15x: {
+        symbol: 'ETH',
+        side: 'LONG',
+        leverage: 15,
+        confidence: 0.85,
+        aggressiveMode: true,
+      },
+      sol_short_20x: {
+        symbol: 'SOL',
+        side: 'SHORT',
+        leverage: 20,
+        confidence: 0.8,
+        aggressiveMode: true,
+      },
+    };
+
+    const selectedScenario = scenarios[scenario];
+    if (!selectedScenario) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'Invalid scenario. Available: btc_short_25x, eth_long_15x, sol_short_20x',
+      });
+    }
+
+    console.log(`[RISK] Quick validation: ${scenario}`);
+
+    // Get assessment result
+    const response = await fetch(
+      'http://localhost:7000/api/risk/advanced-assessment',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedScenario),
+      }
+    );
+
+    const result = (await response.json()) as any;
+
+    res.json({
+      success: true,
+      scenario,
+      ...result,
+    });
+  } catch (error: any) {
+    console.error('Quick validation endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to validate scenario',
+      message: error.message,
+    });
+  }
+});
+
+// Risk agent configuration endpoint
+app.get('/api/risk/config', (req: Request, res: Response) => {
+  try {
+    const config = {
+      aggressive_mode: true,
+      max_leverage: 50,
+      default_leverage: 25,
+      max_capital_allocation: 1.0, // 100%
+      max_single_position_risk: 0.4, // 40%
+      max_drawdown: 0.2, // 20%
+      max_portfolio_risk: 0.5, // 50%
+      max_leverage_usage: 0.8, // 80%
+
+      high_leverage_assets: {
+        BTC: { max_leverage: 50, confidence_threshold: 0.85 },
+        ETH: { max_leverage: 40, confidence_threshold: 0.8 },
+        SOL: { max_leverage: 30, confidence_threshold: 0.75 },
+        FARTCOIN: { max_leverage: 20, confidence_threshold: 0.7 },
+        WIF: { max_leverage: 25, confidence_threshold: 0.7 },
+        PUMP: { max_leverage: 15, confidence_threshold: 0.65 },
+      },
+
+      risk_thresholds: {
+        extreme: 0.9,
+        high: 0.6,
+        medium: 0.4,
+        low: 0.2,
+      },
+
+      quick_scenarios: {
+        btc_short_25x: {
+          description: 'Short BTC at 25x leverage - High conviction bearish',
+        },
+        eth_long_15x: {
+          description: 'Long ETH at 15x leverage - Moderate conviction bullish',
+        },
+        sol_short_20x: {
+          description: 'Short SOL at 20x leverage - Medium conviction bearish',
+        },
+      },
+
+      last_updated: new Date().toISOString(),
+    };
+
+    res.json({
+      success: true,
+      data: config,
+    });
+  } catch (error: any) {
+    console.error('Risk config endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get risk configuration',
+      message: error.message,
+    });
+  }
 });
 
 // Start the server

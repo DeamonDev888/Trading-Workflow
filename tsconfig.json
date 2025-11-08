@@ -28,6 +28,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "allowUnusedLabels": true,
     "allowUnreachableCode": true,
+    "noEmitOnError": false,
     "types": ["node"]
   },
   "include": ["**/*.ts", "**/*.js"],

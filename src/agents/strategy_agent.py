@@ -9,11 +9,18 @@ Built with love by Moon Dev [ROCKET]
 import json
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from termcolor import cprint
 
+from src.agents.iterative_subagent_manager import (
+    IterationConfig,
+    IterationMode,
+    IterativeSubagentManager,
+)
+from src.agents.liquidity_tracker import HyperLiquidLiquidityTracker
 from src.agents.strategy_library import PROVEN_STRATEGIES
+from src.agents.volatility_tracker import HyperLiquidVolatilityTracker
 from src.config import *
 
 # Import HyperLiquid exchange manager for HyperLiquid-only trading
@@ -78,6 +85,26 @@ class StrategyAgent:
         else:
             self.em = None
             cprint("[OK] Strategy Agent using direct nice_funcs", "green")
+
+        # Initialize trackers
+        self.volatility_tracker = HyperLiquidVolatilityTracker()
+        self.liquidity_tracker = HyperLiquidLiquidityTracker()
+        self.volatile_assets_cache = []
+        self.liquid_assets_cache = []
+        self.cache_timestamp = 0
+        self.cache_duration = 3600  # 1 hour cache
+
+        # Initialize iterative subagent manager
+        iterative_config = IterationConfig(
+            max_iterations=3,
+            confidence_threshold=0.85,
+            timeout_per_iteration=120,
+            convergence_threshold=0.9,
+            diversity_requirement=True,
+            learning_rate=0.1,
+        )
+        self.iterative_manager = IterativeSubagentManager(iterative_config)
+        cprint("[OK] Iterative Subagent Manager initialized", "cyan")
 
         # Display validated strategies
         self._display_validated_strategies()
@@ -213,6 +240,292 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         except Exception as e:
             print(f"[ERROR] Error evaluating signals: {e}")
             return None
+
+    def evaluate_signals_iterative(
+        self, signals, market_data, mode: str = "progressive_refinement"
+    ):
+        """
+        [AI] Enhanced signal evaluation using iterative subagent system
+        Supports multiple iteration strategies for improved decision quality
+        """
+        try:
+            if not signals:
+                return None
+
+            print(f"\n{'='*80}")
+            print(f"[AI] ITERATIVE SIGNAL EVALUATION - {mode.upper()}")
+            print(f"{'='*80}")
+
+            # Prepare comprehensive context data
+            context_data = {
+                "signals_count": len(signals),
+                "market_data": market_data,
+                "ai_model": AI_MODEL,
+                "max_tokens": AI_MAX_TOKENS,
+                "temperature": AI_TEMPERATURE,
+                "liquidity_filter": True,
+                "risk_tolerance": "CONSERVATIVE",
+                "trading_mode": "ZERO_RISK",
+            }
+
+            # Format signals for prompt
+            signals_str = json.dumps(signals, indent=2)
+
+            # Create detailed prompt
+            prompt = f"""
+            You are Deamon Dev's Advanced Strategy Validation Assistant [OK]
+
+            TASK: Analyze and validate these trading signals using iterative reasoning:
+
+            Strategy Signals:
+            {signals_str}
+
+            Market Context:
+            {json.dumps(market_data, indent=2)}
+
+            ITERATION REQUIREMENTS:
+            1. Initial Analysis: Evaluate each signal's reasoning and alignment with market conditions
+            2. Risk Assessment: Consider liquidity, volatility, and market risks
+            3. Confidence Building: Provide detailed reasoning with confidence scores
+            4. Final Decision: Give clear EXECUTE/REJECT recommendations for each signal
+
+            CRITICAL REQUIREMENTS:
+            - Only approve signals with HIGH liquidity (avoid slippage risk)
+            - Validate technical indicators are accurate
+            - Ensure risk/reward ratios are favorable
+            - Consider current market volatility and trends
+
+            Response format for EACH signal:
+            - Decision: EXECUTE or REJECT
+            - Confidence: 0.0-1.0
+            - Reasoning: Detailed explanation
+            - Risk Level: LOW/MEDIUM/HIGH
+            - Liquidity Check: PASS/FAIL
+            """
+
+            print(
+                f"[INFO] Starting iterative evaluation with {len(signals)} signals..."
+            )
+
+            # Choose iteration mode
+            if mode == "progressive_refinement":
+                session = self.iterative_manager.call_subagent_iteration(
+                    prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT
+                )
+            elif mode == "cross_validation":
+                session = self.iterative_manager.call_subagent_iteration(
+                    prompt, context_data, IterationMode.CROSS_VALIDATION
+                )
+            elif mode == "convergence_seeking":
+                session = self.iterative_manager.call_subagent_iteration(
+                    prompt, context_data, IterationMode.CONVERGENCE_SEEKING
+                )
+            elif mode == "majority_voting":
+                session = self.iterative_manager.call_subagent_iteration(
+                    prompt, context_data, IterationMode.MAJORITY_VOTING
+                )
+            else:
+                # Default to progressive refinement
+                session = self.iterative_manager.call_subagent_iteration(
+                    prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT
+                )
+
+            # Display iteration results
+            print(f"\n[ITERATION RESULTS]")
+            print(f"  • Mode: {session.mode.value}")
+            print(f"  • Iterations: {len(session.responses)}")
+            print(
+                f"  • Final Confidence: {session.final_result.get('final_confidence', 0):.3f}"
+            )
+            print(
+                f"  • Convergence Score: {session.convergence_metrics.get('stability', 0):.3f}"
+            )
+            print(
+                f"  • Recommended Action: {session.final_result.get('recommended_action', 'UNKNOWN')}"
+            )
+
+            # Parse final decisions
+            final_decisions = self._parse_iterative_decisions(
+                session.final_result, signals
+            )
+
+            print(f"\n[FINAL DECISIONS]")
+            for i, decision in enumerate(final_decisions):
+                signal = signals[i]
+                action = decision["action"]
+                confidence = decision["confidence"]
+                risk = decision["risk_level"]
+
+                color = "green" if action == "EXECUTE" else "red"
+                cprint(
+                    f"  • Signal {i+1}: {action} (confidence: {confidence:.2f}, risk: {risk})",
+                    color,
+                )
+
+            return final_decisions
+
+        except Exception as e:
+            print(f"[ERROR] Iterative signal evaluation failed: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return None
+
+    def evaluate_signals_with_cross_validation(self, signals, market_data):
+        """
+        [AI] Cross-validation signal evaluation with multiple perspectives
+        """
+        try:
+            if not signals:
+                return None
+
+            print(f"\n{'='*80}")
+            print(f"[AI] CROSS-VALIDATION SIGNAL EVALUATION")
+            print(f"{'='*80}")
+
+            # Define validation perspectives
+            perspectives = [
+                {"name": "Technical Analysis", "focus": "indicators", "weight": 0.3},
+                {"name": "Risk Management", "focus": "safety", "weight": 0.3},
+                {"name": "Liquidity Analysis", "focus": "execution", "weight": 0.2},
+                {"name": "Market Context", "focus": "timing", "weight": 0.2},
+            ]
+
+            context_data = {
+                "signals": signals,
+                "market_data": market_data,
+                "perspectives": perspectives,
+                "validation_mode": "CROSS_VALIDATION",
+            }
+
+            # Create cross-validation prompt
+            prompt = f"""
+            CROSS-VALIDATION ANALYSIS REQUIRED
+
+            Signals to validate:
+            {json.dumps(signals, indent=2)}
+
+            Market conditions:
+            {json.dumps(market_data, indent=2)}
+
+            VALIDATION PERSPECTIVES:
+            {json.dumps(perspectives, indent=2)}
+
+            Each perspective will independently analyze the signals.
+            Final decision requires consensus across perspectives.
+            """
+
+            print(
+                f"[INFO] Starting cross-validation with {len(perspectives)} perspectives..."
+            )
+
+            # Execute cross-validation
+            session = self.iterative_manager.call_subagent_iteration(
+                prompt, context_data, IterationMode.CROSS_VALIDATION
+            )
+
+            # Aggregate cross-validation results
+            validation_results = self._aggregate_cross_validation(
+                session, signals, perspectives
+            )
+
+            print(f"\n[CROSS-VALIDATION RESULTS]")
+            for i, result in enumerate(validation_results):
+                signal = signals[i]
+                consensus = result["consensus_score"]
+                recommendation = result["final_recommendation"]
+
+                color = (
+                    "green"
+                    if consensus > 0.7
+                    else "yellow" if consensus > 0.5 else "red"
+                )
+                cprint(
+                    f"  • Signal {i+1}: {recommendation} (consensus: {consensus:.2f})",
+                    color,
+                )
+
+            return validation_results
+
+        except Exception as e:
+            print(f"[ERROR] Cross-validation failed: {e}")
+            return None
+
+    def progressive_refinement_signal(
+        self, signal, market_data, max_refinements: int = 3
+    ):
+        """
+        [AI] Progressive refinement for a single trading signal
+        """
+        try:
+            print(f"\n{'='*60}")
+            print(f"[AI] PROGRESSIVE REFINEMENT - Single Signal")
+            print(f"{'='*60}")
+
+            context_data = {
+                "signal": signal,
+                "market_data": market_data,
+                "refinement_mode": "SINGLE_SIGNAL",
+                "max_refinements": max_refinements,
+            }
+
+            prompt = f"""
+            PROGRESSIVE REFINEMENT ANALYSIS
+
+            Initial Signal:
+            {json.dumps(signal, indent=2)}
+
+            Market Context:
+            {json.dumps(market_data, indent=2)}
+
+            REFINEMENT PROCESS:
+            1. Initial Analysis: Evaluate the signal quality
+            2. Identify Weaknesses: Find areas needing improvement
+            3. Refine Signal: Enhance the signal with additional analysis
+            4. Final Validation: Confirm refined signal meets high standards
+
+            Focus on:
+            - Technical accuracy
+            - Risk management
+            - Liquidity considerations
+            - Market timing
+            """
+
+            print(
+                f"[INFO] Starting progressive refinement (max {max_refinements} iterations)..."
+            )
+
+            # Configure for single signal refinement
+            config = IterationConfig(
+                max_iterations=max_refinements,
+                confidence_threshold=0.9,  # Higher threshold for single signals
+                timeout_per_iteration=90,
+                convergence_threshold=0.95,
+            )
+
+            session = self.iterative_manager.call_subagent_iteration(
+                prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT, config
+            )
+
+            # Extract refined signal
+            refined_signal = self._extract_refined_signal(session.final_result, signal)
+
+            print(f"\n[REFINEMENT RESULTS]")
+            print(f"  • Original Confidence: {signal.get('confidence', 0):.2f}")
+            print(f"  • Refined Confidence: {refined_signal.get('confidence', 0):.2f}")
+            print(
+                f"  • Improvement: {(refined_signal.get('confidence', 0) - signal.get('confidence', 0)):.2f}"
+            )
+            print(f"  • Iterations Used: {len(session.responses)}")
+            print(
+                f"  • Final Decision: {refined_signal.get('final_action', 'UNKNOWN')}"
+            )
+
+            return refined_signal
+
+        except Exception as e:
+            print(f"[ERROR] Progressive refinement failed: {e}")
+            return signal  # Return original signal on failure
 
     def get_signals(self, token):
         """
@@ -400,7 +713,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             # Get funding rate from HyperLiquid
             try:
                 funding_data = self.em.get_funding_rate(token)
-                conditions["funding_rate"] = float(funding_data) if funding_data else 0.0
+                conditions["funding_rate"] = (
+                    float(funding_data) if funding_data else 0.0
+                )
                 print(f"[OK] Real funding rate: {conditions['funding_rate']:.4%}")
             except Exception as e:
                 print(f"[ERROR] Could not get funding rate: {e}")
@@ -419,7 +734,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             except Exception as e:
                 print(f"[ERROR] Could not calculate technical indicators: {e}")
-                raise Exception(f"[ERROR] No technical indicators available for {token}")
+                raise Exception(
+                    f"[ERROR] No technical indicators available for {token}"
+                )
 
             return conditions
 
@@ -431,16 +748,22 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
     def _get_price_history(self, token: str, periods: int = 50) -> list:
         """Get REAL price history from HyperLiquid - NO MOCK DATA"""
         try:
-            print(f"[INFO] Fetching {periods} price points from HyperLiquid for {token}...")
+            print(
+                f"[INFO] Fetching {periods} price points from HyperLiquid for {token}..."
+            )
 
             # Get candle data from HyperLiquid
-            if hasattr(self.em, 'get_candles'):
-                candles = self.em.get_candles(token, timeframe='1h', limit=periods)
+            if hasattr(self.em, "get_candles"):
+                candles = self.em.get_candles(token, timeframe="1h", limit=periods)
             else:
                 # Alternative method using HyperLiquid API
                 import requests
+
                 url = "https://api.hyperliquid.xyz/info"
-                payload = {"type": "candle", "req": {"coin": token, "interval": "1h", "num": periods}}
+                payload = {
+                    "type": "candle",
+                    "req": {"coin": token, "interval": "1h", "num": periods},
+                }
                 response = requests.post(url, json=payload, timeout=10)
 
                 if response.status_code != 200:
@@ -450,11 +773,15 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 candles = data.get("candles", [])
 
             if not candles or len(candles) < periods:
-                raise Exception(f"Insufficient candle data: {len(candles) if candles else 0}")
+                raise Exception(
+                    f"Insufficient candle data: {len(candles) if candles else 0}"
+                )
 
             # Extract close prices
             prices = [float(candle[4]) for candle in candles]  # Close price at index 4
-            print(f"[OK] Got {len(prices)} price points from {prices[0]:.4f} to {prices[-1]:.4f}")
+            print(
+                f"[OK] Got {len(prices)} price points from {prices[0]:.4f} to {prices[-1]:.4f}"
+            )
 
             return prices
 
@@ -476,7 +803,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[OK] RSI(14): {rsi:.2f}")
 
             # MACD (12,26,9)
-            macd_line, signal_line, histogram = self._calculate_macd(price_history, 12, 26, 9)
+            macd_line, signal_line, histogram = self._calculate_macd(
+                price_history, 12, 26, 9
+            )
             indicators["macd"] = macd_line
             indicators["macd_signal"] = signal_line
             indicators["macd_histogram"] = histogram
@@ -485,7 +814,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             # Moving Averages
             sma_9 = sum(price_history[-9:]) / 9
             sma_21 = sum(price_history[-21:]) / 21
-            sma_50 = sum(price_history[-50:]) / 50 if len(price_history) >= 50 else sma_21
+            sma_50 = (
+                sum(price_history[-50:]) / 50 if len(price_history) >= 50 else sma_21
+            )
 
             current_price = price_history[-1]
             indicators["sma_9"] = sma_9
@@ -501,16 +832,25 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             else:
                 indicators["trend"] = "RANGING"
 
-            print(f"[OK] Trend: {indicators['trend']} (Price: {current_price:.4f}, SMA9: {sma_9:.4f}, SMA21: {sma_21:.4f})")
+            print(
+                f"[OK] Trend: {indicators['trend']} (Price: {current_price:.4f}, SMA9: {sma_9:.4f}, SMA21: {sma_21:.4f})"
+            )
 
             # Volatility (ATR calculation)
             atr = self._calculate_atr(price_history, 14)
             indicators["atr"] = atr
-            indicators["volatility"] = "HIGH" if atr > current_price * 0.02 else "MEDIUM" if atr > current_price * 0.01 else "LOW"
+            indicators["volatility"] = (
+                "HIGH"
+                if atr > current_price * 0.02
+                else "MEDIUM" if atr > current_price * 0.01 else "LOW"
+            )
             print(f"[OK] ATR: {atr:.4f}, Volatility: {indicators['volatility']}")
 
             # Volume analysis (using price changes as proxy)
-            price_changes = [abs(price_history[i] - price_history[i-1]) / price_history[i-1] for i in range(1, len(price_history))]
+            price_changes = [
+                abs(price_history[i] - price_history[i - 1]) / price_history[i - 1]
+                for i in range(1, len(price_history))
+            ]
             avg_change = sum(price_changes[-20:]) / 20
             recent_change = price_changes[-1]
             volume_ratio = recent_change / avg_change if avg_change > 0 else 1.0
@@ -520,9 +860,17 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[OK] Volume ratio: {volume_ratio:.2f}x")
 
             # Momentum
-            momentum = (current_price - price_history[-14]) / price_history[-14] if len(price_history) >= 14 else 0
+            momentum = (
+                (current_price - price_history[-14]) / price_history[-14]
+                if len(price_history) >= 14
+                else 0
+            )
             indicators["momentum"] = momentum
-            indicators["momentum_analysis"] = "BULLISH" if momentum > 0.02 else "BEARISH" if momentum < -0.02 else "NEUTRAL"
+            indicators["momentum_analysis"] = (
+                "BULLISH"
+                if momentum > 0.02
+                else "BEARISH" if momentum < -0.02 else "NEUTRAL"
+            )
             print(f"[OK] Momentum: {momentum:.2%}")
 
             # Support/Resistance levels
@@ -533,7 +881,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             indicators["resistance"] = resistance
             indicators["support"] = support
-            indicators["price_position"] = (current_price - support) / (resistance - support)
+            indicators["price_position"] = (current_price - support) / (
+                resistance - support
+            )
 
             print(f"[OK] Support: {support:.4f}, Resistance: {resistance:.4f}")
 
@@ -552,7 +902,7 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         losses = []
 
         for i in range(1, len(prices)):
-            change = prices[i] - prices[i-1]
+            change = prices[i] - prices[i - 1]
             if change > 0:
                 gains.append(change)
                 losses.append(0)
@@ -571,7 +921,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
         return rsi
 
-    def _calculate_macd(self, prices: list, fast: int = 12, slow: int = 26, signal: int = 9):
+    def _calculate_macd(
+        self, prices: list, fast: int = 12, slow: int = 26, signal: int = 9
+    ):
         """Calculate REAL MACD - NO MOCK DATA"""
         if len(prices) < slow:
             return 0, 0, 0
@@ -605,13 +957,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         for i in range(1, len(prices)):
             high = prices[i]
             low = prices[i]
-            prev_close = prices[i-1]
+            prev_close = prices[i - 1]
 
-            tr = max(
-                high - low,
-                abs(high - prev_close),
-                abs(low - prev_close)
-            )
+            tr = max(high - low, abs(high - prev_close), abs(low - prev_close))
             tr_values.append(tr)
 
         atr = sum(tr_values[-period:]) / period
@@ -624,7 +972,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             # Check for error conditions first
             if "error" in market_conditions:
-                raise Exception(f"Cannot check conditions with error: {market_conditions['error']}")
+                raise Exception(
+                    f"Cannot check conditions with error: {market_conditions['error']}"
+                )
 
             conditions = strategy.get("conditions", {})
             details = {}
@@ -637,7 +987,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 if condition_key == "rsi_below":
                     current_rsi = market_conditions.get("rsi", 50)
                     met = current_rsi < required_value
-                    details[f"RSI < {required_value} (current: {current_rsi:.1f})"] = met
+                    details[f"RSI < {required_value} (current: {current_rsi:.1f})"] = (
+                        met
+                    )
 
                 elif condition_key == "volume_above_avg":
                     current_volume = market_conditions.get("volume_ratio", 1.0)
@@ -649,9 +1001,13 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 elif condition_key == "price_near_support":
                     support = market_conditions.get("support", 0)
                     current_price = market_conditions.get("current_price", 0)
-                    distance_from_support = (current_price - support) / current_price * 100
+                    distance_from_support = (
+                        (current_price - support) / current_price * 100
+                    )
                     met = distance_from_support <= 2.0  # Within 2% of support
-                    details[f"Price near support (distance: {distance_from_support:.2f}%)"] = met
+                    details[
+                        f"Price near support (distance: {distance_from_support:.2f}%)"
+                    ] = met
 
                 elif condition_key == "volume_multiplier":
                     current_volume = market_conditions.get("volume_ratio", 1.0)
@@ -663,8 +1019,12 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 elif condition_key == "price_breakout":
                     trend = market_conditions.get("trend", "RANGING")
                     volume_analysis = market_conditions.get("volume_analysis", "NORMAL")
-                    met = (trend in ["BULLISH", "BEARISH"]) and (volume_analysis == "HIGH")
-                    details[f"Breakout confirmed (trend: {trend}, volume: {volume_analysis})"] = met
+                    met = (trend in ["BULLISH", "BEARISH"]) and (
+                        volume_analysis == "HIGH"
+                    )
+                    details[
+                        f"Breakout confirmed (trend: {trend}, volume: {volume_analysis})"
+                    ] = met
 
                 elif condition_key == "fear_greed_below":
                     # Use momentum as proxy for fear/greed
@@ -680,7 +1040,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     macd_histogram = market_conditions.get("macd_histogram", 0)
                     # Check for MACD crossover
                     met = (macd > macd_signal) and (macd_histogram > 0)
-                    details[f"MACD crossover (MACD: {macd:.4f}, Signal: {macd_signal:.4f})"] = met
+                    details[
+                        f"MACD crossover (MACD: {macd:.4f}, Signal: {macd_signal:.4f})"
+                    ] = met
 
                 elif condition_key == "bb_squeeze":
                     volatility = market_conditions.get("volatility", "MEDIUM")
@@ -688,7 +1050,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     price = market_conditions.get("current_price", 1)
                     atr_pct = (atr / price) * 100
                     met = volatility == "LOW" or atr_pct < 1.0  # Tight Bollinger Bands
-                    details[f"Bollinger squeeze (ATR%: {atr_pct:.2f}%, Volatility: {volatility})"] = met
+                    details[
+                        f"Bollinger squeeze (ATR%: {atr_pct:.2f}%, Volatility: {volatility})"
+                    ] = met
 
                 elif condition_key == "funding_rate":
                     current_funding = market_conditions.get("funding_rate", 0)
@@ -700,21 +1064,31 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 elif condition_key == "rsi_above":
                     current_rsi = market_conditions.get("rsi", 50)
                     met = current_rsi > required_value
-                    details[f"RSI > {required_value} (current: {current_rsi:.1f})"] = met
+                    details[f"RSI > {required_value} (current: {current_rsi:.1f})"] = (
+                        met
+                    )
 
                 elif condition_key == "price_above_ma":
                     current_price = market_conditions.get("current_price", 0)
-                    ma_period = int(required_value.split("_")[-1]) if "_" in str(required_value) else 21
+                    ma_period = (
+                        int(required_value.split("_")[-1])
+                        if "_" in str(required_value)
+                        else 21
+                    )
                     ma_key = f"sma_{ma_period}"
                     ma_value = market_conditions.get(ma_key, current_price)
                     met = current_price > ma_value
-                    details[f"Price > MA{ma_period} (${current_price:.4f} > ${ma_value:.4f})"] = met
+                    details[
+                        f"Price > MA{ma_period} (${current_price:.4f} > ${ma_value:.4f})"
+                    ] = met
 
                 elif condition_key == "trend_direction":
                     required_trend = required_value.lower()
                     current_trend = market_conditions.get("trend", "RANGING").lower()
                     met = current_trend == required_trend
-                    details[f"Trend {current_trend.upper()} matches {required_trend.upper()}"] = met
+                    details[
+                        f"Trend {current_trend.upper()} matches {required_trend.upper()}"
+                    ] = met
 
                 else:
                     # Unknown condition - log but don't fail
@@ -738,6 +1112,371 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 "details": {f"Critical error in condition checking: {str(e)}": False},
             }
 
+    async def get_volatile_assets(
+        self, min_volatility: float = 0.03, max_count: int = 15
+    ) -> List[str]:
+        """Get most volatile assets from HyperLiquid"""
+        try:
+            current_time = time.time()
+
+            # Check cache
+            if (
+                self.volatile_assets_cache
+                and current_time - self.cache_timestamp < self.cache_duration
+            ):
+                print(
+                    f"[CACHE] Using cached volatile assets ({len(self.volatile_assets_cache)} tokens)"
+                )
+                return self.volatile_assets_cache
+
+            print(
+                f"[TARGET] Fetching volatile assets (min: {min_volatility*100:.1f}%, max: {max_count})"
+            )
+
+            # Get fresh volatile assets
+            volatile_assets = await self.volatility_tracker.get_top_volatile_assets(
+                min_volatility=min_volatility, max_count=max_count
+            )
+
+            # Update cache
+            self.volatile_assets_cache = volatile_assets
+            self.cache_timestamp = current_time
+
+            return volatile_assets
+
+        except Exception as e:
+            print(f"[ERROR] Failed to get volatile assets: {e}")
+            return []
+
+    async def get_liquid_assets(
+        self, min_liquidity: float = 0.4, max_count: int = 20
+    ) -> List[str]:
+        """Get most liquid assets from HyperLiquid"""
+        try:
+            current_time = time.time()
+
+            # Check cache
+            if (
+                self.liquid_assets_cache
+                and current_time - self.cache_timestamp < self.cache_duration
+            ):
+                print(
+                    f"[CACHE] Using cached liquid assets ({len(self.liquid_assets_cache)} tokens)"
+                )
+                return self.liquid_assets_cache
+
+            print(
+                f"[LIQUIDITY] Fetching liquid assets (min score: {min_liquidity}, max: {max_count})"
+            )
+
+            # Get fresh liquid assets
+            liquid_assets = await self.liquidity_tracker.get_liquid_assets(
+                min_liquidity_score=min_liquidity, max_count=max_count
+            )
+
+            # Update cache
+            self.liquid_assets_cache = liquid_assets
+            self.cache_timestamp = current_time
+
+            return liquid_assets
+
+        except Exception as e:
+            print(f"[ERROR] Failed to get liquid assets: {e}")
+            return []
+
+    async def get_safe_trading_assets(
+        self,
+        min_volatility: float = 0.03,
+        min_liquidity: float = 0.4,
+        max_count: int = 15,
+    ) -> List[str]:
+        """Get assets that are BOTH volatile AND liquid - ZERO RISK TRADING"""
+        try:
+            print(f"\n{'='*80}")
+            print(f"[SAFE] GETTING ZERO-RISK TRADING ASSETS")
+            print(
+                f"[FILTER] Volatility ≥ {min_volatility*100:.1f}% | Liquidity ≥ {min_liquidity}"
+            )
+            print(f"{'='*80}")
+
+            # Get both volatile and liquid assets
+            volatile_assets = await self.get_volatile_assets(
+                min_volatility, max_count * 2
+            )
+            liquid_assets = await self.get_liquid_assets(min_liquidity, max_count * 2)
+
+            print(f"[INFO] Found {len(volatile_assets)} volatile assets")
+            print(f"[INFO] Found {len(liquid_assets)} liquid assets")
+
+            # Find intersection (assets that are both)
+            safe_assets = []
+            for asset in volatile_assets:
+                if asset in liquid_assets:
+                    safe_assets.append(asset)
+
+            if not safe_assets:
+                print(
+                    f"[WARNING] No assets meet BOTH volatility AND liquidity criteria!"
+                )
+                print(f"[WARNING] Relaxing criteria to find tradable assets...")
+
+                # Fallback: Use liquid assets only (better than volatile with poor liquidity)
+                safe_assets = liquid_assets[:max_count]
+
+                print(f"[FALLBACK] Using {len(safe_assets)} liquid-only assets")
+
+            # Get detailed info for display
+            safe_assets_info = []
+            for asset in safe_assets:
+                vol_info = self.volatility_tracker.get_volatility_info(asset)
+                liq_info = self.liquidity_tracker.get_asset_liquidity_info(asset)
+
+                safe_assets_info.append(
+                    {
+                        "symbol": asset,
+                        "volatility_score": vol_info.get("volatility_score", 0),
+                        "liquidity_score": liq_info.get("overall_score", 0),
+                        "volatility_category": vol_info.get("category", "UNKNOWN"),
+                        "liquidity_category": liq_info.get("category", "UNKNOWN"),
+                        "is_blue_chip": liq_info.get("is_blue_chip", False),
+                        "max_leverage": liq_info.get("max_leverage", 1),
+                    }
+                )
+
+            # Sort by combined score (volatility + liquidity)
+            safe_assets_info.sort(
+                key=lambda x: (
+                    x["volatility_score"] * 0.6 + x["liquidity_score"] * 0.4
+                ),
+                reverse=True,
+            )
+
+            # Display top assets
+            print(f"\n[SAFE TRADING ASSETS - ZERO RISK]")
+            for i, asset_info in enumerate(safe_assets_info[:max_count], 1):
+                symbol = asset_info["symbol"]
+                vol_cat = asset_info["volatility_category"]
+                liq_cat = asset_info["liquidity_category"]
+                vol_score = asset_info["volatility_score"]
+                liq_score = asset_info["liquidity_score"]
+                is_blue = asset_info["is_blue_chip"]
+                leverage = asset_info["max_leverage"]
+
+                blue_chip_badge = " 🏛️" if is_blue else ""
+
+                # Color coding for safety level
+                safety_score = vol_score * 0.6 + liq_score * 0.4
+                if safety_score > 0.8:
+                    color = "green"
+                    safety = "EXCELLENT"
+                elif safety_score > 0.6:
+                    color = "cyan"
+                    safety = "VERY SAFE"
+                elif safety_score > 0.4:
+                    color = "blue"
+                    safety = "SAFE"
+                else:
+                    color = "yellow"
+                    safety = "ACCEPTABLE"
+
+                cprint(f"#{i:02d} {symbol}{blue_chip_badge} - {safety}", color)
+                print(f"   Volatility: {vol_cat} ({vol_score:.3f})")
+                print(f"   Liquidity: {liq_cat} ({liq_score:.3f})")
+                print(f"   Safety Score: {safety_score:.3f}")
+                print(f"   Max Leverage: {leverage}x")
+
+            # Update cache with filtered results
+            self.volatile_assets_cache = [asset["symbol"] for asset in safe_assets_info]
+            self.liquid_assets_cache = self.volatile_assets_cache.copy()
+
+            return [asset["symbol"] for asset in safe_assets_info[:max_count]]
+
+        except Exception as e:
+            print(f"[ERROR] Failed to get safe trading assets: {e}")
+            return []
+
+    def is_asset_safe_for_trading(
+        self, token: str, min_volatility: float = 0.03, min_liquidity: float = 0.4
+    ) -> bool:
+        """Check if a specific asset meets BOTH volatility AND liquidity requirements"""
+        try:
+            # Quick check against cached safe assets
+            if (
+                self.volatile_assets_cache
+                and token in self.volatile_assets_cache
+                and self.liquid_assets_cache
+                and token in self.liquid_assets_cache
+            ):
+                return True
+
+            # For non-cached assets, check if it's a blue chip (safe fallback)
+            blue_chip_assets = {
+                "BTC",
+                "ETH",
+                "SOL",
+                "AVAX",
+                "MATIC",
+                "DOT",
+                "LINK",
+                "UNI",
+                "ATOM",
+                "LTC",
+                "BCH",
+                "ETC",
+                "XRP",
+                "ADA",
+                "BNB",
+                "AAVE",
+            }
+            return token in blue_chip_assets
+
+        except Exception as e:
+            print(f"[ERROR] Safety check failed for {token}: {e}")
+            return False
+
+    async def get_volatile_signals(
+        self, min_volatility: float = 0.03, max_assets: int = 10
+    ) -> List[Dict]:
+        """Get signals for the most volatile assets only"""
+        try:
+            print(f"\n{'='*80}")
+            print(f"[VOLATILITY] GENERATING SIGNALS FOR VOLATILE ASSETS")
+            print(f"{'='*80}")
+
+            # Get volatile assets
+            volatile_assets = await self.get_volatile_assets(min_volatility, max_assets)
+
+            if not volatile_assets:
+                print("[WARNING] No volatile assets found")
+                return []
+
+            print(
+                f"[INFO] Analyzing {len(volatile_assets)} volatile assets: {', '.join(volatile_assets)}"
+            )
+
+            # Get signals for volatile assets
+            all_signals = []
+            for token in volatile_assets:
+                try:
+                    signals = self.get_signals(token)
+                    if signals:
+                        all_signals.extend(signals)
+                        print(f"[OK] Got {len(signals)} signals for {token}")
+                    else:
+                        print(f"[INFO] No signals for {token}")
+
+                    # Small delay between assets
+                    await asyncio.sleep(1)
+
+                except Exception as e:
+                    print(f"[ERROR] Failed to get signals for {token}: {e}")
+                    continue
+
+            print(
+                f"\n[RESULT] Generated {len(all_signals)} total signals from volatile assets"
+            )
+            return all_signals
+
+        except Exception as e:
+            print(f"[ERROR] Volatile signals generation failed: {e}")
+            return []
+
+    async def get_safe_signals(
+        self,
+        min_volatility: float = 0.03,
+        min_liquidity: float = 0.4,
+        max_assets: int = 8,
+    ) -> List[Dict]:
+        """Get signals for assets that are BOTH volatile AND liquid - ZERO RISK TRADING"""
+        try:
+            print(f"\n{'='*80}")
+            print(f"[ZERO-RISK] GENERATING SIGNALS FOR SAFE ASSETS")
+            print(f"{'='*80}")
+            print(
+                f"[FILTER] Volatility ≥ {min_volatility*100:.1f}% | Liquidity ≥ {min_liquidity}"
+            )
+            print(f"[MAX] Maximum {max_assets} assets")
+
+            # Get safe trading assets
+            safe_assets = await self.get_safe_trading_assets(
+                min_volatility, min_liquidity, max_assets
+            )
+
+            if not safe_assets:
+                print("[WARNING] No safe trading assets found")
+                return []
+
+            print(
+                f"[INFO] Analyzing {len(safe_assets)} safe assets: {', '.join(safe_assets)}"
+            )
+
+            # Get signals for safe assets
+            all_signals = []
+            for token in safe_assets:
+                try:
+                    signals = self.get_signals(token)
+                    if signals:
+                        all_signals.extend(signals)
+                        print(f"[OK] Got {len(signals)} safe signals for {token}")
+                    else:
+                        print(f"[INFO] No signals for {token}")
+
+                    # Small delay between assets
+                    await asyncio.sleep(1)
+
+                except Exception as e:
+                    print(f"[ERROR] Failed to get safe signals for {token}: {e}")
+                    continue
+
+            print(f"\n[RESULT] Generated {len(all_signals)} total safe trading signals")
+            print(f"[SUCCESS] All signals from liquid assets with zero slippage risk")
+
+            return all_signals
+
+        except Exception as e:
+            print(f"[ERROR] Safe signals generation failed: {e}")
+            return []
+
+    async def run_zero_risk_focused(
+        self,
+        min_volatility: float = 0.03,
+        min_liquidity: float = 0.4,
+        max_assets: int = 8,
+    ):
+        """Run strategy agent focusing on safe liquid assets only"""
+        try:
+            print(f"\n{'='*80}")
+            print(f"[ZERO-RISK] STRATEGY AGENT - LIQUID ASSETS ONLY")
+            print(f"{'='*80}")
+            print(
+                f"[MODE] Trading only on HIGH-LIQUID assets to eliminate slippage risk"
+            )
+            print(
+                f"[FILTER] Volatility: ≥{min_volatility*100:.1f}% | Liquidity: ≥{min_liquidity}"
+            )
+            print(f"[MAX] Maximum assets: {max_assets}")
+
+            # Get safe signals
+            signals = await self.get_safe_signals(
+                min_volatility, min_liquidity, max_assets
+            )
+
+            if signals:
+                print(f"\n[EXECUTION] Executing {len(signals)} ZERO-RISK signals...")
+                self.execute_strategy_signals(signals)
+            else:
+                print(f"\n[INFO] No safe asset signals to execute")
+
+            print(f"\n[COMPLETE] Zero-risk strategy run completed - NO SLIPPAGE RISK")
+            return signals
+
+        except Exception as e:
+            print(f"[ERROR] Zero-risk run failed: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return []
+
     def _generate_signal_from_strategy(
         self, strategy: Dict, token: str, market_conditions: Dict
     ) -> Optional[Dict]:
@@ -745,11 +1484,15 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             # Check for error conditions first
             if "error" in market_conditions:
-                raise Exception(f"Cannot generate signal with error: {market_conditions['error']}")
+                raise Exception(
+                    f"Cannot generate signal with error: {market_conditions['error']}"
+                )
 
             category = strategy["category"]
 
-            print(f"[INFO] Generating signal from REAL data for {strategy['name']} (category: {category})")
+            print(
+                f"[INFO] Generating signal from REAL data for {strategy['name']} (category: {category})"
+            )
 
             # Get REAL technical indicators
             current_price = market_conditions.get("current_price", 0)
@@ -760,17 +1503,23 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             funding_rate = market_conditions.get("funding_rate", 0)
             volatility = market_conditions.get("volatility", "MEDIUM")
 
-            print(f"[DATA] Price: {current_price:.4f}, RSI: {rsi:.1f}, Trend: {trend}, Volume: {volume_ratio:.2f}x")
+            print(
+                f"[DATA] Price: {current_price:.4f}, RSI: {rsi:.1f}, Trend: {trend}, Volume: {volume_ratio:.2f}x"
+            )
 
             # Generate direction and strength based on REAL strategy category and conditions
             if category == "risk_management":
                 # Risk management strategies buy on oversold conditions (REAL RSI)
                 if rsi < 30:
                     direction = "BUY"
-                    strength = min(0.9, 0.6 + (30 - rsi) / 50)  # Stronger signal with lower RSI
+                    strength = min(
+                        0.9, 0.6 + (30 - rsi) / 50
+                    )  # Stronger signal with lower RSI
                     reason = f"Risk management {strategy['name']} - REAL RSI oversold at {rsi:.1f}"
                 else:
-                    print(f"[INFO] Risk management: RSI {rsi:.1f} not oversold enough (<30)")
+                    print(
+                        f"[INFO] Risk management: RSI {rsi:.1f} not oversold enough (<30)"
+                    )
                     return None
 
             elif category == "technical":
@@ -786,22 +1535,30 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     reason = f"Technical {strategy['name']} - REAL bearish trend + RSI {rsi:.1f}"
 
                 else:
-                    print(f"[INFO] Technical: Trend {trend} with RSI {rsi:.1f} - no clear signal")
+                    print(
+                        f"[INFO] Technical: Trend {trend} with RSI {rsi:.1f} - no clear signal"
+                    )
                     return None
 
             elif category == "funding":
                 # Funding strategies use REAL funding rates
                 if funding_rate > 0.01:  # >1%
                     direction = "BUY"  # Buy when funding is high (short the perpetual)
-                    strength = min(0.9, 0.7 + funding_rate * 10)  # Stronger with higher funding
+                    strength = min(
+                        0.9, 0.7 + funding_rate * 10
+                    )  # Stronger with higher funding
                     reason = f"Funding arbitrage {strategy['name']} - REAL high funding rate {funding_rate:.4%}"
                 else:
-                    print(f"[INFO] Funding: Rate {funding_rate:.4%} not high enough (>1%)")
+                    print(
+                        f"[INFO] Funding: Rate {funding_rate:.4%} not high enough (>1%)"
+                    )
                     return None
 
             elif category == "sentiment":
                 # Sentiment strategies use REAL momentum and RSI as proxy
-                sentiment_score = (momentum * 50) + (100 - rsi) / 2  # Convert to 0-100 scale
+                sentiment_score = (momentum * 50) + (
+                    100 - rsi
+                ) / 2  # Convert to 0-100 scale
 
                 if sentiment_score < 20:  # Extreme fear
                     direction = "BUY"
@@ -814,7 +1571,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     reason = f"Sentiment {strategy['name']} - REAL extreme greed (score: {sentiment_score:.1f})"
 
                 else:
-                    print(f"[INFO] Sentiment: Score {sentiment_score:.1f} not extreme enough")
+                    print(
+                        f"[INFO] Sentiment: Score {sentiment_score:.1f} not extreme enough"
+                    )
                     return None
 
             else:
@@ -825,7 +1584,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             if current_price <= 0:
                 raise Exception("Invalid current price - cannot proceed")
 
-            print(f"[SIGNAL] Generated: {direction} strength {strength:.2f} for {token}")
+            print(
+                f"[SIGNAL] Generated: {direction} strength {strength:.2f} for {token}"
+            )
             print(f"[REASON] {reason}")
 
             return {
@@ -837,8 +1598,8 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     "trend": trend,
                     "momentum": momentum,
                     "volume_ratio": volume_ratio,
-                    "current_price": current_price
-                }
+                    "current_price": current_price,
+                },
             }
 
         except Exception as e:
@@ -997,3 +1758,53 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             import traceback
 
             traceback.print_exc()
+
+    async def run_volatile_focused(
+        self, min_volatility: float = 0.03, max_assets: int = 10
+    ):
+        """Run strategy agent focusing on most volatile assets"""
+        try:
+            print(f"\n{'='*80}")
+            print(f"[AI] VOLATILITY-FOCUSED STRATEGY AGENT")
+            print(f"{'='*80}")
+            print(f"[INFO] Targeting assets with >{min_volatility*100:.1f}% volatility")
+            print(f"[INFO] Maximum assets: {max_assets}")
+
+            # Get volatile signals
+            signals = await self.get_volatile_signals(min_volatility, max_assets)
+
+            if signals:
+                print(
+                    f"\n[EXECUTION] Executing {len(signals)} volatile asset signals..."
+                )
+                self.execute_strategy_signals(signals)
+            else:
+                print(f"\n[INFO] No volatile asset signals to execute")
+
+            print(f"\n[COMPLETE] Volatility-focused strategy run completed")
+            return signals
+
+        except Exception as e:
+            print(f"[ERROR] Volatility-focused run failed: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return []
+
+
+# Convenience function for volatility-focused trading
+async def run_volatile_strategy(min_volatility: float = 0.03, max_assets: int = 10):
+    """Run volatility-focused strategy trading"""
+    agent = StrategyAgent()
+    return await agent.run_volatile_focused(min_volatility, max_assets)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    # Example: Run volatility-focused strategy
+    async def main():
+        agent = StrategyAgent()
+        await agent.run_volatile_focused(min_volatility=0.02, max_assets=8)
+
+    asyncio.run(main())
