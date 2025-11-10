@@ -82,9 +82,7 @@ class Position:
             entry_price=float(data["entryPx"]),
             unrealized_pnl=float(data["unrealizedPnl"]),
             leverage=float(data.get("leverage", 1)),
-            liquidation_price=(
-                float(data["liquidationPx"]) if "liquidationPx" in data else None
-            ),
+            liquidation_price=(float(data["liquidationPx"]) if "liquidationPx" in data else None),
             max_leverage=data.get("maxLeverage"),
         )
 

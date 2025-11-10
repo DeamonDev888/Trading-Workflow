@@ -70,7 +70,7 @@ export class RateLimiterService {
             retryAfter:
               Math.ceil(defaultConfig.windowMs / 1000 / 60) + ' minutes',
             timestamp: new Date().toISOString(),
-            ip: req.ip || req.connection.remoteAddress,
+            ip: req.ip || req.socket?.remoteAddress,
             path: req.path,
           });
         }),

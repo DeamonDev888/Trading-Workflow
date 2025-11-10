@@ -21,12 +21,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS middleware
+# CORS middleware - Security improvement: limit allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -113,9 +113,7 @@ async def get_agent_metrics(agent_type: str):
     """Get metrics for a specific agent"""
     try:
         if agent_type not in inference_monitor.agent_metrics:
-            raise HTTPException(
-                status_code=404, detail=f"Agent '{agent_type}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
 
         metrics_json = inference_monitor.get_agent_metrics_json(agent_type)
         metrics_data = json.loads(metrics_json)
@@ -142,20 +140,14 @@ async def get_agent_inferences(
     """Get recent inferences for a specific agent"""
     try:
         if agent_type not in inference_monitor.agent_metrics:
-            raise HTTPException(
-                status_code=404, detail=f"Agent '{agent_type}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
 
-        inferences_json = inference_monitor.get_recent_inferences_json(
-            agent_type, limit
-        )
+        inferences_json = inference_monitor.get_recent_inferences_json(agent_type, limit)
         inferences_data = json.loads(inferences_json)
 
         # Filter out successful inferences if requested
         if not include_errors:
-            inferences_data = [
-                inf for inf in inferences_data if inf.get("success", True)
-            ]
+            inferences_data = [inf for inf in inferences_data if inf.get("success", True)]
 
         return {
             "success": True,
@@ -228,9 +220,7 @@ async def get_agent_status(agent_type: str):
     """Get current status of a specific agent"""
     try:
         if agent_type not in inference_monitor.agent_metrics:
-            raise HTTPException(
-                status_code=404, detail=f"Agent '{agent_type}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_type}' not found")
 
         metrics = inference_monitor.agent_metrics[agent_type]
 
@@ -282,9 +272,7 @@ async def get_realtime_metrics():
                 ),
                 "current_task": metrics.current_task,
                 "last_activity": (
-                    metrics.last_inference.isoformat()
-                    if metrics.last_inference
-                    else None
+                    metrics.last_inference.isoformat() if metrics.last_inference else None
                 ),
             }
 
@@ -301,6 +289,4 @@ async def get_realtime_metrics():
 if __name__ == "__main__":
     logger.info("[INFERENCE API] Starting Agent Inference API...")
 
-    uvicorn.run(
-        "inference_api:app", host="0.0.0.0", port=8004, reload=True, log_level="info"
-    )
+    uvicorn.run("inference_api:app", host="0.0.0.0", port=8004, reload=True, log_level="info")

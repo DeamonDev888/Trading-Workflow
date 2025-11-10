@@ -65,9 +65,7 @@ def calculate_funding_opportunities(rates: Dict[str, float]) -> Dict[str, Any]:
     # Simulation de positions actives
     positions = []
     for symbol, rate in list(good_opportunities.items())[:5]:  # Top 5
-        position_size = (
-            total_exposure / len(good_opportunities) if good_opportunities else 0
-        )
+        position_size = total_exposure / len(good_opportunities) if good_opportunities else 0
         daily_funding = position_size * rate
 
         positions.append(
@@ -88,9 +86,7 @@ def calculate_funding_opportunities(rates: Dict[str, float]) -> Dict[str, Any]:
         "best_yield": round(best_yield, 4),
         "active_opportunities": len(good_opportunities),
         "total_exposure": total_exposure,
-        "current_rates": {
-            k: round(v * 100, 4) for k, v in rates.items()
-        },  # En pourcentage
+        "current_rates": {k: round(v * 100, 4) for k, v in rates.items()},  # En pourcentage
         "positions": positions,
         "error": None,
     }

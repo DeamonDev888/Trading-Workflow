@@ -7,14 +7,10 @@ import json
 import logging
 from datetime import datetime
 
-# Setup basic logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("novaquote")
+from .logger import get_logger
 
-
-def get_logger(name="novaquote"):
-    """Get a logger instance"""
-    return logging.getLogger(name)
+# Use centralized logger
+logger = get_logger("novaquote")
 
 
 # Trading utilities placeholder

@@ -79,17 +79,13 @@ class PersistentAgentClient:
                     return result["task_id"]
                 else:
                     error_text = await response.text()
-                    raise Exception(
-                        f"Task submission failed: {response.status} - {error_text}"
-                    )
+                    raise Exception(f"Task submission failed: {response.status} - {error_text}")
 
         except Exception as e:
             print(f"[ERROR] Failed to submit task {task.task_id}: {e}")
             raise
 
-    async def get_task_result(
-        self, task_id: str, timeout: int = 300
-    ) -> Optional[Dict[str, Any]]:
+    async def get_task_result(self, task_id: str, timeout: int = 300) -> Optional[Dict[str, Any]]:
         """Get task result with timeout"""
         start_time = time.time()
 
@@ -101,9 +97,7 @@ class PersistentAgentClient:
                     if response.status == 200:
                         result = await response.json()
                         if result.get("status") != "pending":
-                            print(
-                                f"[TASK] {task_id} completed: {result.get('success', False)}"
-                            )
+                            print(f"[TASK] {task_id} completed: {result.get('success', False)}")
                             return result
                     else:
                         print(f"[WARNING] Failed to get task result: {response.status}")
@@ -120,9 +114,7 @@ class PersistentAgentClient:
     async def get_agent_status(self) -> Dict[str, Any]:
         """Get overall agent status"""
         try:
-            async with self.session.get(
-                f"{self.orchestrator_url}/status", timeout=10
-            ) as response:
+            async with self.session.get(f"{self.orchestrator_url}/status", timeout=10) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -168,9 +160,7 @@ class PersistentAgentClient:
                 )
 
                 strategy_task_id = await self.submit_task(strategy_task)
-                strategy_result = await self.get_task_result(
-                    strategy_task_id, timeout=120
-                )
+                strategy_result = await self.get_task_result(strategy_task_id, timeout=120)
                 results["strategy"] = strategy_result
 
                 if strategy_result and strategy_result.get("success"):
@@ -211,9 +201,7 @@ class PersistentAgentClient:
                     )
 
                     liquidity_task_id = await self.submit_task(liquidity_task)
-                    liquidity_result = await self.get_task_result(
-                        liquidity_task_id, timeout=60
-                    )
+                    liquidity_result = await self.get_task_result(liquidity_task_id, timeout=60)
                     results["liquidity"] = liquidity_result
 
                     if trade_type == "execution":
@@ -227,14 +215,10 @@ class PersistentAgentClient:
                                 "task": f"Execute {symbol} trade",
                                 "signal": strategy_result.get("response", {}),
                                 "risk_analysis": (
-                                    risk_result.get("response", {})
-                                    if risk_result
-                                    else {}
+                                    risk_result.get("response", {}) if risk_result else {}
                                 ),
                                 "liquidity_analysis": (
-                                    liquidity_result.get("response", {})
-                                    if liquidity_result
-                                    else {}
+                                    liquidity_result.get("response", {}) if liquidity_result else {}
                                 ),
                                 "execution_mode": "SAFE",
                             },
@@ -370,9 +354,7 @@ class PersistentAgentClient:
                     print(f"[RESTART] Agent {agent_type} restart initiated")
                     return True
                 else:
-                    print(
-                        f"[ERROR] Failed to restart agent {agent_type}: {response.status}"
-                    )
+                    print(f"[ERROR] Failed to restart agent {agent_type}: {response.status}")
                     return False
 
         except Exception as e:

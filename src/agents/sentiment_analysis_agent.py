@@ -55,15 +55,11 @@ class TwitterSentimentCollector:
         self.base_url = "https://api.x.com/2"
         self.bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
 
-    async def collect_tweets(
-        self, token: str, limit: int = POSTS_PER_PLATFORM
-    ) -> List[Dict]:
+    async def collect_tweets(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
         """Collect recent tweets about specific token"""
         try:
             if not self.bearer_token:
-                print(
-                    "[WARNING] Twitter Bearer token not found, using web scraping fallback"
-                )
+                print("[WARNING] Twitter Bearer token not found, using web scraping fallback")
                 return await self._web_scrape_fallback(token, limit)
 
             headers = {"Authorization": f"Bearer {self.bearer_token}"}
@@ -125,9 +121,7 @@ class RedditSentimentCollector:
         self.client_secret = os.getenv("REDDIT_CLIENT_SECRET")
         self.user_agent = "SentimentAnalysisAgent/1.0"
 
-    async def collect_posts(
-        self, token: str, limit: int = POSTS_PER_PLATFORM
-    ) -> List[Dict]:
+    async def collect_posts(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
         """Collect posts from crypto subreddits about token"""
         posts = []
 
@@ -171,9 +165,7 @@ class RedditSentimentCollector:
                                             "title": post_data.get("title", ""),
                                             "text": post_data.get("selftext", ""),
                                             "score": post_data.get("score", 0),
-                                            "comments": post_data.get(
-                                                "num_comments", 0
-                                            ),
+                                            "comments": post_data.get("num_comments", 0),
                                             "created_at": datetime.fromtimestamp(
                                                 post_data.get("created_utc", 0)
                                             ).isoformat(),
@@ -226,9 +218,7 @@ class DiscordSentimentCollector:
     def __init__(self):
         self.webhooks = DISCORD_WEBHOOKS
 
-    async def collect_messages(
-        self, token: str, limit: int = POSTS_PER_PLATFORM
-    ) -> List[Dict]:
+    async def collect_messages(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
         """Collect messages from Discord channels"""
         messages = []
 
@@ -256,9 +246,7 @@ class TelegramSentimentCollector:
     def __init__(self):
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 
-    async def collect_messages(
-        self, token: str, limit: int = POSTS_PER_PLATFORM
-    ) -> List[Dict]:
+    async def collect_messages(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
         """Collect messages from Telegram crypto channels"""
         messages = []
 
@@ -286,9 +274,7 @@ class NewsSentimentCollector:
             "cryptonews": "https://crypto-news-api.herokuapp.com/news",
         }
 
-    async def collect_news(
-        self, token: str, limit: int = POSTS_PER_PLATFORM
-    ) -> List[Dict]:
+    async def collect_news(self, token: str, limit: int = POSTS_PER_PLATFORM) -> List[Dict]:
         """Collect news articles about token"""
         articles = []
 
@@ -545,9 +531,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         if sentiment_data["reddit"]:
             text_parts.append("=== REDDIT ===")
             for item in sentiment_data["reddit"][:10]:
-                text_parts.append(
-                    f"r/{item.get('subreddit', '')}: {item.get('title', '')}"
-                )
+                text_parts.append(f"r/{item.get('subreddit', '')}: {item.get('title', '')}")
                 if item.get("text"):
                     text_parts.append(f"Content: {item['text'][:200]}...")
 
@@ -585,8 +569,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     factors = []
                     idx = lines.index(line) + 1
                     while idx < len(lines) and (
-                        lines[idx].strip().startswith("-")
-                        or lines[idx].strip().startswith("•")
+                        lines[idx].strip().startswith("-") or lines[idx].strip().startswith("•")
                     ):
                         factors.append(lines[idx].strip())
                         idx += 1

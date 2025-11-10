@@ -30,9 +30,7 @@ class HyperLiquidVolatilityTracker:
         """Get all available assets metadata from HyperLiquid"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.base_url, json={"type": "meta"}
-                ) as response:
+                async with session.post(self.base_url, json={"type": "meta"}) as response:
                     if response.status == 200:
                         data = await response.json()
                         # Filter out delisted assets
@@ -54,9 +52,7 @@ class HyperLiquidVolatilityTracker:
         """Get current prices for all assets"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.base_url, json={"type": "allMids"}
-                ) as response:
+                async with session.post(self.base_url, json={"type": "allMids"}) as response:
                     if response.status == 200:
                         prices = await response.json()
                         # Filter out @ symbols (test assets) and keep only real tokens
@@ -141,11 +137,7 @@ class HyperLiquidVolatilityTracker:
             atr_pct = (atr / prices[-1]) * 100 if prices[-1] > 0 else 0
 
             # Price range percentage
-            price_range = (
-                (max(prices) - min(prices)) / min(prices) * 100
-                if min(prices) > 0
-                else 0
-            )
+            price_range = (max(prices) - min(prices)) / min(prices) * 100 if min(prices) > 0 else 0
 
             return {
                 "volatility": volatility,
@@ -173,9 +165,7 @@ class HyperLiquidVolatilityTracker:
 
         # Process in batches to avoid rate limiting
         batch_size = 20
-        assets_list = [
-            asset["name"] for asset in assets if asset["name"] in current_prices
-        ]
+        assets_list = [asset["name"] for asset in assets if asset["name"] in current_prices]
 
         for i in range(0, len(assets_list), batch_size):
             batch = assets_list[i : i + batch_size]
@@ -194,17 +184,12 @@ class HyperLiquidVolatilityTracker:
             # Calculate volatility for each symbol
             for j, symbol in enumerate(batch):
                 try:
-                    if (
-                        isinstance(historical_data[j], list)
-                        and len(historical_data[j]) > 0
-                    ):
+                    if isinstance(historical_data[j], list) and len(historical_data[j]) > 0:
                         prices = historical_data[j]
                         vol_metrics = self.calculate_volatility(prices)
 
                         # Add metadata
-                        asset_meta = next(
-                            (a for a in assets if a["name"] == symbol), {}
-                        )
+                        asset_meta = next((a for a in assets if a["name"] == symbol), {})
 
                         volatility_data[symbol] = {
                             **vol_metrics,
@@ -224,9 +209,7 @@ class HyperLiquidVolatilityTracker:
         print(f"[OK] Calculated volatility for {len(volatility_data)} assets")
         return volatility_data
 
-    def rank_by_volatility(
-        self, volatility_data: Dict[str, Dict]
-    ) -> List[Tuple[str, Dict]]:
+    def rank_by_volatility(self, volatility_data: Dict[str, Dict]) -> List[Tuple[str, Dict]]:
         """Rank assets by volatility"""
         ranked_assets = []
 
@@ -238,9 +221,7 @@ class HyperLiquidVolatilityTracker:
                 + (data["range_pct"] / 100) * 0.2
             )
 
-            ranked_assets.append(
-                (symbol, {**data, "volatility_score": volatility_score})
-            )
+            ranked_assets.append((symbol, {**data, "volatility_score": volatility_score}))
 
         # Sort by volatility score (descending)
         ranked_assets.sort(key=lambda x: x[1]["volatility_score"], reverse=True)
@@ -267,16 +248,12 @@ class HyperLiquidVolatilityTracker:
     ) -> List[Tuple[str, Dict]]:
         """Filter for assets with sufficient volatility"""
         filtered = [
-            asset
-            for asset in ranked_assets
-            if asset[1]["volatility_score"] >= min_volatility
+            asset for asset in ranked_assets if asset[1]["volatility_score"] >= min_volatility
         ]
 
         return filtered[:max_count]
 
-    def display_volatility_ranking(
-        self, ranked_assets: List[Tuple[str, Dict]], limit: int = 20
-    ):
+    def display_volatility_ranking(self, ranked_assets: List[Tuple[str, Dict]], limit: int = 20):
         """Display ranked volatility assets"""
         print(f"\n{'='*80}")
         print(f"[RANKING] TOP {limit} MOST VOLATILE ASSETS")
@@ -328,9 +305,7 @@ class HyperLiquidVolatilityTracker:
             symbols = [symbol for symbol, _ in volatile_assets]
 
             print(f"\n[RESULT] Found {len(symbols)} assets meeting volatility criteria")
-            print(
-                f"[SYMBOLS] {', '.join(symbols[:10])}{'...' if len(symbols) > 10 else ''}"
-            )
+            print(f"[SYMBOLS] {', '.join(symbols[:10])}{'...' if len(symbols) > 10 else ''}")
 
             return symbols
 
@@ -340,9 +315,7 @@ class HyperLiquidVolatilityTracker:
 
 
 # Convenience function
-async def get_volatile_assets(
-    min_volatility: float = 0.03, max_count: int = 20
-) -> List[str]:
+async def get_volatile_assets(min_volatility: float = 0.03, max_count: int = 20) -> List[str]:
     """Get most volatile assets for trading"""
     tracker = HyperLiquidVolatilityTracker()
     return await tracker.get_top_volatile_assets(min_volatility, max_count)
@@ -352,9 +325,7 @@ if __name__ == "__main__":
     # Test the volatility tracker
     async def test():
         tracker = HyperLiquidVolatilityTracker()
-        volatile_assets = await tracker.get_top_volatile_assets(
-            min_volatility=0.02, max_count=15
-        )
+        volatile_assets = await tracker.get_top_volatile_assets(min_volatility=0.02, max_count=15)
         print(f"\n[VOLATILE ASSETS] {volatile_assets}")
 
     asyncio.run(test())

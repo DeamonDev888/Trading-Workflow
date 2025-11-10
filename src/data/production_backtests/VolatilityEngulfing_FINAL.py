@@ -83,10 +83,7 @@ class VolatilityEngulfingFinal(Strategy):
 
         # Bearish Engulfing for exit
         bearish_engulfs = (
-            prev_c > prev_o
-            and (curr_c < curr_o)
-            and (curr_o > prev_c)
-            and (curr_c < prev_o)
+            prev_c > prev_o and (curr_c < curr_o) and (curr_o > prev_c) and (curr_c < prev_o)
         )
         is_bearish_engulfing = bearish_engulfs
 
@@ -97,13 +94,7 @@ class VolatilityEngulfingFinal(Strategy):
         pattern_confirm = is_bullish_engulfing
 
         # Entry logic
-        if (
-            not self.position
-            and breakout
-            and vol_confirm
-            and pattern_confirm
-            and trend_filter
-        ):
+        if not self.position and breakout and vol_confirm and pattern_confirm and trend_filter:
             self._execute_long_entry(curr_c, curr_l)
 
         # Position management
@@ -135,9 +126,7 @@ class VolatilityEngulfingFinal(Strategy):
 
             if size > 0:
                 self.buy(size=size, sl=sl_price, tp=tp_price)
-                print(
-                    f"LONG ENTRY at {entry_price:.2f}, SL {sl_price:.2f}, Size {size}"
-                )
+                print(f"LONG ENTRY at {entry_price:.2f}, SL {sl_price:.2f}, Size {size}")
 
 
 def run_backtest():
@@ -150,9 +139,7 @@ def run_backtest():
     for data_path in data_paths:
         try:
             if os.path.exists(data_path):
-                data = pd.read_csv(
-                    data_path, parse_dates=["datetime"], index_col="datetime"
-                )
+                data = pd.read_csv(data_path, parse_dates=["datetime"], index_col="datetime")
                 print(f"Data loaded from: {data_path}")
                 break
         except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -207,18 +194,12 @@ def run_backtest():
                 get_stat_value(stats, ["Return [%", "ReturnPct", "Return"], 0.0), 2
             ),
             "annual_return": round(
-                get_stat_value(
-                    stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0
-                ),
+                get_stat_value(stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0),
                 2,
             ),
-            "sharpe_ratio": round(
-                get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2
-            ),
+            "sharpe_ratio": round(get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2),
             "max_drawdown": round(
-                get_stat_value(
-                    stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0
-                ),
+                get_stat_value(stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0),
                 2,
             ),
             "total_trades": int(

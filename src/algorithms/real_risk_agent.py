@@ -56,8 +56,7 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
     market_return = 0.008  # 0.8% daily market return
     covariance = (
         sum(
-            (r - sum(daily_returns) / days)
-            * (market_return - sum(daily_returns) / days)
+            (r - sum(daily_returns) / days) * (market_return - sum(daily_returns) / days)
             for r in daily_returns
         )
         / days
@@ -84,9 +83,7 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
         "avg_leverage": round(
             1 + abs(portfolio_value) / 50000 * 4, 2
         ),  # Jusqu'à 5x pour gros portefeuilles
-        "risk_level": (
-            "LOW" if risk_score < 0.3 else "MEDIUM" if risk_score < 0.7 else "HIGH"
-        ),
+        "risk_level": ("LOW" if risk_score < 0.3 else "MEDIUM" if risk_score < 0.7 else "HIGH"),
         "portfolio_beta": round(portfolio_beta, 3),
         "current_risk_score": round(risk_score, 3),
         "alerts_count": random.randint(0, 3),

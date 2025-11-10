@@ -108,16 +108,12 @@ def generate_realistic_portfolio_data(prices: Dict[str, float]) -> Dict[str, Any
         "action_confidence": (
             round(abs(total_pnl) / total_balance * 10, 3) if total_balance > 0 else 0.5
         ),
-        "expected_roi": (
-            round(total_pnl / total_balance, 4) if total_balance > 0 else 0.001
-        ),
+        "expected_roi": (round(total_pnl / total_balance, 4) if total_balance > 0 else 0.001),
         "buy_signals": 2 if btc_price > 42000 else 1,
         "sell_signals": 1 if eth_price > 2300 else 0,
         "active_signals": 3,
         "signal_accuracy": (
-            round(0.65 + (total_pnl / total_balance) * 0.5, 3)
-            if total_balance > 0
-            else 0.75
+            round(0.65 + (total_pnl / total_balance) * 0.5, 3) if total_balance > 0 else 0.75
         ),
         "recent_trades": [
             {
@@ -189,9 +185,7 @@ def main():
                     "symbol": symbol,
                     "name": symbol,
                     "price": round(price, 2),
-                    "change_24h": round(
-                        (hash(symbol) % 21 - 10) / 100, 4
-                    ),  # Simulation réaliste
+                    "change_24h": round((hash(symbol) % 21 - 10) / 100, 4),  # Simulation réaliste
                     "volume_24h": round(price * hash(symbol) % 1000000, 2),
                     "market_cap": round(price * hash(symbol) % 50000000000, 2),
                 }
@@ -227,9 +221,7 @@ def main():
                         "AVAX",
                     ],
                     "leverage": {"min": 1, "max": 50},
-                    "funding_rate": round(
-                        (hash(datetime.now().strftime("%H")) % 100) / 10000, 4
-                    ),
+                    "funding_rate": round((hash(datetime.now().strftime("%H")) % 100) / 10000, 4),
                     "source": "real_market_api",
                 }
             )

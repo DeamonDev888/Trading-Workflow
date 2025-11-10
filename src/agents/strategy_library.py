@@ -227,9 +227,7 @@ class ProvenStrategyLibrary:
             },
         }
 
-        print(
-            f"[OK] Strategy library initialized: {len(self.strategies)} proven strategies"
-        )
+        print(f"[OK] Strategy library initialized: {len(self.strategies)} proven strategies")
 
     def get_strategies_by_category(self, category: str) -> List[Dict]:
         """Retourne les stratégies validées par catégorie"""
@@ -243,9 +241,7 @@ class ProvenStrategyLibrary:
         """Retourne UNIQUEMENT les stratégies actuellement validées"""
         return [s for s in self.strategies.values() if s["current_validation"]["valid"]]
 
-    def validate_strategy_performance(
-        self, strategy_name: str, recent_performance: Dict
-    ) -> bool:
+    def validate_strategy_performance(self, strategy_name: str, recent_performance: Dict) -> bool:
         """
         Valide si une stratégie continue de performer
         Seuil: win rate > 55% et profit factor > 1.3 sur dernières 24h
@@ -263,10 +259,7 @@ class ProvenStrategyLibrary:
         recent_profit_factor = recent_performance.get("profit_factor", 0)
 
         # Mettre à jour la validation
-        is_valid = (
-            recent_win_rate >= min_win_rate
-            and recent_profit_factor >= min_profit_factor
-        )
+        is_valid = recent_win_rate >= min_win_rate and recent_profit_factor >= min_profit_factor
 
         strategy["current_validation"]["last_24_hours"] = recent_performance
         strategy["current_validation"]["valid"] = is_valid
@@ -290,9 +283,7 @@ class ProvenStrategyLibrary:
         Les agents utilisent cette méthode - ils ne créent rien !
         """
         valid_strategies = self.get_strategies_for_symbol(symbol)
-        valid_strategies = [
-            s for s in valid_strategies if s["current_validation"]["valid"]
-        ]
+        valid_strategies = [s for s in valid_strategies if s["current_validation"]["valid"]]
 
         if not valid_strategies:
             return None
@@ -309,9 +300,7 @@ class ProvenStrategyLibrary:
             combined_score = (historical_score * 0.6) + (recent_score * 0.4)
 
             # Bonus si la stratégie correspond aux conditions
-            condition_bonus = self._calculate_condition_match(
-                strategy, market_conditions
-            )
+            condition_bonus = self._calculate_condition_match(strategy, market_conditions)
             total_score = combined_score + condition_bonus
 
             if total_score > best_score:
@@ -320,9 +309,7 @@ class ProvenStrategyLibrary:
 
         return best_strategy
 
-    def _calculate_condition_match(
-        self, strategy: Dict, market_conditions: Dict
-    ) -> float:
+    def _calculate_condition_match(self, strategy: Dict, market_conditions: Dict) -> float:
         """Calcule le bonus de correspondance des conditions (0-0.2)"""
         bonus = 0.0
 
@@ -352,9 +339,7 @@ class ProvenStrategyLibrary:
         total_strategies = len(self.strategies)
         valid_strategies = len(self.get_valid_strategies_only())
 
-        avg_win_rate = (
-            sum(s["win_rate"] for s in self.strategies.values()) / total_strategies
-        )
+        avg_win_rate = sum(s["win_rate"] for s in self.strategies.values()) / total_strategies
         avg_profit_factor = (
             sum(s["profit_factor"] for s in self.strategies.values()) / total_strategies
         )
@@ -378,9 +363,7 @@ class ProvenStrategyLibrary:
         win_rate > 60% et profit_factor > 1.5 obligatoires
         """
         if strategy["win_rate"] < 0.60 or strategy["profit_factor"] < 1.5:
-            print(
-                f"[ERROR] Stratégie {strategy['name']} REJETÉE - Critères insuffisants"
-            )
+            print(f"[ERROR] Stratégie {strategy['name']} REJETÉE - Critères insuffisants")
             return False
 
         self.strategies[strategy["name"]] = strategy

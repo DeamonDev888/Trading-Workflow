@@ -174,9 +174,7 @@ class AutomaticCoinRotator:
             )
 
             # Filter to assets in our configuration
-            available_assets = [
-                asset for asset in liquid_assets if asset in self.asset_configs
-            ]
+            available_assets = [asset for asset in liquid_assets if asset in self.asset_configs]
 
             print(f"[LIQUID] Found {len(available_assets)} liquid, configured assets")
             return available_assets
@@ -205,9 +203,7 @@ class AutomaticCoinRotator:
                 selected.append(asset)
                 self.current_assets.append(self.asset_configs[asset])
                 self.last_rotation[asset] = datetime.now()
-                self.performance_history[asset] = [
-                    0.5
-                ]  # Start with neutral performance
+                self.performance_history[asset] = [0.5]  # Start with neutral performance
 
         print(f"[SELECT] Selected {len(selected)} assets: {selected}")
         return selected
@@ -302,13 +298,9 @@ class AutomaticCoinRotator:
                 decision["rotation_type"] = "automatic"
             else:
                 # Replace lowest priority asset
-                lowest_priority_asset = min(
-                    self.current_assets, key=lambda x: x.priority
-                ).symbol
+                lowest_priority_asset = min(self.current_assets, key=lambda x: x.priority).symbol
                 decision["should_rotate"] = True
-                decision["reason"] = (
-                    f"Automatic rotation - replacing {lowest_priority_asset}"
-                )
+                decision["reason"] = f"Automatic rotation - replacing {lowest_priority_asset}"
                 decision["assets_to_remove"] = [lowest_priority_asset]
                 decision["assets_to_add"] = [next_asset]
                 decision["rotation_type"] = "automatic"
@@ -317,9 +309,7 @@ class AutomaticCoinRotator:
         decision["reason"] = "No rotation criteria met"
         return decision
 
-    async def _check_performance_rotation(
-        self, current_time: datetime
-    ) -> Dict[str, Any]:
+    async def _check_performance_rotation(self, current_time: datetime) -> Dict[str, Any]:
         """Check if performance-based rotation is needed"""
         decision = {
             "should_rotate": False,
@@ -350,9 +340,7 @@ class AutomaticCoinRotator:
 
         # Find replacement assets if needed
         if decision["assets_to_remove"]:
-            replacements = await self._find_replacement_assets(
-                decision["assets_to_remove"]
-            )
+            replacements = await self._find_replacement_assets(decision["assets_to_remove"])
             decision["assets_to_add"] = replacements
 
         return decision
@@ -381,9 +369,7 @@ class AutomaticCoinRotator:
 
         # Find replacement assets if needed
         if decision["assets_to_remove"]:
-            replacements = await self._find_replacement_assets(
-                decision["assets_to_remove"]
-            )
+            replacements = await self._find_replacement_assets(decision["assets_to_remove"])
             decision["assets_to_add"] = replacements
 
         return decision
@@ -434,9 +420,7 @@ class AutomaticCoinRotator:
 
                     if assets_to_remove or assets_to_add:
                         decision["should_rotate"] = True
-                        decision["reason"] = (
-                            f"Market rotation - condition: {market_condition}"
-                        )
+                        decision["reason"] = f"Market rotation - condition: {market_condition}"
                         decision["assets_to_remove"] = assets_to_remove
                         decision["assets_to_add"] = assets_to_add[
                             : len(assets_to_remove)
@@ -515,9 +499,7 @@ class AutomaticCoinRotator:
         """Remove an asset from rotation"""
         try:
             # Find and remove from current assets
-            self.current_assets = [
-                ac for ac in self.current_assets if ac.symbol != asset
-            ]
+            self.current_assets = [ac for ac in self.current_assets if ac.symbol != asset]
 
             # Archive performance data
             if asset in self.performance_history:
@@ -546,9 +528,7 @@ class AutomaticCoinRotator:
             # Initialize tracking
             self.last_rotation[asset] = datetime.now()
             if asset not in self.performance_history:
-                self.performance_history[asset] = [
-                    0.5
-                ]  # Start with neutral performance
+                self.performance_history[asset] = [0.5]  # Start with neutral performance
 
             print(
                 f"  [+] Added {asset} to rotation (priority: {asset_config.priority}, weight: {asset_config.weight})"
@@ -594,16 +574,12 @@ class AutomaticCoinRotator:
 
                     # Keep only last 10 entries
                     if len(self.performance_history[asset]) > 10:
-                        self.performance_history[asset] = self.performance_history[
-                            asset
-                        ][-10:]
+                        self.performance_history[asset] = self.performance_history[asset][-10:]
 
             except Exception as e:
                 print(f"[WARNING] Failed to update performance for {asset}: {e}")
 
-    async def _update_rotation_metrics(
-        self, results: Dict[str, Any], cycle_start: float
-    ):
+    async def _update_rotation_metrics(self, results: Dict[str, Any], cycle_start: float):
         """Update rotation metrics"""
         execution_time = time.time() - cycle_start
 
@@ -627,9 +603,7 @@ class AutomaticCoinRotator:
 
     async def _display_rotation_status(self):
         """Display current rotation status"""
-        print(
-            f"\n[ROTATION STATUS] Currently monitoring {len(self.current_assets)} assets:"
-        )
+        print(f"\n[ROTATION STATUS] Currently monitoring {len(self.current_assets)} assets:")
 
         sorted_assets = sorted(self.current_assets, key=lambda x: x.priority)
 
@@ -657,9 +631,7 @@ class AutomaticCoinRotator:
                     "avg_performance": sum(scores) / len(scores),
                     "recent_performance": scores[-3:],
                     "trend": (
-                        "improving"
-                        if len(scores) >= 2 and scores[-1] > scores[-2]
-                        else "declining"
+                        "improving" if len(scores) >= 2 and scores[-1] > scores[-2] else "declining"
                     ),
                 }
                 for asset, scores in self.performance_history.items()
@@ -708,12 +680,8 @@ if __name__ == "__main__":
             # Display final metrics
             metrics = rotator.get_rotation_metrics()
             print(f"\n[FINAL METRICS]")
-            print(
-                f"  Total Rotations: {metrics['rotation_metrics']['total_rotations']}"
-            )
-            print(
-                f"  Successful Rotations: {metrics['rotation_metrics']['successful_rotations']}"
-            )
+            print(f"  Total Rotations: {metrics['rotation_metrics']['total_rotations']}")
+            print(f"  Successful Rotations: {metrics['rotation_metrics']['successful_rotations']}")
             print(
                 f"  Average Rotation Time: {metrics['rotation_metrics']['average_rotation_time']:.1f}s"
             )

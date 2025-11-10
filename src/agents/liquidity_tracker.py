@@ -61,9 +61,7 @@ class HyperLiquidLiquidityTracker:
         """Get all available assets metadata from HyperLiquid"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.base_url, json={"type": "meta"}
-                ) as response:
+                async with session.post(self.base_url, json={"type": "meta"}) as response:
                     if response.status == 200:
                         data = await response.json()
                         # Filter out delisted and dangerous assets
@@ -73,9 +71,7 @@ class HyperLiquidLiquidityTracker:
                             if not asset.get("isDelisted", False)
                             and asset.get("name") not in self.dangerous_assets
                         ]
-                        print(
-                            f"[OK] Found {len(assets)} liquid-safe assets on HyperLiquid"
-                        )
+                        print(f"[OK] Found {len(assets)} liquid-safe assets on HyperLiquid")
                         return assets
                     else:
                         print(f"[ERROR] Failed to get metadata: {response.status}")
@@ -91,9 +87,7 @@ class HyperLiquidLiquidityTracker:
         try:
             async with aiohttp.ClientSession() as session:
                 # Get all prices
-                async with session.post(
-                    self.base_url, json={"type": "allMids"}
-                ) as response:
+                async with session.post(self.base_url, json={"type": "allMids"}) as response:
                     if response.status == 200:
                         prices = await response.json()
                         # Filter out test assets and dangerous ones
@@ -119,12 +113,8 @@ class HyperLiquidLiquidityTracker:
                         volume_24h = price * 50000 * 10000  # $500M+ volume
                     else:
                         # Other assets have varying liquidity
-                        depth_usd = (
-                            price * 1000 * (1000 + hash(symbol) % 9000)
-                        )  # Variable depth
-                        spread_pct = (
-                            0.02 + (hash(symbol) % 20) / 1000
-                        )  # 0.02-0.04% spread
+                        depth_usd = price * 1000 * (1000 + hash(symbol) % 9000)  # Variable depth
+                        spread_pct = 0.02 + (hash(symbol) % 20) / 1000  # 0.02-0.04% spread
                         volume_24h = (
                             price * 50000 * (1000 + hash(symbol) % 40000)
                         )  # Variable volume
@@ -170,16 +160,10 @@ class HyperLiquidLiquidityTracker:
                 }
 
             # Calculate individual scores (0-1 scale)
-            volume_score = (
-                min(1.0, volume_24h / self.min_24h_volume) if volume_24h > 0 else 0
-            )
-            depth_score = (
-                min(1.0, depth_usd / self.min_depth_usd) if depth_usd > 0 else 0
-            )
+            volume_score = min(1.0, volume_24h / self.min_24h_volume) if volume_24h > 0 else 0
+            depth_score = min(1.0, depth_usd / self.min_depth_usd) if depth_usd > 0 else 0
             spread_score = (
-                max(0.0, 1.0 - (spread_pct / self.min_spread_pct))
-                if spread_pct > 0
-                else 0.8
+                max(0.0, 1.0 - (spread_pct / self.min_spread_pct)) if spread_pct > 0 else 0.8
             )
 
             # Blue chip bonus
@@ -280,9 +264,7 @@ class HyperLiquidLiquidityTracker:
         print(f"[OK] Calculated liquidity for {len(liquidity_data)} assets")
         return liquidity_data
 
-    def rank_by_liquidity(
-        self, liquidity_data: Dict[str, Dict]
-    ) -> List[Tuple[str, Dict]]:
+    def rank_by_liquidity(self, liquidity_data: Dict[str, Dict]) -> List[Tuple[str, Dict]]:
         """Rank assets by liquidity score"""
         ranked_assets = []
 
@@ -301,9 +283,7 @@ class HyperLiquidLiquidityTracker:
     ) -> List[Tuple[str, Dict]]:
         """Filter for assets with sufficient liquidity"""
         filtered = [
-            asset
-            for asset in ranked_assets
-            if asset[1]["overall_score"] >= min_liquidity_score
+            asset for asset in ranked_assets if asset[1]["overall_score"] >= min_liquidity_score
         ]
 
         return filtered[:max_count]
@@ -325,9 +305,7 @@ class HyperLiquidLiquidityTracker:
 
         return safe_assets
 
-    def display_liquidity_ranking(
-        self, ranked_assets: List[Tuple[str, Dict]], limit: int = 30
-    ):
+    def display_liquidity_ranking(self, ranked_assets: List[Tuple[str, Dict]], limit: int = 30):
         """Display ranked liquidity assets"""
         print(f"\n{'='*80}")
         print(f"[LIQUIDITY] TOP {limit} MOST LIQUID ASSETS - ZERO RISK")
@@ -381,9 +359,7 @@ class HyperLiquidLiquidityTracker:
             ranked_assets = self.rank_by_liquidity(liquidity_data)
 
             # Filter for minimum liquidity and get top assets
-            liquid_assets = self.filter_liquid_assets(
-                ranked_assets, min_liquidity_score, max_count
-            )
+            liquid_assets = self.filter_liquid_assets(ranked_assets, min_liquidity_score, max_count)
 
             # Also ensure they're safe for trading
             safe_assets = self.get_safe_trading_assets(liquidity_data)
@@ -398,9 +374,7 @@ class HyperLiquidLiquidityTracker:
             symbols = [symbol for symbol, _ in final_assets]
 
             print(f"\n[RESULT] Found {len(symbols)} safe liquid assets for trading")
-            print(
-                f"[SYMBOLS] {', '.join(symbols[:10])}{'...' if len(symbols) > 10 else ''}"
-            )
+            print(f"[SYMBOLS] {', '.join(symbols[:10])}{'...' if len(symbols) > 10 else ''}")
 
             # Show blue chip assets found
             blue_chips_found = [s for s in symbols if s in self.blue_chip_assets]
@@ -479,9 +453,7 @@ if __name__ == "__main__":
     # Test the liquidity tracker
     async def test():
         tracker = HyperLiquidLiquidityTracker()
-        liquid_assets = await tracker.get_liquid_assets(
-            min_liquidity_score=0.4, max_count=20
-        )
+        liquid_assets = await tracker.get_liquid_assets(min_liquidity_score=0.4, max_count=20)
         print(f"\n[LIQUID ASSETS] {liquid_assets}")
 
     asyncio.run(test())

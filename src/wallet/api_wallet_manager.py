@@ -30,12 +30,8 @@ class WalletManager:
         # Configuration
         self.base_url = "https://api.hyperliquid.xyz"
         self.testnet_url = "https://api.hyperliquid-testnet.xyz"
-        self.is_testnet = (
-            os.environ.get("HYPERLIQUID_TESTNET", "false").lower() == "true"
-        )
-        self.api_url = (
-            self.testnet_url if self.is_testnet else self.base_url
-        )  # Mainnet by default
+        self.is_testnet = os.environ.get("HYPERLIQUID_TESTNET", "false").lower() == "true"
+        self.api_url = self.testnet_url if self.is_testnet else self.base_url  # Mainnet by default
 
         # Load configured wallet - REQUIRE REAL KEY
         self.private_key = os.environ.get("HYPER_LIQUID_KEY")
@@ -45,10 +41,7 @@ class WalletManager:
                 "❌ HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
             )
 
-        if (
-            self.private_key == "your_eth_private_key_here"
-            or len(self.private_key.strip()) < 64
-        ):
+        if self.private_key == "your_eth_private_key_here" or len(self.private_key.strip()) < 64:
             raise ValueError(
                 "❌ HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
             )

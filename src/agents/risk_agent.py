@@ -127,16 +127,12 @@ Please provide a detailed risk assessment with clear recommendations."""
         total_value = 0.0
 
         try:
-            print(
-                "\n[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]"
-            )
+            print("\n[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]")
 
             # Get USDC balance first
             print("[MONEY] Getting USDC balance...")
             try:
-                print(
-                    f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}"
-                )
+                print(f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}")
                 usdc_value = n.get_token_balance_usd(config.USDC_ADDRESS)
                 print(f"[OK] USDC Value: ${usdc_value:.2f}")
                 total_value += usdc_value
@@ -161,15 +157,11 @@ Please provide a detailed risk assessment with clear recommendations."""
                         else:
                             print("ℹ️ No balance found for this token")
                     except Exception as e:
-                        print(
-                            f"[ERROR] Error getting balance for {token[:8]}: {str(e)}"
-                        )
+                        print(f"[ERROR] Error getting balance for {token[:8]}: {str(e)}")
                         print("[SEARCH] Full error trace:")
                         traceback.print_exc()
 
-            print(
-                f"\n[DIAMOND] Deamon Dev's Total Portfolio Value: ${total_value:.2f} [OK]"
-            )
+            print(f"\n[DIAMOND] Deamon Dev's Total Portfolio Value: ${total_value:.2f} [OK]")
             return total_value
 
         except Exception as e:
@@ -202,9 +194,7 @@ Please provide a detailed risk assessment with clear recommendations."""
                     hours_since_log = (datetime.now() - last_log).total_seconds() / 3600
 
                     print(f"[CLOCK] Hours since last log: {hours_since_log:.1f}")
-                    print(
-                        f"[GEAR] Max hours between checks: {config.MAX_LOSS_GAIN_CHECK_HOURS}"
-                    )
+                    print(f"[GEAR] Max hours between checks: {config.MAX_LOSS_GAIN_CHECK_HOURS}")
 
                     if hours_since_log < config.MAX_LOSS_GAIN_CHECK_HOURS:
                         cprint(
@@ -256,18 +246,15 @@ Please provide a detailed risk assessment with clear recommendations."""
                 "5m": data_5m.to_dict() if data_5m is not None else None,
             }
         except Exception as e:
-            cprint(
-                f"[ERROR] Error getting data for {token}: {str(e)}", "white", "on_red"
-            )
+            cprint(f"[ERROR] Error getting data for {token}: {str(e)}", "white", "on_red")
             return None
 
     def should_override_limit(self, limit_type):
         """Ask AI (sub-agent) if we should override the limit based on recent market data"""
         try:
             # Only check every 15 minutes
-            if (
-                self.last_override_check
-                and datetime.now() - self.last_override_check < timedelta(minutes=15)
+            if self.last_override_check and datetime.now() - self.last_override_check < timedelta(
+                minutes=15
             ):
                 return self.override_active
 
@@ -282,9 +269,7 @@ Please provide a detailed risk assessment with clear recommendations."""
             ]
 
             if positions.empty:
-                cprint(
-                    "[ERROR] No monitored positions found to analyze", "white", "on_red"
-                )
+                cprint("[ERROR] No monitored positions found to analyze", "white", "on_red")
                 return False
 
             # Collect data only for monitored tokens we have positions in
@@ -519,7 +504,7 @@ Provide a detailed analysis with clear recommendation.
             # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
-                    print(f"[WARNING] PnL limit reached: {current_pnl}%")
+                    print(f"[WARNING] PnL limit reached: {current_pnl:.2f}%")
                     self.handle_limit_breach("PNL_PERCENT", current_pnl)
                     return True
             else:
@@ -562,7 +547,9 @@ Provide a detailed analysis with clear recommendation.
             positions_str = "\nCurrent Positions:\n"
             for _, row in positions_df.iterrows():
                 if row["USD Value"] > 0:
-                    positions_str += f"- {row['Mint Address']}: {row['Amount']} (${row['USD Value']:.2f})\n"
+                    positions_str += (
+                        f"- {row['Mint Address']}: {row['Amount']} (${row['USD Value']:.2f})\n"
+                    )
 
             # Get sub-agent recommendation
             prompt = f"""
@@ -618,9 +605,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
         except Exception as e:
             print(f"[ERROR] Error handling limit breach: {str(e)}")
             # Default to closing positions on error
-            print(
-                "[WARNING] Error in sub-agent consultation - defaulting to close all positions"
-            )
+            print("[WARNING] Error in sub-agent consultation - defaulting to close all positions")
             self.close_all_positions()
 
     def get_current_pnl(self):
@@ -660,7 +645,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
             # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
-                    print(f"[WARNING] PnL limit reached: {current_pnl}%")
+                    print(f"[WARNING] PnL limit reached: {current_pnl:.2f}%")
                     self.handle_limit_breach("PNL_PERCENT", current_pnl)
                     return True
             else:
@@ -679,9 +664,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
 
 def main():
     """Main function to run the risk agent"""
-    cprint(
-        "🛡🛡[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue"
-    )
+    cprint("🛡🛡[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue")
 
     agent = RiskAgent()
 

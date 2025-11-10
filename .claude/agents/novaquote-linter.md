@@ -1,3 +1,8 @@
+---
+name: novaquote-linter
+description: Agent de linting et correction automatique pour le projet NovaQuote Trading
+---
+
 # NovaQuote Linter Agent
 
 ## Description

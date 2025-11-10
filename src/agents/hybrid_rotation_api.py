@@ -29,9 +29,7 @@ class HybridRotationAPI:
         self.hybrid_manager: Optional[HybridRotationManager] = None
         self.running = False
 
-    async def start_hybrid_rotation(
-        self, request_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def start_hybrid_rotation(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Start hybrid rotation with specified configuration"""
         try:
             # Parse request
@@ -171,11 +169,8 @@ class HybridRotationAPI:
                 preferences[symbol] = {
                     "preference_score": pref.preference_score,
                     "weight_multiplier": pref.weight_multiplier,
-                    "locked": pref.lock_until is not None
-                    and pref.lock_until > datetime.now(),
-                    "lock_until": (
-                        pref.lock_until.isoformat() if pref.lock_until else None
-                    ),
+                    "locked": pref.lock_until is not None and pref.lock_until > datetime.now(),
+                    "lock_until": (pref.lock_until.isoformat() if pref.lock_until else None),
                     "min_allocation": pref.min_allocation,
                     "max_allocation": pref.max_allocation,
                     "tags": pref.tags,
@@ -228,9 +223,7 @@ class HybridRotationAPI:
                     preference_data["lock_until"] = None
                 else:
                     try:
-                        lock_time = datetime.fromisoformat(
-                            lock_value.replace("Z", "+00:00")
-                        )
+                        lock_time = datetime.fromisoformat(lock_value.replace("Z", "+00:00"))
                         if lock_time > datetime.now():
                             preference_data["lock_until"] = lock_time.isoformat()
                         else:
@@ -274,9 +267,7 @@ class HybridRotationAPI:
                         "error": "tags must be an array of strings",
                     }
 
-            return await self.hybrid_manager.update_user_preference(
-                symbol, preference_data
-            )
+            return await self.hybrid_manager.update_user_preference(symbol, preference_data)
 
         except Exception as e:
             return {
@@ -335,9 +326,7 @@ class HybridRotationAPI:
                     "error": "response must be 'accept', 'reject', or 'modify'",
                 }
 
-            modifications = (
-                request_data.get("modifications") if response == "modify" else None
-            )
+            modifications = request_data.get("modifications") if response == "modify" else None
 
             return await self.hybrid_manager.respond_to_suggestion(
                 suggestion_id, response, modifications
@@ -373,12 +362,8 @@ class HybridRotationAPI:
                     if asset in self.hybrid_manager.auto_rotator.asset_configs:
                         config = self.hybrid_manager.auto_rotator.asset_configs[asset]
                         self.hybrid_manager.current_assets.append(config)
-                        self.hybrid_manager.auto_rotator.last_rotation[asset] = (
-                            datetime.now()
-                        )
-                        self.hybrid_manager.auto_rotator.performance_history[asset] = [
-                            0.6
-                        ]
+                        self.hybrid_manager.auto_rotator.last_rotation[asset] = datetime.now()
+                        self.hybrid_manager.auto_rotator.performance_history[asset] = [0.6]
 
                 return {
                     "success": True,

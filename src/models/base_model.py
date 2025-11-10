@@ -68,35 +68,10 @@ class BaseModel(ABC):
     def initialize_client(self, **kwargs) -> None:
         """Initialize the model's client"""
 
-    def generate_response(
-        self, system_prompt, user_content, temperature=0.7, max_tokens=None
-    ):
+    @abstractmethod
+    def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate a response from the model with no caching"""
-        try:
-            # Add random nonce to prevent caching
-            nonce = f"_{random.randint(1, 1000000)}"
-            current_time = int(time.time())
-
-            # Each request will be unique
-            unique_content = f"{user_content}_{nonce}_{current_time}"
-
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": f"{system_prompt}_{current_time}"},
-                    {"role": "user", "content": unique_content},
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens if max_tokens else self.max_tokens,
-            )
-
-            return response.choices[0].message
-
-        except Exception as e:
-            if "503" in str(e):
-                raise e  # Let the retry logic handle 503s
-            safe_cprint(f"❌ Model error: {str(e)}", "red")
-            return None
+        pass
 
     @abstractmethod
     def is_available(self) -> bool:

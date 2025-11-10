@@ -68,9 +68,7 @@ class RealTimeBacktester:
     def __init__(self):
         """Initialise le backtester temps réel"""
         self.backtests_dir = Path(__file__).parent / "production_backtests"
-        self.results_dir = (
-            Path(__file__).parent / "rbi_v3" / "10_23_2025" / "backtests_final"
-        )
+        self.results_dir = Path(__file__).parent / "rbi_v3" / "10_23_2025" / "backtests_final"
 
         # Cache des backtests chargés
         self.backtests_cache: Dict[str, BacktestResult] = {}
@@ -123,9 +121,7 @@ class RealTimeBacktester:
                 try:
                     strategy_name = json_file.stem.replace("_FINAL_results", "")
                     if strategy_name not in backtests:  # Éviter les doublons
-                        result = await self.parse_backtest_file(
-                            json_file, strategy_name
-                        )
+                        result = await self.parse_backtest_file(json_file, strategy_name)
                         if result:
                             backtests[strategy_name] = result
                             cprint(
@@ -156,30 +152,16 @@ class RealTimeBacktester:
 
             # Extraction des métriques avec fallback
             win_rate = (
-                self.extract_metric(
-                    data, ["Win Rate [%]", "win_rate", "Win Rate", "winrate"]
-                )
-                / 100
+                self.extract_metric(data, ["Win Rate [%]", "win_rate", "Win Rate", "winrate"]) / 100
             )
-            profit_factor = self.extract_metric(
-                data, ["Profit Factor", "profit_factor", "pf"]
-            )
-            sharpe_ratio = self.extract_metric(
-                data, ["Sharpe Ratio", "sharpe", "sharpe_ratio"]
-            )
+            profit_factor = self.extract_metric(data, ["Profit Factor", "profit_factor", "pf"])
+            sharpe_ratio = self.extract_metric(data, ["Sharpe Ratio", "sharpe", "sharpe_ratio"])
             max_drawdown = abs(
-                self.extract_metric(
-                    data, ["Max. Drawdown [%]", "max_drawdown", "Max Drawdown"]
-                )
+                self.extract_metric(data, ["Max. Drawdown [%]", "max_drawdown", "Max Drawdown"])
                 / 100
             )
-            total_return = (
-                self.extract_metric(data, ["Return [%]", "return", "total_return"])
-                / 100
-            )
-            total_trades = int(
-                self.extract_metric(data, ["# Trades", "total_trades", "trades"])
-            )
+            total_return = self.extract_metric(data, ["Return [%]", "return", "total_return"]) / 100
+            total_trades = int(self.extract_metric(data, ["# Trades", "total_trades", "trades"]))
 
             # Calculer la durée moyenne (simulation)
             avg_trade_duration = 4.5  # 4.5 heures en moyenne
@@ -212,9 +194,7 @@ class RealTimeBacktester:
             cprint(f"   ⚠️ Impossible de parser {file_path.name}: {str(e)}", "yellow")
             return None
 
-    def extract_metric(
-        self, data: Dict, possible_keys: List[str], default: float = 0.0
-    ) -> float:
+    def extract_metric(self, data: Dict, possible_keys: List[str], default: float = 0.0) -> float:
         """
         🔍 EXTRAIT UNE MÉTRIQUE AVEC FALLBACK MULTIPLE
         """
@@ -251,9 +231,7 @@ class RealTimeBacktester:
 
         return default
 
-    async def validate_signals(
-        self, agent_signals: Dict[str, Any]
-    ) -> Dict[str, ValidationResult]:
+    async def validate_signals(self, agent_signals: Dict[str, Any]) -> Dict[str, ValidationResult]:
         """
         ✅ VALIDE LES SIGNAUX DES AGENTS CONTRE LES BACKTESTS
         """
@@ -292,9 +270,7 @@ class RealTimeBacktester:
                     cprint(f"   ⚠️ Pas de backtest pour {strategy_name}", "yellow")
 
         # Affichage du résumé
-        passed = sum(
-            1 for v in validation_results.values() if v.validation_status == "PASS"
-        )
+        passed = sum(1 for v in validation_results.values() if v.validation_status == "PASS")
         total = len(validation_results)
         cprint(
             f"\n   ✅ Validation: {passed}/{total} stratégies validées",
@@ -321,8 +297,7 @@ class RealTimeBacktester:
 
         # Calculer la performance actuelle (simulation)
         current_performance = {
-            "win_rate": backtest_result.win_rate
-            * (0.95 + np.random.random() * 0.1),  # ±5%
+            "win_rate": backtest_result.win_rate * (0.95 + np.random.random() * 0.1),  # ±5%
             "profit_factor": backtest_result.profit_factor
             * (0.9 + np.random.random() * 0.2),  # ±10%
             "sharpe_ratio": backtest_result.sharpe_ratio
@@ -343,9 +318,7 @@ class RealTimeBacktester:
             validation_status = "FAIL"
 
         # Générer des recommandations
-        recommendations = self.generate_recommendations(
-            backtest_result, signal, validation_score
-        )
+        recommendations = self.generate_recommendations(backtest_result, signal, validation_score)
 
         # Affichage
         status_color = {"PASS": "green", "WARNING": "yellow", "FAIL": "red"}.get(
@@ -395,14 +368,10 @@ class RealTimeBacktester:
         scores["win_rate"] = min(1.0, backtest_result.win_rate / 0.7)  # 70%+ = 1.0
 
         # Profit factor score
-        scores["profit_factor"] = min(
-            1.0, backtest_result.profit_factor / 2.0
-        )  # 2.0+ = 1.0
+        scores["profit_factor"] = min(1.0, backtest_result.profit_factor / 2.0)  # 2.0+ = 1.0
 
         # Sharpe ratio score
-        scores["sharpe_ratio"] = min(
-            1.0, backtest_result.sharpe_ratio / 2.0
-        )  # 2.0+ = 1.0
+        scores["sharpe_ratio"] = min(1.0, backtest_result.sharpe_ratio / 2.0)  # 2.0+ = 1.0
 
         # Signal confidence score
         scores["signal_confidence"] = signal_confidence
@@ -410,15 +379,11 @@ class RealTimeBacktester:
         # Performance actuelle vs backtest (bonus/malus)
         performance_bonus = 0.0
         if "win_rate" in current_performance:
-            perf_ratio = current_performance["win_rate"] / max(
-                0.01, backtest_result.win_rate
-            )
+            perf_ratio = current_performance["win_rate"] / max(0.01, backtest_result.win_rate)
             performance_bonus = min(0.1, max(-0.1, (perf_ratio - 1.0) * 0.2))
 
         # Score final pondéré
-        final_score = (
-            sum(scores[key] * weights[key] for key in scores.keys()) + performance_bonus
-        )
+        final_score = sum(scores[key] * weights[key] for key in scores.keys()) + performance_bonus
         return max(0.0, min(1.0, final_score))
 
     def generate_recommendations(
@@ -444,14 +409,10 @@ class RealTimeBacktester:
 
         # Recommandations basées sur les métriques de backtest
         if backtest_result.win_rate < 0.6:
-            recommendations.append(
-                "⚠️ Win rate backtest faible - Ajuster les paramètres d'entrée"
-            )
+            recommendations.append("⚠️ Win rate backtest faible - Ajuster les paramètres d'entrée")
 
         if backtest_result.profit_factor < 1.5:
-            recommendations.append(
-                "⚠️ Profit factor backtest faible - Optimiser la sortie"
-            )
+            recommendations.append("⚠️ Profit factor backtest faible - Optimiser la sortie")
 
         if backtest_result.max_drawdown > 0.2:
             recommendations.append("⚠️ Drawdown élevé - Réduire la taille de position")
@@ -481,8 +442,7 @@ class RealTimeBacktester:
         )
 
         avg_score = (
-            sum(v.validation_score for v in validation_results.values())
-            / total_validations
+            sum(v.validation_score for v in validation_results.values()) / total_validations
             if total_validations > 0
             else 0.0
         )
@@ -507,9 +467,7 @@ class RealTimeBacktester:
                 "warnings": warning_validations,
                 "failed": failed_validations,
                 "success_rate": (
-                    passed_validations / total_validations
-                    if total_validations > 0
-                    else 0.0
+                    passed_validations / total_validations if total_validations > 0 else 0.0
                 ),
                 "average_score": avg_score,
             },
@@ -519,9 +477,7 @@ class RealTimeBacktester:
                     "score": result.validation_score,
                     "status": result.validation_status,
                     "backtest_winrate": result.backtest_result.win_rate,
-                    "signal_confidence": result.current_performance.get(
-                        "win_rate", 0.0
-                    ),
+                    "signal_confidence": result.current_performance.get("win_rate", 0.0),
                 }
                 for name, result in top_strategies
             ],
@@ -552,10 +508,7 @@ class RealTimeBacktester:
         current_avg = self.validation_metrics["avg_validation_score"]
         total_metrics = self.validation_metrics["total_validations"]
         self.validation_metrics["avg_validation_score"] = (
-            (
-                current_avg * (total_metrics - total_validations)
-                + avg_score * total_validations
-            )
+            (current_avg * (total_metrics - total_validations) + avg_score * total_validations)
             / total_metrics
             if total_metrics > 0
             else avg_score
@@ -596,9 +549,7 @@ class RealTimeBacktester:
         """
         total = self.validation_metrics["total_validations"]
         success_rate = (
-            self.validation_metrics["successful_validations"] / total
-            if total > 0
-            else 0.0
+            self.validation_metrics["successful_validations"] / total if total > 0 else 0.0
         )
 
         return {

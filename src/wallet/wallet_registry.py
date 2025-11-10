@@ -31,9 +31,7 @@ class WalletRegistry:
         self.registry = self._load_registry()
 
         cprint(f"📋 {self.name} v{self.version} initialized", "cyan")
-        cprint(
-            f"   Registered wallets: {len(self.registry.get('wallets', {}))}", "cyan"
-        )
+        cprint(f"   Registered wallets: {len(self.registry.get('wallets', {}))}", "cyan")
 
     def _ensure_data_directory(self):
         """Ensure data directory exists"""
@@ -108,9 +106,7 @@ class WalletRegistry:
             cprint(f"❌ Failed to register wallet: {str(e)}", "red")
             return False
 
-    def update_wallet_permissions(
-        self, wallet_address: str, permissions: List[str]
-    ) -> bool:
+    def update_wallet_permissions(self, wallet_address: str, permissions: List[str]) -> bool:
         """
         Update permissions for a wallet
 
@@ -127,14 +123,10 @@ class WalletRegistry:
                 return False
 
             self.registry["wallets"][wallet_address]["permissions"] = permissions
-            self.registry["wallets"][wallet_address][
-                "updated_at"
-            ] = datetime.now().isoformat()
+            self.registry["wallets"][wallet_address]["updated_at"] = datetime.now().isoformat()
             self._save_registry()
 
-            cprint(
-                f"✅ Updated permissions for wallet: {wallet_address[:8]}...", "green"
-            )
+            cprint(f"✅ Updated permissions for wallet: {wallet_address[:8]}...", "green")
             return True
 
         except Exception as e:
@@ -200,9 +192,7 @@ class WalletRegistry:
                 return False
 
             self.registry["wallets"][wallet_address]["is_active"] = False
-            self.registry["wallets"][wallet_address][
-                "deactivated_at"
-            ] = datetime.now().isoformat()
+            self.registry["wallets"][wallet_address]["deactivated_at"] = datetime.now().isoformat()
             self.registry["wallets"][wallet_address]["deactivation_reason"] = reason
             self._save_registry()
 
@@ -369,9 +359,7 @@ class WalletRegistry:
         wallets = self.registry.get("wallets", {})
 
         active_wallets = len([w for w in wallets.values() if w.get("is_active", False)])
-        inactive_wallets = len(
-            [w for w in wallets.values() if not w.get("is_active", False)]
-        )
+        inactive_wallets = len([w for w in wallets.values() if not w.get("is_active", False)])
 
         total_actions = sum(
             len(w.get("approved_actions", [])) + len(w.get("blocked_actions", []))

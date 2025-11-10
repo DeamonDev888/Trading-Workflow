@@ -64,9 +64,7 @@ class DeepSeekModel(BaseModel):
                 content=response.choices[0].message.content.strip(),
                 raw_response=response,
                 model_name=self.model_name,
-                usage=(
-                    response.usage.model_dump() if hasattr(response, "usage") else None
-                ),
+                usage=(response.usage.model_dump() if hasattr(response, "usage") else None),
             )
 
         except Exception as e:

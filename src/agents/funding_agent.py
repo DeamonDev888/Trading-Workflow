@@ -151,12 +151,8 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             cprint("🏆 FUNDING ARBITRAGE STRATEGY VALIDATED", "green")
             cprint("=" * 80, "green")
             cprint(f"✅ Strategy: {funding_strategy['name']}", "green")
-            cprint(
-                f"✅ Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green"
-            )
-            cprint(
-                f"✅ Profit Factor: {funding_strategy['profit_factor']:.2f}", "green"
-            )
+            cprint(f"✅ Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green")
+            cprint(f"✅ Profit Factor: {funding_strategy['profit_factor']:.2f}", "green")
             cprint(
                 f"✅ Tested on: {', '.join(funding_strategy['symbols_validated'])}",
                 "green",
@@ -169,9 +165,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
         else:
             cprint("⚠️ Funding_Arbitrage_85 strategy NOT found in library!", "yellow")
 
-    def validate_funding_opportunity_with_proof(
-        self, symbol: str, funding_rate: float
-    ) -> Dict:
+    def validate_funding_opportunity_with_proof(self, symbol: str, funding_rate: float) -> Dict:
         """
         Validate a funding opportunity using the proven Funding_Arbitrage_85 strategy
 
@@ -282,9 +276,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             btc_close = btc_data["close"].iloc[-1]
             btc_sma = btc_data["close"].rolling(20).mean().iloc[-1]
             btc_trend = "UPTREND" if btc_close > btc_sma else "DOWNTREND"
-            market_context += (
-                f"\nBTC Trend Analysis:\n- Current Price vs 20 SMA: {btc_trend}\n"
-            )
+            market_context += f"\nBTC Trend Analysis:\n- Current Price vs 20 SMA: {btc_trend}\n"
 
             # Prepare the context
             rate = funding_data["annual_rate"].iloc[0]
@@ -341,7 +333,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     matches = re.findall(r"(\d+)%", lines[2])
                     if matches:
                         confidence = int(matches[0])
-                except:
+                except Exception:
                     print("⚠️ Could not parse confidence, using default")
 
             return {"action": action, "analysis": analysis, "confidence": confidence}
@@ -361,10 +353,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     annual_rate = float(row["annual_rate"])
                     symbol = str(row["symbol"])
 
-                    if (
-                        annual_rate < NEGATIVE_THRESHOLD
-                        or annual_rate > POSITIVE_THRESHOLD
-                    ):
+                    if annual_rate < NEGATIVE_THRESHOLD or annual_rate > POSITIVE_THRESHOLD:
                         # Get OHLCV data using new async module
                         async with HyperliquidClient() as client:
                             candles = await client.get_candles(
@@ -420,9 +409,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 rate = data["annual_rate"]
                 action = data["action"]
                 confidence = data["confidence"]
-                analysis = data["analysis"].split("\n")[
-                    0
-                ]  # Get just the first line of analysis
+                analysis = data["analysis"].split("\n")[0]  # Get just the first line of analysis
 
                 if rate < NEGATIVE_THRESHOLD:
                     messages.append(
@@ -484,21 +471,15 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
             if df is not None and not df.empty:
                 # Get latest data for each symbol
-                current_data = (
-                    df.sort_values("event_time").groupby("symbol").last().reset_index()
-                )
+                current_data = df.sort_values("event_time").groupby("symbol").last().reset_index()
 
                 # Ensure funding_rate and yearly_funding_rate are numeric
                 numeric_cols = ["funding_rate", "yearly_funding_rate"]
                 for col in numeric_cols:
-                    current_data[col] = pd.to_numeric(
-                        current_data[col], errors="coerce"
-                    )
+                    current_data[col] = pd.to_numeric(current_data[col], errors="coerce")
 
                 # Rename yearly_funding_rate to annual_rate for consistency
-                current_data = current_data.rename(
-                    columns={"yearly_funding_rate": "annual_rate"}
-                )
+                current_data = current_data.rename(columns={"yearly_funding_rate": "annual_rate"})
 
                 return current_data
             return None
@@ -594,9 +575,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
                 # Truncate symbol to 4 characters
                 symbol = row["symbol"][:4]
-                print(
-                    f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║"
-                )
+                print(f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║")
 
             print("╚" + "═" * 50 + "╝")
 

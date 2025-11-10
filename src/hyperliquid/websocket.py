@@ -34,9 +34,7 @@ class HyperliquidWebSocket:
 
         # Configuration
         self.testnet = testnet
-        self.base_url = (
-            base_url if not testnet else "wss://api.hyperliquid-testnet.xyz/ws"
-        )
+        self.base_url = base_url if not testnet else "wss://api.hyperliquid-testnet.xyz/ws"
         self.reconnect_delay = reconnect_delay
         self.max_reconnects = max_reconnects
 
@@ -373,7 +371,9 @@ class HyperliquidWebSocket:
             await self.websocket.send(json.dumps(message))
 
             # Store subscription for tracking
-            sub_key = f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
+            sub_key = (
+                f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
+            )
             self.subscriptions[sub_key] = subscription
 
             cprint(
@@ -406,7 +406,9 @@ class HyperliquidWebSocket:
             await self.websocket.send(json.dumps(message))
 
             # Remove from tracking
-            sub_key = f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
+            sub_key = (
+                f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
+            )
             self.subscriptions.pop(sub_key, None)
 
             cprint(f"✅ Unsubscribed from {subscription['type']}", "green")

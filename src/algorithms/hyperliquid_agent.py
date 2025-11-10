@@ -64,9 +64,7 @@ class HyperLiquidAgent:
     def _sign_payload(self, payload: Dict) -> str:
         """Signer la payload avec la clé secrète"""
         message = json.dumps(payload)
-        return hmac.new(
-            self.secret_key.encode(), message.encode(), hashlib.sha256
-        ).hexdigest()
+        return hmac.new(self.secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
 
     async def get_meta(self) -> Dict:
         """Récupérer les métadonnées des tokens"""
@@ -239,18 +237,12 @@ class HyperLiquidAgent:
                         positions.append(
                             Position(
                                 symbol=symbol,
-                                side=(
-                                    "long"
-                                    if Decimal(position.get("szi", "0")) > 0
-                                    else "short"
-                                ),
+                                side=("long" if Decimal(position.get("szi", "0")) > 0 else "short"),
                                 size=abs(Decimal(position.get("szi", "0"))),
                                 entry_price=Decimal(position.get("entryPx", "0")),
                                 mark_price=Decimal(position.get("markPx", "0")),
                                 pnl=Decimal(position.get("unrealizedPnl", "0")),
-                                leverage=int(
-                                    position.get("leverage", {}).get("value", 1)
-                                ),
+                                leverage=int(position.get("leverage", {}).get("value", 1)),
                             )
                         )
 
@@ -348,9 +340,7 @@ class HyperLiquidAgent:
                 "current_price": float(current_price),
                 "volume_24h": symbol_info.get("dayNtlVlm", 0) if symbol_info else 0,
                 "funding_rate": symbol_info.get("funding", 0) if symbol_info else 0,
-                "open_interest": (
-                    symbol_info.get("openInterest", 0) if symbol_info else 0
-                ),
+                "open_interest": (symbol_info.get("openInterest", 0) if symbol_info else 0),
                 "mark_price": float(current_price),
                 "timestamp": int(time.time()),
             }
@@ -460,9 +450,7 @@ if __name__ == "__main__":
                                 "name": symbol,
                                 "price": price,
                                 "change_24h": 0.02 if price > 0 else 0,  # Test data
-                                "volume_24h": (
-                                    100000000 if price > 0 else 0
-                                ),  # Test data
+                                "volume_24h": (100000000 if price > 0 else 0),  # Test data
                             }
                         )
 
@@ -485,9 +473,7 @@ if __name__ == "__main__":
                 print(f"Symboles disponibles: {len(meta.get('symbols', []))}")
 
             else:
-                print(
-                    "Commandes disponibles: --get-dashboard-data, --get-tokens, --test"
-                )
+                print("Commandes disponibles: --get-dashboard-data, --get-tokens, --test")
         else:
             # Test par défaut
             await main()

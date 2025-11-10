@@ -76,9 +76,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
         analysis["priority"] = self._determine_priority(metrics)
 
         # Optimisation potentielle
-        analysis["optimization_potential"] = self._calculate_optimization_potential(
-            metrics
-        )
+        analysis["optimization_potential"] = self._calculate_optimization_potential(metrics)
 
         # Générer des recommandations basées sur l'analyse
         analysis["recommendations"] = self._generate_recommendations(analysis)
@@ -143,9 +141,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
             analysis["weaknesses"].append(f"Drawdown élevé: {dd:.2%}")
         else:
             analysis["critical_issues"].append(f"Drawdown critique: {dd:.2%}")
-            analysis["recommendations"].append(
-                "Réduire immédiatement la taille des positions"
-            )
+            analysis["recommendations"].append("Réduire immédiatement la taille des positions")
 
     def _analyze_win_rate(self, metrics: Dict, analysis: Dict):
         """Analyse le taux de réussite"""
@@ -159,9 +155,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
             analysis["weaknesses"].append(f"Win rate moyen: {wr:.2%}")
         else:
             analysis["critical_issues"].append(f"Win rate critique: {wr:.2%}")
-            analysis["recommendations"].append(
-                "Améliorer les signaux d'entrée et de sortie"
-            )
+            analysis["recommendations"].append("Améliorer les signaux d'entrée et de sortie")
 
     def _analyze_trades(self, metrics: Dict, analysis: Dict):
         """Analyse le nombre de trades"""
@@ -270,9 +264,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
             recommendations.append("Intégrer analyse sentiment via Sentiment Agent")
 
         if any("funding" in issue.lower() for issue in analysis["weaknesses"]):
-            recommendations.append(
-                "Optimiser via Funding Agent pour améliorer le ratio"
-            )
+            recommendations.append("Optimiser via Funding Agent pour améliorer le ratio")
 
         # Stratégies d'amélioration générale
         if len(analysis["critical_issues"]) > 0:
@@ -295,8 +287,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
         # Générer une stratégie optimisée
         optimized_strategy = {
             "original_strategy": backtest_data.get("name", "Unknown"),
-            "optimized_strategy_name": f"{backtest_data.get('name', 'Strategy')}"
-            "_OPTIMIZED",
+            "optimized_strategy_name": f"{backtest_data.get('name', 'Strategy')}" "_OPTIMIZED",
             "optimization_timestamp": datetime.now().isoformat(),
             "analysis": analysis,
             "optimizations_applied": [],
@@ -310,15 +301,9 @@ class IntelligentBacktestOptimizer(BaseAgent):
 
         # Optimisation du Sharpe
         if metrics["sharpe"] < 1.5:
-            optimized_strategy["new_parameters"][
-                "stop_loss"
-            ] = "Tighter (2% instead of 3%)"
-            optimized_strategy["new_parameters"][
-                "position_sizing"
-            ] = "Dynamic based on volatility"
-            optimized_strategy["optimizations_applied"].append(
-                "Improved risk management"
-            )
+            optimized_strategy["new_parameters"]["stop_loss"] = "Tighter (2% instead of 3%)"
+            optimized_strategy["new_parameters"]["position_sizing"] = "Dynamic based on volatility"
+            optimized_strategy["optimizations_applied"].append("Improved risk management")
             optimized_strategy["expected_improvements"]["sharpe"] = "20-30% increase"
 
         # Optimisation du drawdown
@@ -326,33 +311,23 @@ class IntelligentBacktestOptimizer(BaseAgent):
             optimized_strategy["new_parameters"]["max_position_size"] = "2% of capital"
             optimized_strategy["new_parameters"]["correlation_filter"] = "Enabled"
             optimized_strategy["optimizations_applied"].append("Reduced risk exposure")
-            optimized_strategy["expected_improvements"][
-                "max_drawdown"
-            ] = "30-40% reduction"
+            optimized_strategy["expected_improvements"]["max_drawdown"] = "30-40% reduction"
 
         # Optimisation du win rate
         if metrics["win_rate"] < 0.65:
-            optimized_strategy["new_parameters"][
-                "entry_signals"
-            ] = "Multi-confirmation required"
+            optimized_strategy["new_parameters"]["entry_signals"] = "Multi-confirmation required"
             optimized_strategy["new_parameters"][
                 "time_filter"
             ] = "Trade only during high volatility"
-            optimized_strategy["optimizations_applied"].append(
-                "Improved entry precision"
-            )
+            optimized_strategy["optimizations_applied"].append("Improved entry precision")
             optimized_strategy["expected_improvements"]["win_rate"] = "10-15% increase"
 
         # Optimisation du profit factor
         if metrics["profit_factor"] < 2.0:
-            optimized_strategy["new_parameters"][
-                "take_profit"
-            ] = "Dynamic (1.5x-3x risk)"
+            optimized_strategy["new_parameters"]["take_profit"] = "Dynamic (1.5x-3x risk)"
             optimized_strategy["new_parameters"]["trailing_stop"] = "Enabled"
             optimized_strategy["optimizations_applied"].append("Enhanced exit strategy")
-            optimized_strategy["expected_improvements"][
-                "profit_factor"
-            ] = "25-35% increase"
+            optimized_strategy["expected_improvements"]["profit_factor"] = "25-35% increase"
 
         # Ajouter les notes d'implémentation
         optimized_strategy["implementation_notes"] = [
@@ -371,9 +346,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
 
         return optimized_strategy
 
-    def optimize_all_strategies(
-        self, backtests: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def optimize_all_strategies(self, backtests: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Optimise toutes les stratégies et génère un rapport"""
 
         results = {
@@ -418,9 +391,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
                 all_expected_scores.append(optimization["expected_score"])
 
             except Exception as e:
-                self.logger.error(
-                    f"Error optimizing {backtest.get('name', 'Unknown')}: {e}"
-                )
+                self.logger.error(f"Error optimizing {backtest.get('name', 'Unknown')}: {e}")
 
         # Calculer les moyennes
         if all_scores:
@@ -446,23 +417,14 @@ class IntelligentBacktestOptimizer(BaseAgent):
         print(f"Priorité basse: {results['summary']['low_priority']}")
 
         if results["summary"]["avg_current_score"] > 0:
-            print(
-                f"\nScore moyen actuel: "
-                f"{results['summary']['avg_current_score']:.1f}/100"
-            )
-            print(
-                f"Score moyen attendu: "
-                f"{results['summary']['avg_expected_score']:.1f}/100"
-            )
+            print(f"\nScore moyen actuel: " f"{results['summary']['avg_current_score']:.1f}/100")
+            print(f"Score moyen attendu: " f"{results['summary']['avg_expected_score']:.1f}/100")
             improvement = (
-                results["summary"]["avg_expected_score"]
-                - results["summary"]["avg_current_score"]
+                results["summary"]["avg_expected_score"] - results["summary"]["avg_current_score"]
             )
             print(f"Amélioration attendue: +{improvement:.1f} points")
 
-        print(
-            f"\nOptimisations recommandées: {results['summary']['total_optimizations']}"
-        )
+        print(f"\nOptimisations recommandées: {results['summary']['total_optimizations']}")
 
         # Top 3 des stratégies à optimiser en priorité
         if results["optimized_strategies"]:
@@ -478,9 +440,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
             for i, opt in enumerate(top_optimizations, 1):
                 print(f"\n{i}. {opt['original_strategy']}")
                 print(f"   Priorité: {opt['analysis']['priority'].upper()}")
-                print(
-                    f"   Score actuel: {opt['analysis']['performance_score']:.1f}/100"
-                )
+                print(f"   Score actuel: {opt['analysis']['performance_score']:.1f}/100")
                 print(f"   Score attendu: {opt['expected_score']:.1f}/100")
                 print(f"   Optimisations: {', '.join(opt['optimizations_applied'])}")
 
@@ -523,8 +483,6 @@ if __name__ == "__main__":
     results = optimizer.optimize_all_strategies(test_backtests)
 
     # Exporter le rapport
-    optimizer.export_optimization_report(
-        results, "intelligent_optimization_report.json"
-    )
+    optimizer.export_optimization_report(results, "intelligent_optimization_report.json")
 
     print("\n[OK] Test terminé avec succès!")

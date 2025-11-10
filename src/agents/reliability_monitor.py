@@ -8,17 +8,18 @@ avec alertes et auto-récupération.
 
 import json
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Callable
-from pathlib import Path
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 from termcolor import cprint
 
 
 class AlertLevel(Enum):
     """Niveaux d'alerte"""
+
     INFO = "INFO"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
@@ -28,6 +29,7 @@ class AlertLevel(Enum):
 @dataclass
 class ReliabilityAlert:
     """Alerte de fiabilité"""
+
     level: AlertLevel
     message: str
     timestamp: str
@@ -45,7 +47,9 @@ class ReliabilityMonitor:
     """
 
     def __init__(self, project_path: Optional[str] = None):
-        self.project_path = Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        self.project_path = (
+            Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        )
         self.alerts_dir = self.project_path / "logs" / "reliability"
         self.alerts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -89,7 +93,7 @@ class ReliabilityMonitor:
     def check_system_health(
         self,
         aggregator_data: Optional[Dict[str, Any]] = None,
-        agent_status: Optional[Dict[str, Any]] = None
+        agent_status: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Vérification complète de la santé du système
@@ -110,7 +114,7 @@ class ReliabilityMonitor:
             "health_score": 1.0,
             "checks": {},
             "alerts": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 1. Vérifier les métriques du système
@@ -157,12 +161,7 @@ class ReliabilityMonitor:
 
     def _check_system_metrics(self, aggregator_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Vérifie les métriques du système"""
-        check_result = {
-            "status": "PASS",
-            "score": 1.0,
-            "details": {},
-            "warnings": []
-        }
+        check_result = {"status": "PASS", "score": 1.0, "details": {}, "warnings": []}
 
         if not aggregator_data:
             check_result["status"] = "WARNING"
@@ -210,7 +209,7 @@ class ReliabilityMonitor:
             "status": "PASS",
             "score": 1.0,
             "details": {"agents": {}},
-            "warnings": []
+            "warnings": [],
         }
 
         if not agent_status:
@@ -229,7 +228,7 @@ class ReliabilityMonitor:
             agent_info = {
                 "health": health,
                 "success_rate": success_rate,
-                "online": health in ["HEALTHY", "DEGRADED"]
+                "online": health in ["HEALTHY", "DEGRADED"],
             }
 
             if health == "HEALTHY":
@@ -259,12 +258,7 @@ class ReliabilityMonitor:
 
     def _check_performance(self, aggregator_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Vérifie les performances"""
-        check_result = {
-            "status": "PASS",
-            "score": 1.0,
-            "details": {},
-            "warnings": []
-        }
+        check_result = {"status": "PASS", "score": 1.0, "details": {}, "warnings": []}
 
         if not aggregator_data:
             return check_result
@@ -291,20 +285,14 @@ class ReliabilityMonitor:
 
     def _check_data_consistency(self, aggregator_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Vérifie la cohérence des données"""
-        check_result = {
-            "status": "PASS",
-            "score": 1.0,
-            "details": {},
-            "warnings": []
-        }
+        check_result = {"status": "PASS", "score": 1.0, "details": {}, "warnings": []}
 
         if not aggregator_data:
             return check_result
 
         # Vérifier la dispersion des décisions
         recent_decisions = [
-            a.get("final_decision")
-            for a in aggregator_data.get("recent_aggregations", [])[-10:]
+            a.get("final_decision") for a in aggregator_data.get("recent_aggregations", [])[-10:]
         ]
 
         if recent_decisions:
@@ -320,12 +308,7 @@ class ReliabilityMonitor:
 
     def _calculate_health_score(self, checks: Dict[str, Any]) -> float:
         """Calcule le score de santé global"""
-        weights = {
-            "system": 0.4,
-            "agents": 0.3,
-            "performance": 0.2,
-            "consistency": 0.1
-        }
+        weights = {"system": 0.4, "agents": 0.3, "performance": 0.2, "consistency": 0.1}
 
         total_weight = 0
         weighted_score = 0
@@ -378,7 +361,7 @@ class ReliabilityMonitor:
         message: str,
         source: str,
         details: Optional[Dict[str, Any]] = None,
-        auto_resolve: bool = False
+        auto_resolve: bool = False,
     ) -> ReliabilityAlert:
         """Crée une nouvelle alerte"""
         alert = ReliabilityAlert(
@@ -387,7 +370,7 @@ class ReliabilityMonitor:
             timestamp=datetime.now().isoformat(),
             source=source,
             details=details or {},
-            auto_resolve=auto_resolve
+            auto_resolve=auto_resolve,
         )
 
         self.active_alerts.append(alert)
@@ -427,7 +410,7 @@ class ReliabilityMonitor:
             "level": alert.level.value,
             "message": alert.message,
             "source": alert.source,
-            "details": alert.details
+            "details": alert.details,
         }
 
         with open(log_file, "a", encoding="utf-8") as f:
@@ -439,7 +422,7 @@ class ReliabilityMonitor:
             AlertLevel.INFO: "cyan",
             AlertLevel.WARNING: "yellow",
             AlertLevel.CRITICAL: "red",
-            AlertLevel.EMERGENCY: "red"
+            AlertLevel.EMERGENCY: "red",
         }
 
         color = level_colors.get(alert.level, "white")
@@ -459,8 +442,7 @@ class ReliabilityMonitor:
         last_24h = now - timedelta(hours=24)
 
         recent_alerts = [
-            a for a in self.alert_history
-            if datetime.fromisoformat(a.timestamp) > last_24h
+            a for a in self.alert_history if datetime.fromisoformat(a.timestamp) > last_24h
         ]
 
         return {
@@ -471,10 +453,13 @@ class ReliabilityMonitor:
                 level.value: len([a for a in recent_alerts if a.level == level])
                 for level in AlertLevel
             },
-            "unresolved_critical": len([
-                a for a in self.active_alerts
-                if a.level in [AlertLevel.CRITICAL, AlertLevel.EMERGENCY]
-            ])
+            "unresolved_critical": len(
+                [
+                    a
+                    for a in self.active_alerts
+                    if a.level in [AlertLevel.CRITICAL, AlertLevel.EMERGENCY]
+                ]
+            ),
         }
 
     def check_consecutive_failures(self, agent_name: str, failure_count: int) -> bool:
@@ -486,7 +471,7 @@ class ReliabilityMonitor:
                 AlertLevel.CRITICAL,
                 f"Agent {agent_name} has failed {failure_count} consecutive times",
                 "reliability_monitor",
-                {"agent": agent_name, "failure_count": failure_count}
+                {"agent": agent_name, "failure_count": failure_count},
             )
             return True
 
@@ -507,7 +492,7 @@ class ReliabilityMonitor:
             "uptime_seconds": self.get_system_uptime(),
             "metrics": self.metrics,
             "thresholds": self.thresholds,
-            "alert_summary": self.get_alert_summary()
+            "alert_summary": self.get_alert_summary(),
         }
 
         with open(filepath, "w", encoding="utf-8") as f:
@@ -521,48 +506,37 @@ if __name__ == "__main__":
     monitor = ReliabilityMonitor()
 
     # Test d'alertes
-    monitor.create_alert(
-        AlertLevel.WARNING,
-        "Test warning alert",
-        "test",
-        {"test_data": "value"}
-    )
+    monitor.create_alert(AlertLevel.WARNING, "Test warning alert", "test", {"test_data": "value"})
 
     # Test de vérification de santé
     mock_aggregator_data = {
         "total_aggregations": 100,
         "successful_aggregations": 85,
         "average_confidence": 0.75,
-        "average_reliability": 0.78
+        "average_reliability": 0.78,
     }
 
     mock_agent_status = {
-        "claude-strategy-advisor": {
-            "health": "HEALTHY",
-            "success_rate": 0.9
-        },
-        "claude-risk-advisor": {
-            "health": "DEGRADED",
-            "success_rate": 0.65
-        }
+        "claude-strategy-advisor": {"health": "HEALTHY", "success_rate": 0.9},
+        "claude-risk-advisor": {"health": "DEGRADED", "success_rate": 0.65},
     }
 
     health_report = monitor.check_system_health(mock_aggregator_data, mock_agent_status)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     cprint("  SYSTEM HEALTH REPORT", "cyan", attrs=["bold"])
-    print("="*70)
+    print("=" * 70)
     print(f"\n  Status: {health_report['overall_status']}")
     print(f"  Health Score: {health_report['health_score']:.2f}")
     print(f"  Uptime: {monitor.get_system_uptime():.0f} seconds")
 
     print("\n  Recommendations:")
-    for rec in health_report['recommendations']:
+    for rec in health_report["recommendations"]:
         cprint(f"    - {rec}", "yellow")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     cprint("  ALERT SUMMARY", "cyan", attrs=["bold"])
-    print("="*70)
+    print("=" * 70)
     summary = monitor.get_alert_summary()
     print(f"\n  Total Alerts: {summary['total_alerts']}")
     print(f"  Active Alerts: {summary['active_alerts']}")
@@ -573,4 +547,4 @@ if __name__ == "__main__":
     metrics_file = monitor.export_metrics()
     print(f"\n  Metrics exported to: {metrics_file}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)

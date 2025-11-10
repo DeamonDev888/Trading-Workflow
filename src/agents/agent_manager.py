@@ -1,8 +1,10 @@
-import subprocess
-import json
 import datetime
+import json
 import os
+import subprocess
+import sys
 from pathlib import Path
+
 
 class NovaQuoteAgentManager:
     def __init__(self, project_path):
@@ -30,20 +32,16 @@ class NovaQuoteAgentManager:
 
         cmd = [
             "claude",
-            "--agents", str(agent_file),
+            "--agents",
+            str(agent_file),
             "--print",
             "--dangerously-skip-permissions",
-            task
+            task,
         ]
 
         try:
             print(f"🚀 Exécution de l'agent {agent_name}...")
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=self.project_path
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_path)
 
             response = {
                 "agent": agent_name,
@@ -52,7 +50,7 @@ class NovaQuoteAgentManager:
                 "stderr": result.stderr,
                 "returncode": result.returncode,
                 "timestamp": datetime.datetime.now().isoformat(),
-                "status": "success" if result.returncode == 0 else "error"
+                "status": "success" if result.returncode == 0 else "error",
             }
 
             if save_report:
@@ -66,7 +64,7 @@ class NovaQuoteAgentManager:
                 "task": task,
                 "error": str(e),
                 "status": "exception",
-                "timestamp": datetime.datetime.now().isoformat()
+                "timestamp": datetime.datetime.now().isoformat(),
             }
 
     def _save_report(self, response):
@@ -75,7 +73,7 @@ class NovaQuoteAgentManager:
         filename = f"{response['agent']}_report_{timestamp}.json"
         report_file = self.reports_path / filename
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(response, f, indent=2, ensure_ascii=False)
 
         print(f"📄 Rapport sauvegardé: {report_file}")
@@ -147,33 +145,34 @@ class NovaQuoteAgentManager:
 
         # 1. Bug Fixer
         print("🐛 Étape 1: Bug Fixer...")
-        results['bug_fixer'] = self.fix_issues()
+        results["bug_fixer"] = self.fix_issues()
 
         # 2. Code Reviewer (Security Audit)
         print("🔒 Étape 2: Code Reviewer...")
-        results['code_reviewer'] = self.security_audit()
+        results["code_reviewer"] = self.security_audit()
 
         # 3. Performance Optimizer
         print("⚡ Étape 3: Performance Optimizer...")
-        results['performance'] = self.optimize_performance()
+        results["performance"] = self.optimize_performance()
 
         # 4. Test Enhancer
         print("🧪 Étape 4: Test Enhancer...")
-        results['tests'] = self.enhance_tests()
+        results["tests"] = self.enhance_tests()
 
         # 5. Documentation Generator
         print("📚 Étape 5: Documentation Generator...")
-        results['documentation'] = self.generate_docs()
+        results["documentation"] = self.generate_docs()
 
         print("✅ Analyse complète terminée !")
 
         # Résumé des résultats
         print("\n📊 Résumé des résultats:")
         for agent, result in results.items():
-            status_icon = "✅" if result['status'] == 'success' else "❌"
+            status_icon = "✅" if result["status"] == "success" else "❌"
             print(f"{status_icon} {agent}: {result['status']}")
 
         return results
+
 
 # Point d'entrée pour le script
 if __name__ == "__main__":
@@ -186,34 +185,34 @@ if __name__ == "__main__":
     print("🚀 NOVAQUOTE Agent Manager")
     print("=" * 40)
 
-    if len(os.sys.argv) > 1:
-        command = os.sys.argv[1]
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
 
         if command == "analyze":
-            file_path = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            file_path = sys.argv[2] if len(sys.argv) > 2 else None
             if file_path:
                 result = manager.analyze_file(file_path)
             else:
                 print("Usage: python agent_manager.py analyze <file_path>")
 
         elif command == "fix":
-            file_path = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            file_path = sys.argv[2] if len(sys.argv) > 2 else None
             result = manager.fix_issues(file_path)
 
         elif command == "docs":
-            component = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            component = sys.argv[2] if len(sys.argv) > 2 else None
             result = manager.generate_docs(component)
 
         elif command == "perf":
-            component = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            component = sys.argv[2] if len(sys.argv) > 2 else None
             result = manager.optimize_performance(component)
 
         elif command == "test":
-            component = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            component = sys.argv[2] if len(sys.argv) > 2 else None
             result = manager.enhance_tests(component)
 
         elif command == "security":
-            component = os.sys.argv[2] if len(os.sys.argv) > 2 else None
+            component = sys.argv[2] if len(sys.argv) > 2 else None
             result = manager.security_audit(component)
 
         elif command == "complete":

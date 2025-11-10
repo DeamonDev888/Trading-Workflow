@@ -75,9 +75,7 @@ class XAIModel(BaseModel):
             model_info = self.AVAILABLE_MODELS.get(self.model_name, {})
             if model_info:
                 if "context_window" in model_info:
-                    safe_cprint(
-                        f"📊 Context window: {model_info['context_window']}", "cyan"
-                    )
+                    safe_cprint(f"📊 Context window: {model_info['context_window']}", "cyan")
                 if "pricing" in model_info:
                     safe_cprint(f"💰 Pricing: {model_info['pricing']}", "cyan")
                 if "rate_limits" in model_info:
@@ -118,9 +116,7 @@ class XAIModel(BaseModel):
                 content=content,
                 raw_response=response,
                 model_name=self.model_name,
-                usage=(
-                    response.usage.model_dump() if hasattr(response, "usage") else None
-                ),
+                usage=(response.usage.model_dump() if hasattr(response, "usage") else None),
             )
 
         except Exception as e:

@@ -29,7 +29,12 @@ from src.agents.funding_agent import FundingAgent
 from src.agents.risk_agent import RiskAgent
 from src.agents.sentiment_analysis_agent import SentimentAnalysisAgent
 from src.agents.strategy_agent import StrategyAgent
-from src.logger import get_logger
+try:
+    from src.logger import get_logger
+except ImportError:
+    import logging
+    def get_logger(name):
+        return logging.getLogger(name)
 
 # Configuration logging
 logger = get_logger("master_agent")
@@ -88,15 +93,9 @@ class MasterAgent:
         }
 
         # Chemins des backtests
-        self.backtests_dir = (
-            Path(__file__).parent.parent / "data" / "production_backtests"
-        )
+        self.backtests_dir = Path(__file__).parent.parent / "data" / "production_backtests"
         self.backtests_results_dir = (
-            Path(__file__).parent.parent
-            / "data"
-            / "rbi_v3"
-            / "10_23_2025"
-            / "backtests_final"
+            Path(__file__).parent.parent / "data" / "rbi_v3" / "10_23_2025" / "backtests_final"
         )
 
         # Historique des cycles
@@ -112,16 +111,12 @@ class MasterAgent:
         }
 
         cprint(f"\n{'='*80}", "cyan")
-        cprint(
-            "[OK] NOVAQUOTE AGENT MASTER - COORDINATEUR CENTRAL", "cyan", attrs=["bold"]
-        )
+        cprint("[OK] NOVAQUOTE AGENT MASTER - COORDINATEUR CENTRAL", "cyan", attrs=["bold"])
         cprint(f"{'='*80}\n", "cyan")
 
         cprint("[OK] Agent Master initialisé avec succès", "green")
         cprint(f"   [STATS] {len(self.agents)} agents configurés", "blue")
-        cprint(
-            f"   [CLOCK] Durée cycle: {self.cycle_duration_seconds//60} minutes", "blue"
-        )
+        cprint(f"   [CLOCK] Durée cycle: {self.cycle_duration_seconds//60} minutes", "blue")
         cprint(f"   [DIR] Backtests directory: {self.backtests_dir}", "blue")
         cprint(f"   [DIR] Results directory: {self.backtests_results_dir}", "blue")
         cprint("\n")
@@ -132,9 +127,7 @@ class MasterAgent:
         Exécute le cycle de 20 minutes en continu
         """
         self.is_running = True
-        cprint(
-            "[ROCKET] Démarrage du cycle circulaire continu...", "green", attrs=["bold"]
-        )
+        cprint("[ROCKET] Démarrage du cycle circulaire continu...", "green", attrs=["bold"])
 
         try:
             while self.is_running:
@@ -175,9 +168,7 @@ class MasterAgent:
                         f"   [CLOCK] Prochain cycle dans {sleep_time/60:.1f} minutes",
                         "blue",
                     )
-                    await asyncio.sleep(
-                        min(sleep_time, 60)
-                    )  # Sleep par tranche de 60s max
+                    await asyncio.sleep(min(sleep_time, 60))  # Sleep par tranche de 60s max
 
         except Exception as e:
             cprint(
@@ -246,7 +237,10 @@ class MasterAgent:
 
             # ==================== PHASE 4: SENTIMENT AGENT (ANALYSE SOCIALE) ====================
             cprint(
-                "\n[MASK] [4/4] SENTIMENT AGENT - Analyse sentiment...",
+                "\n[CHAT] [4/4] SENTIMENT AGENT - Analyse sentiment...",
+                "magenta",
+                attrs=["bold"],
+            )[MASK] [4/4] SENTIMENT AGENT - Analyse sentiment...",
                 "magenta",
                 attrs=["bold"],
             )
@@ -488,18 +482,14 @@ class MasterAgent:
             },
         }
 
-    async def make_combined_decision(
-        self, agents_results: List[AgentResult]
-    ) -> Dict[str, Any]:
+    async def make_combined_decision(self, agents_results: List[AgentResult]) -> Dict[str, Any]:
         """
         [WINNER] PRISE DE DÉCISION UNIFIÉE
         Combine les résultats des 4 agents pour une décision finale
         """
         # Calculer le score combiné
         total_confidence = sum(result.confidence for result in agents_results)
-        avg_confidence = (
-            total_confidence / len(agents_results) if agents_results else 0.0
-        )
+        avg_confidence = total_confidence / len(agents_results) if agents_results else 0.0
 
         # Analyser les signaux BUY/SELL
         buy_signals = 0
@@ -512,9 +502,7 @@ class MasterAgent:
                     if signal.get("signal") == "BUY":
                         buy_signals += 1
                         if signal.get("confidence", 0) > 0.8:
-                            strong_signals.append(
-                                f"{signal['token']} ({signal['strategy']})"
-                            )
+                            strong_signals.append(f"{signal['token']} ({signal['strategy']})")
                     elif signal.get("signal") == "SELL":
                         sell_signals += 1
 
@@ -573,13 +561,9 @@ class MasterAgent:
                 "strategy": strategy_name,
                 "backtest_winrate": 0.68 + (hash(strategy_name) % 100) / 1000,  # Simulé
                 "backtest_return": 0.15 + (hash(strategy_name) % 100) / 1000,
-                "current_signal_match": (
-                    True if "BUY" in combined_decision["decision"] else False
-                ),
+                "current_signal_match": (True if "BUY" in combined_decision["decision"] else False),
                 "confidence_score": 0.75 + (hash(strategy_name) % 50) / 100,
-                "validation_status": (
-                    "PASS" if (hash(strategy_name) % 3) != 0 else "WARNING"
-                ),
+                "validation_status": ("PASS" if (hash(strategy_name) % 3) != 0 else "WARNING"),
             }
 
             if validation_result["validation_status"] == "PASS":
@@ -656,9 +640,7 @@ class MasterAgent:
             opportunities = data.get("arbitrage_opportunities", [])
             if not opportunities:
                 return 0.5
-            avg_confidence = sum(o.get("confidence", 0) for o in opportunities) / len(
-                opportunities
-            )
+            avg_confidence = sum(o.get("confidence", 0) for o in opportunities) / len(opportunities)
             return avg_confidence
 
         elif agent_name == "sentiment_agent":
@@ -823,9 +805,7 @@ class MasterAgent:
         }
 
         # Sauvegarder pour le backend (le backend lira ce fichier)
-        dashboard_file = (
-            Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
-        )
+        dashboard_file = Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
         with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(dashboard_data, f, indent=2, ensure_ascii=False)
 

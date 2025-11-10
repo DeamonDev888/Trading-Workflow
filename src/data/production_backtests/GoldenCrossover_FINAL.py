@@ -25,9 +25,7 @@ class GoldenCrossoverFinal(Strategy):
         self.sma20 = self.I(talib.SMA, self.data.Close, timeperiod=20)
         self.sma200 = self.I(talib.SMA, self.data.Close, timeperiod=200)
         self.rsi = self.I(talib.RSI, self.data.Close, timeperiod=14)
-        self.atr = self.I(
-            talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14
-        )
+        self.atr = self.I(talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14)
         self.avg_volume = self.I(talib.SMA, self.data.Volume, timeperiod=20)
         self.last_peak_price = 0.0
         self.last_peak_rsi = 100.0
@@ -60,11 +58,7 @@ class GoldenCrossoverFinal(Strategy):
             return
 
         # Entry conditions
-        crossover = (
-            len(self.data) > 1
-            and self.data.Close[-2] <= self.sma20[-2]
-            and close > sma20
-        )
+        crossover = len(self.data) > 1 and self.data.Close[-2] <= self.sma20[-2] and close > sma20
         touch_fib = low <= fib618 + (0.01 * close)  # Tolerance for touch/wick
         volume_confirm = volume > avg_vol
         uptrend = close > sma200
@@ -82,9 +76,7 @@ class GoldenCrossoverFinal(Strategy):
         from_idx = max(0, len(self.data) - lookback - 1)
 
         try:
-            recent_high_values = self.data.High.iloc[
-                from_idx : len(self.data) - 1
-            ].values
+            recent_high_values = self.data.High.iloc[from_idx : len(self.data) - 1].values
             if len(recent_high_values) < 10:
                 return None
 
@@ -123,9 +115,7 @@ class GoldenCrossoverFinal(Strategy):
             self.entry_bar = len(self.data) - 1
             self.last_peak_price = self.data.High[-1]
             self.last_peak_rsi = self.rsi[-1]
-            print(
-                f"LONG ENTRY at {entry_price:.2f}, SL {stop_price:.2f}, Size {position_size}"
-            )
+            print(f"LONG ENTRY at {entry_price:.2f}, SL {stop_price:.2f}, Size {position_size}")
 
     def _manage_position(self, close, high, rsi, atr, sma20):
         """Manage existing positions"""
@@ -149,12 +139,7 @@ class GoldenCrossoverFinal(Strategy):
             return
 
         # Bearish divergence approximation
-        if (
-            rsi > 70
-            and len(self.data) > 2
-            and close > self.data.Close[-2]
-            and rsi < self.rsi[-2]
-        ):
+        if rsi > 70 and len(self.data) > 2 and close > self.data.Close[-2] and rsi < self.rsi[-2]:
             print("Bearish RSI Divergence detected, EXITING!")
             self.position.close()
             return
@@ -181,9 +166,7 @@ def run_backtest():
     for data_path in data_paths:
         try:
             if os.path.exists(data_path):
-                data = pd.read_csv(
-                    data_path, parse_dates=["datetime"], index_col="datetime"
-                )
+                data = pd.read_csv(data_path, parse_dates=["datetime"], index_col="datetime")
                 print(f"Data loaded from: {data_path}")
                 break
         except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -238,18 +221,12 @@ def run_backtest():
                 get_stat_value(stats, ["Return [%", "ReturnPct", "Return"], 0.0), 2
             ),
             "annual_return": round(
-                get_stat_value(
-                    stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0
-                ),
+                get_stat_value(stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0),
                 2,
             ),
-            "sharpe_ratio": round(
-                get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2
-            ),
+            "sharpe_ratio": round(get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2),
             "max_drawdown": round(
-                get_stat_value(
-                    stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0
-                ),
+                get_stat_value(stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0),
                 2,
             ),
             "total_trades": int(

@@ -189,9 +189,7 @@ class CoinRotationManager:
 
                 return recommendations
             else:
-                print(
-                    "[WARNING] Failed to get strategy recommendations, using defaults"
-                )
+                print("[WARNING] Failed to get strategy recommendations, using defaults")
                 return []
 
         except Exception as e:
@@ -210,9 +208,7 @@ class CoinRotationManager:
 
         # Adjust priority based on configuration weights
         priority = base_priority
-        priority += int(
-            (1 - confidence) * 3
-        )  # Higher confidence = lower priority number
+        priority += int((1 - confidence) * 3)  # Higher confidence = lower priority number
         priority += risk_adjustment
 
         return max(1, min(10, priority))
@@ -249,9 +245,7 @@ class CoinRotationManager:
             cycle_time = time.time() - start_time
             self._update_rotation_metrics(cycle_time, rotation_results)
 
-            print(
-                f"[COMPLETE] Rotation cycle {cycle_id} completed in {cycle_time:.1f}s"
-            )
+            print(f"[COMPLETE] Rotation cycle {cycle_id} completed in {cycle_time:.1f}s")
 
         except Exception as e:
             print(f"[ERROR] Rotation cycle failed: {e}")
@@ -317,16 +311,11 @@ class CoinRotationManager:
             trend_strength = response.get("trend_strength", 0.5)
 
             # Calculate risk-adjusted score
-            risk_multiplier = {"LOW": 1.0, "MEDIUM": 0.8, "HIGH": 0.5}.get(
-                profile.risk_level, 0.7
-            )
+            risk_multiplier = {"LOW": 1.0, "MEDIUM": 0.8, "HIGH": 0.5}.get(profile.risk_level, 0.7)
 
             # Composite score calculation
             score = (
-                win_rate * 0.3
-                + profitability * 0.3
-                + (1 - volatility) * 0.2
-                + trend_strength * 0.2
+                win_rate * 0.3 + profitability * 0.3 + (1 - volatility) * 0.2 + trend_strength * 0.2
             ) * risk_multiplier
 
             return max(0.0, min(1.0, score))
@@ -354,14 +343,8 @@ class CoinRotationManager:
         # Identify assets to add (recommended but not monitored)
         for rec in recommendations:
             symbol = rec.get("symbol", "").upper()
-            if (
-                symbol
-                and symbol not in current_symbols
-                and symbol in recommended_symbols
-            ):
-                score = self._calculate_composite_score(
-                    rec, performance_scores.get(symbol, 0.5)
-                )
+            if symbol and symbol not in current_symbols and symbol in recommended_symbols:
+                score = self._calculate_composite_score(rec, performance_scores.get(symbol, 0.5))
                 if score > 0.4:  # Minimum threshold
                     decisions["assets_to_add"].append(
                         {
@@ -381,9 +364,7 @@ class CoinRotationManager:
                 decisions["assets_to_remove"].append(
                     {
                         "symbol": symbol,
-                        "score": performance_scores.get(
-                            symbol, profile.performance_score
-                        ),
+                        "score": performance_scores.get(symbol, profile.performance_score),
                         "reason": "Poor performance or not recommended",
                         "current_priority": profile.priority,
                     }
@@ -399,9 +380,7 @@ class CoinRotationManager:
         self, recommendation: Dict[str, Any], performance_score: float
     ) -> float:
         """Calculate composite score combining recommendation and performance"""
-        recommendation_score = (
-            recommendation.get("confidence", 0.5) / 10.0
-        )  # Normalize to 0-0.1
+        recommendation_score = recommendation.get("confidence", 0.5) / 10.0  # Normalize to 0-0.1
 
         # Apply configuration weights
         composite_score = (
@@ -490,9 +469,7 @@ class CoinRotationManager:
             # Store in performance history
             self.performance_metrics["asset_performance"][symbol] = {
                 "final_score": profile.performance_score,
-                "total_monitoring_time": (
-                    datetime.now() - profile.last_updated
-                ).total_seconds(),
+                "total_monitoring_time": (datetime.now() - profile.last_updated).total_seconds(),
                 "average_confidence": profile.confidence,
                 "strategy_used": profile.strategy,
                 "archived_at": datetime.now().isoformat(),
@@ -507,19 +484,15 @@ class CoinRotationManager:
             + cycle_time
         ) / self.performance_metrics["total_rotations"]
 
-        self.performance_metrics["successful_reallocations"] += len(
-            results["added_assets"]
-        ) + len(results["removed_assets"])
+        self.performance_metrics["successful_reallocations"] += len(results["added_assets"]) + len(
+            results["removed_assets"]
+        )
 
     def _display_monitored_assets(self):
         """Display currently monitored assets"""
-        print(
-            f"\n[MONITORED ASSETS] Currently tracking {len(self.monitored_assets)} assets:"
-        )
+        print(f"\n[MONITORED ASSETS] Currently tracking {len(self.monitored_assets)} assets:")
 
-        sorted_assets = sorted(
-            self.monitored_assets.items(), key=lambda x: x[1].priority
-        )
+        sorted_assets = sorted(self.monitored_assets.items(), key=lambda x: x[1].priority)
 
         for symbol, profile in sorted_assets:
             status_icon = "[ACTIVE]" if profile.monitoring_active else "[INACTIVE]"
@@ -550,9 +523,7 @@ class CoinRotationManager:
             },
         }
 
-    async def force_rotation(
-        self, strategy_override: Optional[RotationStrategy] = None
-    ):
+    async def force_rotation(self, strategy_override: Optional[RotationStrategy] = None):
         """Force an immediate rotation cycle"""
         if strategy_override:
             self.config.strategy = strategy_override
@@ -570,9 +541,7 @@ class CoinRotationManager:
             return False
 
         if len(self.monitored_assets) >= self.config.max_assets:
-            print(
-                f"[ERROR] Cannot add {symbol}: maximum assets ({self.config.max_assets}) reached"
-            )
+            print(f"[ERROR] Cannot add {symbol}: maximum assets ({self.config.max_assets}) reached")
             return False
 
         profile = AssetProfile(

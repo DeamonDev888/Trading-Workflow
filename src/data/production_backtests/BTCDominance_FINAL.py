@@ -30,12 +30,8 @@ class BTCDominanceFinal(Strategy):
     def init(self):
         """Initialize technical indicators"""
         # Moving averages
-        self.sma_short = self.I(
-            talib.SMA, self.data.Close, timeperiod=self.sma_short_period
-        )
-        self.sma_long = self.I(
-            talib.SMA, self.data.Close, timeperiod=self.sma_long_period
-        )
+        self.sma_short = self.I(talib.SMA, self.data.Close, timeperiod=self.sma_short_period)
+        self.sma_long = self.I(talib.SMA, self.data.Close, timeperiod=self.sma_long_period)
 
         # RSI for momentum
         self.rsi = self.I(talib.RSI, self.data.Close, timeperiod=self.rsi_period)
@@ -152,9 +148,7 @@ class BTCDominanceFinal(Strategy):
                     size = int(risk_amount / risk_dist)
                     if size > 0:
                         self.buy(size=size, sl=stop_price)
-                        print(
-                            f"LONG ENTRY at {close:.2f}, SL {stop_price:.2f}, Size {size}"
-                        )
+                        print(f"LONG ENTRY at {close:.2f}, SL {stop_price:.2f}, Size {size}")
 
         # Short entry conditions
         elif self._should_go_short(
@@ -169,9 +163,7 @@ class BTCDominanceFinal(Strategy):
                     size = int(risk_amount / risk_dist)
                     if size > 0:
                         self.sell(size=size, sl=stop_price)
-                        print(
-                            f"SHORT ENTRY at {close:.2f}, SL {stop_price:.2f}, Size {size}"
-                        )
+                        print(f"SHORT ENTRY at {close:.2f}, SL {stop_price:.2f}, Size {size}")
 
     def _should_go_long(
         self, close, sma_short, sma_long, rsi, volume, volume_ma, dominance_trend
@@ -238,9 +230,7 @@ def run_backtest():
     for data_path in data_paths:
         try:
             if os.path.exists(data_path):
-                data = pd.read_csv(
-                    data_path, parse_dates=["datetime"], index_col="datetime"
-                )
+                data = pd.read_csv(data_path, parse_dates=["datetime"], index_col="datetime")
                 print(f"Data loaded from: {data_path}")
                 break
         except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -295,18 +285,12 @@ def run_backtest():
                 get_stat_value(stats, ["Return [%", "ReturnPct", "Return"], 0.0), 2
             ),
             "annual_return": round(
-                get_stat_value(
-                    stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0
-                ),
+                get_stat_value(stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0),
                 2,
             ),
-            "sharpe_ratio": round(
-                get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2
-            ),
+            "sharpe_ratio": round(get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2),
             "max_drawdown": round(
-                get_stat_value(
-                    stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0
-                ),
+                get_stat_value(stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0),
                 2,
             ),
             "total_trades": int(

@@ -17,23 +17,16 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from src.agents.automatic_coin_rotator import (
-    AssetConfig,
-    AutomaticCoinRotator,
-)
+from src.agents.automatic_coin_rotator import AssetConfig, AutomaticCoinRotator
 from src.agents.liquidity_tracker import HyperLiquidLiquidityTracker
-from src.agents.persistent_agent_client import (
-    PersistentAgentClient,
-)
+from src.agents.persistent_agent_client import PersistentAgentClient
 
 
 class ControlMode(Enum):
     FULL_AUTO = "full_auto"  # 100% automatic
     USER_GUIDED = "user_guided"  # Automatic with user preferences
     USER_OVERRIDE = "user_override"  # User decisions take priority
-    SEMI_AUTO = (
-        "semi_auto"  # User handles critical decisions, auto handles optimization
-    )
+    SEMI_AUTO = "semi_auto"  # User handles critical decisions, auto handles optimization
     COLLABORATIVE = "collaborative"  # AI suggests, user decides
 
 
@@ -167,8 +160,7 @@ class HybridRotationManager:
         for asset in default_assets:
             self.user_preferences[asset] = UserPreference(
                 symbol=asset,
-                preference_score=0.6
-                + (hash(asset) % 40) / 100,  # Random-ish preference
+                preference_score=0.6 + (hash(asset) % 40) / 100,  # Random-ish preference
                 weight_multiplier=1.0,
                 tags=["bluechip" if asset in ["BTC", "ETH"] else "altcoin"],
             )
@@ -290,9 +282,7 @@ class HybridRotationManager:
 
         return needs
 
-    async def _analyze_user_override_rotation(
-        self, needs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_user_override_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """User override analysis - check for locked assets and preference violations"""
         current_time = datetime.now()
 
@@ -301,11 +291,7 @@ class HybridRotationManager:
             asset = asset_config.symbol
             user_pref = self.user_preferences.get(asset)
 
-            if (
-                user_pref
-                and user_pref.lock_until
-                and user_pref.lock_until > current_time
-            ):
+            if user_pref and user_pref.lock_until and user_pref.lock_until > current_time:
                 continue  # Skip locked assets
 
             # Check performance issues for non-locked assets
@@ -315,9 +301,7 @@ class HybridRotationManager:
                     avg_perf = sum(perf_history[-3:]) / 3
                     if avg_perf < 0.3:  # Poor performance
                         needs["action_needed"] = True
-                        needs["reason"] = (
-                            f"Poor performance for {asset}: {avg_perf:.3f}"
-                        )
+                        needs["reason"] = f"Poor performance for {asset}: {avg_perf:.3f}"
                         needs["performance_issues"].append(asset)
 
         return needs
@@ -332,9 +316,7 @@ class HybridRotationManager:
             filtered_additions = []
             for asset in auto_decision["assets_to_add"]:
                 user_pref = self.user_preferences.get(asset)
-                if (
-                    not user_pref or user_pref.preference_score > 0.3
-                ):  # User doesn't hate it
+                if not user_pref or user_pref.preference_score > 0.3:  # User doesn't hate it
                     filtered_additions.append(asset)
 
             if filtered_additions:
@@ -344,9 +326,7 @@ class HybridRotationManager:
 
         return needs
 
-    async def _analyze_semi_auto_rotation(
-        self, needs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_semi_auto_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """Semi-automatic rotation - only critical issues trigger user interaction"""
         # Check for critical issues that need user decision
         for asset_config in self.current_assets:
@@ -366,9 +346,7 @@ class HybridRotationManager:
 
         return needs
 
-    async def _analyze_collaborative_rotation(
-        self, needs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_collaborative_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """Collaborative rotation - AI suggests, user decides"""
         # Always suggest improvements in collaborative mode
         current_time = datetime.now()
@@ -379,11 +357,7 @@ class HybridRotationManager:
             user_pref = self.user_preferences.get(asset)
 
             # Don't suggest changes for locked assets
-            if (
-                user_pref
-                and user_pref.lock_until
-                and user_pref.lock_until > current_time
-            ):
+            if user_pref and user_pref.lock_until and user_pref.lock_until > current_time:
                 continue
 
             # Check if we can find better alternatives
@@ -398,8 +372,7 @@ class HybridRotationManager:
 
                     # Only suggest if significantly better and user doesn't dislike
                     if candidate_score > current_score + 0.2 and (
-                        not user_candidate_pref
-                        or user_candidate_pref.preference_score > 0.3
+                        not user_candidate_pref or user_candidate_pref.preference_score > 0.3
                     ):
                         needs["action_needed"] = True
                         needs["reason"] = "Collaborative improvement suggestions"
@@ -473,8 +446,7 @@ class HybridRotationManager:
                     confidence=0.6 + opportunity["improvement"],
                     reasoning=f"Replace {opportunity['current']} with {opportunity['candidate']} for {opportunity['improvement']:.3f} improvement",
                     expected_impact=opportunity["improvement"],
-                    auto_accept=opportunity["improvement"]
-                    > self.config.auto_accept_threshold,
+                    auto_accept=opportunity["improvement"] > self.config.auto_accept_threshold,
                 )
                 suggestions.append(suggestion)
 
@@ -487,17 +459,12 @@ class HybridRotationManager:
     async def _process_suggestions(self, suggestions: List[RotationSuggestion]):
         """Process rotation suggestions based on control mode"""
         for suggestion in suggestions:
-            if (
-                suggestion.auto_accept
-                and self.config.control_mode != ControlMode.COLLABORATIVE
-            ):
+            if suggestion.auto_accept and self.config.control_mode != ControlMode.COLLABORATIVE:
                 # Auto-accept high confidence suggestions
                 await self._execute_suggestion(suggestion, "auto_accepted")
             elif self.config.control_mode == ControlMode.COLLABORATIVE:
                 # Store for user review
-                print(
-                    f"[SUGGESTION] {suggestion.reason} (confidence: {suggestion.confidence:.2f})"
-                )
+                print(f"[SUGGESTION] {suggestion.reason} (confidence: {suggestion.confidence:.2f})")
             else:
                 # Process based on mode-specific logic
                 await self._handle_mode_specific_suggestion(suggestion)
@@ -516,9 +483,7 @@ class HybridRotationManager:
             if suggestion.confidence > 0.85:
                 await self._execute_suggestion(suggestion, "auto_critical")
 
-    async def _execute_suggestion(
-        self, suggestion: RotationSuggestion, response_type: str
-    ):
+    async def _execute_suggestion(self, suggestion: RotationSuggestion, response_type: str):
         """Execute a rotation suggestion"""
         try:
             success = False
@@ -560,9 +525,7 @@ class HybridRotationManager:
                 elif "collaborative" in response_type:
                     self.collaborative_decisions += 1
 
-            print(
-                f"[EXECUTE] {suggestion.action} executed: {success} ({response_type})"
-            )
+            print(f"[EXECUTE] {suggestion.action} executed: {success} ({response_type})")
 
         except Exception as e:
             print(f"[ERROR] Failed to execute suggestion: {e}")
@@ -596,9 +559,7 @@ class HybridRotationManager:
     async def _remove_asset_from_rotation(self, asset: str) -> bool:
         """Remove an asset from the rotation"""
         try:
-            self.current_assets = [
-                ac for ac in self.current_assets if ac.symbol != asset
-            ]
+            self.current_assets = [ac for ac in self.current_assets if ac.symbol != asset]
             print(f"  [-] Removed {asset} from hybrid rotation")
             return True
         except Exception as e:
@@ -673,9 +634,7 @@ class HybridRotationManager:
     def _update_hybrid_metrics(self, cycle_time: float):
         """Update hybrid rotation metrics"""
         self.hybrid_metrics["total_decisions"] = (
-            self.auto_rotation_count
-            + self.user_interaction_count
-            + self.collaborative_decisions
+            self.auto_rotation_count + self.user_interaction_count + self.collaborative_decisions
         )
         self.hybrid_metrics["user_decisions"] = self.user_interaction_count
         self.hybrid_metrics["auto_decisions"] = self.auto_rotation_count
@@ -684,9 +643,7 @@ class HybridRotationManager:
         # Calculate satisfaction (simple heuristic)
         total_suggestions = self.hybrid_metrics["suggestions_made"]
         if total_suggestions > 0:
-            acceptance_rate = (
-                self.hybrid_metrics["suggestions_accepted"] / total_suggestions
-            )
+            acceptance_rate = self.hybrid_metrics["suggestions_accepted"] / total_suggestions
             self.hybrid_metrics["user_satisfaction"] = min(1.0, acceptance_rate * 1.2)
 
     # User interface methods
@@ -738,18 +695,14 @@ class HybridRotationManager:
 
             # Update preference fields
             if "preference_score" in preference_data:
-                user_pref.preference_score = max(
-                    0.0, min(1.0, preference_data["preference_score"])
-                )
+                user_pref.preference_score = max(0.0, min(1.0, preference_data["preference_score"]))
 
             if "weight_multiplier" in preference_data:
                 user_pref.weight_multiplier = preference_data["weight_multiplier"]
 
             if "lock_until" in preference_data:
                 if preference_data["lock_until"]:
-                    user_pref.lock_until = datetime.fromisoformat(
-                        preference_data["lock_until"]
-                    )
+                    user_pref.lock_until = datetime.fromisoformat(preference_data["lock_until"])
                 else:
                     user_pref.lock_until = None
 
@@ -762,9 +715,7 @@ class HybridRotationManager:
             if "tags" in preference_data:
                 user_pref.tags = preference_data["tags"]
 
-            print(
-                f"[PREF] Updated preference for {symbol}: {user_pref.preference_score:.2f}"
-            )
+            print(f"[PREF] Updated preference for {symbol}: {user_pref.preference_score:.2f}")
 
             return {
                 "success": True,
@@ -847,8 +798,7 @@ class HybridRotationManager:
                 symbol: {
                     "preference_score": pref.preference_score,
                     "weight_multiplier": pref.weight_multiplier,
-                    "locked": pref.lock_until is not None
-                    and pref.lock_until > datetime.now(),
+                    "locked": pref.lock_until is not None and pref.lock_until > datetime.now(),
                     "tags": pref.tags,
                 }
                 for symbol, pref in self.user_preferences.items()
@@ -901,9 +851,7 @@ if __name__ == "__main__":
             print(f"  Total Decisions: {status['metrics']['total_decisions']}")
             print(f"  User Decisions: {status['metrics']['user_decisions']}")
             print(f"  Auto Decisions: {status['metrics']['auto_decisions']}")
-            print(
-                f"  Collaborative Decisions: {status['metrics']['collaborative_decisions']}"
-            )
+            print(f"  Collaborative Decisions: {status['metrics']['collaborative_decisions']}")
             print(f"  User Satisfaction: {status['metrics']['user_satisfaction']:.2f}")
 
         except KeyboardInterrupt:

@@ -9,14 +9,7 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 from termcolor import cprint
 
-from .types import (
-    AssetInfo,
-    Candle,
-    L2Book,
-    Order,
-    Position,
-    Trade,
-)
+from .types import AssetInfo, Candle, L2Book, Order, Position, Trade
 
 
 class HyperliquidClient:
@@ -37,9 +30,7 @@ class HyperliquidClient:
 
         # Configuration
         self.testnet = testnet
-        self.base_url = (
-            base_url if not testnet else "https://api.hyperliquid-testnet.xyz"
-        )
+        self.base_url = base_url if not testnet else "https://api.hyperliquid-testnet.xyz"
         self.info_url = f"{self.base_url}/info"
         self.exchange_url = f"{self.base_url}/exchange"
         self.timeout = timeout
@@ -68,9 +59,7 @@ class HyperliquidClient:
     async def start(self):
         """Start the HTTP session"""
         if self.session is None:
-            self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.timeout)
-            )
+            self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
         cprint("✅ HTTP session started", "green")
 
     async def close(self):
@@ -474,11 +463,7 @@ class HyperliquidClient:
             "p": str(price),
             "s": str(size),
             "r": reduce_only,
-            "t": {
-                "limit" if time_in_force != "Market" else "market": {
-                    "tif": time_in_force
-                }
-            },
+            "t": {"limit" if time_in_force != "Market" else "market": {"tif": time_in_force}},
         }
 
         return {"type": "order", "orders": [order], "grouping": "na"}

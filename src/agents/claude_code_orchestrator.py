@@ -10,24 +10,25 @@ Orchestrateur principal qui:
 5. Surveille en continu
 """
 
+import asyncio
 import json
 import time
-import asyncio
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
-from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 from termcolor import cprint
 
 from src.agents.claude_code_integration import ClaudeCodeIntegrationManager
-from src.agents.data_aggregator import DataAggregator, AggregationResult
-from src.agents.reliability_monitor import ReliabilityMonitor, AlertLevel
+from src.agents.data_aggregator import AggregationResult, DataAggregator
+from src.agents.reliability_monitor import AlertLevel, ReliabilityMonitor
 
 
 @dataclass
 class OrchestratorConfig:
     """Configuration de l'orchestrateur"""
+
     # Agents à utiliser
     required_agents: List[str] = None
 
@@ -56,13 +57,14 @@ class OrchestratorConfig:
                 "claude-strategy-advisor",
                 "claude-risk-advisor",
                 "claude-funding-advisor",
-                "claude-sentiment-analyzer"
+                "claude-sentiment-analyzer",
             ]
 
 
 @dataclass
 class OrchestratorResult:
     """Résultat de l'orchestration"""
+
     success: bool
     decision: str
     confidence: float
@@ -86,9 +88,15 @@ class ClaudeCodeOrchestrator:
     Gère tout le cycle de vie: exécution, agrégation, validation, décision
     """
 
-    def __init__(self, config: Optional[OrchestratorConfig] = None, project_path: Optional[str] = None):
+    def __init__(
+        self,
+        config: Optional[OrchestratorConfig] = None,
+        project_path: Optional[str] = None,
+    ):
         self.config = config or OrchestratorConfig()
-        self.project_path = Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        self.project_path = (
+            Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        )
 
         # Composants
         self.integration_manager = ClaudeCodeIntegrationManager(self.project_path)
@@ -135,7 +143,7 @@ class ClaudeCodeOrchestrator:
         self,
         task: str,
         context_data: Optional[Dict[str, Any]] = None,
-        mode: str = "complete"
+        mode: str = "complete",
     ) -> OrchestratorResult:
         """
         Exécute une analyse de trading complète
@@ -164,7 +172,9 @@ class ClaudeCodeOrchestrator:
             agent_results = await self._execute_agents(task, context_data, mode)
 
             # 2. Agréger les données
-            aggregation_result = self.data_aggregator.aggregate_agent_data(agent_results, context_data)
+            aggregation_result = self.data_aggregator.aggregate_agent_data(
+                agent_results, context_data
+            )
 
             # 3. Valider avec le moniteur de fiabilité
             if self.config.enable_monitoring:
@@ -214,7 +224,7 @@ class ClaudeCodeOrchestrator:
                 AlertLevel.CRITICAL,
                 f"Orchestration failed: {str(e)}",
                 "orchestrator",
-                {"execution_id": execution_id, "error": str(e)}
+                {"execution_id": execution_id, "error": str(e)},
             )
 
             # Exécuter les callbacks d'échec
@@ -222,7 +232,10 @@ class ClaudeCodeOrchestrator:
                 try:
                     callback(e)
                 except Exception as callback_error:
-                    cprint(f"[ORCHESTRATOR] Failure callback failed: {callback_error}", "red")
+                    cprint(
+                        f"[ORCHESTRATOR] Failure callback failed: {callback_error}",
+                        "red",
+                    )
 
             result = OrchestratorResult(
                 success=False,
@@ -230,7 +243,7 @@ class ClaudeCodeOrchestrator:
                 confidence=0.0,
                 reliability=0.0,
                 error=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
             return result
@@ -239,10 +252,7 @@ class ClaudeCodeOrchestrator:
             self.is_running = False
 
     async def _execute_agents(
-        self,
-        task: str,
-        context_data: Optional[Dict[str, Any]],
-        mode: str
+        self, task: str, context_data: Optional[Dict[str, Any]], mode: str
     ) -> Dict[str, Dict[str, Any]]:
         """Exécute les agents selon le mode"""
         agent_results = {}
@@ -259,7 +269,10 @@ class ClaudeCodeOrchestrator:
         elif mode == "quick":
             # Exécuter uniquement les agents essentiels
             essential_agents = ["claude-strategy-advisor", "claude-risk-advisor"]
-            cprint(f"[ORCHESTRATOR] Executing essential agents: {', '.join(essential_agents)}", "cyan")
+            cprint(
+                f"[ORCHESTRATOR] Executing essential agents: {', '.join(essential_agents)}",
+                "cyan",
+            )
 
             for agent_id in essential_agents:
                 result = await self._execute_single_agent(agent_id, task, context_data)
@@ -267,7 +280,10 @@ class ClaudeCodeOrchestrator:
 
         else:  # custom
             # Exécuter selon la configuration
-            cprint(f"[ORCHESTRATOR] Executing custom agents: {', '.join(self.config.required_agents)}", "cyan")
+            cprint(
+                f"[ORCHESTRATOR] Executing custom agents: {', '.join(self.config.required_agents)}",
+                "cyan",
+            )
 
             for agent_id in self.config.required_agents:
                 result = await self._execute_single_agent(agent_id, task, context_data)
@@ -276,10 +292,7 @@ class ClaudeCodeOrchestrator:
         return agent_results
 
     async def _execute_single_agent(
-        self,
-        agent_id: str,
-        task: str,
-        context_data: Optional[Dict[str, Any]]
+        self, agent_id: str, task: str, context_data: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Exécute un agent unique"""
         try:
@@ -288,7 +301,7 @@ class ClaudeCodeOrchestrator:
                 agent_id=agent_id,
                 prompt=task,
                 context_data=context_data,
-                use_iterations=True
+                use_iterations=True,
             )
 
             return {
@@ -299,7 +312,7 @@ class ClaudeCodeOrchestrator:
                 "execution_time": result.get("execution_time", 0.0),
                 "result": result.get("result", {}),
                 "timestamp": datetime.now().isoformat(),
-                "error": result.get("error")
+                "error": result.get("error"),
             }
 
         except Exception as e:
@@ -312,7 +325,7 @@ class ClaudeCodeOrchestrator:
                 "execution_time": 0.0,
                 "result": {},
                 "timestamp": datetime.now().isoformat(),
-                "error": str(e)
+                "error": str(e),
             }
 
     async def _run_health_checks(self):
@@ -324,8 +337,7 @@ class ClaudeCodeOrchestrator:
 
             # Vérifier la santé du système
             health_report = self.reliability_monitor.check_system_health(
-                reliability_data,
-                agent_status
+                reliability_data, agent_status
             )
 
             # Générer des alertes si nécessaire
@@ -334,14 +346,14 @@ class ClaudeCodeOrchestrator:
                     AlertLevel.EMERGENCY,
                     "System health is CRITICAL",
                     "orchestrator",
-                    health_report
+                    health_report,
                 )
             elif health_report["overall_status"] == "UNHEALTHY":
                 self.reliability_monitor.create_alert(
                     AlertLevel.CRITICAL,
                     "System health is UNHEALTHY",
                     "orchestrator",
-                    health_report
+                    health_report,
                 )
 
             # Vérifier les échecs consécutifs
@@ -353,21 +365,24 @@ class ClaudeCodeOrchestrator:
                         recent_calls = self.data_aggregator.aggregation_history[-10:]
                         consecutive_failures = 0
                         for agg in reversed(recent_calls):
-                            agent_data = next((a for a in agg.agents_data if a.agent_name == agent_name), None)
+                            agent_data = next(
+                                (a for a in agg.agents_data if a.agent_name == agent_name),
+                                None,
+                            )
                             if agent_data and not agent_data.success:
                                 consecutive_failures += 1
                             else:
                                 break
 
-                        self.reliability_monitor.check_consecutive_failures(agent_name, consecutive_failures)
+                        self.reliability_monitor.check_consecutive_failures(
+                            agent_name, consecutive_failures
+                        )
 
         except Exception as e:
             cprint(f"[ORCHESTRATOR] Health check failed: {e}", "red")
 
     def _make_final_decision(
-        self,
-        aggregation_result: AggregationResult,
-        execution_id: str
+        self, aggregation_result: AggregationResult, execution_id: str
     ) -> OrchestratorResult:
         """Détermine la décision finale"""
         warnings = []
@@ -381,7 +396,7 @@ class ClaudeCodeOrchestrator:
                 reliability=0.0,
                 aggregation_result=aggregation_result,
                 error="No agent data available",
-                warnings=warnings
+                warnings=warnings,
             )
 
         # 2. Vérifier le nombre d'agents réussis
@@ -412,7 +427,7 @@ class ClaudeCodeOrchestrator:
                 reliability=0.0,
                 aggregation_result=aggregation_result,
                 error=f"Critical errors: {len(aggregation_result.errors)}",
-                warnings=warnings
+                warnings=warnings,
             )
 
         # 6. Déterminer la décision finale
@@ -430,7 +445,7 @@ class ClaudeCodeOrchestrator:
         decision_reliability = aggregation_result.reliability_score
 
         # Score final (moyenne pondée)
-        final_score = (decision_confidence * 0.6 + decision_reliability * 0.4)
+        final_score = decision_confidence * 0.6 + decision_reliability * 0.4
 
         return OrchestratorResult(
             success=True,
@@ -443,8 +458,8 @@ class ClaudeCodeOrchestrator:
                 "execution_id": execution_id,
                 "final_score": final_score,
                 "num_successful_agents": len(successful_agents),
-                "num_total_agents": len(aggregation_result.agents_data)
-            }
+                "num_total_agents": len(aggregation_result.agents_data),
+            },
         )
 
     async def _attempt_recovery(self, result: OrchestratorResult):
@@ -461,7 +476,10 @@ class ClaudeCodeOrchestrator:
         for strategy in recovery_strategies:
             try:
                 await strategy(result)
-                cprint(f"[ORCHESTRATOR] Recovery strategy applied: {strategy.__name__}", "green")
+                cprint(
+                    f"[ORCHESTRATOR] Recovery strategy applied: {strategy.__name__}",
+                    "green",
+                )
                 break
             except Exception as e:
                 cprint(f"[ORCHESTRATOR] Recovery strategy failed: {e}", "red")
@@ -488,20 +506,20 @@ class ClaudeCodeOrchestrator:
         # Moyenne mobile
         n = self.stats["total_executions"]
         self.stats["average_execution_time"] = (
-            (self.stats["average_execution_time"] * (n - 1) + execution_time) / n
-        )
+            self.stats["average_execution_time"] * (n - 1) + execution_time
+        ) / n
         self.stats["average_confidence"] = (
-            (self.stats["average_confidence"] * (n - 1) + result.confidence) / n
-        )
+            self.stats["average_confidence"] * (n - 1) + result.confidence
+        ) / n
         self.stats["average_reliability"] = (
-            (self.stats["average_reliability"] * (n - 1) + result.reliability) / n
-        )
+            self.stats["average_reliability"] * (n - 1) + result.reliability
+        ) / n
 
     def _print_final_result(self, result: OrchestratorResult, execution_time: float):
         """Affiche le résultat final"""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         cprint("  ORCHESTRATOR RESULT", "cyan", attrs=["bold"])
-        print("="*70)
+        print("=" * 70)
 
         if result.success:
             cprint(f"\n  ✓ SUCCESS", "green", attrs=["bold"])
@@ -515,28 +533,31 @@ class ClaudeCodeOrchestrator:
 
         cprint(f"\n  Execution Time: {execution_time:.2f}s", "white")
         cprint(f"  Total Agents: {result.metadata.get('num_total_agents', 0)}", "white")
-        cprint(f"  Successful Agents: {result.metadata.get('num_successful_agents', 0)}", "white")
+        cprint(
+            f"  Successful Agents: {result.metadata.get('num_successful_agents', 0)}",
+            "white",
+        )
 
         if result.warnings:
             cprint(f"\n  Warnings: {len(result.warnings)}", "yellow")
             for warning in result.warnings[:3]:
                 cprint(f"    - {warning}", "yellow")
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
 
     def get_statistics(self) -> Dict[str, Any]:
         """Retourne les statistiques complètes"""
         return {
             "execution_stats": self.stats,
             "is_running": self.is_running,
-            "last_execution": self.last_execution.isoformat() if self.last_execution else None,
+            "last_execution": (self.last_execution.isoformat() if self.last_execution else None),
             "execution_count": self.execution_count,
             "failure_count": self.failure_count,
             "success_rate": (
                 self.stats["successful_executions"] / max(1, self.stats["total_executions"])
             ),
             "reliability_data": self.data_aggregator.get_reliability_report(),
-            "active_alerts": len(self.reliability_monitor.get_active_alerts())
+            "active_alerts": len(self.reliability_monitor.get_active_alerts()),
         }
 
     def is_system_healthy(self) -> bool:
@@ -550,8 +571,7 @@ class ClaudeCodeOrchestrator:
         # Vérifier les alertes critiques
         active_alerts = self.reliability_monitor.get_active_alerts()
         critical_alerts = [
-            a for a in active_alerts
-            if a.level in [AlertLevel.CRITICAL, AlertLevel.EMERGENCY]
+            a for a in active_alerts if a.level in [AlertLevel.CRITICAL, AlertLevel.EMERGENCY]
         ]
         if critical_alerts:
             return False
@@ -573,7 +593,7 @@ if __name__ == "__main__":
             min_confidence=0.6,
             min_reliability=0.7,
             enable_monitoring=True,
-            auto_recovery=True
+            auto_recovery=True,
         )
 
         # Initialiser l'orchestrateur
@@ -584,20 +604,20 @@ if __name__ == "__main__":
             "symbol": "BTC-USD",
             "price": 50000,
             "volume": 1000000,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Exécuter l'analyse
         result = await orchestrator.execute_trading_analysis(
             task="Should I buy BTC at current price?",
             context_data=test_context,
-            mode="complete"
+            mode="complete",
         )
 
         # Afficher les statistiques
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         cprint("  ORCHESTRATOR STATISTICS", "cyan", attrs=["bold"])
-        print("="*70)
+        print("=" * 70)
 
         stats = orchestrator.get_statistics()
         print(f"\n  Total Executions: {stats['execution_stats']['total_executions']}")
@@ -606,6 +626,6 @@ if __name__ == "__main__":
         print(f"  Average Reliability: {stats['execution_stats']['average_reliability']:.2f}")
         print(f"  System Healthy: {orchestrator.is_system_healthy()}")
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
 
     asyncio.run(main())

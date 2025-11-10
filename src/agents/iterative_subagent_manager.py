@@ -124,9 +124,7 @@ class IterativeSubagentManager:
                 session = self._adaptive_learning(prompt, context_data, session)
 
             # Calculate convergence metrics
-            session.convergence_metrics = self._calculate_convergence_metrics(
-                session.responses
-            )
+            session.convergence_metrics = self._calculate_convergence_metrics(session.responses)
 
             # Generate final result
             session.final_result = self._generate_final_result(session)
@@ -136,9 +134,7 @@ class IterativeSubagentManager:
             session.final_result = {
                 "error": str(e),
                 "fallback_mode": True,
-                "last_response": (
-                    session.responses[-1].response if session.responses else None
-                ),
+                "last_response": (session.responses[-1].response if session.responses else None),
             }
 
         session.total_time = time.time() - start_time
@@ -181,16 +177,12 @@ class IterativeSubagentManager:
 
             # Check if we've reached sufficient confidence
             if response.confidence >= session.config.confidence_threshold:
-                print(
-                    f"[CONVERGED] Confidence threshold reached: {response.confidence:.2f}"
-                )
+                print(f"[CONVERGED] Confidence threshold reached: {response.confidence:.2f}")
                 break
 
             # Prepare next iteration prompt
             if iteration < session.config.max_iterations:
-                current_prompt = self._create_refinement_prompt(
-                    response, accumulated_context
-                )
+                current_prompt = self._create_refinement_prompt(response, accumulated_context)
 
         return session
 
@@ -247,9 +239,7 @@ class IterativeSubagentManager:
             convergence_context = context_data.copy() if context_data else {}
             if previous_response:
                 convergence_context["previous_response"] = previous_response.response
-                convergence_context["convergence_target"] = (
-                    session.config.convergence_threshold
-                )
+                convergence_context["convergence_target"] = session.config.convergence_threshold
 
             response = self._make_subagent_call(
                 prompt, convergence_context, iteration, session.config
@@ -258,9 +248,7 @@ class IterativeSubagentManager:
 
             # Check convergence with previous response
             if previous_response:
-                similarity = self._calculate_response_similarity(
-                    response, previous_response
-                )
+                similarity = self._calculate_response_similarity(response, previous_response)
                 if similarity >= session.config.convergence_threshold:
                     print(f"[CONVERGED] Response stability achieved: {similarity:.2f}")
                     break
@@ -340,9 +328,7 @@ class IterativeSubagentManager:
 
             # Adaptive refinement based on performance patterns
             if iteration < session.config.max_iterations:
-                refinement = self._generate_adaptive_refinement(
-                    response, relevant_history
-                )
+                refinement = self._generate_adaptive_refinement(response, relevant_history)
                 if refinement:
                     current_prompt = f"""
                     Previous analysis: {response.response}
@@ -521,9 +507,7 @@ class IterativeSubagentManager:
         # Weighted average
         return confidence_similarity * 0.4 + decision_similarity * 0.6
 
-    def _create_refinement_prompt(
-        self, response: SubagentResponse, context: dict
-    ) -> str:
+    def _create_refinement_prompt(self, response: SubagentResponse, context: dict) -> str:
         """Create a refinement prompt based on previous response"""
         return f"""
         Please refine your previous analysis:
@@ -545,9 +529,7 @@ class IterativeSubagentManager:
 
         for session in self.session_history[-10:]:  # Last 10 sessions
             # Simple relevance check (could be made more sophisticated)
-            if any(
-                word in prompt.lower() for word in ["trading", "strategy", "signal"]
-            ):
+            if any(word in prompt.lower() for word in ["trading", "strategy", "signal"]):
                 relevant_sessions.append(
                     {
                         "mode": session.mode.value,
@@ -560,15 +542,11 @@ class IterativeSubagentManager:
                         "final_confidence": (
                             session.responses[-1].confidence if session.responses else 0
                         ),
-                        "convergence_score": session.convergence_metrics.get(
-                            "stability", 0
-                        ),
+                        "convergence_score": session.convergence_metrics.get("stability", 0),
                     }
                 )
 
-        return sorted(
-            relevant_sessions, key=lambda x: x["final_confidence"], reverse=True
-        )
+        return sorted(relevant_sessions, key=lambda x: x["final_confidence"], reverse=True)
 
     def _generate_adaptive_refinement(
         self, response: SubagentResponse, history: List[Dict]
@@ -584,9 +562,7 @@ class IterativeSubagentManager:
 
         return None
 
-    def _calculate_convergence_metrics(
-        self, responses: List[SubagentResponse]
-    ) -> Dict[str, float]:
+    def _calculate_convergence_metrics(self, responses: List[SubagentResponse]) -> Dict[str, float]:
         """Calculate various convergence metrics"""
         if len(responses) < 2:
             return {"stability": 1.0, "confidence_trend": 0.0, "consistency": 1.0}
@@ -594,14 +570,10 @@ class IterativeSubagentManager:
         # Stability: how similar are consecutive responses
         stability_scores = []
         for i in range(1, len(responses)):
-            similarity = self._calculate_response_similarity(
-                responses[i], responses[i - 1]
-            )
+            similarity = self._calculate_response_similarity(responses[i], responses[i - 1])
             stability_scores.append(similarity)
 
-        stability = (
-            sum(stability_scores) / len(stability_scores) if stability_scores else 1.0
-        )
+        stability = sum(stability_scores) / len(stability_scores) if stability_scores else 1.0
 
         # Confidence trend: is confidence improving?
         confidence_trend = responses[-1].confidence - responses[0].confidence
@@ -609,9 +581,7 @@ class IterativeSubagentManager:
         # Consistency: variance in confidence
         confidences = [r.confidence for r in responses]
         avg_confidence = sum(confidences) / len(confidences)
-        variance = sum((c - avg_confidence) ** 2 for c in confidences) / len(
-            confidences
-        )
+        variance = sum((c - avg_confidence) ** 2 for c in confidences) / len(confidences)
         consistency = 1 - min(1.0, variance)
 
         return {
@@ -681,9 +651,7 @@ class IterativeSubagentManager:
                     "session_id": s.session_id,
                     "mode": s.mode.value,
                     "iterations": len(s.responses),
-                    "final_confidence": (
-                        s.responses[-1].confidence if s.responses else 0
-                    ),
+                    "final_confidence": (s.responses[-1].confidence if s.responses else 0),
                     "converged": s.convergence_metrics.get("stability", 0) > 0.8,
                 }
                 for s in self.session_history[-5:]
@@ -696,17 +664,13 @@ class IterativeSubagentManager:
         recommendations = []
 
         if self.performance_metrics["average_iterations"] > 2.5:
-            recommendations.append(
-                "Consider increasing confidence threshold to reduce iterations"
-            )
+            recommendations.append("Consider increasing confidence threshold to reduce iterations")
 
         if self.performance_metrics["convergence_rate"] < 0.7:
             recommendations.append("Try cross-validation mode for better convergence")
 
         if self.performance_metrics["confidence_improvement"] < 0.1:
-            recommendations.append(
-                "Prompts may need refinement for better confidence progression"
-            )
+            recommendations.append("Prompts may need refinement for better confidence progression")
 
         return recommendations
 

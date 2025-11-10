@@ -246,9 +246,7 @@ class RotationController:
             available_assets = await self._get_available_assets()
 
             if assets_to_add:
-                assets_to_add = [
-                    asset for asset in assets_to_add if asset in available_assets
-                ]
+                assets_to_add = [asset for asset in assets_to_add if asset in available_assets]
 
             if assets_to_remove:
                 assets_to_remove = [
@@ -326,11 +324,7 @@ class RotationController:
         try:
             return {
                 "success": True,
-                "history": (
-                    self.rotation_history[-limit:]
-                    if limit > 0
-                    else self.rotation_history
-                ),
+                "history": (self.rotation_history[-limit:] if limit > 0 else self.rotation_history),
                 "total_count": len(self.rotation_history),
                 "timestamp": datetime.now().isoformat(),
             }
@@ -407,9 +401,7 @@ class RotationAPI:
 
         return await self.controller.start_rotation(mode, interval, max_assets)
 
-    async def start_manual_rotation(
-        self, request_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def start_manual_rotation(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """API endpoint to start manual rotation"""
         assets = request_data.get("assets", [])
         return await self.controller.start_manual_rotation(assets)
@@ -474,9 +466,7 @@ if __name__ == "__main__":
 
         # Demo manual rotation
         print("\n[DEMO] Starting manual rotation...")
-        manual_result = await api.start_manual_rotation(
-            {"assets": ["BTC", "ETH", "SOL"]}
-        )
+        manual_result = await api.start_manual_rotation({"assets": ["BTC", "ETH", "SOL"]})
         print(f"Manual result: {manual_result}")
 
         # Wait a bit

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from termcolor import cprint
+
 from src.agents.iterative_subagent_manager import (
     IterationConfig,
     IterationMode,
@@ -34,7 +35,9 @@ class ClaudeCodeIntegrationManager:
     """
 
     def __init__(self, project_path: Optional[str] = None):
-        self.project_path = Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        self.project_path = (
+            Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        )
         self.agents_path = self.project_path / ".claude" / "agents"
         self.agents_config_file = self.project_path / "claude-agents.json"
 
@@ -54,7 +57,7 @@ class ClaudeCodeIntegrationManager:
 
         cprint(
             f"[OK] Claude Code Integration Manager initialized with {len(self.agent_to_subagent_mapping)} agents",
-            "green"
+            "green",
         )
 
     def _verify_configuration(self):
@@ -62,7 +65,7 @@ class ClaudeCodeIntegrationManager:
         if not self.agents_config_file.exists():
             cprint(
                 f"[WARNING] {self.agents_config_file} not found! Creating default...",
-                "yellow"
+                "yellow",
             )
             self._create_default_agents_config()
 
@@ -220,7 +223,8 @@ Analysez le contexte et fournissez une réponse détaillée avec:
 
         cmd = [
             "claude",
-            "--agents", str(agent_file),
+            "--agents",
+            str(agent_file),
             "--print",
             "--dangerously-skip-permissions",
             full_prompt,
@@ -267,7 +271,9 @@ Analysez le contexte et fournissez une réponse détaillée avec:
 
         cprint(f"[OK] Created agent config: {agent_file}", "green")
 
-    def delegate_to_claude_agents(self, task_description: str, context_data: dict) -> Dict[str, Any]:
+    def delegate_to_claude_agents(
+        self, task_description: str, context_data: dict
+    ) -> Dict[str, Any]:
         """
         Déléguer automatiquement aux agents via claude-agents.json
 
@@ -292,7 +298,8 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         # Appel via le fichier combined
         cmd = [
             "claude",
-            "--agents", str(self.agents_config_file),
+            "--agents",
+            str(self.agents_config_file),
             "--print",
             "--dangerously-skip-permissions",
             delegation_prompt,
@@ -423,7 +430,7 @@ Analysez le contexte et fournissez une réponse détaillée avec:
 
         return {
             "decision": decision,
-            "avg_confidence": sum(confidences) / len(confidences) if confidences else 0.0,
+            "avg_confidence": (sum(confidences) / len(confidences) if confidences else 0.0),
             "reasoning": "; ".join(reasoning_parts),
             "agents_agreed": len(decisions),
         }
@@ -462,9 +469,9 @@ if __name__ == "__main__":
     }
 
     # Test d'appel direct
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: Direct Agent Call")
-    print("="*60)
+    print("=" * 60)
     result = manager.call_claude_code_agent(
         agent_id="claude-strategy-advisor",
         prompt="Should I buy BTC at $50,000?",
@@ -473,9 +480,9 @@ if __name__ == "__main__":
     print(f"\nResult: {json.dumps(result, indent=2)}")
 
     # Test de délégation
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Delegation via claude-agents.json")
-    print("="*60)
+    print("=" * 60)
     delegation_result = manager.delegate_to_claude_agents(
         task_description="Analyze BTC trading opportunity",
         context_data=test_market_data,
@@ -483,9 +490,9 @@ if __name__ == "__main__":
     print(f"\nDelegation Result: {json.dumps(delegation_result, indent=2)}")
 
     # Test d'analyse complète
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: Complete Trading Analysis")
-    print("="*60)
+    print("=" * 60)
     complete_result = manager.run_complete_trading_analysis(test_market_data)
     print(f"\nComplete Result Summary: {json.dumps(complete_result['summary'], indent=2)}")
 

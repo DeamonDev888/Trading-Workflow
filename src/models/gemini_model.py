@@ -69,9 +69,7 @@ class GeminiModel(BaseModel):
                 blocked_categories = []
 
                 if hasattr(response, "prompt_feedback"):
-                    block_reason_value = getattr(
-                        response.prompt_feedback, "block_reason", 0
-                    )
+                    block_reason_value = getattr(response.prompt_feedback, "block_reason", 0)
                     # 0=UNSPECIFIED, 1=SAFETY, 2=OTHER, 3=BLOCKLIST, 4=PROHIBITED_CONTENT
                     block_reason_map = {
                         0: "UNSPECIFIED",
@@ -89,15 +87,11 @@ class GeminiModel(BaseModel):
                         for rating in response.prompt_feedback.safety_ratings:
                             prob = getattr(rating, "probability", None)
                             if prob and str(prob) in ["MEDIUM", "HIGH", "2", "3"]:
-                                blocked_categories.append(
-                                    f"{rating.category.name}:{prob}"
-                                )
+                                blocked_categories.append(f"{rating.category.name}:{prob}")
 
                 finish_reason = None
                 if response.candidates and len(response.candidates) > 0:
-                    finish_reason = getattr(
-                        response.candidates[0], "finish_reason", None
-                    )
+                    finish_reason = getattr(response.candidates[0], "finish_reason", None)
 
                 error_msg = f"Empty response - block_reason={block_reason}"
                 if blocked_categories:

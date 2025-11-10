@@ -63,9 +63,9 @@ class FractalCascadeFinal(Strategy):
 
         # Alligator indicators
         jaw_period = 13
-        self.jaw = self.I(
-            lambda s: s.ewm(alpha=1 / jaw_period, adjust=False).mean(), median
-        ).shift(8)
+        self.jaw = self.I(lambda s: s.ewm(alpha=1 / jaw_period, adjust=False).mean(), median).shift(
+            8
+        )
 
         teeth_period = 8
         self.teeth = self.I(
@@ -80,21 +80,13 @@ class FractalCascadeFinal(Strategy):
         # Awesome Oscillator
         ao_fast = 5
         ao_slow = 34
-        smma_fast = self.I(
-            lambda s: s.ewm(alpha=1 / ao_fast, adjust=False).mean(), median
-        )
-        smma_slow = self.I(
-            lambda s: s.ewm(alpha=1 / ao_slow, adjust=False).mean(), median
-        )
+        smma_fast = self.I(lambda s: s.ewm(alpha=1 / ao_fast, adjust=False).mean(), median)
+        smma_slow = self.I(lambda s: s.ewm(alpha=1 / ao_slow, adjust=False).mean(), median)
         self.ao = smma_fast - smma_slow
 
         # Other indicators
-        self.atr = self.I(
-            talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14
-        )
-        self.adx = self.I(
-            talib.ADX, self.data.High, self.data.Low, self.data.Close, timeperiod=14
-        )
+        self.atr = self.I(talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14)
+        self.adx = self.I(talib.ADX, self.data.High, self.data.Low, self.data.Close, timeperiod=14)
         self.volume_ma = self.I(talib.SMA, self.data.Volume, timeperiod=20)
 
         # Fractals
@@ -213,9 +205,7 @@ def run_backtest():
     for data_path in data_paths:
         try:
             if os.path.exists(data_path):
-                data = pd.read_csv(
-                    data_path, parse_dates=["datetime"], index_col="datetime"
-                )
+                data = pd.read_csv(data_path, parse_dates=["datetime"], index_col="datetime")
                 print(f"Data loaded from: {data_path}")
                 break
         except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -270,18 +260,12 @@ def run_backtest():
                 get_stat_value(stats, ["Return [%", "ReturnPct", "Return"], 0.0), 2
             ),
             "annual_return": round(
-                get_stat_value(
-                    stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0
-                ),
+                get_stat_value(stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0),
                 2,
             ),
-            "sharpe_ratio": round(
-                get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2
-            ),
+            "sharpe_ratio": round(get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2),
             "max_drawdown": round(
-                get_stat_value(
-                    stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0
-                ),
+                get_stat_value(stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0),
                 2,
             ),
             "total_trades": int(

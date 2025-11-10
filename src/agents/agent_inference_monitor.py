@@ -123,9 +123,7 @@ class AgentInferenceMonitor:
         while self.monitoring:
             try:
                 # Check agent health
-                async with self.session.get(
-                    f"{endpoint}/health", timeout=5
-                ) as response:
+                async with self.session.get(f"{endpoint}/health", timeout=5) as response:
                     if response.status == 200:
                         health_data = await response.json()
                         metrics.status = "online"
@@ -152,22 +150,17 @@ class AgentInferenceMonitor:
     async def _fetch_recent_inferences(self, agent_type: str, endpoint: str):
         """Fetch recent inferences from an agent"""
         try:
-            async with self.session.get(
-                f"{endpoint}/inferences", timeout=5
-            ) as response:
+            async with self.session.get(f"{endpoint}/inferences", timeout=5) as response:
                 if response.status == 200:
                     data = await response.json()
 
                     for inference_data in data.get("recent_inferences", []):
                         # Process only new inferences
-                        inference_timestamp = datetime.fromisoformat(
-                            inference_data["timestamp"]
-                        )
+                        inference_timestamp = datetime.fromisoformat(inference_data["timestamp"])
 
                         # Check if we already have this inference
                         if not any(
-                            inf.agent_type == agent_type
-                            and inf.timestamp == inference_timestamp
+                            inf.agent_type == agent_type and inf.timestamp == inference_timestamp
                             for inf in self.inference_history
                         ):
                             # Create new inference result
@@ -177,9 +170,7 @@ class AgentInferenceMonitor:
                                 input_data=inference_data.get("input", {}),
                                 output_data=inference_data.get("output", {}),
                                 confidence=inference_data.get("confidence", 0.0),
-                                processing_time=inference_data.get(
-                                    "processing_time", 0.0
-                                ),
+                                processing_time=inference_data.get("processing_time", 0.0),
                                 success=inference_data.get("success", True),
                                 error_message=inference_data.get("error_message"),
                             )
@@ -208,9 +199,7 @@ class AgentInferenceMonitor:
                             agent_type = agent_status.get("type")
                             if agent_type in self.agent_metrics:
                                 metrics = self.agent_metrics[agent_type]
-                                metrics.uptime_percentage = agent_status.get(
-                                    "uptime", 0.0
-                                )
+                                metrics.uptime_percentage = agent_status.get("uptime", 0.0)
 
             except Exception as e:
                 self.logger.error(f"Orchestrator monitoring error: {e}")
@@ -255,13 +244,11 @@ class AgentInferenceMonitor:
         if inference.success:
             total_successful = metrics.successful_inferences
             metrics.average_confidence = (
-                metrics.average_confidence * (total_successful - 1)
-                + inference.confidence
+                metrics.average_confidence * (total_successful - 1) + inference.confidence
             ) / total_successful
 
             metrics.average_processing_time = (
-                metrics.average_processing_time * (total_successful - 1)
-                + inference.processing_time
+                metrics.average_processing_time * (total_successful - 1) + inference.processing_time
             ) / total_successful
 
     async def _update_uptime_percentage(self, agent_type: str):
@@ -292,9 +279,7 @@ class AgentInferenceMonitor:
     def get_recent_inferences_json(self, agent_type: str, limit: int = 10) -> str:
         """Get recent inferences for an agent as JSON"""
         agent_inferences = [
-            inference
-            for inference in self.inference_history
-            if inference.agent_type == agent_type
+            inference for inference in self.inference_history if inference.agent_type == agent_type
         ]
 
         # Sort by timestamp (newest first)
@@ -315,15 +300,9 @@ class AgentInferenceMonitor:
         summary = {
             "timestamp": datetime.now().isoformat(),
             "total_agents": len(self.agent_endpoints),
-            "online_agents": sum(
-                1 for m in self.agent_metrics.values() if m.status == "online"
-            ),
-            "offline_agents": sum(
-                1 for m in self.agent_metrics.values() if m.status == "offline"
-            ),
-            "error_agents": sum(
-                1 for m in self.agent_metrics.values() if m.status == "error"
-            ),
+            "online_agents": sum(1 for m in self.agent_metrics.values() if m.status == "online"),
+            "offline_agents": sum(1 for m in self.agent_metrics.values() if m.status == "offline"),
+            "error_agents": sum(1 for m in self.agent_metrics.values() if m.status == "error"),
             "total_inferences_last_hour": len(
                 [
                     inf
@@ -332,8 +311,7 @@ class AgentInferenceMonitor:
                 ]
             ),
             "agents": {
-                agent_type: asdict(metrics)
-                for agent_type, metrics in self.agent_metrics.items()
+                agent_type: asdict(metrics) for agent_type, metrics in self.agent_metrics.items()
             },
         }
 

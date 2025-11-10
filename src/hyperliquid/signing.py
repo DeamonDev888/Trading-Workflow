@@ -12,9 +12,7 @@ from eth_account import Account
 from eth_account.messages import encode_defunct
 
 
-def sign_user_action(
-    action: Dict[str, Any], account: Account, nonce: int
-) -> Dict[str, Any]:
+def sign_user_action(action: Dict[str, Any], account: Account, nonce: int) -> Dict[str, Any]:
     """
     Sign a user action for HyperLiquid exchange endpoint
 
@@ -46,9 +44,7 @@ def sign_user_action(
     }
 
 
-def sign_l1_action(
-    action: Dict[str, Any], account: Account, nonce: int
-) -> Dict[str, Any]:
+def sign_l1_action(action: Dict[str, Any], account: Account, nonce: int) -> Dict[str, Any]:
     """
     Sign an L1 action for HyperLiquid info endpoint
 

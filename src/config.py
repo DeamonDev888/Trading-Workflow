@@ -57,24 +57,18 @@ MAX_ORDER_SIZE_USD = 100  # Maximum order size in USD
 LEVERAGE = 5  # Default leverage for trades
 
 # Risk Control Settings
-MAX_LOSS_GAIN_CHECK_HOURS = (
-    12  # How far back to check for max loss/gain limits (in hours)
-)
+MAX_LOSS_GAIN_CHECK_HOURS = 12  # How far back to check for max loss/gain limits (in hours)
 SLEEP_BETWEEN_RUNS_MINUTES = 20  # How long to sleep between agent runs
 
 # Loss/Gain Limits
-USE_PERCENTAGE = (
-    False  # If True, use percentage-based limits. If False, use USD-based limits
-)
+USE_PERCENTAGE = False  # If True, use percentage-based limits. If False, use USD-based limits
 
 # USD-based limits (used if USE_PERCENTAGE is False)
 MAX_LOSS_USD = 50  # Maximum loss in USD before stopping trading
 MAX_GAIN_USD = 200  # Maximum gain in USD before stopping trading
 
 # Minimum balance control
-MINIMUM_BALANCE_USD = (
-    100  # If balance falls below this, risk management will be triggered
-)
+MINIMUM_BALANCE_USD = 100  # If balance falls below this, risk management will be triggered
 USE_AI_CONFIRMATION = True  # Consult AI before closing positions
 
 # Percentage-based limits (used if USE_PERCENTAGE is True)
@@ -103,17 +97,13 @@ AI_TEMPERATURE = 0.7
 # Wallet Management Settings
 MAX_API_WALLETS_PER_USER = int(os.environ.get("MAX_API_WALLETS_PER_USER", "5"))
 WALLET_ROTATION_DAYS = int(os.environ.get("WALLET_ROTATION_DAYS", "30"))
-API_WALLET_AUTO_APPROVE = (
-    os.environ.get("API_WALLET_AUTO_APPROVE", "true").lower() == "true"
-)
+API_WALLET_AUTO_APPROVE = os.environ.get("API_WALLET_AUTO_APPROVE", "true").lower() == "true"
 
 # Permission & Risk Management
 MAX_TOTAL_EXPOSURE = float(os.environ.get("MAX_TOTAL_EXPOSURE", "50000"))
 MAX_DAILY_LOSS = float(os.environ.get("MAX_DAILY_LOSS", "1000"))
 MAX_CONCURRENT_POSITIONS = int(os.environ.get("MAX_CONCURRENT_POSITIONS", "10"))
-REQUIRE_AI_CONFIRMATION = (
-    os.environ.get("REQUIRE_AI_CONFIRMATION", "true").lower() == "true"
-)
+REQUIRE_AI_CONFIRMATION = os.environ.get("REQUIRE_AI_CONFIRMATION", "true").lower() == "true"
 
 # Network Configuration
 HYPERLIQUID_TESTNET = (

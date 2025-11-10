@@ -71,7 +71,7 @@ class AdvancedRiskAgent(BaseAgent):
         }
 
         print(f"\n{'='*80}")
-        mode_str = 'AGGRESSIVE' if aggressive_mode else 'CONSERVATIVE'
+        mode_str = "AGGRESSIVE" if aggressive_mode else "CONSERVATIVE"
         print(f"[RISK] ADVANCED RISK AGENT V3.0 - {mode_str} MODE")
         print(f"{'='*80}")
         print(f"[LEVERAGE] Max Leverage: {self.max_leverage}x")
@@ -99,19 +99,13 @@ class AdvancedRiskAgent(BaseAgent):
             market_analysis: Additional market context
         """
         try:
-            print(
-                f"\n[ASSESSMENT] Evaluating {side} {symbol} @ "
-                f"{proposed_leverage}x leverage"
-            )
+            print(f"\n[ASSESSMENT] Evaluating {side} {symbol} @ " f"{proposed_leverage}x leverage")
             print(f"[CONFIDENCE] Trade confidence: {trade_confidence*100:.1f}%")
 
             # Get asset-specific limits
             asset_config = self.high_leverage_assets.get(
                 symbol,
-                {
-                    "max_leverage": self.default_leverage,
-                    "confidence_threshold": 0.70
-                },
+                {"max_leverage": self.default_leverage, "confidence_threshold": 0.70},
             )
 
             # Check basic requirements
@@ -119,7 +113,7 @@ class AdvancedRiskAgent(BaseAgent):
                 return {
                     "approved": False,
                     "reason": (
-                        f'Leverage {proposed_leverage}x exceeds max '
+                        f"Leverage {proposed_leverage}x exceeds max "
                         f'{asset_config["max_leverage"]}x for {symbol}'
                     ),
                     "adjusted_leverage": asset_config["max_leverage"],
@@ -129,7 +123,7 @@ class AdvancedRiskAgent(BaseAgent):
                 return {
                     "approved": False,
                     "reason": (
-                        f'Confidence {trade_confidence*100:.1f}% below threshold '
+                        f"Confidence {trade_confidence*100:.1f}% below threshold "
                         f'{asset_config["confidence_threshold"]*100:.1f}% for {symbol}'
                     ),
                     "required_confidence": asset_config["confidence_threshold"],
@@ -180,9 +174,7 @@ class AdvancedRiskAgent(BaseAgent):
             ai_decision = await self._get_ai_risk_assessment(assessment_prompt)
 
             # Final decision
-            approved = self._make_final_decision(
-                ai_decision, risk_metrics, trade_confidence
-            )
+            approved = self._make_final_decision(ai_decision, risk_metrics, trade_confidence)
 
             result = {
                 "approved": approved,
@@ -190,9 +182,7 @@ class AdvancedRiskAgent(BaseAgent):
                 "side": side,
                 "proposed_leverage": proposed_leverage,
                 "approved_leverage": (
-                    min(proposed_leverage, asset_config["max_leverage"])
-                    if approved
-                    else 0
+                    min(proposed_leverage, asset_config["max_leverage"]) if approved else 0
                 ),
                 "position_size_usd": position_size_usd if approved else 0,
                 "current_price": current_price,
@@ -278,13 +268,9 @@ class AdvancedRiskAgent(BaseAgent):
             maintenance_margin = 0.005  # 0.5% maintenance margin
 
             if side.upper() == "LONG":
-                liquidation_price = current_price * (
-                    1 - 1 / leverage + maintenance_margin
-                )
+                liquidation_price = current_price * (1 - 1 / leverage + maintenance_margin)
             else:  # SHORT
-                liquidation_price = current_price * (
-                    1 + 1 / leverage - maintenance_margin
-                )
+                liquidation_price = current_price * (1 + 1 / leverage - maintenance_margin)
 
             return liquidation_price
 
@@ -322,9 +308,7 @@ class AdvancedRiskAgent(BaseAgent):
             leverage_risk = min(1.0, leverage / self.max_leverage)
 
             # Combined risk score
-            risk_score = (
-                portfolio_impact * 0.4 + liquidation_risk * 0.4 + leverage_risk * 0.2
-            )
+            risk_score = portfolio_impact * 0.4 + liquidation_risk * 0.4 + leverage_risk * 0.2
 
             return {
                 "distance_to_liquidation_pct": distance_to_liq * 100,
@@ -335,11 +319,7 @@ class AdvancedRiskAgent(BaseAgent):
                 "risk_level": (
                     "EXTREME"
                     if risk_score > 0.8
-                    else (
-                        "HIGH"
-                        if risk_score > 0.6
-                        else "MEDIUM" if risk_score > 0.4 else "LOW"
-                    )
+                    else ("HIGH" if risk_score > 0.6 else "MEDIUM" if risk_score > 0.4 else "LOW")
                 ),
             }
 
@@ -497,9 +477,7 @@ Should this aggressive position be approved with the proposed parameters?
                     parsed["leverage_adjustment"] = float(lev_str) if lev_str else None
                 elif line.startswith("POSITION_SIZE_ADJUSTMENT:"):
                     size_str = line.split(":", 1)[1].strip()
-                    parsed["position_size_adjustment"] = (
-                        float(size_str) if size_str else None
-                    )
+                    parsed["position_size_adjustment"] = float(size_str) if size_str else None
                 elif line.startswith("REASONING:"):
                     parsed["reasoning"] = line.split(":", 1)[1].strip()
                 elif line.startswith("RISK_FACTORS:"):
@@ -507,8 +485,7 @@ Should this aggressive position be approved with the proposed parameters?
                     factors = []
                     idx = lines.index(line) + 1
                     while idx < len(lines) and (
-                        lines[idx].strip().startswith("-")
-                        or lines[idx].strip().startswith("•")
+                        lines[idx].strip().startswith("-") or lines[idx].strip().startswith("•")
                     ):
                         factors.append(lines[idx].strip())
                         idx += 1
@@ -566,7 +543,7 @@ Should this aggressive position be approved with the proposed parameters?
     def _display_assessment_result(self, result: Dict):
         """Display comprehensive assessment result"""
         print(f"\n{'='*80}")
-        approved_symbol = '✅ APPROVED' if result['approved'] else '❌ REJECTED'
+        approved_symbol = "✅ APPROVED" if result["approved"] else "❌ REJECTED"
         print(f"[ASSESSMENT RESULT] {approved_symbol}")
         print(f"{'='*80}")
 
@@ -574,9 +551,7 @@ Should this aggressive position be approved with the proposed parameters?
             print(f"[ERROR] {result.get('reason', 'Unknown error')}")
             return
 
-        print(
-            f"[TRADE] {result.get('side', 'UNKNOWN')} {result.get('symbol', 'UNKNOWN')}"
-        )
+        print(f"[TRADE] {result.get('side', 'UNKNOWN')} {result.get('symbol', 'UNKNOWN')}")
         print(
             f"[LEVERAGE] {result.get('proposed_leverage', 0):.1f}x → "
             f"{result.get('approved_leverage', 0):.1f}x"
@@ -591,8 +566,8 @@ Should this aggressive position be approved with the proposed parameters?
 
         risk_metrics = result.get("risk_metrics", {})
         if risk_metrics:
-            risk_score = risk_metrics.get('overall_risk_score', 0)
-            risk_level = risk_metrics.get('risk_level', 'UNKNOWN')
+            risk_score = risk_metrics.get("overall_risk_score", 0)
+            risk_level = risk_metrics.get("risk_level", "UNKNOWN")
             print(f"[RISK] Score: {risk_score:.3f} ({risk_level})")
             print(
                 f"[RISK] Distance to Liq: "
@@ -643,9 +618,7 @@ Should this aggressive position be approved with the proposed parameters?
 async def validate_btc_short(leverage: float = 25.0, confidence: float = 0.9) -> bool:
     """Validate short BTC position with specified leverage"""
     agent = AdvancedRiskAgent(aggressive_mode=True)
-    return await agent.validate_aggressive_position(
-        "BTC", "SHORT", leverage, confidence
-    )
+    return await agent.validate_aggressive_position("BTC", "SHORT", leverage, confidence)
 
 
 async def assess_high_leverage_trade(

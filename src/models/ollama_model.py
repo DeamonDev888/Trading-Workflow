@@ -61,20 +61,14 @@ class OllamaModel(BaseModel):
                     f"⚠️ Ollama API returned status code: {response.status_code}",
                     "yellow",
                 )
-                raise ConnectionError(
-                    f"Ollama API returned status code: {response.status_code}"
-                )
+                raise ConnectionError(f"Ollama API returned status code: {response.status_code}")
         except requests.exceptions.ConnectionError:
-            safe_cprint(
-                "❌ Could not connect to Ollama API - is the server running?", "red"
-            )
+            safe_cprint("❌ Could not connect to Ollama API - is the server running?", "red")
             safe_cprint("💡 Start the server with: ollama serve", "yellow")
             raise
         except Exception as e:
             safe_cprint(f"❌ Could not connect to Ollama API: {str(e)}", "red")
-            safe_cprint(
-                "💡 Make sure Ollama is running locally (ollama serve)", "yellow"
-            )
+            safe_cprint("💡 Make sure Ollama is running locally (ollama serve)", "yellow")
             raise
 
     @property
@@ -87,7 +81,7 @@ class OllamaModel(BaseModel):
         try:
             response = requests.get(f"{self.base_url}/tags")
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def generate_response(

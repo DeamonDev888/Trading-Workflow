@@ -27,7 +27,12 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from termcolor import cprint
 
-from src.logger import get_logger
+try:
+    from src.logger import get_logger
+except ImportError:
+    import logging
+    def get_logger(name):
+        return logging.getLogger(name)
 
 logger = get_logger("metrics_collector")
 
@@ -130,9 +135,7 @@ class MetricsCollector:
         cprint(f"   📊 Max history: {max_history} éléments", "blue")
         cprint("\n")
 
-    async def collect_agent_metrics(
-        self, agent_name: str, metrics: Dict[str, Any]
-    ) -> AgentMetrics:
+    async def collect_agent_metrics(self, agent_name: str, metrics: Dict[str, Any]) -> AgentMetrics:
         """
         🎯 COLLECTE LES MÉTRIQUES D'UN AGENT
         """
@@ -167,9 +170,7 @@ class MetricsCollector:
 
         return agent_metrics
 
-    async def collect_cycle_metrics(
-        self, cycle_data: Dict[str, Any]
-    ) -> CycleAggregateMetrics:
+    async def collect_cycle_metrics(self, cycle_data: Dict[str, Any]) -> CycleAggregateMetrics:
         """
         🔄 COLLECTE LES MÉTRIQUES D'UN CYCLE
         """
@@ -195,12 +196,8 @@ class MetricsCollector:
             agents_status=agents_status,
             combined_decision=cycle_data.get("combined_decision", "UNKNOWN"),
             decision_confidence=cycle_data.get("decision_confidence", 0.0),
-            backtests_passed=cycle_data.get("backtests_validation", {}).get(
-                "strategies_passed", 0
-            ),
-            backtests_failed=cycle_data.get("backtests_validation", {}).get(
-                "strategies_failed", 0
-            ),
+            backtests_passed=cycle_data.get("backtests_validation", {}).get("strategies_passed", 0),
+            backtests_failed=cycle_data.get("backtests_validation", {}).get("strategies_failed", 0),
             total_llm_calls=total_llm_calls,
             total_execution_time_ms=total_execution_time,
             performance_score=performance_score,
@@ -236,9 +233,7 @@ class MetricsCollector:
         # 1. Statut des agents (40% du score)
         agents_results = cycle_data.get("agents_results", [])
         if agents_results:
-            success_count = sum(
-                1 for r in agents_results if r.get("status") == "SUCCESS"
-            )
+            success_count = sum(1 for r in agents_results if r.get("status") == "SUCCESS")
             agent_score = success_count / len(agents_results)
             score += agent_score * 0.4
             total_weight += 0.4
@@ -279,9 +274,7 @@ class MetricsCollector:
         now = datetime.now()
 
         # Calculer le temps de fonctionnement
-        self.global_stats["system_uptime_seconds"] = (
-            time.time() - self.global_stats["start_time"]
-        )
+        self.global_stats["system_uptime_seconds"] = time.time() - self.global_stats["start_time"]
 
         # Déterminer le statut du système
         system_status = self.determine_system_status()
@@ -321,11 +314,7 @@ class MetricsCollector:
                     "status": (
                         "SUCCESS"
                         if cycle_metrics.performance_score > 0.7
-                        else (
-                            "WARNING"
-                            if cycle_metrics.performance_score > 0.4
-                            else "FAIL"
-                        )
+                        else ("WARNING" if cycle_metrics.performance_score > 0.4 else "FAIL")
                     ),
                 }
             )
@@ -340,14 +329,10 @@ class MetricsCollector:
         self.dashboard_data = DashboardMetrics(
             timestamp=now.isoformat(),
             current_cycle=(
-                cycle_data.get("cycle_id")
-                if cycle_data
-                else self.dashboard_data.current_cycle
+                cycle_data.get("cycle_id") if cycle_data else self.dashboard_data.current_cycle
             ),
             next_cycle=(
-                cycle_data.get("next_cycle_time")
-                if cycle_data
-                else self.dashboard_data.next_cycle
+                cycle_data.get("next_cycle_time") if cycle_data else self.dashboard_data.next_cycle
             ),
             system_status=system_status,
             active_agents=active_agents,
@@ -371,9 +356,7 @@ class MetricsCollector:
 
         # Analyser les 5 derniers cycles
         recent_cycles = list(self.cycles_history)[-5:]
-        avg_performance = sum(c.performance_score for c in recent_cycles) / len(
-            recent_cycles
-        )
+        avg_performance = sum(c.performance_score for c in recent_cycles) / len(recent_cycles)
 
         # Compter les erreurs récentes
         errors_count = sum(
@@ -448,11 +431,8 @@ class MetricsCollector:
                 "total_cycles": self.global_stats["total_cycles"],
                 "total_agents_runs": self.global_stats["total_agents_runs"],
                 "total_llm_calls": self.global_stats["total_llm_calls"],
-                "system_uptime_hours": self.global_stats["system_uptime_seconds"]
-                / 3600,
-                "start_time": datetime.fromtimestamp(
-                    self.global_stats["start_time"]
-                ).isoformat(),
+                "system_uptime_hours": self.global_stats["system_uptime_seconds"] / 3600,
+                "start_time": datetime.fromtimestamp(self.global_stats["start_time"]).isoformat(),
             },
             "cycles": {},
             "agents": {},
@@ -466,10 +446,8 @@ class MetricsCollector:
                 "count": len(cycles_list),
                 "avg_performance_score": sum(c.performance_score for c in cycles_list)
                 / len(cycles_list),
-                "avg_duration_ms": sum(c.duration_ms for c in cycles_list)
-                / len(cycles_list),
-                "avg_llm_calls": sum(c.total_llm_calls for c in cycles_list)
-                / len(cycles_list),
+                "avg_duration_ms": sum(c.duration_ms for c in cycles_list) / len(cycles_list),
+                "avg_llm_calls": sum(c.total_llm_calls for c in cycles_list) / len(cycles_list),
                 "success_rate": sum(1 for c in cycles_list if c.performance_score > 0.6)
                 / len(cycles_list),
                 "last_cycle": cycles_list[-1].cycle_id,
@@ -498,9 +476,7 @@ class MetricsCollector:
         """
         💾 SAUVEGARDE LES DONNÉES DU DASHBOARD
         """
-        dashboard_file = (
-            Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
-        )
+        dashboard_file = Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
 
         with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(asdict(self.dashboard_data), f, indent=2, ensure_ascii=False)
@@ -513,9 +489,7 @@ class MetricsCollector:
 
         # Filtrer les cycles récents
         recent_cycles = [
-            c
-            for c in self.cycles_history
-            if datetime.fromisoformat(c.timestamp) > cutoff_time
+            c for c in self.cycles_history if datetime.fromisoformat(c.timestamp) > cutoff_time
         ]
 
         if not recent_cycles:
@@ -565,9 +539,7 @@ class MetricsCollector:
             },
             "decisions": dict(decision_trends),
             "top_decision": (
-                max(decision_trends.items(), key=lambda x: x[1])[0]
-                if decision_trends
-                else None
+                max(decision_trends.items(), key=lambda x: x[1])[0] if decision_trends else None
             ),
         }
 
@@ -586,8 +558,7 @@ class MetricsCollector:
 
         if format.lower() == "json":
             export_file = (
-                self.metrics_dir
-                / f"metrics_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                self.metrics_dir / f"metrics_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             )
             with open(export_file, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)

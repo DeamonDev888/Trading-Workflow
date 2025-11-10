@@ -116,9 +116,7 @@ class PortfolioManager:
             "daily_pnl": round(total_pnl * 0.1, 2),
             "positions_count": len(positions),
             "positions": positions,
-            "leverage_used": round(
-                sum(p["leverage"] for p in positions) / len(positions), 2
-            ),
+            "leverage_used": round(sum(p["leverage"] for p in positions) / len(positions), 2),
             "risk_score": round(min(1.0, abs(total_pnl) / total_value * 2), 3),
             "connected": True,
             "last_update": datetime.now().isoformat(),
@@ -160,9 +158,7 @@ class PortfolioManager:
 
                             pnl = size * (current_price - entry_price)
                             total_pnl += pnl
-                            margin_used += abs(
-                                size * current_price * 0.1
-                            )  # 10% margin requirement
+                            margin_used += abs(size * current_price * 0.1)  # 10% margin requirement
 
                             positions.append(
                                 {
@@ -173,9 +169,7 @@ class PortfolioManager:
                                     "current_price": current_price,
                                     "pnl": round(pnl, 2),
                                     "pnl_percentage": round(
-                                        (current_price - entry_price)
-                                        / entry_price
-                                        * 100,
+                                        (current_price - entry_price) / entry_price * 100,
                                         2,
                                     ),
                                     "leverage": abs(size * current_price)
@@ -185,9 +179,7 @@ class PortfolioManager:
                             )
 
                 # Get wallet balance
-                total_balance = float(
-                    data.get("crossMarginSummary", {}).get("accountValue", 0)
-                )
+                total_balance = float(data.get("crossMarginSummary", {}).get("accountValue", 0))
                 available_balance = total_balance - margin_used
 
                 return {
@@ -198,9 +190,7 @@ class PortfolioManager:
                     "available_balance": round(available_balance, 2),
                     "margin_used": round(margin_used, 2),
                     "unrealized_pnl": round(total_pnl, 2),
-                    "daily_pnl": round(
-                        total_pnl * 0.05, 2
-                    ),  # Estimate 5% of total P&L is daily
+                    "daily_pnl": round(total_pnl * 0.05, 2),  # Estimate 5% of total P&L is daily
                     "positions_count": len(positions),
                     "positions": positions,
                     "leverage_used": (
@@ -240,9 +230,7 @@ class PortfolioManager:
         else:
             return self.get_mainnet_portfolio(prices)
 
-    def switch_mode(
-        self, new_mode: str, wallet_address: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def switch_mode(self, new_mode: str, wallet_address: Optional[str] = None) -> Dict[str, Any]:
         """Switch between simulation and mainnet modes"""
         old_mode = self.mode
         self.mode = new_mode

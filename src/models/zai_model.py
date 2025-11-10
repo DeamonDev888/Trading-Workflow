@@ -9,7 +9,6 @@ from termcolor import cprint
 
 from .base_model import BaseModel, ModelResponse, safe_cprint
 
-
 # Import des SDKs - essayer OpenAI SDK d'abord (compatible Roo Code)
 try:
     from openai import OpenAI
@@ -69,14 +68,10 @@ class ZAIModel(BaseModel):
                 }
             )
             self.base_url = "https://api.z.ai/api/anthropic/v1/messages"
-            safe_cprint(
-                "SUCCESS: Z.AI client initialized with Claude Code method", "green"
-            )
+            safe_cprint("SUCCESS: Z.AI client initialized with Claude Code method", "green")
             return
         except ImportError:
-            safe_cprint(
-                "WARNING: requests not available, falling back to OpenAI SDK", "yellow"
-            )
+            safe_cprint("WARNING: requests not available, falling back to OpenAI SDK", "yellow")
 
         # Méthode 2: OpenAI SDK avec le bon endpoint Claude Code
         if OPENAI_AVAILABLE:
@@ -101,9 +96,7 @@ class ZAIModel(BaseModel):
                 safe_cprint("SUCCESS: Z.AI client initialized with native SDK", "green")
                 return
             except Exception as e:
-                safe_cprint(
-                    f"WARNING: Native ZAI SDK method failed: {str(e)}", "yellow"
-                )
+                safe_cprint(f"WARNING: Native ZAI SDK method failed: {str(e)}", "yellow")
 
         # Si aucune méthode ne fonctionne
         raise RuntimeError("Failed to initialize Z.AI client - all methods failed")
@@ -135,22 +128,15 @@ class ZAIModel(BaseModel):
                 if response.status_code == 200:
                     # Si on a du contenu, c'est définitivement disponible
                     if "content" in response_data and response_data["content"]:
-                        safe_cprint(
-                            "SUCCESS: Z.AI GLM-4.6 is available and working", "green"
-                        )
+                        safe_cprint("SUCCESS: Z.AI GLM-4.6 is available and working", "green")
                         return True
                     # Si on a une erreur mais que l'API répond, considérer comme disponible
                     elif "error" in response_data:
                         error_type = response_data.get("error", {}).get("type")
-                        error_message = response_data.get("error", {}).get(
-                            "message", ""
-                        )
+                        error_message = response_data.get("error", {}).get("message", "")
 
                         # Erreurs qui signifient "API accessible mais plan requis"
-                        if (
-                            error_type == "1000"
-                            or "Authorization Failure" in error_message
-                        ):
+                        if error_type == "1000" or "Authorization Failure" in error_message:
                             safe_cprint(
                                 "INFO: GLM Coding Lite plan required - API is accessible",
                                 "yellow",
@@ -174,9 +160,7 @@ class ZAIModel(BaseModel):
                             return True  # API répond = modèle disponible
                     else:
                         # Réponse 200 sans contenu ni erreur = considérer disponible
-                        safe_cprint(
-                            "SUCCESS: Z.AI API accessible (GLM-4.6 available)", "green"
-                        )
+                        safe_cprint("SUCCESS: Z.AI API accessible (GLM-4.6 available)", "green")
                         return True
                 elif response.status_code == 401:
                     # HTTP 401 avec Z.AI signifie souvent "plan requis" mais API accessible
@@ -208,12 +192,8 @@ class ZAIModel(BaseModel):
             error_str = str(e)
             # Si c'est juste une erreur de balance mais l'API fonctionne
             if "1113" in error_str or "balance" in error_str.lower():
-                safe_cprint(
-                    "INFO: Z.AI API works but GLM Coding Lite plan needed", "yellow"
-                )
-                safe_cprint(
-                    "INFO: Visit https://platform.z.ai/ to activate plan", "yellow"
-                )
+                safe_cprint("INFO: Z.AI API works but GLM Coding Lite plan needed", "yellow")
+                safe_cprint("INFO: Visit https://platform.z.ai/ to activate plan", "yellow")
                 return True
             safe_cprint(f"WARNING: Z.AI model check failed: {str(e)}", "yellow")
             return False
@@ -274,9 +254,7 @@ class ZAIModel(BaseModel):
 
                     # Erreur d'autorisation (plan requis)
                     if "1000" in error_str or "Authorization Failure" in error_str:
-                        safe_cprint(
-                            "ERROR: GLM Coding Lite plan required for Z.AI API", "red"
-                        )
+                        safe_cprint("ERROR: GLM Coding Lite plan required for Z.AI API", "red")
                         safe_cprint(
                             "SOLUTION: Visit https://platform.z.ai/ to activate plan",
                             "yellow",
@@ -285,12 +263,8 @@ class ZAIModel(BaseModel):
 
                     # Erreur de balance
                     elif "1113" in error_str or "balance" in error_str.lower():
-                        safe_cprint(
-                            "ERROR: Insufficient balance on Z.AI account", "red"
-                        )
-                        safe_cprint(
-                            "SOLUTION: Add credits to your Z.AI account", "yellow"
-                        )
+                        safe_cprint("ERROR: Insufficient balance on Z.AI account", "red")
+                        safe_cprint("SOLUTION: Add credits to your Z.AI account", "yellow")
                         return None
 
                     else:
@@ -309,9 +283,7 @@ class ZAIModel(BaseModel):
 
                 if response and response.choices:
                     content = response.choices[0].message.content
-                    safe_cprint(
-                        "SUCCESS: GLM-4.6 response generated via OpenAI SDK", "green"
-                    )
+                    safe_cprint("SUCCESS: GLM-4.6 response generated via OpenAI SDK", "green")
                     return content
                 else:
                     safe_cprint("ERROR: No response from GLM-4.6", "red")
@@ -330,9 +302,7 @@ class ZAIModel(BaseModel):
 
                 if response and response.choices:
                     content = response.choices[0].message.content
-                    safe_cprint(
-                        "SUCCESS: GLM-4.6 response generated via ZAI SDK", "green"
-                    )
+                    safe_cprint("SUCCESS: GLM-4.6 response generated via ZAI SDK", "green")
                     return content
                 else:
                     safe_cprint("ERROR: No response from GLM-4.6", "red")
@@ -345,9 +315,7 @@ class ZAIModel(BaseModel):
             # Gestion spécifique des erreurs
             if "1113" in error_str or "balance" in error_str.lower():
                 safe_cprint("SOLUTION: GLM Coding Lite plan required", "yellow")
-                safe_cprint(
-                    "SOLUTION: Visit https://platform.z.ai/ to activate plan", "yellow"
-                )
+                safe_cprint("SOLUTION: Visit https://platform.z.ai/ to activate plan", "yellow")
             elif "404" in error_str:
                 safe_cprint("SOLUTION: Check API endpoint and authentication", "yellow")
             elif "401" in error_str:
@@ -434,10 +402,7 @@ class ZAIModel(BaseModel):
                 for chunk in response:
                     if chunk.choices and chunk.choices[0].delta:
                         delta = chunk.choices[0].delta
-                        if (
-                            hasattr(delta, "reasoning_content")
-                            and delta.reasoning_content
-                        ):
+                        if hasattr(delta, "reasoning_content") and delta.reasoning_content:
                             yield f"[THINKING] {delta.reasoning_content}"
                         if delta.content:
                             yield delta.content
@@ -483,9 +448,7 @@ def test_zai_model(api_key: str) -> bool:
         )
 
         if test_response and len(test_response) > 0:
-            safe_cprint(
-                "SUCCESS: Z.AI GLM-4.6 test successful - Roo Code compatible!", "green"
-            )
+            safe_cprint("SUCCESS: Z.AI GLM-4.6 test successful - Roo Code compatible!", "green")
             return True
         else:
             safe_cprint("ERROR: Z.AI GLM-4.6 test failed", "red")

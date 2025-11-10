@@ -44,9 +44,7 @@ class DeamonDevAPI:
 
         try:
             response = self.session.get(f"{self.base_url}/api/agents", timeout=10)
-            return (
-                response.json() if response.status_code == 200 else {"success": False}
-            )
+            return response.json() if response.status_code == 200 else {"success": False}
         except Exception as e:
             logger.error(f"Failed to get agents: {e}")
             return {"success": False, "error": str(e)}
@@ -58,9 +56,7 @@ class DeamonDevAPI:
 
         try:
             response = self.session.get(f"{self.base_url}/api/dashboard", timeout=10)
-            return (
-                response.json() if response.status_code == 200 else {"success": False}
-            )
+            return response.json() if response.status_code == 200 else {"success": False}
         except Exception as e:
             logger.error(f"Failed to get dashboard: {e}")
             return {"success": False, "error": str(e)}
@@ -71,12 +67,8 @@ class DeamonDevAPI:
             return {"success": False, "error": "Not connected"}
 
         try:
-            response = self.session.post(
-                f"{self.base_url}{endpoint}", json=data, timeout=10
-            )
-            return (
-                response.json() if response.status_code == 200 else {"success": False}
-            )
+            response = self.session.post(f"{self.base_url}{endpoint}", json=data, timeout=10)
+            return response.json() if response.status_code == 200 else {"success": False}
         except Exception as e:
             logger.error(f"Failed to post data: {e}")
             return {"success": False, "error": str(e)}

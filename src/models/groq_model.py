@@ -153,9 +153,7 @@ class GroqModel(BaseModel):
                 self.model_name = "mixtral-8x7b-32768"
 
             # Test the connection with a simple completion
-            safe_cprint(
-                f"  ├─ Testing connection with model: {self.model_name}", "cyan"
-            )
+            safe_cprint(f"  ├─ Testing connection with model: {self.model_name}", "cyan")
             test_response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[{"role": "user", "content": "Hello"}],
@@ -206,9 +204,7 @@ class GroqModel(BaseModel):
             self.client = None
             raise
 
-    def generate_response(
-        self, system_prompt, user_content, temperature=0.7, max_tokens=None
-    ):
+    def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate response with no caching"""
         try:
             # Force unique request every time
@@ -259,9 +255,7 @@ class GroqModel(BaseModel):
 
             # Handle rate limit errors (413)
             if "413" in error_str or "rate_limit_exceeded" in error_str:
-                safe_cprint(
-                    f"⚠️  Groq rate limit exceeded (request too large)", "yellow"
-                )
+                safe_cprint(f"⚠️  Groq rate limit exceeded (request too large)", "yellow")
                 safe_cprint(f"   Model: {self.model_name}", "yellow")
                 if "Requested" in error_str and "Limit" in error_str:
                     # Extract token info from error message

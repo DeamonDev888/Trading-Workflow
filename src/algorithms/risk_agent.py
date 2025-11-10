@@ -100,9 +100,7 @@ class RiskAgent:
             if lose_rate >= 1:
                 kelly_fraction = 0
             else:
-                kelly_fraction = (
-                    avg_win_loss_ratio * win_rate - lose_rate
-                ) / avg_win_loss_ratio
+                kelly_fraction = (avg_win_loss_ratio * win_rate - lose_rate) / avg_win_loss_ratio
 
             # Ajuster Kelly pour plus de conservatisme (Kelly/4)
             kelly_fraction = max(0, kelly_fraction / 4)
@@ -144,9 +142,7 @@ class RiskAgent:
                 confidence=0,
             )
 
-    async def assess_portfolio_risk(
-        self, positions: List[Dict], market_data: Dict
-    ) -> RiskMetrics:
+    async def assess_portfolio_risk(self, positions: List[Dict], market_data: Dict) -> RiskMetrics:
         """Évaluer le risque global du portfolio"""
         try:
             if not positions:
@@ -173,9 +169,7 @@ class RiskAgent:
             leverage_ratio = await self._calculate_leverage_ratio(positions)
 
             # Calculer le risque de liquidité
-            liquidity_risk = await self._calculate_liquidity_risk(
-                positions, market_data
-            )
+            liquidity_risk = await self._calculate_liquidity_risk(positions, market_data)
 
             return RiskMetrics(
                 volatility=portfolio_volatility,
@@ -286,9 +280,7 @@ class RiskAgent:
                 return 0
 
             # Calculer l'indice Herfindahl-Hirschman
-            concentrations = [
-                (pos.get("value", 0) / total_value) ** 2 for pos in positions
-            ]
+            concentrations = [(pos.get("value", 0) / total_value) ** 2 for pos in positions]
             hhi = sum(concentrations)
 
             return hhi
@@ -312,9 +304,7 @@ class RiskAgent:
             self.logger.error(f"Erreur calcul levier: {e}")
             return 0
 
-    async def _calculate_liquidity_risk(
-        self, positions: List[Dict], market_data: Dict
-    ) -> float:
+    async def _calculate_liquidity_risk(self, positions: List[Dict], market_data: Dict) -> float:
         """Calculer le risque de liquidité"""
         try:
             if not positions:
@@ -457,9 +447,9 @@ class RiskAgent:
 
                 # Garder seulement les 365 derniers jours
                 if len(self.performance_metrics["daily_returns"]) > 365:
-                    self.performance_metrics["daily_returns"] = (
-                        self.performance_metrics["daily_returns"][-365:]
-                    )
+                    self.performance_metrics["daily_returns"] = self.performance_metrics[
+                        "daily_returns"
+                    ][-365:]
 
             self.current_capital += pnl
 
@@ -495,9 +485,7 @@ class RiskAgent:
             "current_drawdown": float(self.performance_metrics["current_drawdown"]),
             "max_drawdown": float(self.performance_metrics["max_drawdown"]),
             "active_alerts": len(self.active_alerts),
-            "critical_alerts": len(
-                [a for a in self.active_alerts if a.level == "CRITICAL"]
-            ),
+            "critical_alerts": len([a for a in self.active_alerts if a.level == "CRITICAL"]),
             "current_capital": float(self.current_capital),
             "risk_limits": self.risk_thresholds,
         }
@@ -537,9 +525,7 @@ if __name__ == "__main__":
                         "ETH": {"volatility": 0.04},
                     }
 
-                    risk_metrics = await agent.assess_portfolio_risk(
-                        mock_positions, mock_market
-                    )
+                    risk_metrics = await agent.assess_portfolio_risk(mock_positions, mock_market)
                     alerts = await agent.check_risk_limits(risk_metrics)
 
                     metrics_data = {
@@ -595,9 +581,7 @@ if __name__ == "__main__":
                 ]
                 mock_market = {"BTC": {"volatility": 0.03}, "ETH": {"volatility": 0.04}}
 
-                risk_metrics = await agent.assess_portfolio_risk(
-                    mock_positions, mock_market
-                )
+                risk_metrics = await agent.assess_portfolio_risk(mock_positions, mock_market)
                 print(f"Métriques risque: Volatilité={risk_metrics.volatility:.2%}")
 
                 alerts = await agent.check_risk_limits(risk_metrics)

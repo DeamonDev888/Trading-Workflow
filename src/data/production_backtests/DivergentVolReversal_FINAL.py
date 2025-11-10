@@ -39,12 +39,8 @@ class DivergentVolReversalFinal(Strategy):
         )
         self.macd_hist = macd_hist
         self.sma = self.I(talib.SMA, self.data.Close, timeperiod=20)
-        self.adx = self.I(
-            talib.ADX, self.data.High, self.data.Low, self.data.Close, timeperiod=14
-        )
-        self.atr = self.I(
-            talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14
-        )
+        self.adx = self.I(talib.ADX, self.data.High, self.data.Low, self.data.Close, timeperiod=14)
+        self.atr = self.I(talib.ATR, self.data.High, self.data.Low, self.data.Close, timeperiod=14)
         self.atr_sma = self.I(talib.SMA, self.atr, timeperiod=20)
         self.entry_bar = None
 
@@ -156,9 +152,7 @@ class DivergentVolReversalFinal(Strategy):
                 tp_price = entry_price + self.rr_ratio * risk_per_unit
                 self.buy(size=pos_size, sl=sl_price, tp=tp_price)
                 self.entry_bar = len(self.data)
-                print(
-                    f"LONG ENTRY at {entry_price:.2f}, Size {pos_size}, SL {sl_price:.2f}"
-                )
+                print(f"LONG ENTRY at {entry_price:.2f}, Size {pos_size}, SL {sl_price:.2f}")
 
     def _execute_short_entry(self):
         """Execute short entry with proper risk management"""
@@ -178,9 +172,7 @@ class DivergentVolReversalFinal(Strategy):
                 tp_price = entry_price - self.rr_ratio * risk_per_unit
                 self.sell(size=pos_size, sl=sl_price, tp=tp_price)
                 self.entry_bar = len(self.data)
-                print(
-                    f"SHORT ENTRY at {entry_price:.2f}, Size {pos_size}, SL {sl_price:.2f}"
-                )
+                print(f"SHORT ENTRY at {entry_price:.2f}, Size {pos_size}, SL {sl_price:.2f}")
 
 
 def run_backtest():
@@ -193,9 +185,7 @@ def run_backtest():
     for data_path in data_paths:
         try:
             if os.path.exists(data_path):
-                data = pd.read_csv(
-                    data_path, parse_dates=["datetime"], index_col="datetime"
-                )
+                data = pd.read_csv(data_path, parse_dates=["datetime"], index_col="datetime")
                 print(f"Data loaded from: {data_path}")
                 break
         except (FileNotFoundError, pd.errors.EmptyDataError):
@@ -250,18 +240,12 @@ def run_backtest():
                 get_stat_value(stats, ["Return [%", "ReturnPct", "Return"], 0.0), 2
             ),
             "annual_return": round(
-                get_stat_value(
-                    stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0
-                ),
+                get_stat_value(stats, ["Return (Ann.) [%", "AnnualReturn", "AnnualReturnPct"], 0.0),
                 2,
             ),
-            "sharpe_ratio": round(
-                get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2
-            ),
+            "sharpe_ratio": round(get_stat_value(stats, ["Sharpe Ratio", "SharpeRatio"], 0.0), 2),
             "max_drawdown": round(
-                get_stat_value(
-                    stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0
-                ),
+                get_stat_value(stats, ["Max. Drawdown [%", "MaxDrawdown", "MaxDrawdownPct"], 0.0),
                 2,
             ),
             "total_trades": int(

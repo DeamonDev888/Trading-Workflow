@@ -128,15 +128,11 @@ class ModelFactory:
 
             if api_key := os.getenv(key_name):
                 try:
-                    safe_cprint(
-                        f"  +- Found {key_name} ({len(api_key)} chars)", "green"
-                    )
+                    safe_cprint(f"  +- Found {key_name} ({len(api_key)} chars)", "green")
                     safe_cprint(f"  +- Getting model class for {model_type}...", "cyan")
 
                     if model_type not in self.MODEL_IMPLEMENTATIONS:
-                        safe_cprint(
-                            f"  +-  Model type not found in implementations!", "red"
-                        )
+                        safe_cprint(f"  +-  Model type not found in implementations!", "red")
                         safe_cprint(
                             f"  L- Available implementations: {list(self.MODEL_IMPLEMENTATIONS.keys())}",
                             "yellow",
@@ -144,9 +140,7 @@ class ModelFactory:
                         continue
 
                     model_class = self.MODEL_IMPLEMENTATIONS[model_type]
-                    safe_cprint(
-                        f"  +- Using model class: {model_class.__name__}", "cyan"
-                    )
+                    safe_cprint(f"  +- Using model class: {model_class.__name__}", "cyan")
 
                     # Create instance with more detailed error handling
                     try:
@@ -163,9 +157,7 @@ class ModelFactory:
                         if model_instance.is_available():
                             self._models[model_type] = model_instance
                             initialized = True
-                            safe_cprint(
-                                f"  -  Successfully initialized {model_type}", "green"
-                            )
+                            safe_cprint(f"  -  Successfully initialized {model_type}", "green")
                         else:
                             # For ZAI, don't show "not available" if it's just a plan issue
                             if model_type == "zai":
@@ -188,28 +180,20 @@ class ModelFactory:
                             f"  +- Error type: {type(instance_error).__name__}",
                             "yellow",
                         )
-                        safe_cprint(
-                            f"  +- Error message: {str(instance_error)}", "yellow"
-                        )
+                        safe_cprint(f"  +- Error message: {str(instance_error)}", "yellow")
                         if hasattr(instance_error, "__traceback__"):
                             import traceback
 
-                            safe_cprint(
-                                f"    Traceback:\n{traceback.format_exc()}", "yellow"
-                            )
+                            safe_cprint(f"    Traceback:\n{traceback.format_exc()}", "yellow")
 
                 except Exception as e:
-                    safe_cprint(
-                        f"  +-  Failed to initialize {model_type} model", "yellow"
-                    )
+                    safe_cprint(f"  +-  Failed to initialize {model_type} model", "yellow")
                     safe_cprint(f"  +- Error type: {type(e).__name__}", "yellow")
                     safe_cprint(f"  +- Error message: {str(e)}", "yellow")
                     if hasattr(e, "__traceback__"):
                         import traceback
 
-                        safe_cprint(
-                            f"    Traceback:\n{traceback.format_exc()}", "yellow"
-                        )
+                        safe_cprint(f"    Traceback:\n{traceback.format_exc()}", "yellow")
             else:
                 safe_cprint(f"  - {key_name} not found", "blue")
 
@@ -238,9 +222,7 @@ class ModelFactory:
         safe_cprint(f"  L- Available models: {list(self._models.keys())}", "cyan")
 
         if not initialized:
-            safe_cprint(
-                "\n No AI models available - check API keys and Ollama server", "yellow"
-            )
+            safe_cprint("\n No AI models available - check API keys and Ollama server", "yellow")
             safe_cprint("Required environment variables:", "yellow")
             for model_type, key_name in self._get_api_key_mapping().items():
                 safe_cprint(f"  +- {key_name} (for {model_type})", "yellow")
@@ -254,13 +236,9 @@ class ModelFactory:
                 safe_cprint(f"  +- {model_type}: {model.model_name}", "green")
             safe_cprint("  L- Deamon Dev's Model Factory Ready! 🌙", "green")
 
-    def get_model(
-        self, model_type: str, model_name: Optional[str] = None
-    ) -> Optional[BaseModel]:
+    def get_model(self, model_type: str, model_name: Optional[str] = None) -> Optional[BaseModel]:
         """Get a specific model instance"""
-        safe_cprint(
-            f"\n Requesting model: {model_type} ({model_name or 'default'})", "cyan"
-        )
+        safe_cprint(f"\n Requesting model: {model_type} ({model_name or 'default'})", "cyan")
 
         if model_type not in self.MODEL_IMPLEMENTATIONS:
             safe_cprint(f" Invalid model type: '{model_type}'", "red")
@@ -282,15 +260,11 @@ class ModelFactory:
 
         model = self._models[model_type]
         if model_name and model.model_name != model_name:
-            safe_cprint(
-                f" Reinitializing {model_type} with model {model_name}...", "cyan"
-            )
+            safe_cprint(f" Reinitializing {model_type} with model {model_name}...", "cyan")
             try:
                 # Special handling for Ollama models
                 if model_type == "ollama":
-                    model = self.MODEL_IMPLEMENTATIONS[model_type](
-                        model_name=model_name
-                    )
+                    model = self.MODEL_IMPLEMENTATIONS[model_type](model_name=model_name)
                 else:
                     # For API-based models that need a key
                     if api_key := os.getenv(self._get_api_key_mapping()[model_type]):
@@ -304,9 +278,7 @@ class ModelFactory:
                 self._models[model_type] = model
                 safe_cprint(f" Successfully reinitialized with new model", "green")
             except Exception as e:
-                safe_cprint(
-                    f" Failed to initialize {model_type} with model {model_name}", "red"
-                )
+                safe_cprint(f" Failed to initialize {model_type} with model {model_name}", "red")
                 safe_cprint(f" Error type: {type(e).__name__}", "red")
                 safe_cprint(f" Error: {str(e)}", "red")
                 return None
@@ -329,18 +301,13 @@ class ModelFactory:
     @property
     def available_models(self) -> Dict[str, list]:
         """Get all available models and their configurations"""
-        return {
-            model_type: model.AVAILABLE_MODELS
-            for model_type, model in self._models.items()
-        }
+        return {model_type: model.AVAILABLE_MODELS for model_type, model in self._models.items()}
 
     def is_model_available(self, model_type: str) -> bool:
         """Check if a specific model type is available"""
         return model_type in self._models and self._models[model_type].is_available()
 
-    def generate_response(
-        self, system_prompt, user_content, temperature=0.7, max_tokens=None
-    ):
+    def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate a response from the model with no caching"""
         try:
             # Add random nonce to prevent caching

@@ -8,17 +8,32 @@ des données provenant des sub-agents Claude Code.
 
 import json
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from termcolor import cprint
+try:
+    from termcolor import safe_cprint
+except ImportError:
+    # Fallback if termcolor is not available
+    def safe_cprint(text, color=None, attrs=None):
+        print(text)
+
+def safe_safe_cprint(text, color):
+    """Safe print that handles Unicode encoding issues"""
+    try:
+        safe_cprint(text, color)
+    except UnicodeEncodeError:
+        # Remove emojis and special characters for compatibility
+        clean_text = text.encode('ascii', 'ignore').decode('ascii')
+        print(clean_text)
 
 
 @dataclass
 class AgentData:
     """Structure des données d'un agent"""
+
     agent_name: str
     timestamp: str
     raw_response: str
@@ -37,6 +52,7 @@ class AgentData:
 @dataclass
 class AggregationResult:
     """Résultat de l'agrégation complète"""
+
     aggregation_id: str
     timestamp: str
     agents_data: List[AgentData]
@@ -57,7 +73,9 @@ class DataAggregator:
     """
 
     def __init__(self, project_path: Optional[str] = None):
-        self.project_path = Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        self.project_path = (
+            Path(project_path) if project_path else Path(__file__).parent.parent.parent
+        )
         self.data_dir = self.project_path / "data" / "aggregator"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -75,7 +93,7 @@ class DataAggregator:
             "validation_failure_rate": 0.0,
         }
 
-        cprint("[OK] Data Aggregator initialized", "green")
+        safe_safe_cprint("[OK] Data Aggregator initialized", "green")
 
     def aggregate_agent_data(
         self,
@@ -95,16 +113,19 @@ class DataAggregator:
         aggregation_id = f"agg_{int(time.time())}"
         timestamp = datetime.now().isoformat()
 
-        cprint(f"\n[AGGREGATOR] Starting aggregation {aggregation_id}", "cyan")
-        cprint(f"[AGGREGATOR] Processing {len(agent_results)} agents", "cyan")
+        safe_safe_cprint(f"\n[AGGREGATOR] Starting aggregation {aggregation_id}", "cyan")
+        safe_safe_cprint(f"[AGGREGATOR] Processing {len(agent_results)} agents", "cyan")
 
         # 1. Convertir les résultats en AgentData
         agents_data = []
         for agent_name, result in agent_results.items():
             agent_data = self._convert_to_agent_data(agent_name, result)
             agents_data.append(agent_data)
-            cprint(f"  - {agent_name}: confidence={agent_data.confidence:.2f}, "
-                   f"converged={agent_data.convergence}", "white")
+            safe_safe_cprint(
+                f"  - {agent_name}: confidence={agent_data.confidence:.2f}, "
+                f"converged={agent_data.convergence}",
+                "white",
+            )
 
         # 2. Valider chaque agent
         for agent_data in agents_data:
@@ -143,7 +164,7 @@ class DataAggregator:
                 "num_agents": len(agents_data),
                 "successful_agents": sum(1 for a in agents_data if a.success),
                 "avg_execution_time": sum(a.execution_time for a in agents_data) / len(agents_data),
-            }
+            },
         )
 
         # 9. Sauvegarder
@@ -266,7 +287,7 @@ class DataAggregator:
                 decisions[agent_data.agent_name] = {
                     "decision": decision,
                     "confidence": agent_data.confidence,
-                    "reliability": agent_data.reliability_score
+                    "reliability": agent_data.reliability_score,
                 }
                 confidences.append(agent_data.confidence)
 
@@ -276,7 +297,7 @@ class DataAggregator:
                 "decision": "HOLD",
                 "confidence": 0.0,
                 "agreements": [],
-                "reason": "No valid decisions"
+                "reason": "No valid decisions",
             }
 
         # Compter les décisions
@@ -293,20 +314,22 @@ class DataAggregator:
 
         # Construire la liste des accords
         for agent_name, data in decisions.items():
-            agreements.append({
-                "agent": agent_name,
-                "decision": data["decision"],
-                "matches_final": data["decision"] == final_decision,
-                "confidence": data["confidence"],
-                "reliability": data["reliability"]
-            })
+            agreements.append(
+                {
+                    "agent": agent_name,
+                    "decision": data["decision"],
+                    "matches_final": data["decision"] == final_decision,
+                    "confidence": data["confidence"],
+                    "reliability": data["reliability"],
+                }
+            )
 
         return {
             "decision": final_decision,
             "confidence": final_confidence,
             "agreements": agreements,
             "total_weighted_votes": sum(decision_counts.values()),
-            "decision_breakdown": decision_counts
+            "decision_breakdown": decision_counts,
         }
 
     def _extract_decision(self, agent_data: AgentData) -> Optional[str]:
@@ -334,7 +357,9 @@ class DataAggregator:
 
         return None
 
-    def _determine_final_decision(self, consensus: Dict[str, Any], agents_data: List[AgentData]) -> str:
+    def _determine_final_decision(
+        self, consensus: Dict[str, Any], agents_data: List[AgentData]
+    ) -> str:
         """Détermine la décision finale"""
         # Si on a un consensus clair
         if consensus.get("confidence", 0) > 0.7:
@@ -375,14 +400,14 @@ class DataAggregator:
         self,
         agents_data: List[AgentData],
         consensus: Dict[str, Any],
-        context_data: Optional[Dict[str, Any]] = None
+        context_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Valide le système global"""
         validation_results = {
             "overall_status": "VALID",
             "checks": [],
             "warnings": [],
-            "critical_issues": []
+            "critical_issues": [],
         }
 
         # 1. Vérifier le nombre d'agents
@@ -423,7 +448,9 @@ class DataAggregator:
 
         return validation_results
 
-    def _collect_warnings_errors(self, agents_data: List[AgentData], validation_results: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    def _collect_warnings_errors(
+        self, agents_data: List[AgentData], validation_results: Dict[str, Any]
+    ) -> Tuple[List[str], List[str]]:
         """Collecte tous les warnings et erreurs"""
         warnings = []
         errors = []
@@ -478,13 +505,13 @@ class DataAggregator:
             "validation_results": result.validation_results,
             "warnings": result.warnings,
             "errors": result.errors,
-            "metadata": result.metadata
+            "metadata": result.metadata,
         }
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(result_dict, f, indent=2, ensure_ascii=False)
 
-        cprint(f"[AGGREGATOR] Saved: {filepath}", "green")
+        safe_safe_cprint(f"[AGGREGATOR] Saved: {filepath}", "green")
 
     def _update_metrics(self, result: AggregationResult):
         """Met à jour les métriques de fiabilité"""
@@ -500,18 +527,19 @@ class DataAggregator:
         # Moyennes mobiles
         total = self.reliability_metrics["total_aggregations"]
         self.reliability_metrics["average_confidence"] = (
-            (self.reliability_metrics["average_confidence"] * (total - 1) + result.confidence_score) / total
-        )
+            self.reliability_metrics["average_confidence"] * (total - 1) + result.confidence_score
+        ) / total
         self.reliability_metrics["average_reliability"] = (
-            (self.reliability_metrics["average_reliability"] * (total - 1) + result.reliability_score) / total
-        )
+            self.reliability_metrics["average_reliability"] * (total - 1) + result.reliability_score
+        ) / total
 
         # Taux de succès par agent
         for agent_data in result.agents_data:
             agent_name = agent_data.agent_name
             if agent_name not in self.reliability_metrics["agent_success_rates"]:
                 self.reliability_metrics["agent_success_rates"][agent_name] = {
-                    "total": 0, "successful": 0
+                    "total": 0,
+                    "successful": 0,
                 }
             self.reliability_metrics["agent_success_rates"][agent_name]["total"] += 1
             if agent_data.success:
@@ -520,54 +548,66 @@ class DataAggregator:
         # Taux d'échec de validation
         if result.validation_results.get("critical_issues"):
             self.reliability_metrics["validation_failure_rate"] = (
-                (self.reliability_metrics["validation_failure_rate"] * (total - 1) + 1) / total
-            )
+                self.reliability_metrics["validation_failure_rate"] * (total - 1) + 1
+            ) / total
         else:
             self.reliability_metrics["validation_failure_rate"] = (
-                (self.reliability_metrics["validation_failure_rate"] * (total - 1)) / total
-            )
+                self.reliability_metrics["validation_failure_rate"] * (total - 1)
+            ) / total
 
     def _print_aggregation_summary(self, result: AggregationResult):
         """Affiche un résumé de l'agrégation"""
-        print("\n" + "="*70)
-        cprint("  AGGREGATION SUMMARY", "cyan", attrs=["bold"])
-        print("="*70)
+        print("\n" + "=" * 70)
+        safe_cprint("  AGGREGATION SUMMARY", "cyan", attrs=["bold"])
+        print("=" * 70)
 
-        cprint(f"\n  ID: {result.aggregation_id}", "white")
-        cprint(f"  Timestamp: {result.timestamp}", "white")
+        safe_cprint(f"\n  ID: {result.aggregation_id}", "white")
+        safe_cprint(f"  Timestamp: {result.timestamp}", "white")
 
-        cprint(f"\n  Agents: {len(result.agents_data)} total, "
-               f"{sum(1 for a in result.agents_data if a.success)} successful", "cyan")
+        safe_cprint(
+            f"\n  Agents: {len(result.agents_data)} total, "
+            f"{sum(1 for a in result.agents_data if a.success)} successful",
+            "cyan",
+        )
 
-        cprint(f"\n  Final Decision: {result.final_decision}", "green", attrs=["bold"])
-        cprint(f"  Confidence Score: {result.confidence_score:.2f}", "cyan")
-        cprint(f"  Reliability Score: {result.reliability_score:.2f}", "cyan")
+        safe_cprint(f"\n  Final Decision: {result.final_decision}", "green", attrs=["bold"])
+        safe_cprint(f"  Confidence Score: {result.confidence_score:.2f}", "cyan")
+        safe_cprint(f"  Reliability Score: {result.reliability_score:.2f}", "cyan")
 
         consensus = result.consensus
-        cprint(f"\n  Consensus: {consensus.get('decision', 'N/A')} "
-               f"(confidence: {consensus.get('confidence', 0.0):.2f})", "white")
+        safe_cprint(
+            f"\n  Consensus: {consensus.get('decision', 'N/A')} "
+            f"(confidence: {consensus.get('confidence', 0.0):.2f})",
+            "white",
+        )
 
         # Statut de validation
         validation = result.validation_results
         if validation.get("critical_issues"):
-            cprint(f"\n  Status: INVALID ({len(validation['critical_issues'])} critical issues)", "red")
+            safe_cprint(
+                f"\n  Status: INVALID ({len(validation['critical_issues'])} critical issues)",
+                "red",
+            )
         elif validation.get("warnings"):
-            cprint(f"\n  Status: WARNING ({len(validation['warnings'])} warnings)", "yellow")
+            safe_cprint(
+                f"\n  Status: WARNING ({len(validation['warnings'])} warnings)",
+                "yellow",
+            )
         else:
-            cprint(f"\n  Status: VALID", "green")
+            safe_cprint(f"\n  Status: VALID", "green")
 
         # Avertissements et erreurs
         if result.warnings:
-            cprint(f"\n  Warnings: {len(result.warnings)}", "yellow")
+            safe_cprint(f"\n  Warnings: {len(result.warnings)}", "yellow")
             for warning in result.warnings[:3]:  # Afficher max 3
-                cprint(f"    - {warning}", "yellow")
+                safe_cprint(f"    - {warning}", "yellow")
 
         if result.errors:
-            cprint(f"\n  Errors: {len(result.errors)}", "red")
+            safe_cprint(f"\n  Errors: {len(result.errors)}", "red")
             for error in result.errors[:3]:  # Afficher max 3
-                cprint(f"    - {error}", "red")
+                safe_cprint(f"    - {error}", "red")
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
 
     def get_reliability_report(self) -> Dict[str, Any]:
         """Génère un rapport de fiabilité complet"""
@@ -581,11 +621,11 @@ class DataAggregator:
                     "final_decision": a.final_decision,
                     "confidence_score": a.confidence_score,
                     "reliability_score": a.reliability_score,
-                    "has_errors": len(a.errors) > 0
+                    "has_errors": len(a.errors) > 0,
                 }
                 for a in self.aggregation_history[-10:]  # 10 dernières
             ],
-            "agent_reliability": {}
+            "agent_reliability": {},
         }
 
         # Statistiques par agent
@@ -595,7 +635,7 @@ class DataAggregator:
                 report["agent_reliability"][agent_name] = {
                     "total_calls": stats["total"],
                     "successful_calls": stats["successful"],
-                    "success_rate": success_rate
+                    "success_rate": success_rate,
                 }
 
         return report
@@ -650,7 +690,7 @@ class DataAggregator:
                     "health": health,
                     "success_rate": success_rate,
                     "total_calls": stats["total"],
-                    "successful_calls": stats["successful"]
+                    "successful_calls": stats["successful"],
                 }
 
         return status
@@ -669,7 +709,7 @@ if __name__ == "__main__":
             "iterations": 3,
             "execution_time": 45.2,
             "result": {"decision": "BUY", "reasoning": "Strong signal"},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         },
         "claude-risk-advisor": {
             "success": True,
@@ -678,7 +718,7 @@ if __name__ == "__main__":
             "iterations": 2,
             "execution_time": 38.7,
             "result": {"decision": "BUY", "risk_level": "LOW"},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         },
         "claude-funding-advisor": {
             "success": True,
@@ -687,32 +727,31 @@ if __name__ == "__main__":
             "iterations": 3,
             "execution_time": 42.1,
             "result": {"decision": "HOLD", "funding_rate": 0.0001},
-            "timestamp": datetime.now().isoformat()
-        }
+            "timestamp": datetime.now().isoformat(),
+        },
     }
 
-    context = {
-        "symbol": "BTC-USD",
-        "price": 50000
-    }
+    context = {"symbol": "BTC-USD", "price": 50000}
 
     result = aggregator.aggregate_agent_data(test_results, context)
 
-    print("\n" + "="*70)
-    cprint("  RELIABILITY CHECK", "cyan", attrs=["bold"])
-    print("="*70)
+    print("\n" + "=" * 70)
+    safe_cprint("  RELIABILITY CHECK", "cyan", attrs=["bold"])
+    print("=" * 70)
 
     reliable = aggregator.is_system_reliable()
-    cprint(f"\n  System Reliable: {reliable}", "green" if reliable else "red")
+    safe_cprint(f"\n  System Reliable: {reliable}", "green" if reliable else "red")
 
     if reliable:
-        cprint("  The system is operating reliably", "green")
+        safe_cprint("  The system is operating reliably", "green")
     else:
-        cprint("  The system has reliability issues - review the report", "yellow")
+        safe_cprint("  The system has reliability issues - review the report", "yellow")
 
     report = aggregator.get_reliability_report()
     print(f"\n  Average Confidence: {report['summary']['average_confidence']:.2f}")
     print(f"  Average Reliability: {report['summary']['average_reliability']:.2f}")
-    print(f"  Success Rate: {report['summary']['successful_aggregations']}/{report['summary']['total_aggregations']}")
+    print(
+        f"  Success Rate: {report['summary']['successful_aggregations']}/{report['summary']['total_aggregations']}"
+    )
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)

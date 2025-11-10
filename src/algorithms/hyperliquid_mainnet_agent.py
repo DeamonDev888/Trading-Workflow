@@ -35,9 +35,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             "take_profit_pct": 0.05,  # 5% take profit
         }
 
-    async def validate_risk_limits(
-        self, symbol: str, size: Decimal, price: Decimal
-    ) -> bool:
+    async def validate_risk_limits(self, symbol: str, size: Decimal, price: Decimal) -> bool:
         """Valider les limites de risque avant trading"""
         try:
             # Calculer la valeur de la position en USD
@@ -82,9 +80,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 return OrderResult(success=False, error="Limite de risque dépassée")
 
             # Placer l'ordre avec stop loss et take profit
-            self.logger.info(
-                f"🔥 MAINNET ORDER: {side} {size} {symbol} @ {price or 'MARKET'}"
-            )
+            self.logger.info(f"🔥 MAINNET ORDER: {side} {size} {symbol} @ {price or 'MARKET'}")
 
             result = await self.place_order(
                 symbol=symbol,
@@ -108,9 +104,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
             self.logger.error(f"Erreur place_safe_order: {e}")
             return OrderResult(success=False, error=str(e))
 
-    async def _place_risk_orders(
-        self, symbol: str, side: str, size: Decimal, entry_price: Decimal
-    ):
+    async def _place_risk_orders(self, symbol: str, side: str, size: Decimal, entry_price: Decimal):
         """Placer les ordres stop loss et take profit"""
         try:
             # Calculer stop loss et take profit prices
@@ -272,9 +266,7 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
 
             # Logger les résultats
             successful_closes = sum(1 for r in results if r.success)
-            self.logger.info(
-                f"🔒 POSITIONS FERMÉES: {successful_closes}/{len(results)}"
-            )
+            self.logger.info(f"🔒 POSITIONS FERMÉES: {successful_closes}/{len(results)}")
 
             return successful_closes > 0
 
@@ -301,12 +293,8 @@ class HyperLiquidMainnetAgent(HyperLiquidAgent):
                 "short_positions": len(short_positions),
                 "total_pnl": float(total_pnl),
                 "account_balance": {k: float(v) for k, v in balances.items()},
-                "leverage_used": (
-                    max([p.leverage for p in positions]) if positions else 0
-                ),
-                "risk_level": (
-                    "HIGH" if len(positions) > 5 else "MEDIUM" if positions else "LOW"
-                ),
+                "leverage_used": (max([p.leverage for p in positions]) if positions else 0),
+                "risk_level": ("HIGH" if len(positions) > 5 else "MEDIUM" if positions else "LOW"),
                 "timestamp": int(asyncio.get_event_loop().time()),
             }
 

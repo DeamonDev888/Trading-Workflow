@@ -4,7 +4,6 @@ Built with love by Deamon Dev
 """
 
 import requests
-
 from openai import OpenAI
 from termcolor import cprint
 
@@ -103,9 +102,7 @@ class OpenAIModel(BaseModel):
                 "green",
             )
             if self._supports_reasoning_effort():
-                safe_cprint(
-                    f"🧠 Reasoning effort set to: {self.reasoning_effort}", "cyan"
-                )
+                safe_cprint(f"🧠 Reasoning effort set to: {self.reasoning_effort}", "cyan")
         except Exception as e:
             safe_cprint(f"❌ Failed to initialize OpenAI model: {str(e)}", "red")
             self.client = None
@@ -113,9 +110,7 @@ class OpenAIModel(BaseModel):
     def _supports_reasoning_effort(self) -> bool:
         """Check if the current model supports reasoning effort"""
         model_info = self.AVAILABLE_MODELS.get(self.model_name, {})
-        return isinstance(model_info, dict) and model_info.get(
-            "supports_reasoning_effort", False
-        )
+        return isinstance(model_info, dict) and model_info.get("supports_reasoning_effort", False)
 
     def _prepare_model_kwargs(self, **kwargs):
         """Prepare model-specific kwargs"""
@@ -163,9 +158,7 @@ class OpenAIModel(BaseModel):
             # Prefer Responses API for newer models if available (per OpenAI Text guide)
             if self.model_name.startswith(("gpt-5", "o1")):
                 try:
-                    content_str = (
-                        f"Instructions: {system_prompt}\n\nInput: {user_content}"
-                    )
+                    content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
                     # Map token limit for Responses API
                     max_output_tokens = None
                     if "max_tokens" in kwargs:
@@ -209,13 +202,9 @@ class OpenAIModel(BaseModel):
                 except AttributeError:
                     # Responses API not available, fall back to direct HTTP
                     try:
-                        content_str = (
-                            f"Instructions: {system_prompt}\n\nInput: {user_content}"
-                        )
+                        content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
                         max_output_tokens = (
-                            kwargs.get("max_tokens")
-                            or kwargs.get("max_completion_tokens")
-                            or 2048
+                            kwargs.get("max_tokens") or kwargs.get("max_completion_tokens") or 2048
                         )
                         http_resp = requests.post(
                             url="https://api.openai.com/v1/responses",
@@ -239,17 +228,13 @@ class OpenAIModel(BaseModel):
                             parts = []
                             for item in output_items:
                                 content_list = (
-                                    item.get("content")
-                                    if isinstance(item, dict)
-                                    else None
+                                    item.get("content") if isinstance(item, dict) else None
                                 )
                                 if isinstance(content_list, list):
                                     for part in content_list:
                                         text_val = None
                                         if isinstance(part, dict):
-                                            text_val = part.get("text") or part.get(
-                                                "content"
-                                            )
+                                            text_val = part.get("text") or part.get("content")
                                         if isinstance(text_val, str):
                                             parts.append(text_val)
                             content_text = "".join(parts).strip() if parts else None
@@ -307,9 +292,7 @@ class OpenAIModel(BaseModel):
             # Debug: show finish_reason and meta
             try:
                 finish_reason = getattr(choice, "finish_reason", None)
-                safe_cprint(
-                    f"🧪 Deamon Dev debug: finish_reason={finish_reason}", "cyan"
-                )
+                safe_cprint(f"🧪 Deamon Dev debug: finish_reason={finish_reason}", "cyan")
             except Exception:
                 pass
 
@@ -371,9 +354,7 @@ class OpenAIModel(BaseModel):
                         "🛠️ Deamon Dev fallback: trying Responses API for text output",
                         "yellow",
                     )
-                    content_str = (
-                        f"Instructions: {system_prompt}\n\nInput: {user_content}"
-                    )
+                    content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
                     # Map token limit to responses API
                     max_output_tokens = None
                     if "max_tokens" in kwargs:
@@ -420,10 +401,7 @@ class OpenAIModel(BaseModel):
                     ]
                     fb_kwargs = kwargs.copy()
                     # Map tokens for non-O1/O3 models
-                    if (
-                        "max_tokens" not in fb_kwargs
-                        and "max_completion_tokens" in fb_kwargs
-                    ):
+                    if "max_tokens" not in fb_kwargs and "max_completion_tokens" in fb_kwargs:
                         fb_kwargs["max_tokens"] = fb_kwargs.pop("max_completion_tokens")
                     fb_kwargs.pop("temperature", None)  # keep defaults safe
                     fb_response = self.client.chat.completions.create(
@@ -450,9 +428,7 @@ class OpenAIModel(BaseModel):
                 content=content_text or "",
                 raw_response=response,
                 model_name=self.model_name,
-                usage=(
-                    response.usage.model_dump() if hasattr(response, "usage") else None
-                ),
+                usage=(response.usage.model_dump() if hasattr(response, "usage") else None),
             )
 
         except Exception as e:
@@ -464,13 +440,9 @@ class OpenAIModel(BaseModel):
             try:
                 safe_cprint(f"🔎 type={type(e).__name__}", "yellow")
                 if hasattr(e, "status_code"):
-                    safe_cprint(
-                        f"🔎 status_code={getattr(e, 'status_code', None)}", "yellow"
-                    )
+                    safe_cprint(f"🔎 status_code={getattr(e, 'status_code', None)}", "yellow")
                 if hasattr(e, "request_id"):
-                    safe_cprint(
-                        f"🔎 request_id={getattr(e, 'request_id', None)}", "yellow"
-                    )
+                    safe_cprint(f"🔎 request_id={getattr(e, 'request_id', None)}", "yellow")
                 if hasattr(e, "code"):
                     safe_cprint(f"🔎 code={getattr(e, 'code', None)}", "yellow")
                 if hasattr(e, "param"):
@@ -479,9 +451,7 @@ class OpenAIModel(BaseModel):
                 if resp is not None:
                     safe_cprint(f"🔎 response={resp}", "yellow")
                     try:
-                        safe_cprint(
-                            f"🔎 response.body={getattr(e, 'body', None)}", "yellow"
-                        )
+                        safe_cprint(f"🔎 response.body={getattr(e, 'body', None)}", "yellow")
                     except Exception:
                         pass
             except Exception:

@@ -552,15 +552,11 @@ if __name__ == "__main__":
         self.task_queue.append(task)
         self.task_queue.sort(key=lambda t: t.priority)
 
-        print(
-            f"[TASK] Submitted {task_id} to {agent_type.value} agent (priority: {priority})"
-        )
+        print(f"[TASK] Submitted {task_id} to {agent_type.value} agent (priority: {priority})")
 
         return task_id
 
-    async def get_task_result(
-        self, task_id: str, timeout: int = 300
-    ) -> Optional[TaskResponse]:
+    async def get_task_result(self, task_id: str, timeout: int = 300) -> Optional[TaskResponse]:
         """Wait for and get task result"""
         start_time = time.time()
 
@@ -618,9 +614,7 @@ if __name__ == "__main__":
                 print(f"[ERROR] Task queue processing error: {e}")
                 await asyncio.sleep(1)
 
-    async def _get_available_agent(
-        self, agent_type: AgentType
-    ) -> Optional[AgentProcess]:
+    async def _get_available_agent(self, agent_type: AgentType) -> Optional[AgentProcess]:
         """Get an available agent of specified type"""
         for agent in self.agents.values():
             if (
@@ -665,19 +659,14 @@ if __name__ == "__main__":
                 # Update metrics
                 agent.request_count += 1
                 agent.performance_metrics["avg_response_time"] = (
-                    agent.performance_metrics["avg_response_time"]
-                    * (agent.request_count - 1)
+                    agent.performance_metrics["avg_response_time"] * (agent.request_count - 1)
                     + execution_time
                 ) / agent.request_count
 
                 if result.get("success"):
                     agent.performance_metrics["success_rate"] = min(
                         1.0,
-                        (
-                            agent.performance_metrics["success_rate"]
-                            * (agent.request_count - 1)
-                            + 1
-                        )
+                        (agent.performance_metrics["success_rate"] * (agent.request_count - 1) + 1)
                         / agent.request_count,
                     )
                     self.metrics["successful_tasks"] += 1
@@ -695,9 +684,7 @@ if __name__ == "__main__":
                 # Callback if provided
                 if task.callback_url:
                     try:
-                        requests.post(
-                            task.callback_url, json=asdict(task_response), timeout=10
-                        )
+                        requests.post(task.callback_url, json=asdict(task_response), timeout=10)
                     except:
                         pass
 
@@ -757,9 +744,7 @@ if __name__ == "__main__":
                             agent.performance_metrics["memory_usage"] = (
                                 process.memory_info().rss / 1024 / 1024
                             )  # MB
-                            agent.performance_metrics["cpu_usage"] = (
-                                process.cpu_percent()
-                            )
+                            agent.performance_metrics["cpu_usage"] = process.cpu_percent()
                         except:
                             pass
 
@@ -775,9 +760,7 @@ if __name__ == "__main__":
             try:
                 # Keep only recent completed tasks
                 if len(self.completed_tasks) > self.task_history_size:
-                    self.completed_tasks = self.completed_tasks[
-                        -self.task_history_size :
-                    ]
+                    self.completed_tasks = self.completed_tasks[-self.task_history_size :]
 
                 await asyncio.sleep(60)  # Cleanup every minute
 
