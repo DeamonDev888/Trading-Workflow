@@ -125,15 +125,12 @@ class L2Book:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "L2Book":
-        # Handle different response formats
         levels = data.get("levels", [])
         if isinstance(levels, list) and len(levels) > 0:
             if isinstance(levels[0], dict):
-                # Format: levels[0] = {'bids': [...], 'asks': [...]}
                 bids_data = levels[0].get("bids", [])
                 asks_data = levels[0].get("asks", [])
             else:
-                # Format: levels = [[bids], [asks]]
                 bids_data = levels[0] if len(levels) > 0 else []
                 asks_data = levels[1] if len(levels) > 1 else []
         else:
@@ -171,16 +168,13 @@ class Candle:
         )
 
 
-# API Request/Response Types
 InfoRequest = Dict[str, Any]
 InfoResponse = Union[Dict[str, Any], List[Any]]
 
 ExchangeRequest = Dict[str, Any]
 ExchangeResponse = Dict[str, Any]
 
-# Asset ID mappings
 ASSET_IDS = {
-    # Perpetual assets (index in meta.universe)
     "BTC": 0,
     "ETH": 1,
     "SOL": 2,
@@ -283,7 +277,6 @@ ASSET_IDS = {
     "ENA": 99,
 }
 
-# Spot asset IDs (10000 + spotIndex)
 SPOT_ASSET_OFFSET = 10000
 
 
@@ -299,12 +292,9 @@ def get_asset_id(symbol: str, is_spot: bool = False) -> int:
         Asset ID
     """
     if is_spot:
-        # For spot assets, we need to look up the index in spotMeta
-        # This is a placeholder - in practice, you'd fetch from /info meta
         spot_indices = {
             "PURR/USDC": 0,
             "HYPE/USDC": 1,
-            # Add more as needed
         }
         spot_index = spot_indices.get(symbol, 0)
         return SPOT_ASSET_OFFSET + spot_index
@@ -323,16 +313,13 @@ def get_symbol_from_asset_id(asset_id: int) -> str:
         Symbol string
     """
     if asset_id >= SPOT_ASSET_OFFSET:
-        # Spot asset
         spot_index = asset_id - SPOT_ASSET_OFFSET
         spot_symbols = {
             0: "PURR/USDC",
             1: "HYPE/USDC",
-            # Add more as needed
         }
         return spot_symbols.get(spot_index, f"SPOT_{spot_index}")
     else:
-        # Perpetual asset
         for symbol, aid in ASSET_IDS.items():
             if aid == asset_id:
                 return symbol

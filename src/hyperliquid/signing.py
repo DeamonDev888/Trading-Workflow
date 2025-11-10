@@ -24,17 +24,13 @@ def sign_user_action(action: Dict[str, Any], account: Account, nonce: int) -> Di
     Returns:
         Signature dictionary
     """
-    # Create the message to sign
     message = {"action": action, "nonce": nonce}
 
-    # Serialize the message
     message_json = json.dumps(message, separators=(",", ":"), sort_keys=True)
     message_bytes = message_json.encode("utf-8")
 
-    # Create the hash
     message_hash = hashlib.sha256(message_bytes).digest()
 
-    # Sign the hash
     signed_message = account.sign_message(encode_defunct(primitive=message_hash))
 
     return {
@@ -56,17 +52,13 @@ def sign_l1_action(action: Dict[str, Any], account: Account, nonce: int) -> Dict
     Returns:
         Signature dictionary
     """
-    # Create the message to sign
     message = {"action": action, "nonce": nonce}
 
-    # Serialize the message
     message_json = json.dumps(message, separators=(",", ":"), sort_keys=True)
     message_bytes = message_json.encode("utf-8")
 
-    # Create the hash
     message_hash = hashlib.sha256(message_bytes).digest()
 
-    # Sign the hash
     signed_message = account.sign_message(encode_defunct(primitive=message_hash))
 
     return {
@@ -103,29 +95,23 @@ def verify_signature(
         True if signature is valid
     """
     try:
-        # Check sender if provided
         if expected_sender and signature_dict.get("sender") != expected_sender:
             return False
 
-        # Recreate the message
         nonce = signature_dict.get("nonce")
         if not nonce:
             return False
 
         message = {"action": action, "nonce": nonce}
 
-        # Serialize the message
         message_json = json.dumps(message, separators=(",", ":"), sort_keys=True)
         message_bytes = message_json.encode("utf-8")
 
-        # Create the hash
         message_hash = hashlib.sha256(message_bytes).digest()
 
-        # Check hash matches
         if signature_dict.get("hash") != message_hash.hex():
             return False
 
-        # Verify signature using eth_account
         account = Account()
         recovered = account.recover_message(
             encode_defunct(primitive=message_hash),
@@ -138,7 +124,6 @@ def verify_signature(
         return False
 
 
-# Convenience function for trading
 def create_signed_order(
     order_action: Dict[str, Any], account: Account, nonce: int = None
 ) -> Dict[str, Any]:
@@ -161,7 +146,6 @@ def create_signed_order(
     return {"action": order_action, "signature": signature, "nonce": nonce}
 
 
-# Convenience function for cancellations
 def create_signed_cancel(
     cancel_action: Dict[str, Any], account: Account, nonce: int = None
 ) -> Dict[str, Any]:
@@ -184,16 +168,13 @@ def create_signed_cancel(
     return {"action": cancel_action, "signature": signature, "nonce": nonce}
 
 
-# Example usage:
 """
 from eth_account import Account
 from src.hyperliquid.signing import sign_user_action, get_nonce
 from src.hyperliquid.client import HyperliquidClient
 
-# Initialize account
 account = Account.from_key(private_key)
 
-# Create order action (from client)
 client = HyperliquidClient()
 order_action = client.create_order_action(
     asset_id=0,  # BTC
@@ -202,11 +183,9 @@ order_action = client.create_order_action(
     size=0.001
 )
 
-# Sign the action
 nonce = get_nonce()
 signature = sign_user_action(order_action, account, nonce)
 
-# Use in exchange call
 result = await client.place_order(
     action=order_action,
     signature=signature,

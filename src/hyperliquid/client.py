@@ -28,17 +28,14 @@ class HyperliquidClient:
         self.name = "Hyperliquid API Client"
         self.version = "1.0.0"
 
-        # Configuration
         self.testnet = testnet
         self.base_url = base_url if not testnet else "https://api.hyperliquid-testnet.xyz"
         self.info_url = f"{self.base_url}/info"
         self.exchange_url = f"{self.base_url}/exchange"
         self.timeout = timeout
 
-        # HTTP session
         self.session: Optional[aiohttp.ClientSession] = None
 
-        # Cached data
         self._meta_cache: Optional[Dict[str, Any]] = None
         self._spot_meta_cache: Optional[Dict[str, Any]] = None
         self._asset_info_cache: Dict[int, AssetInfo] = {}
@@ -93,10 +90,6 @@ class HyperliquidClient:
         except aiohttp.ClientError as e:
             cprint(f"❌ HTTP request failed: {str(e)}", "red")
             raise
-
-    # ===============================
-    # INFO ENDPOINT METHODS
-    # ===============================
 
     async def get_meta(self) -> Dict[str, Any]:
         """
@@ -297,10 +290,6 @@ class HyperliquidClient:
 
         return candles
 
-    # ===============================
-    # EXCHANGE ENDPOINT METHODS
-    # ===============================
-
     async def place_order(
         self, action: Dict[str, Any], signature: Dict[str, Any], nonce: int
     ) -> Dict[str, Any]:
@@ -429,10 +418,6 @@ class HyperliquidClient:
         payload = {"action": action, "nonce": nonce, "signature": signature}
 
         return await self._post_request(self.exchange_url, payload)
-
-    # ===============================
-    # UTILITY METHODS
-    # ===============================
 
     def create_order_action(
         self,
