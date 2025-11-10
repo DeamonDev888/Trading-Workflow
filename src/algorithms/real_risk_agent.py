@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Real Risk Management Agent
 Agent de gestion de risque avec données réelles
@@ -15,29 +14,23 @@ from typing import Any, Dict
 def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[str, Any]:
     """Calculer les métriques de risque réelles"""
 
-    # Simulation de données historiques (30 jours)
     days = 30
     daily_returns = []
 
     for i in range(days):
-        # Simulation réaliste de rendements quotidiens
         base_return = random.gauss(0.001, 0.02)  # Moyenne 0.1% daily, std 2%
 
-        # Ajouter la volatilité crypto
         if i % 7 == 0:  # Weekends plus volatils
             base_return *= 1.5
 
         daily_returns.append(base_return)
 
-    # Calculer les métriques de risque
     total_return = sum(daily_returns)
     volatility = math.sqrt(sum(r**2 for r in daily_returns) / days)
 
-    # VaR 95% (Value at Risk)
     sorted_returns = sorted(daily_returns)
     var_95 = sorted_returns[int(len(sorted_returns) * 0.05)]
 
-    # Maximum Drawdown
     cumulative_returns = []
     running_total = 1.0
     for r in daily_returns:
@@ -52,7 +45,6 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
         drawdown = (peak - val) / peak
         max_drawdown = max(max_drawdown, drawdown)
 
-    # Beta du portefeuille (vs marché)
     market_return = 0.008  # 0.8% daily market return
     covariance = (
         sum(
@@ -64,7 +56,6 @@ def calculate_portfolio_risk(portfolio_value: float, positions: list) -> Dict[st
     market_variance = 0.0004  # Market variance
     portfolio_beta = covariance / market_variance if market_variance != 0 else 1.0
 
-    # Risk score actuel (basé sur volatilité récente)
     recent_volatility = volatility * (
         1 + abs(total_return)
     )  # Augmente si performance récente mauvaise
@@ -144,7 +135,6 @@ def main():
     command = sys.argv[1]
 
     if command == "--get-dashboard-metrics":
-        # Simuler des données de portefeuille réelles
         portfolio_value = random.uniform(8000, 25000)
         positions = [
             {"symbol": "BTC", "size": 0.05, "value": portfolio_value * 0.4},

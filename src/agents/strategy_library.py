@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [WINNER] Stratégies Prouvées par Backtests - Bibliothèque Centrale
 L'ÂME du projet - Les agents ne font qu'exécuter ces stratégies validées
@@ -21,9 +20,7 @@ class ProvenStrategyLibrary:
         self.last_validation = time.time()
         self.validation_interval = 3600  # Revalider toutes les heures
 
-        # [WINNER] STRATÉGIES PROUVÉES PAR BACKTESTS (Seuils minimum: 60% win rate, 1.5 profit factor)
         self.strategies = {
-            # === STRATÉGIES RISK MANAGEMENT ===
             "RSI_Oversold_68": {
                 "name": "RSI_Oversold_68",
                 "category": "risk_management",
@@ -108,7 +105,6 @@ class ProvenStrategyLibrary:
                     "valid": True,
                 },
             },
-            # === STRATÉGIES TECHNIQUES ===
             "MACD_Crossover_65": {
                 "name": "MACD_Crossover_65",
                 "category": "technical",
@@ -167,7 +163,6 @@ class ProvenStrategyLibrary:
                     "valid": True,
                 },
             },
-            # === STRATÉGIES FUNDING ===
             "Funding_Arbitrage_85": {
                 "name": "Funding_Arbitrage_85",
                 "category": "funding",
@@ -196,7 +191,6 @@ class ProvenStrategyLibrary:
                     "valid": True,
                 },
             },
-            # === STRATÉGIES SENTIMENT ===
             "Twitter_Sentiment_69": {
                 "name": "Twitter_Sentiment_69",
                 "category": "sentiment",
@@ -251,14 +245,12 @@ class ProvenStrategyLibrary:
 
         strategy = self.strategies[strategy_name]
 
-        # Critères de validation continue
         min_win_rate = 0.55  # 55% minimum récent
         min_profit_factor = 1.3  # 1.3 minimum récent
 
         recent_win_rate = recent_performance.get("win_rate", 0)
         recent_profit_factor = recent_performance.get("profit_factor", 0)
 
-        # Mettre à jour la validation
         is_valid = recent_win_rate >= min_win_rate and recent_profit_factor >= min_profit_factor
 
         strategy["current_validation"]["last_24_hours"] = recent_performance
@@ -288,18 +280,15 @@ class ProvenStrategyLibrary:
         if not valid_strategies:
             return None
 
-        # Score basé sur performances historiques + récentes
         best_strategy = None
         best_score = 0
 
         for strategy in valid_strategies:
-            # Score pondéré: 60% historique + 40% récent
             historical_score = strategy["win_rate"]
             recent_score = strategy["current_validation"]["last_24_hours"]["win_rate"]
 
             combined_score = (historical_score * 0.6) + (recent_score * 0.4)
 
-            # Bonus si la stratégie correspond aux conditions
             condition_bonus = self._calculate_condition_match(strategy, market_conditions)
             total_score = combined_score + condition_bonus
 
@@ -313,7 +302,6 @@ class ProvenStrategyLibrary:
         """Calcule le bonus de correspondance des conditions (0-0.2)"""
         bonus = 0.0
 
-        # Vérifier si les conditions de la stratégie sont remplies
         conditions = strategy.get("conditions", {})
 
         if strategy["category"] == "risk_management":
@@ -373,5 +361,4 @@ class ProvenStrategyLibrary:
         return True
 
 
-# Instance globale de la bibliothèque
 PROVEN_STRATEGIES = ProvenStrategyLibrary()

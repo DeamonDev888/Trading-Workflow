@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from eth_account import Account
 from termcolor import cprint
 
-# Load environment variables
 load_dotenv()
 
 
@@ -27,13 +26,11 @@ class WalletManager:
         self.name = "Wallet Manager"
         self.version = "2.0.0"
 
-        # Configuration
         self.base_url = "https://api.hyperliquid.xyz"
         self.testnet_url = "https://api.hyperliquid-testnet.xyz"
         self.is_testnet = os.environ.get("HYPERLIQUID_TESTNET", "false").lower() == "true"
         self.api_url = self.testnet_url if self.is_testnet else self.base_url  # Mainnet by default
 
-        # Load configured wallet - REQUIRE REAL KEY
         self.private_key = os.environ.get("HYPER_LIQUID_KEY")
 
         if not self.private_key:
@@ -47,7 +44,6 @@ class WalletManager:
             )
 
         try:
-            # Validate and load the real private key
             self.account = Account.from_key(self.private_key)
             self.address = self.account.address
             cprint(
@@ -59,10 +55,8 @@ class WalletManager:
                 f"❌ Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
             )
 
-        # Wallet permissions (from config)
         self.permissions = self._load_wallet_permissions()
 
-        # Wallet status
         self.wallet_info = {
             "address": self.address,
             "permissions": self.permissions,
@@ -78,7 +72,6 @@ class WalletManager:
 
     def _load_wallet_permissions(self) -> List[str]:
         """Load wallet permissions from config"""
-        # Default permissions for configured wallet
         return ["trading", "read", "full_access"]
 
     def get_wallet_info(self) -> Dict[str, Any]:
@@ -125,7 +118,6 @@ class WalletManager:
 
         cprint(f"✅ Updated wallet permissions: {', '.join(self.permissions)}", "green")
 
-    # Legacy methods for backward compatibility
     def get_active_wallets(self) -> List[Dict[str, Any]]:
         """Get active wallets (returns configured wallet)"""
         return [

@@ -4,16 +4,13 @@ Compatibility layer for refactored system
 """
 
 import json
-import logging
 from datetime import datetime
 
 from .logger import get_logger
 
-# Use centralized logger
 logger = get_logger("novaquote")
 
 
-# Trading utilities placeholder
 def format_usd(amount):
     """Format amount as USD"""
     return f"${amount:,.2f}"
@@ -24,14 +21,12 @@ def format_percentage(value):
     return f"{value:+.2f}%"
 
 
-# API utilities placeholder
 def make_api_request(url, method="GET", data=None):
     """Make API request placeholder"""
     logger.info(f"API Request: {method} {url}")
     return {"success": True, "data": None}
 
 
-# WebSocket utilities placeholder
 def send_websocket_message(ws, message):
     """Send WebSocket message"""
     if ws and hasattr(ws, "send"):
@@ -40,7 +35,6 @@ def send_websocket_message(ws, message):
     return False
 
 
-# Time utilities
 def get_timestamp():
     """Get current timestamp"""
     return datetime.now().isoformat()

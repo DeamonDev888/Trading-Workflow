@@ -11,7 +11,6 @@ Orchestrateur principal qui:
 """
 
 import asyncio
-import json
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -29,26 +28,20 @@ from src.agents.reliability_monitor import AlertLevel, ReliabilityMonitor
 class OrchestratorConfig:
     """Configuration de l'orchestrateur"""
 
-    # Agents à utiliser
     required_agents: List[str] = None
 
-    # Seuils de décision
     min_confidence: float = 0.6
     min_reliability: float = 0.7
     min_agents_agreement: float = 0.5
 
-    # Timeout
     max_execution_time: float = 300.0  # 5 minutes
 
-    # Monitoring
     enable_monitoring: bool = True
     health_check_interval: float = 60.0  # 1 minute
 
-    # Auto-récupération
     auto_recovery: bool = True
     max_retry_attempts: int = 3
 
-    # Validation
     strict_validation: bool = False
 
     def __post_init__(self):
@@ -98,18 +91,15 @@ class ClaudeCodeOrchestrator:
             Path(project_path) if project_path else Path(__file__).parent.parent.parent
         )
 
-        # Composants
         self.integration_manager = ClaudeCodeIntegrationManager(self.project_path)
         self.data_aggregator = DataAggregator(self.project_path)
         self.reliability_monitor = ReliabilityMonitor(self.project_path)
 
-        # État interne
         self.is_running = False
         self.last_execution: Optional[datetime] = None
         self.execution_count = 0
         self.failure_count = 0
 
-        # Statistiques
         self.stats = {
             "total_executions": 0,
             "successful_executions": 0,
@@ -119,7 +109,6 @@ class ClaudeCodeOrchestrator:
             "average_reliability": 0.0,
         }
 
-        # Callbacks
         self.success_callbacks: List[Callable[[OrchestratorResult], None]] = []
         self.failure_callbacks: List[Callable[[Exception], None]] = []
         self.decision_callbacks: List[Callable[[OrchestratorResult], None]] = []
@@ -168,22 +157,17 @@ class ClaudeCodeOrchestrator:
             self.execution_count += 1
             self.last_execution = datetime.now()
 
-            # 1. Lancer les agents selon le mode
             agent_results = await self._execute_agents(task, context_data, mode)
 
-            # 2. Agréger les données
             aggregation_result = self.data_aggregator.aggregate_agent_data(
                 agent_results, context_data
             )
 
-            # 3. Valider avec le moniteur de fiabilité
             if self.config.enable_monitoring:
                 await self._run_health_checks()
 
-            # 4. Déterminer la décision finale
             orchestrator_result = self._make_final_decision(aggregation_result, execution_id)
 
-            # 5. Exécuter les callbacks
             if orchestrator_result.success:
                 self.stats["successful_executions"] += 1
                 for callback in self.success_callbacks:
@@ -201,14 +185,11 @@ class ClaudeCodeOrchestrator:
                 except Exception as e:
                     cprint(f"[ORCHESTRATOR] Decision callback failed: {e}", "red")
 
-            # 6. Mettre à jour les statistiques
             self._update_stats(orchestrator_result, time.time() - start_time)
 
-            # 7. Vérifier si auto-récupération nécessaire
             if not orchestrator_result.success and self.config.auto_recovery:
                 await self._attempt_recovery(orchestrator_result)
 
-            # 8. Afficher le résultat final
             self._print_final_result(orchestrator_result, time.time() - start_time)
 
             return orchestrator_result
@@ -219,7 +200,6 @@ class ClaudeCodeOrchestrator:
 
             cprint(f"\n[ORCHESTRATOR] Execution failed: {e}", "red", attrs=["bold"])
 
-            # Créer une alerte
             self.reliability_monitor.create_alert(
                 AlertLevel.CRITICAL,
                 f"Orchestration failed: {str(e)}",
@@ -227,7 +207,6 @@ class ClaudeCodeOrchestrator:
                 {"execution_id": execution_id, "error": str(e)},
             )
 
-            # Exécuter les callbacks d'échec
             for callback in self.failure_callbacks:
                 try:
                     callback(e)
@@ -258,7 +237,6 @@ class ClaudeCodeOrchestrator:
         agent_results = {}
 
         if mode == "complete":
-            # Exécuter tous les agents en parallèle
             cprint("[ORCHESTRATOR] Executing all agents (complete mode)", "cyan")
 
             for agent_id in self.config.required_agents:
@@ -267,7 +245,6 @@ class ClaudeCodeOrchestrator:
                 agent_results[agent_id] = result
 
         elif mode == "quick":
-            # Exécuter uniquement les agents essentiels
             essential_agents = ["claude-strategy-advisor", "claude-risk-advisor"]
             cprint(
                 f"[ORCHESTRATOR] Executing essential agents: {', '.join(essential_agents)}",
@@ -279,7 +256,6 @@ class ClaudeCodeOrchestrator:
                 agent_results[agent_id] = result
 
         else:  # custom
-            # Exécuter selon la configuration
             cprint(
                 f"[ORCHESTRATOR] Executing custom agents: {', '.join(self.config.required_agents)}",
                 "cyan",
@@ -296,7 +272,6 @@ class ClaudeCodeOrchestrator:
     ) -> Dict[str, Any]:
         """Exécute un agent unique"""
         try:
-            # Utiliser le gestionnaire d'intégration
             result = self.integration_manager.call_claude_code_agent(
                 agent_id=agent_id,
                 prompt=task,
@@ -331,16 +306,13 @@ class ClaudeCodeOrchestrator:
     async def _run_health_checks(self):
         """Exécute les vérifications de santé"""
         try:
-            # Récupérer les données du moniteur
             reliability_data = self.data_aggregator.get_reliability_report()
             agent_status = self.data_aggregator.get_agent_status()
 
-            # Vérifier la santé du système
             health_report = self.reliability_monitor.check_system_health(
                 reliability_data, agent_status
             )
 
-            # Générer des alertes si nécessaire
             if health_report["overall_status"] == "CRITICAL":
                 self.reliability_monitor.create_alert(
                     AlertLevel.EMERGENCY,
@@ -356,12 +328,10 @@ class ClaudeCodeOrchestrator:
                     health_report,
                 )
 
-            # Vérifier les échecs consécutifs
             for agent_name, stats in reliability_data.get("agent_reliability", {}).items():
                 if stats["total_calls"] > 0:
                     failure_rate = 1.0 - stats["success_rate"]
                     if failure_rate > 0.5:  # Plus de 50% d'échecs
-                        # Calculer le nombre d'échecs consécutifs
                         recent_calls = self.data_aggregator.aggregation_history[-10:]
                         consecutive_failures = 0
                         for agg in reversed(recent_calls):
@@ -387,7 +357,6 @@ class ClaudeCodeOrchestrator:
         """Détermine la décision finale"""
         warnings = []
 
-        # 1. Vérifier que l'agrégation a réussi
         if not aggregation_result.agents_data:
             return OrchestratorResult(
                 success=False,
@@ -399,26 +368,22 @@ class ClaudeCodeOrchestrator:
                 warnings=warnings,
             )
 
-        # 2. Vérifier le nombre d'agents réussis
         successful_agents = [a for a in aggregation_result.agents_data if a.success]
         if len(successful_agents) < 2:
             warnings.append(f"Only {len(successful_agents)} agents succeeded (minimum: 2)")
 
-        # 3. Vérifier la confiance
         if aggregation_result.confidence_score < self.config.min_confidence:
             warnings.append(
                 f"Confidence too low: {aggregation_result.confidence_score:.2f} "
                 f"(minimum: {self.config.min_confidence})"
             )
 
-        # 4. Vérifier la fiabilité
         if aggregation_result.reliability_score < self.config.min_reliability:
             warnings.append(
                 f"Reliability too low: {aggregation_result.reliability_score:.2f} "
                 f"(minimum: {self.config.min_reliability})"
             )
 
-        # 5. Vérifier les erreurs critiques
         if aggregation_result.errors:
             return OrchestratorResult(
                 success=False,
@@ -430,21 +395,16 @@ class ClaudeCodeOrchestrator:
                 warnings=warnings,
             )
 
-        # 6. Déterminer la décision finale
         final_decision = aggregation_result.final_decision
 
-        # 7. Ajuster selon le mode strict
         if self.config.strict_validation and warnings:
-            # En mode strict, être plus conservative
             if aggregation_result.confidence_score < 0.8:
                 final_decision = "HOLD"
                 warnings.append("Decision adjusted to HOLD due to strict validation")
 
-        # 8. Calculer la décision finale avec pondération
         decision_confidence = aggregation_result.confidence_score
         decision_reliability = aggregation_result.reliability_score
 
-        # Score final (moyenne pondée)
         final_score = decision_confidence * 0.6 + decision_reliability * 0.4
 
         return OrchestratorResult(
@@ -466,7 +426,6 @@ class ClaudeCodeOrchestrator:
         """Tente une auto-récupération"""
         cprint("\n[ORCHESTRATOR] Attempting auto-recovery...", "yellow")
 
-        # Stratégies de récupération
         recovery_strategies = [
             self._restart_failed_agents,
             self._reduce_iterations,
@@ -486,24 +445,20 @@ class ClaudeCodeOrchestrator:
 
     async def _restart_failed_agents(self, result: OrchestratorResult):
         """Redémarre les agents en échec"""
-        # TODO: Implémenter le redémarrage des agents
         pass
 
     async def _reduce_iterations(self, result: OrchestratorResult):
         """Réduit le nombre d'itérations"""
-        # TODO: Ajuster la configuration des itérations
         pass
 
     async def _switch_to_quick_mode(self, result: OrchestratorResult):
         """Bascule en mode rapide"""
-        # TODO: Réduire le nombre d'agents utilisés
         pass
 
     def _update_stats(self, result: OrchestratorResult, execution_time: float):
         """Met à jour les statistiques"""
         self.stats["total_executions"] += 1
 
-        # Moyenne mobile
         n = self.stats["total_executions"]
         self.stats["average_execution_time"] = (
             self.stats["average_execution_time"] * (n - 1) + execution_time
@@ -562,13 +517,11 @@ class ClaudeCodeOrchestrator:
 
     def is_system_healthy(self) -> bool:
         """Vérifie si le système est globalement en bonne santé"""
-        # Vérifier le taux de succès
         if self.stats["total_executions"] > 0:
             success_rate = self.stats["successful_executions"] / self.stats["total_executions"]
             if success_rate < 0.6:  # Moins de 60% de succès
                 return False
 
-        # Vérifier les alertes critiques
         active_alerts = self.reliability_monitor.get_active_alerts()
         critical_alerts = [
             a for a in active_alerts if a.level in [AlertLevel.CRITICAL, AlertLevel.EMERGENCY]
@@ -576,19 +529,16 @@ class ClaudeCodeOrchestrator:
         if critical_alerts:
             return False
 
-        # Vérifier les échecs consécutifs
         if self.failure_count >= 5:  # Plus de 5 échecs consécutifs
             return False
 
         return True
 
 
-# Test de l'orchestrateur
 if __name__ == "__main__":
     import asyncio
 
     async def main():
-        # Configuration
         config = OrchestratorConfig(
             min_confidence=0.6,
             min_reliability=0.7,
@@ -596,10 +546,8 @@ if __name__ == "__main__":
             auto_recovery=True,
         )
 
-        # Initialiser l'orchestrateur
         orchestrator = ClaudeCodeOrchestrator(config)
 
-        # Données de test
         test_context = {
             "symbol": "BTC-USD",
             "price": 50000,
@@ -607,14 +555,12 @@ if __name__ == "__main__":
             "timestamp": datetime.now().isoformat(),
         }
 
-        # Exécuter l'analyse
         result = await orchestrator.execute_trading_analysis(
             task="Should I buy BTC at current price?",
             context_data=test_context,
             mode="complete",
         )
 
-        # Afficher les statistiques
         print("\n" + "=" * 70)
         cprint("  ORCHESTRATOR STATISTICS", "cyan", attrs=["bold"])
         print("=" * 70)

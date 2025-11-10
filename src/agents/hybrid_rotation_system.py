@@ -79,13 +79,11 @@ class HybridRotationManager:
         self.liquidity_tracker = HyperLiquidLiquidityTracker()
         self.client: Optional[PersistentAgentClient] = None
 
-        # Core components
         self.auto_rotator = AutomaticCoinRotator()
         self.user_preferences: Dict[str, UserPreference] = {}
         self.active_suggestions: List[RotationSuggestion] = []
         self.suggestion_history: List[RotationSuggestion] = []
 
-        # State management
         self.running = False
         self.current_assets: List[AssetConfig] = []
         self.last_rotation = datetime.now()
@@ -93,11 +91,9 @@ class HybridRotationManager:
         self.auto_rotation_count = 0
         self.collaborative_decisions = 0
 
-        # Learning system
         self.user_patterns: Dict[str, Any] = {}
         self.preference_evolution: Dict[str, List[float]] = {}
 
-        # Metrics
         self.hybrid_metrics = {
             "total_decisions": 0,
             "user_decisions": 0,
@@ -122,10 +118,8 @@ class HybridRotationManager:
             self.client = client
             self.running = True
 
-            # Initialize system
             await self._initialize_hybrid_system()
 
-            # Main hybrid loop
             while self.running:
                 try:
                     await self._perform_hybrid_rotation_cycle()
@@ -139,13 +133,10 @@ class HybridRotationManager:
         """Initialize the hybrid system"""
         print("[INIT] Initializing hybrid rotation system...")
 
-        # Initialize automatic rotator
         await self.auto_rotator._initialize_monitoring()
 
-        # Load user preferences (in real system, from database)
         await self._load_user_preferences()
 
-        # Get initial assets
         initial_assets = await self._get_hybrid_initial_assets()
 
         print(f"[INIT] Hybrid system initialized with {len(initial_assets)} assets")
@@ -153,8 +144,6 @@ class HybridRotationManager:
 
     async def _load_user_preferences(self):
         """Load or initialize user preferences"""
-        # In real implementation, load from database/user profile
-        # For now, initialize with some default preferences
         default_assets = ["BTC", "ETH", "SOL", "AVAX", "MATIC", "DOT"]
 
         for asset in default_assets:
@@ -169,16 +158,13 @@ class HybridRotationManager:
 
     async def _get_hybrid_initial_assets(self) -> List[AssetConfig]:
         """Get initial assets considering both auto and user preferences"""
-        # Get automatic suggestions
         auto_assets = await self.auto_rotator._get_liquid_assets()
 
-        # Combine with user preferences
         scored_assets = []
         for asset in auto_assets[:12]:  # Top 12 liquid assets
             if asset in self.auto_rotator.asset_configs:
                 user_pref = self.user_preferences.get(asset)
 
-                # Calculate hybrid score
                 auto_score = 1.0 - (
                     auto_assets.index(asset) / len(auto_assets)
                 )  # Higher for better rank
@@ -191,17 +177,14 @@ class HybridRotationManager:
 
                 scored_assets.append((asset, hybrid_score, user_pref))
 
-        # Sort by hybrid score
         scored_assets.sort(key=lambda x: x[1], reverse=True)
 
-        # Select top assets
         selected = []
         for asset, score, user_pref in scored_assets[: self.config.max_assets]:
             config = self.auto_rotator.asset_configs[asset]
             self.current_assets.append(config)
             selected.append(asset)
 
-            # Initialize tracking
             self.auto_rotator.last_rotation[asset] = datetime.now()
             self.auto_rotator.performance_history[asset] = [score]
 
@@ -213,25 +196,19 @@ class HybridRotationManager:
         print(f"\n[HYBRID] Rotation cycle started")
 
         try:
-            # Step 1: Update performance data
             await self._update_performance_data()
 
-            # Step 2: Analyze rotation needs based on control mode
             rotation_needs = await self._analyze_hybrid_rotation_needs()
 
-            # Step 3: Generate suggestions if needed
             if rotation_needs["action_needed"]:
                 suggestions = await self._generate_rotation_suggestions(rotation_needs)
                 await self._process_suggestions(suggestions)
 
-            # Step 4: Execute rotation decisions
             await self._execute_hybrid_rotations()
 
-            # Step 5: Learn and adapt
             if self.config.learning_enabled:
                 await self._learn_from_cycle()
 
-            # Update metrics
             cycle_time = time.time() - cycle_start
             self._update_hybrid_metrics(cycle_time)
 
@@ -250,23 +227,18 @@ class HybridRotationManager:
         }
 
         if self.config.control_mode == ControlMode.FULL_AUTO:
-            # Pure automatic
             return await self._analyze_auto_rotation(needs)
 
         elif self.config.control_mode == ControlMode.USER_OVERRIDE:
-            # User preferences take priority
             return await self._analyze_user_override_rotation(needs)
 
         elif self.config.control_mode == ControlMode.USER_GUIDED:
-            # Automatic with user guidance
             return await self._analyze_guided_rotation(needs)
 
         elif self.config.control_mode == ControlMode.SEMI_AUTO:
-            # User handles critical, auto handles optimization
             return await self._analyze_semi_auto_rotation(needs)
 
         elif self.config.control_mode == ControlMode.COLLABORATIVE:
-            # AI suggests, user decides
             return await self._analyze_collaborative_rotation(needs)
 
         return needs
@@ -286,7 +258,6 @@ class HybridRotationManager:
         """User override analysis - check for locked assets and preference violations"""
         current_time = datetime.now()
 
-        # Check for locked assets that should be rotated
         for asset_config in self.current_assets:
             asset = asset_config.symbol
             user_pref = self.user_preferences.get(asset)
@@ -294,7 +265,6 @@ class HybridRotationManager:
             if user_pref and user_pref.lock_until and user_pref.lock_until > current_time:
                 continue  # Skip locked assets
 
-            # Check performance issues for non-locked assets
             if asset in self.auto_rotator.performance_history:
                 perf_history = self.auto_rotator.performance_history[asset]
                 if len(perf_history) >= 3:
@@ -308,10 +278,8 @@ class HybridRotationManager:
 
     async def _analyze_guided_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """User-guided rotation analysis"""
-        # Get automatic suggestions but filter by user preferences
         auto_decision = await self.auto_rotator._analyze_rotation_needs()
 
-        # Filter automatic suggestions through user preferences
         if auto_decision.get("assets_to_add"):
             filtered_additions = []
             for asset in auto_decision["assets_to_add"]:
@@ -328,7 +296,6 @@ class HybridRotationManager:
 
     async def _analyze_semi_auto_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """Semi-automatic rotation - only critical issues trigger user interaction"""
-        # Check for critical issues that need user decision
         for asset_config in self.current_assets:
             asset = asset_config.symbol
 
@@ -338,7 +305,6 @@ class HybridRotationManager:
                     recent_perf = perf_history[-3:]
                     avg_recent = sum(recent_perf) / 3
 
-                    # Critical performance issue
                     if avg_recent < 0.2:
                         needs["action_needed"] = True
                         needs["reason"] = f"Critical performance issue for {asset}"
@@ -348,29 +314,23 @@ class HybridRotationManager:
 
     async def _analyze_collaborative_rotation(self, needs: Dict[str, Any]) -> Dict[str, Any]:
         """Collaborative rotation - AI suggests, user decides"""
-        # Always suggest improvements in collaborative mode
         current_time = datetime.now()
 
-        # Find improvement opportunities
         for asset_config in self.current_assets:
             asset = asset_config.symbol
             user_pref = self.user_preferences.get(asset)
 
-            # Don't suggest changes for locked assets
             if user_pref and user_pref.lock_until and user_pref.lock_until > current_time:
                 continue
 
-            # Check if we can find better alternatives
             available_assets = await self.auto_rotator._get_liquid_assets()
             current_score = await self._calculate_asset_score(asset)
 
-            # Look for better performing assets
             for candidate in available_assets:
                 if candidate not in [ac.symbol for ac in self.current_assets]:
                     candidate_score = await self._calculate_asset_score(candidate)
                     user_candidate_pref = self.user_preferences.get(candidate)
 
-                    # Only suggest if significantly better and user doesn't dislike
                     if candidate_score > current_score + 0.2 and (
                         not user_candidate_pref or user_candidate_pref.preference_score > 0.3
                     ):
@@ -394,11 +354,9 @@ class HybridRotationManager:
         suggestions = []
 
         if self.config.control_mode == ControlMode.FULL_AUTO:
-            # No suggestions in full auto mode
             return []
 
         elif self.config.control_mode == ControlMode.USER_OVERRIDE:
-            # Generate suggestions for performance issues
             for asset in rotation_needs["performance_issues"]:
                 suggestion = RotationSuggestion(
                     action="replace",
@@ -411,7 +369,6 @@ class HybridRotationManager:
                 suggestions.append(suggestion)
 
         elif self.config.control_mode == ControlMode.USER_GUIDED:
-            # Suggest filtered automatic candidates
             for asset in rotation_needs["auto_candidates"]:
                 user_pref = self.user_preferences.get(asset)
                 suggestion = RotationSuggestion(
@@ -425,7 +382,6 @@ class HybridRotationManager:
                 suggestions.append(suggestion)
 
         elif self.config.control_mode == ControlMode.SEMI_AUTO:
-            # Generate suggestions for critical issues
             for asset in rotation_needs["performance_issues"]:
                 suggestion = RotationSuggestion(
                     action="replace",
@@ -438,7 +394,6 @@ class HybridRotationManager:
                 suggestions.append(suggestion)
 
         elif self.config.control_mode == ControlMode.COLLABORATIVE:
-            # Generate collaborative suggestions
             for opportunity in rotation_needs["market_opportunities"]:
                 suggestion = RotationSuggestion(
                     action="replace",
@@ -450,7 +405,6 @@ class HybridRotationManager:
                 )
                 suggestions.append(suggestion)
 
-        # Store suggestions
         self.active_suggestions.extend(suggestions)
         self.hybrid_metrics["suggestions_made"] += len(suggestions)
 
@@ -460,26 +414,21 @@ class HybridRotationManager:
         """Process rotation suggestions based on control mode"""
         for suggestion in suggestions:
             if suggestion.auto_accept and self.config.control_mode != ControlMode.COLLABORATIVE:
-                # Auto-accept high confidence suggestions
                 await self._execute_suggestion(suggestion, "auto_accepted")
             elif self.config.control_mode == ControlMode.COLLABORATIVE:
-                # Store for user review
                 print(f"[SUGGESTION] {suggestion.reason} (confidence: {suggestion.confidence:.2f})")
             else:
-                # Process based on mode-specific logic
                 await self._handle_mode_specific_suggestion(suggestion)
 
     async def _handle_mode_specific_suggestion(self, suggestion: RotationSuggestion):
         """Handle suggestions based on specific control mode"""
         if self.config.control_mode == ControlMode.USER_GUIDED:
-            # User-guided: auto-accept if user likes the asset
             if suggestion.action == "add":
                 user_pref = self.user_preferences.get(suggestion.assets[0])
                 if user_pref and user_pref.preference_score > 0.7:
                     await self._execute_suggestion(suggestion, "user_guided_accept")
 
         elif self.config.control_mode == ControlMode.SEMI_AUTO:
-            # Semi-auto: only critical issues need user approval
             if suggestion.confidence > 0.85:
                 await self._execute_suggestion(suggestion, "auto_critical")
 
@@ -489,20 +438,17 @@ class HybridRotationManager:
             success = False
 
             if suggestion.action == "add":
-                # Add asset
                 asset = suggestion.assets[0]
                 if len(self.current_assets) < self.config.max_assets:
                     if await self._add_asset_to_rotation(asset):
                         success = True
 
             elif suggestion.action == "remove":
-                # Remove asset
                 asset = suggestion.assets[0]
                 if await self._remove_asset_from_rotation(asset):
                     success = True
 
             elif suggestion.action == "replace":
-                # Replace asset
                 old_asset = suggestion.assets[0]
                 new_asset = suggestion.assets[1] if len(suggestion.assets) > 1 else None
 
@@ -511,12 +457,10 @@ class HybridRotationManager:
                         if await self._add_asset_to_rotation(new_asset):
                             success = True
 
-            # Update suggestion
             suggestion.user_response = response_type
             self.suggestion_history.append(suggestion)
             self.active_suggestions.remove(suggestion)
 
-            # Update metrics
             if success:
                 if response_type in ["auto_accepted", "user_guided_accept"]:
                     self.auto_rotation_count += 1
@@ -532,9 +476,7 @@ class HybridRotationManager:
 
     async def _execute_hybrid_rotations(self):
         """Execute any pending rotations"""
-        # In full auto mode, let the automatic rotator handle it
         if self.config.control_mode == ControlMode.FULL_AUTO:
-            # Run one automatic rotation cycle
             auto_decision = await self.auto_rotator._analyze_rotation_needs()
             if auto_decision["should_rotate"]:
                 await self.auto_rotator._execute_rotation(auto_decision)
@@ -546,7 +488,6 @@ class HybridRotationManager:
                 config = self.auto_rotator.asset_configs[asset]
                 self.current_assets.append(config)
 
-                # Initialize tracking
                 self.auto_rotator.last_rotation[asset] = datetime.now()
                 self.auto_rotator.performance_history[asset] = [0.6]
 
@@ -573,19 +514,16 @@ class HybridRotationManager:
 
     async def _calculate_asset_score(self, asset: str) -> float:
         """Calculate hybrid score for an asset"""
-        # Performance score
         perf_score = 0.5
         if asset in self.auto_rotator.performance_history:
             history = self.auto_rotator.performance_history[asset]
             if history:
                 perf_score = sum(history) / len(history)
 
-        # User preference score
         user_score = 0.5
         if asset in self.user_preferences:
             user_score = self.user_preferences[asset].preference_score
 
-        # Combine scores
         hybrid_score = (
             perf_score * self.config.auto_rotation_weight
             + user_score * self.config.user_preference_weight
@@ -598,12 +536,10 @@ class HybridRotationManager:
         if not self.config.learning_enabled:
             return
 
-        # Learn from user responses
         for suggestion in self.suggestion_history[-5:]:  # Last 5 suggestions
             if suggestion.user_response:
                 await self._update_user_patterns(suggestion)
 
-        # Adapt preferences based on performance
         for asset_config in self.current_assets:
             asset = asset_config.symbol
             if asset in self.auto_rotator.performance_history:
@@ -611,7 +547,6 @@ class HybridRotationManager:
                 if len(perf_history) >= 3:
                     recent_perf = sum(perf_history[-3:]) / 3
 
-                    # Gradually adjust user preference based on performance
                     if asset in self.user_preferences:
                         user_pref = self.user_preferences[asset]
                         adjustment = (recent_perf - 0.5) * self.config.adaptation_rate
@@ -640,13 +575,11 @@ class HybridRotationManager:
         self.hybrid_metrics["auto_decisions"] = self.auto_rotation_count
         self.hybrid_metrics["collaborative_decisions"] = self.collaborative_decisions
 
-        # Calculate satisfaction (simple heuristic)
         total_suggestions = self.hybrid_metrics["suggestions_made"]
         if total_suggestions > 0:
             acceptance_rate = self.hybrid_metrics["suggestions_accepted"] / total_suggestions
             self.hybrid_metrics["user_satisfaction"] = min(1.0, acceptance_rate * 1.2)
 
-    # User interface methods
     async def respond_to_suggestion(
         self,
         suggestion_id: int,
@@ -669,7 +602,6 @@ class HybridRotationManager:
                     self.hybrid_metrics["suggestions_rejected"] += 1
 
                 elif response == "modify" and modifications:
-                    # Apply user modifications and re-execute
                     await self._apply_modifications(suggestion, modifications)
 
                 return {
@@ -693,7 +625,6 @@ class HybridRotationManager:
 
             user_pref = self.user_preferences[symbol]
 
-            # Update preference fields
             if "preference_score" in preference_data:
                 user_pref.preference_score = max(0.0, min(1.0, preference_data["preference_score"]))
 
@@ -813,7 +744,6 @@ class HybridRotationManager:
         self.running = False
 
 
-# Demo and testing
 if __name__ == "__main__":
 
     async def demo_hybrid_rotation():
@@ -834,17 +764,13 @@ if __name__ == "__main__":
         print("[DEMO] Starting hybrid rotation system (runs for 60 seconds)...")
 
         try:
-            # Start hybrid rotation
             task = asyncio.create_task(hybrid_manager.start_hybrid_rotation())
 
-            # Let it run for 1 minute
             await asyncio.sleep(60)
 
-            # Stop rotation
             hybrid_manager.stop_hybrid_rotation()
             task.cancel()
 
-            # Display final status
             status = hybrid_manager.get_hybrid_status()
             print(f"\n[FINAL HYBRID STATUS]")
             print(f"  Control Mode: {status['control_mode']}")

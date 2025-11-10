@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Intelligent Backtest Optimizer - IA-Powered Strategy Enhancement
 Analyse les backtests et utilise les agents IA pour optimiser
@@ -10,17 +9,13 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
-import numpy as np
 
-
-# Simple base class for standalone usage
 class BaseAgent:
     def __init__(self):
         self.name = "Base Agent"
         self.version = "1.0.0"
 
 
-# Simplified strategy agent
 class SimpleStrategyAgent:
     def __init__(self):
         self.name = "Strategy Agent"
@@ -35,7 +30,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
         self.version = "1.0.0"
         self.strategy_agent = SimpleStrategyAgent()
 
-        # Seuil de performance minimum
         self.min_sharpe = 1.0
         self.min_return = 0.20  # 20%
         self.min_win_rate = 0.55  # 55%
@@ -58,10 +52,8 @@ class IntelligentBacktestOptimizer(BaseAgent):
             "optimization_potential": 0.0,
         }
 
-        # Extraire les métriques
         metrics = self._extract_metrics(backtest_data)
 
-        # Analyser chaque métrique
         self._analyze_return(metrics, analysis)
         self._analyze_sharpe(metrics, analysis)
         self._analyze_drawdown(metrics, analysis)
@@ -69,16 +61,12 @@ class IntelligentBacktestOptimizer(BaseAgent):
         self._analyze_trades(metrics, analysis)
         self._analyze_profit_factor(metrics, analysis)
 
-        # Calculer le score global
         analysis["performance_score"] = self._calculate_performance_score(metrics)
 
-        # Déterminer la priorité d'optimisation
         analysis["priority"] = self._determine_priority(metrics)
 
-        # Optimisation potentielle
         analysis["optimization_potential"] = self._calculate_optimization_potential(metrics)
 
-        # Générer des recommandations basées sur l'analyse
         analysis["recommendations"] = self._generate_recommendations(analysis)
 
         return analysis
@@ -107,7 +95,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
             analysis["weaknesses"].append(f"Retour insuffisant: {return_pct:.2%}")
             analysis["critical_issues"].append("Retour en dessous du seuil minimum")
 
-        # Analyse de la stabilité du retour
         if metrics["annual_return"] > metrics["return"] * 3:
             analysis["recommendations"].append(
                 "Retour annualisé très élevé - vérifier la cohérence temporelle"
@@ -189,22 +176,16 @@ class IntelligentBacktestOptimizer(BaseAgent):
         """Calcule un score de performance global (0-100)"""
         score = 0
 
-        # Return (25 points)
         score += min(25, max(0, (metrics["return"] * 50)))
 
-        # Sharpe (20 points)
         score += min(20, max(0, metrics["sharpe"] * 10))
 
-        # Win Rate (20 points)
         score += min(20, max(0, metrics["win_rate"] * 20))
 
-        # Drawdown inverse (15 points)
         score += min(15, max(0, (0.30 - metrics["max_drawdown"]) * 50))
 
-        # Profit Factor (10 points)
         score += min(10, max(0, metrics["profit_factor"] * 5))
 
-        # Nombre de trades (10 points)
         if 50 <= metrics["total_trades"] <= 300:
             score += 10
         elif 20 <= metrics["total_trades"] < 50:
@@ -237,7 +218,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
         """Calcule le potentiel d'optimisation (0-1)"""
         potential = 0
 
-        # Plus il y a de faiblesses, plus le potentiel est élevé
         if metrics["return"] < 0.30:
             potential += 0.3
         if metrics["sharpe"] < 1.5:
@@ -255,9 +235,7 @@ class IntelligentBacktestOptimizer(BaseAgent):
         """Génère des recommandations d'optimisation"""
         recommendations = analysis["recommendations"].copy()
 
-        # Ajouter des recommandations basées sur les agents spécialisés
         if analysis["priority"] in ["critical", "high"]:
-            # Demander l'aide du risk agent
             recommendations.append("Demander analyse approfondie au Risk Agent")
 
         if any("sentiment" in issue.lower() for issue in analysis["weaknesses"]):
@@ -266,7 +244,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
         if any("funding" in issue.lower() for issue in analysis["weaknesses"]):
             recommendations.append("Optimiser via Funding Agent pour améliorer le ratio")
 
-        # Stratégies d'amélioration générale
         if len(analysis["critical_issues"]) > 0:
             recommendations.extend(
                 [
@@ -281,10 +258,8 @@ class IntelligentBacktestOptimizer(BaseAgent):
     def optimize_strategy(self, backtest_data: Dict[str, Any]) -> Dict[str, Any]:
         """Génère une stratégie optimisée basée sur l'analyse"""
 
-        # Analyser d'abord
         analysis = self.analyze_backtest(backtest_data)
 
-        # Générer une stratégie optimisée
         optimized_strategy = {
             "original_strategy": backtest_data.get("name", "Unknown"),
             "optimized_strategy_name": f"{backtest_data.get('name', 'Strategy')}" "_OPTIMIZED",
@@ -296,24 +271,20 @@ class IntelligentBacktestOptimizer(BaseAgent):
             "implementation_notes": [],
         }
 
-        # Appliquer des optimisations basées sur l'analyse
         metrics = self._extract_metrics(backtest_data)
 
-        # Optimisation du Sharpe
         if metrics["sharpe"] < 1.5:
             optimized_strategy["new_parameters"]["stop_loss"] = "Tighter (2% instead of 3%)"
             optimized_strategy["new_parameters"]["position_sizing"] = "Dynamic based on volatility"
             optimized_strategy["optimizations_applied"].append("Improved risk management")
             optimized_strategy["expected_improvements"]["sharpe"] = "20-30% increase"
 
-        # Optimisation du drawdown
         if metrics["max_drawdown"] > 0.15:
             optimized_strategy["new_parameters"]["max_position_size"] = "2% of capital"
             optimized_strategy["new_parameters"]["correlation_filter"] = "Enabled"
             optimized_strategy["optimizations_applied"].append("Reduced risk exposure")
             optimized_strategy["expected_improvements"]["max_drawdown"] = "30-40% reduction"
 
-        # Optimisation du win rate
         if metrics["win_rate"] < 0.65:
             optimized_strategy["new_parameters"]["entry_signals"] = "Multi-confirmation required"
             optimized_strategy["new_parameters"][
@@ -322,14 +293,12 @@ class IntelligentBacktestOptimizer(BaseAgent):
             optimized_strategy["optimizations_applied"].append("Improved entry precision")
             optimized_strategy["expected_improvements"]["win_rate"] = "10-15% increase"
 
-        # Optimisation du profit factor
         if metrics["profit_factor"] < 2.0:
             optimized_strategy["new_parameters"]["take_profit"] = "Dynamic (1.5x-3x risk)"
             optimized_strategy["new_parameters"]["trailing_stop"] = "Enabled"
             optimized_strategy["optimizations_applied"].append("Enhanced exit strategy")
             optimized_strategy["expected_improvements"]["profit_factor"] = "25-35% increase"
 
-        # Ajouter les notes d'implémentation
         optimized_strategy["implementation_notes"] = [
             "Backtester avec les nouveaux paramètres",
             "Tester sur données out-of-sample",
@@ -337,7 +306,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
             "Ajuster graduellement sur petit capital",
         ]
 
-        # Calculer le score attendu après optimisation
         expected_score = min(100, analysis["performance_score"] * 1.4)
         optimized_strategy["expected_score"] = expected_score
         optimized_strategy["expected_score_improvement"] = (
@@ -372,7 +340,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
                 optimization = self.optimize_strategy(backtest)
                 results["optimized_strategies"].append(optimization)
 
-                # Mettre à jour le résumé
                 priority = optimization["analysis"]["priority"]
                 if priority == "critical":
                     results["summary"]["critical_strategies"] += 1
@@ -393,7 +360,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
             except Exception as e:
                 self.logger.error(f"Error optimizing {backtest.get('name', 'Unknown')}: {e}")
 
-        # Calculer les moyennes
         if all_scores:
             results["summary"]["avg_current_score"] = np.mean(all_scores)
             results["summary"]["avg_expected_score"] = np.mean(all_expected_scores)
@@ -406,7 +372,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
 
-        # Afficher le rapport dans la console
         print("\n" + "=" * 80)
         print("RAPPORT D'OPTIMISATION INTELLIGENTE")
         print("=" * 80)
@@ -426,7 +391,6 @@ class IntelligentBacktestOptimizer(BaseAgent):
 
         print(f"\nOptimisations recommandées: {results['summary']['total_optimizations']}")
 
-        # Top 3 des stratégies à optimiser en priorité
         if results["optimized_strategies"]:
             top_optimizations = sorted(
                 results["optimized_strategies"],
@@ -450,10 +414,8 @@ class IntelligentBacktestOptimizer(BaseAgent):
 
 
 if __name__ == "__main__":
-    # Test du système d'optimisation
     optimizer = IntelligentBacktestOptimizer()
 
-    # Charger les backtests existants
     test_backtests = [
         {
             "name": "Test Strategy 1",
@@ -479,10 +441,8 @@ if __name__ == "__main__":
     print("TEST DU SYSTÈME D'OPTIMISATION INTELLIGENTE")
     print("=" * 80)
 
-    # Analyser et optimiser
     results = optimizer.optimize_all_strategies(test_backtests)
 
-    # Exporter le rapport
     optimizer.export_optimization_report(results, "intelligent_optimization_report.json")
 
     print("\n[OK] Test terminé avec succès!")

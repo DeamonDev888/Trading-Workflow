@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 NOVAQUOTE Project Snapshot - Génère contexte dynamique basé sur l'analyse réelle
 """
@@ -93,7 +92,6 @@ class ProjectSnapshot:
                     with open(py_file, 'r', encoding='utf-8') as f:
                         content = f.read()
 
-                    # Détecter Claude Code sub-agents
                     pattern_subagents = any(re.search(p, content) for p in [
                         r'claude\s+--agent\s+claude-',
                         r'subprocess\.run.*claude',
@@ -153,8 +151,12 @@ class ProjectSnapshot:
         context_lines.append("## Structure")
         context_lines.append("```")
         context_lines.append("projet trading/")
-        context_lines.append("├── src/agents/            # {} scripts ({} agents + {}+ algorithmes)".format(
-            len(analysis["agents_ia"]) + len(analysis["algorithmes"]), len(analysis["agents_ia"]), len(analysis["algorithmes"])))
+        context_lines.append("├── src/agents/            # {} scripts ({} agents
+                                                                                + {}+ algorithmes)".format(
+
+            len(analysis["agents_ia"])
+                                      + len(analysis["algorithmes"]), len(analysis["agents_ia"]), len(analysis["algorithmes"])))
+
         context_lines.append("├── src/models/            # Model Factory (anciennement)")
         context_lines.append("├── frontend/public/       # {} pages HTML".format(len(analysis["pages_frontend"])))
         context_lines.append("├── backend/               # server-backend.ts (Port 7000)")

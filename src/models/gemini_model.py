@@ -3,7 +3,6 @@
 Built with love by Deamon Dev
 """
 
-import google.generativeai as genai
 from termcolor import cprint
 
 from .base_model import BaseModel, ModelResponse, safe_cprint
@@ -42,11 +41,8 @@ class GeminiModel(BaseModel):
     ) -> ModelResponse:
         """Generate a response using Gemini"""
         try:
-            # Combine system prompt and user content since Gemini doesn't have system messages
             combined_prompt = f"{system_prompt}\n\n{user_content}"
 
-            # Configure safety settings - use BLOCK_ONLY_HIGH instead of BLOCK_NONE
-            # BLOCK_NONE requires special billing access in 2025
             safety_settings = {
                 genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
                 genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
@@ -62,15 +58,12 @@ class GeminiModel(BaseModel):
                 safety_settings=safety_settings,
             )
 
-            # Check if response was blocked or empty
             if not response.candidates or not response.candidates[0].content.parts:
-                # Get detailed block reason
                 block_reason = "UNSPECIFIED"
                 blocked_categories = []
 
                 if hasattr(response, "prompt_feedback"):
                     block_reason_value = getattr(response.prompt_feedback, "block_reason", 0)
-                    # 0=UNSPECIFIED, 1=SAFETY, 2=OTHER, 3=BLOCKLIST, 4=PROHIBITED_CONTENT
                     block_reason_map = {
                         0: "UNSPECIFIED",
                         1: "SAFETY",

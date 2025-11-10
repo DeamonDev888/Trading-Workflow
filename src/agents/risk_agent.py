@@ -13,12 +13,10 @@ import time
 import traceback
 from datetime import datetime, timedelta
 
-import pandas as pd
 from dotenv import load_dotenv
 from termcolor import cprint
 
 from src import config
-from src import nice_funcs as n
 from src.agents.base_agent import BaseAgent
 from src.config import (
     AI_MAX_TOKENS,
@@ -36,10 +34,8 @@ from src.config import (
     USE_PERCENTAGE,
 )
 
-# Define excluded tokens (USDC and SOL to be excluded from position monitoring)
 EXCLUDED_TOKENS = ["USDC", "SOL"]
 
-# Load environment variables
 load_dotenv()
 
 
@@ -52,10 +48,8 @@ class RiskAgent(BaseAgent):
             "risk_agent", enable_postgres=True
         )  # Initialize base agent with PostgreSQL support
 
-        # Configuration pour le sub-agent
-        self.subagent_name = "claude-risk-advisor"
+        self.subagent_name = "Deamon-risk-advisor"
 
-        # Initialize start balance using portfolio value
         self.start_balance = self.get_portfolio_value()
         print(f"[BANK] Initial Portfolio Balance: ${self.start_balance:.2f}")
 
@@ -83,7 +77,7 @@ class RiskAgent(BaseAgent):
         Raises:
             RuntimeError: Si l'appel au sub-agent échoue
         """
-        full_prompt = f"""Use the claude-risk-advisor subagent to analyze this risk scenario:
+        full_prompt = f"""Use the Deamon-risk-advisor subagent to analyze this risk scenario:
 
 {prompt}
 
@@ -92,7 +86,6 @@ Context Data:
 
 Please provide a detailed risk assessment with clear recommendations."""
 
-        # Exécuter Claude Code avec le sub-agent
         cmd = [
             "claude",
             "--dangerously-skip-permissions",
@@ -129,7 +122,6 @@ Please provide a detailed risk assessment with clear recommendations."""
         try:
             print("\n[SEARCH] Deamon Dev's Portfolio Value Calculator Starting... [ROCKET]")
 
-            # Get USDC balance first
             print("[MONEY] Getting USDC balance...")
             try:
                 print(f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}")
@@ -141,7 +133,6 @@ Please provide a detailed risk assessment with clear recommendations."""
                 print(f"[SEARCH] Debug info - USDC Address: {config.USDC_ADDRESS}")
                 traceback.print_exc()
 
-            # Get balance of each monitored token
             print("\n[STATS] Getting monitored token balances...")
             print(f"[TARGET] Total tokens to check: {len(config.MONITORED_TOKENS)}")
             print(f"[NOTE] Token list: {config.MONITORED_TOKENS}")
@@ -179,12 +170,10 @@ Please provide a detailed risk assessment with clear recommendations."""
         try:
             print("\n[NOTE] Checking if we need to log daily balance...")
 
-            # Create data directory if it doesn't exist
             os.makedirs("src/data", exist_ok=True)
             balance_file = "src/data/portfolio_balance.csv"
             print(f"[DIR] Using balance file: {balance_file}")
 
-            # Check if we already have a recent log
             if os.path.exists(balance_file):
                 print("[OK] Found existing balance log file")
                 df = pd.read_csv(balance_file)
@@ -207,11 +196,9 @@ Please provide a detailed risk assessment with clear recommendations."""
                 print("[STATS] Creating new balance log file")
                 df = pd.DataFrame(columns=["timestamp", "balance"])
 
-            # Get current portfolio value
             print("\n[MONEY] Getting fresh portfolio value...")
             current_value = self.get_portfolio_value()
 
-            # Add new row
             new_row = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "balance": current_value,
@@ -220,7 +207,6 @@ Please provide a detailed risk assessment with clear recommendations."""
 
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
 
-            # Save updated log
             df.to_csv(balance_file, index=False)
             cprint(
                 f"💾 New portfolio balance logged: ${current_value:.2f}",
@@ -235,10 +221,8 @@ Please provide a detailed risk assessment with clear recommendations."""
     def get_position_data(self, token):
         """Get recent market data for a token"""
         try:
-            # Get 8h of 15m data
             data_15m = n.get_data(token, 0.33, "15m")  # 8 hours = 0.33 days
 
-            # Get 2h of 5m data
             data_5m = n.get_data(token, 0.083, "5m")  # 2 hours = 0.083 days
 
             return {
@@ -252,17 +236,13 @@ Please provide a detailed risk assessment with clear recommendations."""
     def should_override_limit(self, limit_type):
         """Ask AI (sub-agent) if we should override the limit based on recent market data"""
         try:
-            # Only check every 15 minutes
             if self.last_override_check and datetime.now() - self.last_override_check < timedelta(
                 minutes=15
             ):
                 return self.override_active
 
-            # Get current positions first
             positions = n.fetch_wallet_holdings_og(config.address)
 
-            # Filter for tokens that are both in MONITORED_TOKENS and in our positions
-            # Exclude USDC and SOL
             positions = positions[
                 positions["Mint Address"].isin(MONITORED_TOKENS)
                 & ~positions["Mint Address"].isin(EXCLUDED_TOKENS)
@@ -272,7 +252,6 @@ Please provide a detailed risk assessment with clear recommendations."""
                 cprint("[ERROR] No monitored positions found to analyze", "white", "on_red")
                 return False
 
-            # Collect data only for monitored tokens we have positions in
             position_data = {}
             for _, row in positions.iterrows():
                 token = row["Mint Address"]
@@ -299,7 +278,6 @@ Please provide a detailed risk assessment with clear recommendations."""
                 )
                 return False
 
-            # Format data for sub-agent analysis
             prompt = f"""
 RISK LIMIT BREACH DETECTED
 
@@ -323,7 +301,6 @@ Consider:
 Provide a detailed analysis with clear recommendation.
 """
 
-            # Appeler le sub-agent
             context_data = {
                 "limit_type": limit_type,
                 "current_value": self.current_value,
@@ -344,10 +321,8 @@ Provide a detailed analysis with clear recommendation.
 
             self.last_override_check = datetime.now()
 
-            # Check if we should override (keep positions open)
             self.override_active = "OVERRIDE" in response.upper()
 
-            # Print the sub-agent's reasoning
             cprint("\n🧠 Risk Sub-Agent Analysis:", "white", "on_blue")
             print("=" * 80)
             print(response)
@@ -378,7 +353,6 @@ Provide a detailed analysis with clear recommendation.
             self.current_value = self.get_portfolio_value()
 
             if USE_PERCENTAGE:
-                # Calculate percentage change
                 percent_change = (
                     (self.current_value - self.start_balance) / self.start_balance
                 ) * 100
@@ -404,7 +378,6 @@ Provide a detailed analysis with clear recommendation.
                     return True
 
             else:
-                # Calculate USD change
                 usd_change = self.current_value - self.start_balance
 
                 if usd_change <= -MAX_LOSS_USD:
@@ -434,16 +407,13 @@ Provide a detailed analysis with clear recommendation.
         try:
             cprint("\n[REFRESH] Closing monitored positions...", "white", "on_cyan")
 
-            # Get all positions
             positions = n.fetch_wallet_holdings_og(config.address)
 
-            # Debug print to see what we're working with
             cprint("\n[STATS] Current positions:", "cyan")
             print(positions)
             cprint("\n[TARGET] Monitored tokens:", "cyan")
             print(MONITORED_TOKENS)
 
-            # Filter for tokens that are both in MONITORED_TOKENS and not in EXCLUDED_TOKENS
             positions = positions[
                 positions["Mint Address"].isin(MONITORED_TOKENS)
                 & ~positions["Mint Address"].isin(EXCLUDED_TOKENS)
@@ -453,7 +423,6 @@ Provide a detailed analysis with clear recommendation.
                 cprint("[NOTE] No monitored positions to close", "white", "on_blue")
                 return
 
-            # Close each monitored position
             for _, row in positions.iterrows():
                 token = row["Mint Address"]
                 value = row["USD Value"]
@@ -485,7 +454,6 @@ Provide a detailed analysis with clear recommendation.
     def check_risk_limits(self):
         """Check if any risk limits have been breached"""
         try:
-            # Get current PnL
             current_pnl = self.get_current_pnl()
             current_balance = self.get_portfolio_value()
 
@@ -493,7 +461,6 @@ Provide a detailed analysis with clear recommendation.
             print(f"💼 Current Balance: ${current_balance:.2f}")
             print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
-            # Check minimum balance limit
             if current_balance < MINIMUM_BALANCE_USD:
                 print(
                     f"[WARNING] ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
@@ -501,7 +468,6 @@ Provide a detailed analysis with clear recommendation.
                 self.handle_limit_breach("MINIMUM_BALANCE", current_balance)
                 return True
 
-            # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
                     print(f"[WARNING] PnL limit reached: {current_pnl:.2f}%")
@@ -523,7 +489,6 @@ Provide a detailed analysis with clear recommendation.
     def handle_limit_breach(self, breach_type, current_value):
         """Handle breached risk limits with sub-agent consultation"""
         try:
-            # If AI confirmation is disabled, close positions immediately
             if not USE_AI_CONFIRMATION:
                 print(
                     f"\n[ALERT] {breach_type} limit breached! Closing all positions immediately..."
@@ -532,10 +497,8 @@ Provide a detailed analysis with clear recommendation.
                 self.close_all_positions()
                 return
 
-            # Get all current positions
             positions_df = n.fetch_wallet_holdings_og(config.address)
 
-            # Prepare breach context
             if breach_type == "MINIMUM_BALANCE":
                 context = f"Current balance (${current_value:.2f}) has fallen below minimum balance limit (${MINIMUM_BALANCE_USD:.2f})"
             elif breach_type == "PNL_USD":
@@ -543,7 +506,6 @@ Provide a detailed analysis with clear recommendation.
             else:
                 context = f"Current PnL ({current_value}%) has exceeded percentage limit ({MAX_LOSS_PERCENT}%)"
 
-            # Format positions for sub-agent
             positions_str = "\nCurrent Positions:\n"
             for _, row in positions_df.iterrows():
                 if row["USD Value"] > 0:
@@ -551,7 +513,6 @@ Provide a detailed analysis with clear recommendation.
                         f"- {row['Mint Address']}: {row['Amount']} (${row['USD Value']:.2f})\n"
                     )
 
-            # Get sub-agent recommendation
             prompt = f"""
 [ALERT] RISK LIMIT BREACH ALERT [ALERT]
 
@@ -568,7 +529,6 @@ Should we close all positions immediately? Consider:
 Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL or HOLD_POSITIONS.
 """
 
-            # Préparer les données contextuelles
             context_data = {
                 "breach_type": breach_type,
                 "current_value": current_value,
@@ -581,7 +541,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
                 "positions": positions_str,
             }
 
-            # Appeler le sub-agent
             cprint(
                 "\n[AI] Consulting Claude Code Sub-Agent for risk decision...",
                 "white",
@@ -594,7 +553,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
             print(response)
             print("=" * 80)
 
-            # Parse decision
             decision = response.split("\n")[0].strip()
             if "CLOSE_ALL" in decision.upper():
                 print("[ALERT] Sub-Agent recommends closing all positions!")
@@ -604,7 +562,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
 
         except Exception as e:
             print(f"[ERROR] Error handling limit breach: {str(e)}")
-            # Default to closing positions on error
             print("[WARNING] Error in sub-agent consultation - defaulting to close all positions")
             self.close_all_positions()
 
@@ -626,7 +583,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
     def run(self):
         """Run the risk agent V2 (implements BaseAgent interface)"""
         try:
-            # Get current PnL
             current_pnl = self.get_current_pnl()
             current_balance = self.get_portfolio_value()
 
@@ -634,7 +590,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
             print(f"💼 Current Balance: ${current_balance:.2f}")
             print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
-            # Check minimum balance limit
             if current_balance < MINIMUM_BALANCE_USD:
                 print(
                     f"[WARNING] ALERT: Current balance ${current_balance:.2f} is below minimum ${MINIMUM_BALANCE_USD:.2f}"
@@ -642,7 +597,6 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
                 self.handle_limit_breach("MINIMUM_BALANCE", current_balance)
                 return True
 
-            # Check PnL limits
             if USE_PERCENTAGE:
                 if abs(current_pnl) >= MAX_LOSS_PERCENT:
                     print(f"[WARNING] PnL limit reached: {current_pnl:.2f}%")
@@ -670,13 +624,10 @@ def main():
 
     while True:
         try:
-            # Always try to log balance (function will check if 12 hours have passed)
             agent.log_daily_balance()
 
-            # Always check PnL limits
             agent.check_pnl_limits()
 
-            # Sleep for 5 minutes before next check
             time.sleep(300)
 
         except KeyboardInterrupt:

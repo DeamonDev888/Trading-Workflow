@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] AI Agents Manager - Système de gestion des 4 vrais agents IA
 Uniquement les agents avec appels API LLM (ChatGPT, Claude, etc.)
@@ -7,7 +6,6 @@ Uniquement les agents avec appels API LLM (ChatGPT, Claude, etc.)
 import json
 import sys
 
-# Configuration des 4 vrais agents IA (avec appels LLM)
 AGENTS_CONFIG = {
     "risk_agent": {
         "class": "RiskAgent",
@@ -100,7 +98,6 @@ class AgentManager:
         configured = len([a for a in agents if a["status"] in ["active", "configured"]])
         inactive = len([a for a in agents if a["status"] == "inactive"])
 
-        # Trier par performance
         agents_sorted = sorted(
             agents,
             key=lambda x: float(x["performance"].replace("+", "").replace("%", "")),
@@ -161,7 +158,6 @@ class AgentManager:
         if agent_id not in AGENTS_CONFIG:
             raise ValueError(f"Agent {agent_id} not found")
 
-        # Simuler la sauvegarde de configuration
         return {
             "success": True,
             "message": f"Configuration de l'agent {agent_id} mise à jour",

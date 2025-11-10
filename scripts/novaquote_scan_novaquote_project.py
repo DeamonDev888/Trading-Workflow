@@ -16,7 +16,6 @@ class NovaQuoteProjectScanner:
     """Scanner 100% dédié au projet NovaQuote Trading"""
 
     def __init__(self):
-        # Structure spécifique NovaQuote
         self.novaquote_structure = {
             'agents': [
                 'src/agents/master_agent.py',
@@ -97,7 +96,6 @@ class NovaQuoteProjectScanner:
             ]
         }
 
-        # Patterns spécifiques NovaQuote
         self.novaquote_patterns = {
             'agent_patterns': [
                 r'class\s+\w+Agent\s*\(',
@@ -156,7 +154,6 @@ class NovaQuoteProjectScanner:
 
         all_errors = {}
 
-        # Scanner chaque catégorie NovaQuote
         for category, files in self.novaquote_structure.items():
             print(f"\n🔍 SCANNING CATÉGORIE: {category.upper()} ({len(files)} fichiers)")
             category_errors = self._scan_novaquote_category(files, category)
@@ -164,13 +161,11 @@ class NovaQuoteProjectScanner:
                 all_errors[category] = category_errors
                 self.stats['categories_processed'].add(category)
 
-        # Analyse spécifique des patterns NovaQuote
         print(f"\n🎯 ANALYSE DES PATTERNS NOVAQUOTE")
         pattern_errors = self._analyze_novaquote_patterns()
         if pattern_errors:
             all_errors['patterns'] = pattern_errors
 
-        # Générer rapport NovaQuote
         self._generate_novaquote_report(all_errors)
 
         return all_errors
@@ -229,7 +224,6 @@ class NovaQuoteProjectScanner:
         """Scanner spécialisé pour agents NovaQuote"""
         errors = []
 
-        # 1. Validation structure agent
         required_methods = ['__init__', 'run']
         for method in required_methods:
             if f'def {method}(' not in content:
@@ -243,9 +237,7 @@ class NovaQuoteProjectScanner:
                     'suggestion': f"Ajouter la méthode '{method}(self):'"
                 })
 
-        # 2. Validation patterns agents
         for i, line in enumerate(lines, 1):
-            # Configuration requise
             if 'self.config' not in content and 'self._config' not in content:
                 errors.append({
                     'file': file_path,
@@ -257,7 +249,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Ajouter self.config = config dans __init__"
                 })
 
-            # Gestion erreurs trading
             if 'except:' in line and 'Exception' not in line:
                 errors.append({
                     'file': file_path,
@@ -269,7 +260,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Remplacer 'except:' par 'except Exception as e:'"
                 })
 
-            # Loggigng NovaQuote
             if 'print(' in line:
                 errors.append({
                     'file': file_path,
@@ -281,7 +271,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Remplacer print() par self.logger.info() ou logging.getLogger()"
                 })
 
-        # 3. Validation imports NovaQuote
         novaquote_imports_needed = self._check_novaquote_imports(content, 'agent')
         for imp in novaquote_imports_needed:
             errors.append({
@@ -300,9 +289,7 @@ class NovaQuoteProjectScanner:
         """Scanner spécialisé pour algorithmes de trading NovaQuote"""
         errors = []
 
-        # Validation algorithmes trading
         for i, line in enumerate(lines, 1):
-            # Risk management
             if 'def execute' in content and 'stop_loss' not in content:
                 errors.append({
                     'file': file_path,
@@ -314,7 +301,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Ajouter logique stop_loss dans execute()"
                 })
 
-            # Position sizing
             if 'position_size' in content and 'max_position_size' not in content:
                 errors.append({
                     'file': file_path,
@@ -326,7 +312,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Ajouter max_position_size dans configuration"
                 })
 
-            # Latency tracking
             if 'def execute' in content and 'latency' not in content.lower():
                 errors.append({
                     'file': file_path,
@@ -344,7 +329,6 @@ class NovaQuoteProjectScanner:
         """Scanner spécialisé pour fichiers HyperLiquid"""
         errors = []
 
-        # API Key validation
         if 'api_key' in content and 'base64' not in content.lower():
             errors.append({
                 'file': file_path,
@@ -356,7 +340,6 @@ class NovaQuoteProjectScanner:
                 'suggestion': "Utiliser base64.b64encode() pour les clés API"
             })
 
-        # Signature validation
         if 'sign' in content and 'private_key' not in content and 'api_secret' not in content:
             errors.append({
                 'file': file_path,
@@ -368,7 +351,6 @@ class NovaQuoteProjectScanner:
                 'suggestion': "Ajouter private_key ou api_secret pour signing"
             })
 
-        # WebSocket patterns
         if 'websocket' in content.lower():
             for i, line in enumerate(lines, 1):
                 if 'websocket' in line.lower() and 'reconnect' not in content.lower():
@@ -388,11 +370,9 @@ class NovaQuoteProjectScanner:
         """Scanner spécialisé pour modèles IA NovaQuote"""
         errors = []
 
-        # Model interface validation
         if 'class ' in content:
             for i, line in enumerate(lines, 1):
                 if 'class ' in line and 'Model' in line:
-                    # Required methods for AI models
                     required_model_methods = ['generate', 'chat', 'query']
                     for method in required_model_methods:
                         if f'def {method}(' not in content:
@@ -406,7 +386,6 @@ class NovaQuoteProjectScanner:
                                 'suggestion': f"Ajouter def {method}(self, prompt):"
                             })
 
-        # API key security
         if 'api_key' in content and 'os.getenv' not in content and 'environment' not in content:
             errors.append({
                 'file': file_path,
@@ -424,9 +403,7 @@ class NovaQuoteProjectScanner:
         """Scanner spécialisé pour wallet NovaQuote"""
         errors = []
 
-        # Wallet security validation
         for i, line in enumerate(lines, 1):
-            # Private key handling
             if 'private_key' in line and 'encryption' not in content.lower():
                 errors.append({
                     'file': file_path,
@@ -438,7 +415,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Utiliser encryption AES pour stocker les clés privées"
                 })
 
-            # Permission validation
             if 'permission' in content and 'validate' not in content.lower():
                 errors.append({
                     'file': file_path,
@@ -456,9 +432,7 @@ class NovaQuoteProjectScanner:
         """Scanner générique pour autres catégories NovaQuote"""
         errors = []
 
-        # NovaQuote patterns validation
         for i, line in enumerate(lines, 1):
-            # NovaQuote logging
             if 'print(' in line:
                 errors.append({
                     'file': file_path,
@@ -470,7 +444,6 @@ class NovaQuoteProjectScanner:
                     'suggestion': "Remplacer print() par logging.getLogger()"
                 })
 
-            # Environment variables
             if 'password' in line.lower() or 'secret' in line.lower():
                 if 'os.getenv' not in line:
                     errors.append({
@@ -489,7 +462,6 @@ class NovaQuoteProjectScanner:
         """Vérifier les imports NovaQuote requis"""
         missing_imports = []
 
-        # Imports NovaQuote de base
         novaquote_base_imports = [
             'import logging',
             'from typing import'
@@ -505,7 +477,6 @@ class NovaQuoteProjectScanner:
         """Analyser les patterns spécifiques NovaQuote"""
         errors = []
 
-        # Scanner tous les fichiers pour patterns NovaQuote
         novaquote_files = Path("src").rglob("*.py")
 
         for pattern_name, patterns in self.novaquote_patterns.items():
@@ -515,7 +486,6 @@ class NovaQuoteProjectScanner:
                         with open(file_path, 'r', encoding='utf-8') as f:
                             content = f.read()
                             if re.search(pattern, content):
-                                # Pattern détecté - valider son utilisation
                                 pass
                     except:
                         continue
@@ -528,13 +498,11 @@ class NovaQuoteProjectScanner:
         print("📈 RAPPORT NOVAQUOTE PROJECT SCANNER")
         print("="*100)
 
-        # Statistiques NovaQuote
         print(f"\n📊 STATISTIQUES NOVAQUOTE")
         print(f"   📁 Fichiers NovaQuote scannés: {self.stats['novaquote_files_scanned']}")
         print(f"   🔢 Erreurs NovaQuote trouvées: {self.stats['novaquote_errors_found']}")
         print(f"   📂 Catégories traitées: {len(self.stats['categories_processed'])}")
 
-        # Erreurs par catégorie NovaQuote
         if all_errors:
             print(f"\n🔍 ERREURS PAR CATÉGORIE NOVAQUOTE")
             for category, errors in all_errors.items():
@@ -551,7 +519,6 @@ class NovaQuoteProjectScanner:
                         print(f"      🟡 MEDIUM: {severity_counts['MEDIUM']}")
                         print(f"      🟢 LOW: {severity_counts['LOW']}")
 
-            # Top erreurs critiques NovaQuote
             critical_errors = []
             for category_errors in all_errors.values():
                 critical_errors.extend([e for e in category_errors if e.get('severity') in ['CRITICAL', 'HIGH']])
@@ -563,7 +530,6 @@ class NovaQuoteProjectScanner:
                     print(f"      {error['message']}")
                     print(f"      💡 {error.get('suggestion', 'Correction requise')}")
 
-        # Recommandations NovaQuote
         print(f"\n🎯 RECOMMANDATIONS NOVAQUOTE")
 
         if all_errors:
@@ -590,7 +556,6 @@ class NovaQuoteProjectScanner:
         else:
             print(f"   ✅ EXCELLENT: Aucune erreur NovaQuote détectée !")
 
-        # Sauvegarder rapport NovaQuote
         report_data = {
             "timestamp": datetime.now().isoformat(),
             "project": "NovaQuote Trading",
@@ -625,15 +590,11 @@ def main():
 
     if args.category:
         print(f"📂 Catégorie spécifique: {args.category}")
-        # Implémenter scan catégorie spécifique
     elif args.agent:
         print(f"🤖 Agent spécifique: {args.agent}")
-        # Implémenter scan agent spécifique
     elif args.security_only:
         print(f"🔒 Focus sécurité seulement")
-        # Implémenter scan sécurité
     else:
-        # Scan complet du projet NovaQuote
         errors = scanner.scan_novaquote_project()
 
     print(f"\n🏁 Scan NovaQuote Project terminé")

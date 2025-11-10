@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] Réponse à la question : Comment l'agent principal récupère les données
 et comment vérifier que le système est fiable ?
@@ -7,11 +6,9 @@ Démonstration complète du système de récupération et de fiabilité
 """
 
 import asyncio
-import json
 from datetime import datetime
 from pathlib import Path
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 import sys
 sys.path.insert(0, str(project_root))
@@ -162,21 +159,17 @@ from src.agents.data_aggregator import DataAggregator
 
 aggregator = DataAggregator()
 
-# ... après plusieurs exécutions ...
 
-# Vérifier si le système est fiable
 is_reliable = aggregator.is_system_reliable(threshold=0.7)
 
 if is_reliable:
     print("✅ Système fiable")
-    # Obtenir le rapport détaillé
     report = aggregator.get_reliability_report()
     print(f"Taux de succès: {report['summary']['successful_aggregations']}/{report['summary']['total_aggregations']}")
     print(f"Confiance moyenne: {report['summary']['average_confidence']:.2f}")
     print(f"Fiabilité moyenne: {report['summary']['average_reliability']:.2f}")
 else:
     print("❌ Problèmes de fiabilité détectés")
-    # Vérifier les agents individuels
     agent_status = aggregator.get_agent_status()
     for name, status in agent_status.items():
         if status['health'] == 'UNHEALTHY':
@@ -190,7 +183,6 @@ from src.agents.reliability_monitor import ReliabilityMonitor
 
 monitor = ReliabilityMonitor()
 
-# Vérifier la santé du système
 health_report = monitor.check_system_health(
     aggregator_data,
     agent_status
@@ -199,14 +191,12 @@ health_report = monitor.check_system_health(
 print(f"Statut global: {health_report['overall_status']}")
 print(f"Score de santé: {health_report['health_score']:.2f}")
 
-# Vérifier si le système est en bonne santé
 is_healthy = monitor.is_system_reliable()
 
 if is_healthy:
     print("✅ Système en bonne santé")
 else:
     print("⚠️  Problèmes de santé détectés")
-    # Vérifier les alertes actives
     active_alerts = monitor.get_active_alerts()
     for alert in active_alerts:
         print(f"  {alert.level.value}: {alert.message}")
@@ -219,9 +209,7 @@ from src.agents.claude_code_orchestrator import ClaudeCodeOrchestrator
 
 orchestrator = ClaudeCodeOrchestrator()
 
-# ... après plusieurs exécutions ...
 
-# Vérifier si le système est globalement en bonne santé
 is_healthy = orchestrator.is_system_healthy()
 
 if is_healthy:
@@ -229,7 +217,6 @@ if is_healthy:
 else:
     print("⚠️  Système a des problèmes")
 
-# Obtenir les statistiques complètes
 stats = orchestrator.get_statistics()
 print(f"Exécutions totales: {stats['execution_stats']['total_executions']}")
 print(f"Taux de succès: {stats['success_rate']:.2%}")
@@ -249,7 +236,6 @@ Nous allons simuler:
 5. Génération d'alertes si nécessaire
     """)
 
-    # Simulation
     from src.agents.data_aggregator import AgentData
 
     print("\n📊 Exécution simulée de 4 agents:")
@@ -322,7 +308,6 @@ Nous allons simuler:
 
     print("\n🔄 Agrégation et calcul du consensus...")
 
-    # Simuler le consensus
     decisions = {"BUY": 0.85 + 0.78 + 0.68, "HOLD": 0.72}  # Pondéré par confiance
     best_decision = "BUY"  # Majorité
     consensus_confidence = (0.85 + 0.78 + 0.72 + 0.68) / 4  # Moyenne des confiances
@@ -331,7 +316,6 @@ Nous allons simuler:
     cprint(f"  📈 Confiance globale: {consensus_confidence:.2f}", "cyan")
     cprint(f"  🔒 Fiabilité globale: 0.78 (calculée)", "cyan")
 
-    # Vérifier la fiabilité
     print("\n✅ Vérification de la fiabilité:")
 
     checks = {
@@ -366,7 +350,6 @@ from src.agents.claude_code_orchestrator import (
 from src.agents.reliability_monitor import AlertLevel
 
 async def main():
-    # 1. Configuration
     config = OrchestratorConfig(
         min_confidence=0.6,
         min_reliability=0.7,
@@ -374,10 +357,8 @@ async def main():
         auto_recovery=True
     )
 
-    # 2. Initialisation
     orchestrator = ClaudeCodeOrchestrator(config)
 
-    # 3. Callback d'alerte
     def handle_alert(alert):
         if alert.level == AlertLevel.CRITICAL:
             print(f"🚨 ALERTE CRITIQUE: {alert.message}")
@@ -386,7 +367,6 @@ async def main():
 
     orchestrator.reliability_monitor.add_alert_callback(handle_alert)
 
-    # 4. Exécution
     result = await orchestrator.execute_trading_analysis(
         task="Should I buy BTC at $50,000?",
         context_data={
@@ -397,7 +377,6 @@ async def main():
         mode="complete"
     )
 
-    # 5. Vérification du résultat
     if result.success:
         print(f"\\n✅ Décision: {result.decision}")
         print(f"   Confiance: {result.confidence:.2f}")
@@ -410,18 +389,15 @@ async def main():
     else:
         print(f"\\n❌ Échec: {result.error}")
 
-    # 6. Vérification de la fiabilité du système
     is_healthy = orchestrator.is_system_healthy()
     print(f"\\n🏥 Santé du système: {'OK' if is_healthy else 'PROBLÈMES'}")
 
-    # 7. Statistiques
     stats = orchestrator.get_statistics()
     print(f"\\n📊 Statistiques:")
     print(f"   Exécutions: {stats['execution_stats']['total_executions']}")
     print(f"   Taux de succès: {stats['success_rate']:.2%}")
     print(f"   Alertes actives: {stats['active_alerts']}")
 
-# Exécuter
 asyncio.run(main())
     """)
 
@@ -514,13 +490,10 @@ Critères de fiabilité:
     print_section("Scripts de Test")
 
     print("""
-# Test du système de fiabilité
 python scripts/claude_code_reliability_demo.py
 
-# Test de l'orchestrateur
 python -c "from src.agents.claude_code_orchestrator import *; import asyncio; asyncio.run(main())"
 
-# Vérifier la santé du système
 python -c "from src.agents.claude_code_orchestrator import ClaudeCodeOrchestrator; o = ClaudeCodeOrchestrator(); print(o.is_system_healthy())"
     """)
 

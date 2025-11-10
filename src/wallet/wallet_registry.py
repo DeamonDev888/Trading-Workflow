@@ -23,11 +23,9 @@ class WalletRegistry:
         self.name = "Wallet Registry"
         self.version = "1.0.0"
 
-        # Storage
         self.registry_file = "data/wallet_registry.json"
         self._ensure_data_directory()
 
-        # Load registry
         self.registry = self._load_registry()
 
         cprint(f"📋 {self.name} v{self.version} initialized", "cyan")
@@ -77,7 +75,6 @@ class WalletRegistry:
             if "wallets" not in self.registry:
                 self.registry["wallets"] = {}
 
-            # Create wallet entry
             wallet_entry = {
                 "address": wallet_address,
                 "registered_at": datetime.now().isoformat(),
@@ -225,11 +222,9 @@ class WalletRegistry:
 
             wallet = self.registry["wallets"][wallet_address]
 
-            # Update activity info
             wallet["last_activity"] = datetime.now().isoformat()
             wallet["activity_count"] += 1
 
-            # Log action
             action_log = {
                 "timestamp": datetime.now().isoformat(),
                 "action": action,
@@ -242,7 +237,6 @@ class WalletRegistry:
                     wallet["approved_actions"] = []
                 wallet["approved_actions"].append(action_log)
 
-                # Keep only last 100 actions
                 if len(wallet["approved_actions"]) > 100:
                     wallet["approved_actions"] = wallet["approved_actions"][-100:]
             else:
@@ -250,7 +244,6 @@ class WalletRegistry:
                     wallet["blocked_actions"] = []
                 wallet["blocked_actions"].append(action_log)
 
-                # Keep only last 50 blocked actions
                 if len(wallet["blocked_actions"]) > 50:
                     wallet["blocked_actions"] = wallet["blocked_actions"][-50:]
 
@@ -284,11 +277,9 @@ class WalletRegistry:
         approved_actions = wallet_info.get("approved_actions", [])
         blocked_actions = wallet_info.get("blocked_actions", [])
 
-        # Calculate stats
         total_actions = len(approved_actions) + len(blocked_actions)
         success_rate = len(approved_actions) / total_actions if total_actions > 0 else 0
 
-        # Recent activity (last 24 hours)
         now = datetime.now()
         recent_approved = [
             a
@@ -336,14 +327,12 @@ class WalletRegistry:
                 if last_activity_dt < cutoff and not data.get("is_active", False):
                     wallets_to_remove.append(addr)
             elif not data.get("is_active", False):
-                # No activity ever and not active
                 created_at = data.get("registered_at")
                 if created_at:
                     created_dt = datetime.fromisoformat(created_at)
                     if created_dt < cutoff:
                         wallets_to_remove.append(addr)
 
-        # Remove expired wallets
         for addr in wallets_to_remove:
             del self.registry["wallets"][addr]
             cleaned += 1
@@ -408,7 +397,6 @@ class WalletRegistry:
             with open(filepath, "r") as f:
                 imported_registry = json.load(f)
 
-            # Merge with existing registry
             if "wallets" in imported_registry:
                 if "wallets" not in self.registry:
                     self.registry["wallets"] = {}

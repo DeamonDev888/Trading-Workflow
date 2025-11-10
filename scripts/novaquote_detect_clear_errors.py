@@ -8,9 +8,7 @@ import json
 import os
 import re
 import subprocess
-import sys
 from datetime import datetime
-from pathlib import Path
 
 class NovaQuoteClearErrorFinder:
     """Tool that finds and clearly reports errors in codebase"""

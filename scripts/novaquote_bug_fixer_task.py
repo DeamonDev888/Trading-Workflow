@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 NOVBQUOTE BUG FIXER - VRAI SUB-AGENT TASK CLAUDE CODE
 
@@ -9,21 +8,18 @@ Utilisation dans Claude Code:
     from novaquote_bug_fixer_task import NOVAQUOTEBugFixerTask
     from task_agent import Task
 
-    # Créer le sub-agent task
     task = NOVAQUOTEBugFixerTask(
         target_path="src/",
         max_iterations=3
     )
 
-    # L'invoquer avec Task
     agent = Task(
         subagent_type="novaquote_bug_fixer",
-        tools=["Read", "Edit", "Bash", "Grep", "Glob"],  # [OK] Outils Claude Code 
+        tools=["Read", "Edit", "Bash", "Grep", "Glob"],  # [OK] Outils Claude Code
         prompt=task.generate_prompt(),
         model="sonnet"
     )
 
-    # Exécuter - Claude Code utilise SES outils !
     result = await agent.run()
 """
 
@@ -101,7 +97,6 @@ COMMENCE MAINTENANT avec l'outil Glob.
 
         return f"{base}\n\nITÉRATION {iteration}/{self.max_iterations}\n{specific}"
 
-# Exemple d'utilisation dans Claude Code
 def example_usage():
     """
     EXEMPLE D'UTILISATION DANS CLAUDE CODE
@@ -110,44 +105,34 @@ def example_usage():
     """
 
     example_code = '''
-# ============================================
-# DANS CLAUDE CODE - VRAIE UTILISATION
-# ============================================
 
 from novaquote_bug_fixer_task import NOVAQUOTEBugFixerTask
 from task_agent import Task
 
-# 1. Créer le sub-agent task
 bug_fixer = NOVAQUOTEBugFixerTask(
     target_path="src/",
     max_iterations=3
 )
 
-# 2. Créer l'agent avec les outils Claude Code
 agent = Task(
     subagent_type=bug_fixer.name,
     description="Auto Bug Fixer NOVAQUOTE",
-    tools=["Read", "Edit", "Bash", "Grep", "Glob"],  # [OK] Outils Claude Code 
+    tools=["Read", "Edit", "Bash", "Grep", "Glob"],  # [OK] Outils Claude Code
     prompt=bug_fixer.generate_prompt(),
     model="sonnet"
 )
 
-# 3. Exécuter - Claude Code fait le travail !
 print("Lancement du sub-agent task...")
 result = await agent.run()
 
-# 4. Résultat
 print("Résultat:", result)
-# ============================================
     '''
 
     print(example_code)
 
 if __name__ == "__main__":
-    # Exemple d'utilisation
     example_usage()
 
-    # Créer un sub-agent task
     task = NOVAQUOTEBugFixerTask(target_path="src/", max_iterations=3)
 
     print("\n" + "="*70)

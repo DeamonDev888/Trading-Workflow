@@ -26,14 +26,14 @@ class MarketDatabase {
           reject(err);
           return;
         }
-        console.log('✅ Connected to SQLite market database');
+        console.info('✅ Connected to SQLite market database');
         this.createTables().then(resolve).catch(reject);
       });
     });
   }
 
   async createTables() {
-    const tables = [
+    const tables = [;
       // OHLCV data table
       `CREATE TABLE IF NOT EXISTS ohlcv_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,11 +104,11 @@ class MarketDatabase {
       'CREATE INDEX IF NOT EXISTS idx_btc_dominance_time ON btc_dominance(timestamp)',
     ];
 
-    for (const sql of tables) {
+    for (const sql of tables) {;
       await this.runQuery(sql);
     }
 
-    console.log('✅ Database tables created successfully');
+    console.info('✅ Database tables created successfully');
   }
 
   async runQuery(sql, params = []) {
@@ -129,7 +129,7 @@ class MarketDatabase {
         if (err) {
           console.error('❌ Error closing database:', err.message);
         } else {
-          console.log('✅ Database connection closed');
+          console.info('✅ Database connection closed');
         }
         resolve();
       });
@@ -138,7 +138,7 @@ class MarketDatabase {
 
   // Sample data insertion for testing
   async insertSampleMarkets() {
-    const markets = [
+    const markets = [;
       ['BTC/USDT', 'binance', 'Bitcoin', 'BTC', 'USDT', 0.00001, 2, 8],
       ['ETH/USDT', 'binance', 'Ethereum', 'ETH', 'USDT', 0.001, 2, 8],
       ['SOL/USDT', 'binance', 'Solana', 'SOL', 'USDT', 0.01, 2, 8],
@@ -164,7 +164,7 @@ class MarketDatabase {
       ],
     ];
 
-    for (const market of markets) {
+    for (const market of markets) {;
       await this.runQuery(
         `INSERT OR REPLACE INTO markets
                  (symbol, exchange, name, base_currency, quote_currency, min_order_size, price_precision, volume_precision)
@@ -173,7 +173,7 @@ class MarketDatabase {
       );
     }
 
-    console.log('✅ Sample markets inserted');
+    console.info('✅ Sample markets inserted');
   }
 }
 
@@ -184,9 +184,9 @@ if (require.main === module) {
   db.initialize()
     .then(() => db.insertSampleMarkets())
     .then(() => {
-      console.log('🎉 Market database setup completed successfully!');
-      console.log('📊 Database location:', db.dbPath);
-      console.log('🔧 Ready to insert real market data from exchanges');
+      console.info('🎉 Market database setup completed successfully!');
+      console.info('📊 Database location:', db.dbPath);
+      console.info('🔧 Ready to insert real market data from exchanges');
     })
     .catch((err) => {
       console.error('❌ Database setup failed:', err.message);

@@ -124,7 +124,6 @@ class PersistentAgentOrchestrator:
         self.monitoring_interval = 5  # seconds
         self.task_history_size = 1000
 
-        # Performance tracking
         self.metrics = {
             "total_tasks": 0,
             "successful_tasks": 0,
@@ -190,7 +189,6 @@ class PersistentAgentOrchestrator:
 
         self.running = True
 
-        # Start monitoring and task processing
         asyncio.create_task(self._monitor_agents())
         asyncio.create_task(self._process_task_queue())
         asyncio.create_task(self._cleanup_old_tasks())
@@ -200,14 +198,12 @@ class PersistentAgentOrchestrator:
     async def _start_agent_process(self, agent: AgentProcess, config: Dict) -> bool:
         """Start a single agent process"""
         try:
-            # Create the startup script for the agent
             startup_script = self._create_agent_script(config)
             script_path = f"temp_agent_{config['type'].value}.py"
 
             with open(script_path, "w") as f:
                 f.write(startup_script)
 
-            # Start the agent process
             cmd = [
                 "python",
                 script_path,
@@ -230,10 +226,8 @@ class PersistentAgentOrchestrator:
             agent.process = process
             agent.pid = process.pid
 
-            # Wait for agent to be ready
             await asyncio.sleep(3)
 
-            # Check if agent is responsive
             if await self._ping_agent(agent):
                 agent.status = AgentStatus.RUNNING
                 agent.last_heartbeat = datetime.now()
@@ -276,7 +270,6 @@ class Persistent{config['type'].value.title()}Agent:
         self.claude_process = None
         self.task_count = 0
 
-        # Initialize FastAPI
         self.app = FastAPI(title=f"Persistent {config['type'].value.title()} Agent")
         self.app.add_middleware(
             CORSMiddleware,
@@ -286,7 +279,6 @@ class Persistent{config['type'].value.title()}Agent:
             allow_headers=["*"],
         )
 
-        # Setup routes
         self._setup_routes()
 
     def _setup_routes(self):
@@ -313,10 +305,8 @@ class Persistent{config['type'].value.title()}Agent:
                 self.current_task = task_id
                 self.task_count += 1
 
-                # Prepare prompt for Claude Code
                 prompt = self._create_claude_prompt(task_data)
 
-                # Call Claude Code CLI
                 response = await self._call_claude_code(prompt, task_data)
 
                 self.current_task = None
@@ -421,7 +411,6 @@ class Persistent{config['type'].value.title()}Agent:
         server = uvicorn.Server(config)
         await server.serve()
 
-# Main execution
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, required=True)
@@ -548,7 +537,6 @@ if __name__ == "__main__":
             callback_url=callback_url,
         )
 
-        # Add to queue (priority queue)
         self.task_queue.append(task)
         self.task_queue.sort(key=lambda t: t.priority)
 
@@ -561,13 +549,11 @@ if __name__ == "__main__":
         start_time = time.time()
 
         while time.time() - start_time < timeout:
-            # Check completed tasks
             for response in self.completed_tasks:
                 if response.task_id == task_id:
                     self.completed_tasks.remove(response)
                     return response
 
-            # Check if task failed
             if task_id in self.active_tasks:
                 task = self.active_tasks[task_id]
                 if datetime.now() - task.created_at > timedelta(seconds=task.timeout):
@@ -592,19 +578,15 @@ if __name__ == "__main__":
                 if self.task_queue:
                     task = self.task_queue.pop(0)
 
-                    # Find available agent for this task type
                     agent = await self._get_available_agent(task.agent_type)
 
                     if agent:
-                        # Execute task
                         self.active_tasks[task.task_id] = task
                         agent.current_task = task.task_id
                         agent.status = AgentStatus.BUSY
 
-                        # Execute in background
                         self.executor.submit(self._execute_task, agent, task)
                     else:
-                        # No available agent, put task back in queue
                         self.task_queue.append(task)
                         await asyncio.sleep(2)
 
@@ -623,7 +605,6 @@ if __name__ == "__main__":
                 and agent.current_task is None
             ):
 
-                # Check if agent is healthy
                 if await self._ping_agent(agent):
                     return agent
                 else:
@@ -636,7 +617,6 @@ if __name__ == "__main__":
         try:
             start_time = time.time()
 
-            # Call agent API
             response = requests.post(
                 f"{agent.api_url}/process",
                 json={"task_id": task.task_id, "payload": task.payload},
@@ -656,7 +636,6 @@ if __name__ == "__main__":
                     execution_time=execution_time,
                 )
 
-                # Update metrics
                 agent.request_count += 1
                 agent.performance_metrics["avg_response_time"] = (
                     agent.performance_metrics["avg_response_time"] * (agent.request_count - 1)
@@ -681,7 +660,6 @@ if __name__ == "__main__":
 
                 self.completed_tasks.append(task_response)
 
-                # Callback if provided
                 if task.callback_url:
                     try:
                         requests.post(task.callback_url, json=asdict(task_response), timeout=10)
@@ -689,7 +667,6 @@ if __name__ == "__main__":
                         pass
 
             else:
-                # Agent error
                 task_response = TaskResponse(
                     task_id=task.task_id,
                     agent_id=agent.agent_id,
@@ -702,7 +679,6 @@ if __name__ == "__main__":
                 agent.error_count += 1
 
         except Exception as e:
-            # Execution error
             task_response = TaskResponse(
                 task_id=task.task_id,
                 agent_id=agent.agent_id,
@@ -715,7 +691,6 @@ if __name__ == "__main__":
             agent.error_count += 1
 
         finally:
-            # Clean up
             if task.task_id in self.active_tasks:
                 del self.active_tasks[task.task_id]
             agent.current_task = None
@@ -727,7 +702,6 @@ if __name__ == "__main__":
         while self.running:
             try:
                 for agent in self.agents.values():
-                    # Check heartbeat
                     if datetime.now() - agent.last_heartbeat > timedelta(seconds=30):
                         if await self._ping_agent(agent):
                             agent.last_heartbeat = datetime.now()
@@ -737,7 +711,6 @@ if __name__ == "__main__":
                             agent.status = AgentStatus.ERROR
                             print(f"[WARNING] Agent {agent.agent_id} not responding")
 
-                    # Update performance metrics
                     if agent.pid:
                         try:
                             process = psutil.Process(agent.pid)
@@ -758,7 +731,6 @@ if __name__ == "__main__":
         """Clean up old completed tasks"""
         while self.running:
             try:
-                # Keep only recent completed tasks
                 if len(self.completed_tasks) > self.task_history_size:
                     self.completed_tasks = self.completed_tasks[-self.task_history_size :]
 
@@ -822,7 +794,6 @@ if __name__ == "__main__":
             asyncio.create_task(self.stop_all_agents())
 
 
-# API Layer for external communication
 app = FastAPI(title="Agent Orchestrator API")
 orchestrator = None
 
@@ -877,10 +848,8 @@ async def get_status_api():
 @app.post("/restart_agent/{agent_id}")
 async def restart_agent_api(agent_id: str):
     """Restart a specific agent"""
-    # Implementation would restart the agent
     return {"status": "restarted", "agent_id": agent_id}
 
 
 if __name__ == "__main__":
-    # Run the orchestrator API server
     uvicorn.run(app, host="0.0.0.0", port=7999)

@@ -17,7 +17,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
 
-import pandas as pd
 from termcolor import cprint
 
 from src.agents.base_agent import BaseAgent
@@ -33,10 +32,13 @@ from src.config import (
 )
 from src.hyperliquid import HyperliquidClient
 
-# Get the project root directory
+TIMEFRAME = "1h"
+LOOKBACK_BARS = 50
+NEGATIVE_THRESHOLD = -0.01
+POSITIVE_THRESHOLD = 0.01
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Funding Analysis Prompt for Claude Sub-Agent
 FUNDING_ANALYSIS_PROMPT = """
 You are Deamon Dev's Funding Rate Analysis Assistant
 
@@ -69,18 +71,14 @@ class FundingAgent(BaseAgent):
         """Initialize Deamon Dev's Funding Agent"""
         super().__init__("funding", enable_postgres=True)
 
-        # Configuration pour le sub-agent
-        self.subagent_name = "claude-funding-advisor"
+        self.subagent_name = "Deamon-funding-advisor"
 
-        # Create data directories
         self.data_dir = PROJECT_ROOT / "src" / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize or load historical data
         self.history_file = self.data_dir / "funding_history.csv"
         self.load_history()
 
-        # 🏆 VALIDATE FUNDING STRATEGY FROM LIBRARY
         self._validate_funding_strategy()
 
         cprint(
@@ -103,7 +101,7 @@ class FundingAgent(BaseAgent):
         Raises:
             RuntimeError: Si l'appel au sub-agent échoue
         """
-        full_prompt = f"""Use the claude-funding-advisor subagent to analyze this funding opportunity:
+        full_prompt = f"""Use the Deamon-funding-advisor subagent to analyze this funding opportunity:
 
 {prompt}
 
@@ -112,17 +110,16 @@ Context Data:
 
 Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommendations."""
 
-        # Exécuter Claude Code avec le sub-agent
         cmd = [
             "claude",
             "--dangerously-skip-permissions",
             "--agent",
-            "claude-funding-advisor",
+            "Deamon-funding-advisor",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: claude-funding-advisor (skipping permissions)",
+            f"[INFO] Calling sub-agent: Deamon-funding-advisor (skipping permissions)",
             "cyan",
         )
 
@@ -179,7 +176,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 "reason": "Funding_Arbitrage_85 strategy not in validated library",
             }
 
-        # Check if symbol was tested
         if symbol not in funding_strategy["symbols_validated"]:
             return {
                 "valid": False,
@@ -187,7 +183,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 "backtest_proof": funding_strategy,
             }
 
-        # Check funding rate threshold from strategy
         min_funding = funding_strategy["conditions"].get("funding_rate", 0.01)
 
         if funding_rate < min_funding:
@@ -197,7 +192,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 "backtest_proof": funding_strategy,
             }
 
-        # Check current validation status
         if not funding_strategy["current_validation"]["valid"]:
             return {
                 "valid": False,
@@ -205,7 +199,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 "backtest_proof": funding_strategy,
             }
 
-        # ✅ VALIDATED
         return {
             "valid": True,
             "reason": f"Funding opportunity validated with {funding_strategy['name']}",
@@ -218,18 +211,15 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
     async def _analyze_opportunity(self, symbol, funding_data, market_data):
         """Get AI analysis of the opportunity using Claude Sub-Agent"""
         try:
-            # Debug print raw funding rate
             rate = funding_data["annual_rate"].iloc[0]
             print(f"\n🔍 Raw funding rate for {symbol}: {rate:.2f}%")
 
-            # Get BTC market data as market barometer using new module
             async with HyperliquidClient() as client:
                 btc_candles = await client.get_candles(
                     symbol="BTC",
                     interval=TIMEFRAME,
                 )
 
-                # Convert to DataFrame
                 btc_data = pd.DataFrame(
                     [
                         {
@@ -244,7 +234,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     ]
                 )
 
-                # Get symbol specific data if not BTC
                 symbol_data = None
                 if symbol != "BTC":
                     symbol_candles = await client.get_candles(
@@ -265,20 +254,17 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                         ]
                     )
 
-            # Format market data context
             market_context = (
                 f"BTC Market Data (Last 5 candles):\n{btc_data.tail(5).to_string()}\n\n"
             )
             if symbol_data is not None and symbol != "BTC":
                 market_context += f"{symbol} Technical Data (Last 5 candles):\n{symbol_data.tail(5).to_string()}\n\n"
 
-            # Add some basic trend analysis
             btc_close = btc_data["close"].iloc[-1]
             btc_sma = btc_data["close"].rolling(20).mean().iloc[-1]
             btc_trend = "UPTREND" if btc_close > btc_sma else "DOWNTREND"
             market_context += f"\nBTC Trend Analysis:\n- Current Price vs 20 SMA: {btc_trend}\n"
 
-            # Prepare the context
             rate = funding_data["annual_rate"].iloc[0]
             context = FUNDING_ANALYSIS_PROMPT.format(
                 symbol=symbol,
@@ -289,7 +275,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
             print(f"\n🤖 Analyzing {symbol} with Claude Sub-Agent...")
 
-            # Prepare context data
             context_data = {
                 "symbol": symbol,
                 "funding_rate": rate,
@@ -297,34 +282,27 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 "active_model": self.active_model,
             }
 
-            # Call the Claude sub-agent
             content = self.call_subagent(context, context_data)
 
-            # Debug: Print raw response
             print("\n🔍 Raw response:")
             print(repr(content))
 
-            # Clean up any remaining formatting
             content = content.replace("\\n", "\n")
             content = content.strip("[]")
 
-            # Split into lines and clean each line
             lines = [line.strip() for line in content.split("\n") if line.strip()]
 
             if not lines:
                 print("❌ Empty response from sub-agent")
                 return None
 
-            # First line should be the action
             action = lines[0].strip().upper()
             if action not in ["BUY", "SELL", "NOTHING"]:
                 print(f"⚠️ Invalid action: {action}")
                 return None
 
-            # Rest is analysis
             analysis = lines[1] if len(lines) > 1 else ""
 
-            # Extract confidence from third line
             confidence = 50  # Default confidence
             if len(lines) > 2:
                 try:
@@ -354,7 +332,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     symbol = str(row["symbol"])
 
                     if annual_rate < NEGATIVE_THRESHOLD or annual_rate > POSITIVE_THRESHOLD:
-                        # Get OHLCV data using new async module
                         async with HyperliquidClient() as client:
                             candles = await client.get_candles(
                                 symbol=symbol,
@@ -404,7 +381,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             messages = []
 
             for symbol, data in opportunities.items():
-                # Get full name from mapping
                 token_name = SYMBOL_NAMES.get(symbol, symbol)
                 rate = data["annual_rate"]
                 action = data["action"]
@@ -446,14 +422,12 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
     def load_history(self):
         """Load or initialize historical funding rate data"""
         try:
-            # Always start with clean history using the new format
             self.funding_history = pd.DataFrame(
                 columns=["timestamp", "symbol", "funding_rate", "annual_rate"]
             )
             print("📝 Initialized new funding rate history")
 
             if self.history_file.exists():
-                # Keep just one backup file
                 backup_file = self.data_dir / "funding_history_backup.csv"
                 os.rename(self.history_file, backup_file)
                 print(f"📦 Backed up old history file")
@@ -470,15 +444,12 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             df = self.api.get_funding_data()
 
             if df is not None and not df.empty:
-                # Get latest data for each symbol
                 current_data = df.sort_values("event_time").groupby("symbol").last().reset_index()
 
-                # Ensure funding_rate and yearly_funding_rate are numeric
                 numeric_cols = ["funding_rate", "yearly_funding_rate"]
                 for col in numeric_cols:
                     current_data[col] = pd.to_numeric(current_data[col], errors="coerce")
 
-                # Rename yearly_funding_rate to annual_rate for consistency
                 current_data = current_data.rename(columns={"yearly_funding_rate": "annual_rate"})
 
                 return current_data
@@ -493,19 +464,16 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
         """Save current funding data to history"""
         try:
             if current_data is not None and not current_data.empty:
-                # Convert to wide format with all symbols in one row
                 wide_data = pd.DataFrame()
                 wide_data["event_time"] = [
                     current_data["event_time"].iloc[0]
                 ]  # Use first event_time
 
-                # Add columns for each symbol's funding and annual rates
                 for _, row in current_data.iterrows():
                     symbol = row["symbol"]
                     wide_data[f"{symbol}_funding_rate"] = row["funding_rate"]
                     wide_data[f"{symbol}_annual_rate"] = row["annual_rate"]
 
-                # Concatenate with existing history
                 if self.funding_history.empty:
                     self.funding_history = wide_data
                 else:
@@ -513,21 +481,17 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                         [self.funding_history, wide_data], ignore_index=True
                     )
 
-                # Drop duplicates based on event_time
                 self.funding_history = self.funding_history.drop_duplicates(
                     subset=["event_time"], keep="last"
                 )
 
-                # Keep only last 24 hours of data
                 cutoff_time = datetime.now() - timedelta(hours=24)
                 self.funding_history = self.funding_history[
                     pd.to_datetime(self.funding_history["event_time"]) > cutoff_time
                 ]
 
-                # Sort by event_time
                 self.funding_history = self.funding_history.sort_values("event_time")
 
-                # Save to file
                 self.funding_history.to_csv(self.history_file, index=False)
 
         except Exception as e:
@@ -537,23 +501,18 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
     async def run_monitoring_cycle(self):
         """Run one monitoring cycle - UPDATED FOR NEW MODULE"""
         try:
-            # Get current funding rates
             current_data = self._get_current_funding()
 
             if current_data is not None:
-                # Save to history silently
                 self._save_to_history(current_data)
 
-                # Check for significant changes (async)
                 opportunities = await self._detect_significant_changes(current_data)
 
                 if opportunities:
-                    # Format and announce changes
                     message = self._format_announcement(opportunities)
                     if message:
                         self._announce(message)
 
-            # Always print the final box after any announcements
             print("\n" + "╔" + "═" * 50 + "╗")
             print("║         🌙 Deamon Dev's Funding Party 🎉          ║")
             print("╠" + "═" * 50 + "╣")
@@ -561,7 +520,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             print("╟" + "─" * 50 + "╢")
 
             for _, row in current_data.iterrows():
-                # Get fun status emoji based on rate
                 if row["annual_rate"] > 20:
                     status = "🔥 SUPER HOT!"
                 elif row["annual_rate"] < -5:
@@ -573,7 +531,6 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 else:
                     status = "😴 CHILL"
 
-                # Truncate symbol to 4 characters
                 symbol = row["symbol"][:4]
                 print(f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║")
 
@@ -601,7 +558,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
 
 if __name__ == "__main__":
-    # Create event loop for async agent
+
     async def main():
         agent = FundingAgent()
         await agent.run()

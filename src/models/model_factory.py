@@ -7,7 +7,6 @@ This module manages all available AI models and provides a unified interface.
 import os
 import sys
 
-# Force UTF-8 encoding for Windows compatibility
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="ignore")
     sys.stderr.reconfigure(encoding="utf-8", errors="ignore")
@@ -25,7 +24,6 @@ def safe_cprint(text, color):
     try:
         cprint(text, color)
     except UnicodeEncodeError:
-        # Remove emojis and special characters for Windows compatibility
         clean_text = (
             text.replace("✨", "")
             .replace("❌", "")
@@ -40,7 +38,6 @@ def safe_cprint(text, color):
             .replace("🔑", "")
             .replace("═", "-")
         )
-        # Remove all remaining non-ASCII characters
         clean_text = "".join(char for char in clean_text if ord(char) < 128)
         cprint(clean_text, color)
 
@@ -60,7 +57,6 @@ from .zai_model import ZAIModel  # Added Z.AI GLM-4.6 support
 class ModelFactory:
     """Factory for creating and managing AI models"""
 
-    # Map model types to their implementations
     MODEL_IMPLEMENTATIONS = {
         "claude": ClaudeModel,
         "groq": GroqModel,
@@ -72,7 +68,6 @@ class ModelFactory:
         "zai": ZAIModel,  # Z.AI GLM-4.6 - Top Chinese model with Claude Sonnet 4 performance
     }
 
-    # Default models for each type
     DEFAULT_MODELS = {
         "claude": "claude-3-5-haiku-latest",  # Latest fast Claude model
         "groq": "mixtral-8x7b-32768",  # Fast Mixtral model
@@ -87,7 +82,6 @@ class ModelFactory:
     def __init__(self):
         safe_cprint("\nCreating new ModelFactory instance...", "cyan")
 
-        # Load environment variables first
         project_root = Path(__file__).parent.parent.parent
         env_path = project_root / ".env"
         safe_cprint(f"\nLoading environment from: {env_path}", "cyan")
@@ -104,7 +98,6 @@ class ModelFactory:
         safe_cprint("\nDeamon Dev's Model Factory Initialization", "cyan")
         safe_cprint("=" * 50, "cyan")
 
-        # Debug current environment without exposing values
         safe_cprint("\n Environment Check:", "cyan")
         for key in [
             "GROQ_API_KEY",
@@ -121,7 +114,6 @@ class ModelFactory:
             else:
                 safe_cprint(f"  +- {key}: Not found or empty", "red")
 
-        # Try to initialize each model type
         for model_type, key_name in self._get_api_key_mapping().items():
             safe_cprint(f"\n Initializing {model_type} model...", "cyan")
             safe_cprint(f"  +- Looking for {key_name}...", "cyan")
@@ -142,7 +134,6 @@ class ModelFactory:
                     model_class = self.MODEL_IMPLEMENTATIONS[model_type]
                     safe_cprint(f"  +- Using model class: {model_class.__name__}", "cyan")
 
-                    # Create instance with more detailed error handling
                     try:
                         safe_cprint(f"  +- Creating model instance...", "cyan")
                         safe_cprint(
@@ -152,14 +143,12 @@ class ModelFactory:
                         model_instance = model_class(api_key)
                         safe_cprint(f"  +- Model instance created", "green")
 
-                        # Test if instance is properly initialized
                         safe_cprint(f"  +- Testing model availability...", "cyan")
                         if model_instance.is_available():
                             self._models[model_type] = model_instance
                             initialized = True
                             safe_cprint(f"  -  Successfully initialized {model_type}", "green")
                         else:
-                            # For ZAI, don't show "not available" if it's just a plan issue
                             if model_type == "zai":
                                 safe_cprint(
                                     f"  -  ZAI model configured but plan activation needed",
@@ -197,22 +186,6 @@ class ModelFactory:
             else:
                 safe_cprint(f"  - {key_name} not found", "blue")
 
-        # Initialize Ollama separately since it doesn't need an API key
-        # Temporairement désactivé
-        # try:
-        #     safe_cprint("\n Initializing Ollama model...", "cyan")
-        #     model_class = self.MODEL_IMPLEMENTATIONS["ollama"]
-        #     model_instance = model_class(model_name=self.DEFAULT_MODELS["ollama"])
-        #
-        #     if model_instance.is_available():
-        #         self._models["ollama"] = model_instance
-        #         initialized = True
-        #         safe_cprint(" Successfully initialized Ollama", "green")
-        #     else:
-        #         safe_cprint(" Ollama server not available - make sure 'ollama serve' is running", "yellow")
-        # except Exception as e:
-        #     safe_cprint(f" Failed to initialize Ollama: {str(e)}", "red")
-
         safe_cprint("\n" + "═" * 50, "cyan")
         safe_cprint(f"📊 Initialization Summary:", "cyan")
         safe_cprint(
@@ -230,7 +203,6 @@ class ModelFactory:
             safe_cprint("\nFor Ollama:", "yellow")
             safe_cprint("  L- Make sure 'ollama serve' is running", "yellow")
         else:
-            # Print available models
             safe_cprint("\n🤖 Available AI Models:", "cyan")
             for model_type, model in self._models.items():
                 safe_cprint(f"  +- {model_type}: {model.model_name}", "green")
@@ -262,11 +234,9 @@ class ModelFactory:
         if model_name and model.model_name != model_name:
             safe_cprint(f" Reinitializing {model_type} with model {model_name}...", "cyan")
             try:
-                # Special handling for Ollama models
                 if model_type == "ollama":
                     model = self.MODEL_IMPLEMENTATIONS[model_type](model_name=model_name)
                 else:
-                    # For API-based models that need a key
                     if api_key := os.getenv(self._get_api_key_mapping()[model_type]):
                         model = self.MODEL_IMPLEMENTATIONS[model_type](
                             api_key, model_name=model_name
@@ -289,13 +259,11 @@ class ModelFactory:
         """Get mapping of model types to their API key environment variable names"""
         return {
             "claude": "ANTHROPIC_KEY",
-            # "groq": "GROQ_API_KEY",  # Temporairement désactivé
             "openai": "OPENAI_KEY",
             "gemini": "GEMINI_KEY",  # Re-enabled with Gemini 2.5 models
             "deepseek": "DEEPSEEK_KEY",
             "xai": "GROK_API_KEY",  # Grok/xAI uses GROK_API_KEY
             "zai": "ZAI_API_KEY",  # Z.AI GLM-4.6 API key
-            # Ollama doesn't need an API key as it runs locally
         }
 
     @property
@@ -310,7 +278,6 @@ class ModelFactory:
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate a response from the model with no caching"""
         try:
-            # Add random nonce to prevent caching
             nonce = f"_{random.randint(1, 1000000)}"
 
             response = self.client.chat.completions.create(
@@ -335,5 +302,4 @@ class ModelFactory:
             return None
 
 
-# Create a singleton instance
 model_factory = ModelFactory()

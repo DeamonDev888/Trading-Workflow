@@ -8,6 +8,7 @@ Ensures NO trading on illiquid or risky assets.
 """
 
 import asyncio
+import json
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -23,12 +24,10 @@ class HyperLiquidLiquidityTracker:
         self.liquidity_cache = {}
         self.cache_duration = 600  # 10 minutes cache
 
-        # Liquidity thresholds
         self.min_24h_volume = 50000000  # $50M minimum 24h volume
         self.min_depth_usd = 1000000  # $1M minimum depth
         self.min_spread_pct = 0.1  # 0.1% maximum spread
 
-        # High liquidity assets (never excluded)
         self.blue_chip_assets = {
             "BTC",
             "ETH",
@@ -54,7 +53,6 @@ class HyperLiquidLiquidityTracker:
             "RUNE",
         }
 
-        # Always exclude these (illiquid or dangerous)
         self.dangerous_assets = {"kPEPE", "kSHIB", "kBONK", "kFLOKI", "kLUNC", "kNEIRO"}
 
     async def get_all_metadata(self) -> List[Dict]:
@@ -64,7 +62,6 @@ class HyperLiquidLiquidityTracker:
                 async with session.post(self.base_url, json={"type": "meta"}) as response:
                     if response.status == 200:
                         data = await response.json()
-                        # Filter out delisted and dangerous assets
                         assets = [
                             asset
                             for asset in data.get("universe", [])
@@ -86,11 +83,9 @@ class HyperLiquidLiquidityTracker:
         """Get current prices and order book depth"""
         try:
             async with aiohttp.ClientSession() as session:
-                # Get all prices
                 async with session.post(self.base_url, json={"type": "allMids"}) as response:
                     if response.status == 200:
                         prices = await response.json()
-                        # Filter out test assets and dangerous ones
                         real_prices = {
                             k: float(v)
                             for k, v in prices.items()
@@ -102,17 +97,13 @@ class HyperLiquidLiquidityTracker:
                         print(f"[ERROR] Failed to get prices: {response.status}")
                         return {}, {}
 
-                # Simulate order book depth (in real implementation, this would use order book API)
                 depth_data = {}
                 for symbol, price in real_prices.items():
-                    # Simulate realistic depth based on asset category
                     if symbol in self.blue_chip_assets:
-                        # Blue chips have excellent liquidity
                         depth_usd = price * 1000 * 10000  # High depth
                         spread_pct = 0.01 + (hash(symbol) % 5) / 1000  # 0.01-0.015%
                         volume_24h = price * 50000 * 10000  # $500M+ volume
                     else:
-                        # Other assets have varying liquidity
                         depth_usd = price * 1000 * (1000 + hash(symbol) % 9000)  # Variable depth
                         spread_pct = 0.02 + (hash(symbol) % 20) / 1000  # 0.02-0.04% spread
                         volume_24h = (
@@ -139,13 +130,11 @@ class HyperLiquidLiquidityTracker:
         try:
             symbol = asset["name"]
 
-            # Get depth data
             asset_depth = depth_data.get(symbol, {})
             depth_usd = asset_depth.get("depth_usd", 0)
             spread_pct = asset_depth.get("spread_pct", 0.1)
             volume_24h = asset_depth.get("volume_24h", 0)
 
-            # Check if it's a blue chip asset
             is_blue_chip = symbol in self.blue_chip_assets
             is_dangerous = symbol in self.dangerous_assets
 
@@ -159,21 +148,17 @@ class HyperLiquidLiquidityTracker:
                     "overall_score": 0.0,
                 }
 
-            # Calculate individual scores (0-1 scale)
             volume_score = min(1.0, volume_24h / self.min_24h_volume) if volume_24h > 0 else 0
             depth_score = min(1.0, depth_usd / self.min_depth_usd) if depth_usd > 0 else 0
             spread_score = (
                 max(0.0, 1.0 - (spread_pct / self.min_spread_pct)) if spread_pct > 0 else 0.8
             )
 
-            # Blue chip bonus
             blue_chip_bonus = 0.3 if is_blue_chip else 0.0
 
-            # Leverage bonus (higher leverage = higher liquidity on HyperLiquid)
             leverage = asset.get("maxLeverage", 1)
             leverage_bonus = min(0.2, leverage / 50)  # Up to 0.2 for 50x leverage
 
-            # Overall liquidity score (weighted)
             overall_score = (
                 volume_score * 0.4  # 40% weight to volume
                 + depth_score * 0.3  # 30% weight to depth
@@ -224,13 +209,11 @@ class HyperLiquidLiquidityTracker:
         print(f"[INFO] Blue chip assets: {len(self.blue_chip_assets)}")
         print(f"[INFO] Dangerous assets excluded: {len(self.dangerous_assets)}")
 
-        # Get metadata and current data
         assets = await self.get_all_metadata()
         prices, depth_data = await self.get_current_prices_and_depth()
 
         liquidity_data = {}
 
-        # Process assets
         assets_list = [asset["name"] for asset in assets if asset["name"] in prices]
 
         print(f"[INFO] Analyzing liquidity for {len(assets_list)} assets...")
@@ -244,7 +227,6 @@ class HyperLiquidLiquidityTracker:
                         asset_data, price, depth_data
                     )
 
-                    # Add additional metadata
                     liquidity_data[symbol] = {
                         **liquidity_metrics,
                         "symbol": symbol,
@@ -271,7 +253,6 @@ class HyperLiquidLiquidityTracker:
         for symbol, data in liquidity_data.items():
             ranked_assets.append((symbol, data))
 
-        # Sort by overall liquidity score (descending)
         ranked_assets.sort(key=lambda x: x[1]["overall_score"], reverse=True)
         return ranked_assets
 
@@ -293,13 +274,9 @@ class HyperLiquidLiquidityTracker:
         safe_assets = []
 
         for symbol, data in liquidity_data.items():
-            # Must meet minimum liquidity requirements
             if data["overall_score"] >= 0.4:  # Minimum GOOD category
-                # Must have acceptable spread
                 if data.get("spread_score", 0) >= 0.3:
-                    # Must have sufficient depth
                     if data.get("depth_score", 0) >= 0.3:
-                        # Must not be a dangerous asset
                         if symbol not in self.dangerous_assets:
                             safe_assets.append(symbol)
 
@@ -316,7 +293,6 @@ class HyperLiquidLiquidityTracker:
             is_blue_chip = data.get("is_blue_chip", False)
             overall_score = data.get("overall_score", 0)
 
-            # Color coding
             color = {
                 "EXCELLENT": "green",
                 "VERY_GOOD": "cyan",
@@ -352,31 +328,23 @@ class HyperLiquidLiquidityTracker:
             print(f"[FILTER] Minimum liquidity score: {min_liquidity_score}")
             print(f"[FILTER] Maximum assets: {max_count}")
 
-            # Calculate all liquidity
             liquidity_data = await self.calculate_all_liquidity()
 
-            # Rank by liquidity
             ranked_assets = self.rank_by_liquidity(liquidity_data)
 
-            # Filter for minimum liquidity and get top assets
             liquid_assets = self.filter_liquid_assets(ranked_assets, min_liquidity_score, max_count)
 
-            # Also ensure they're safe for trading
             safe_assets = self.get_safe_trading_assets(liquidity_data)
 
-            # Intersection of filtered and safe assets
             final_assets = [asset for asset in liquid_assets if asset[0] in safe_assets]
 
-            # Display ranking
             self.display_liquidity_ranking(ranked_assets, limit=max_count)
 
-            # Return just the symbols
             symbols = [symbol for symbol, _ in final_assets]
 
             print(f"\n[RESULT] Found {len(symbols)} safe liquid assets for trading")
             print(f"[SYMBOLS] {', '.join(symbols[:10])}{'...' if len(symbols) > 10 else ''}")
 
-            # Show blue chip assets found
             blue_chips_found = [s for s in symbols if s in self.blue_chip_assets]
             if blue_chips_found:
                 print(
@@ -392,11 +360,9 @@ class HyperLiquidLiquidityTracker:
     def is_asset_liquid_enough(self, symbol: str, min_score: float = 0.4) -> bool:
         """Check if a specific asset meets liquidity requirements"""
         try:
-            # Quick check against cache if available
             if self.liquidity_cache and symbol in self.liquidity_cache:
                 return self.liquidity_cache[symbol]["overall_score"] >= min_score
 
-            # For non-cached assets, check if it's a blue chip
             return symbol in self.blue_chip_assets
 
         except Exception as e:
@@ -409,7 +375,6 @@ class HyperLiquidLiquidityTracker:
             if self.liquidity_cache and symbol in self.liquidity_cache:
                 return self.liquidity_cache[symbol]
 
-            # Return basic info for blue chips
             if symbol in self.blue_chip_assets:
                 return {
                     "overall_score": 0.9,
@@ -440,7 +405,6 @@ class HyperLiquidLiquidityTracker:
             }
 
 
-# Convenience function
 async def get_liquid_trading_assets(
     min_liquidity_score: float = 0.4, max_count: int = 30
 ) -> List[str]:
@@ -450,7 +414,7 @@ async def get_liquid_trading_assets(
 
 
 if __name__ == "__main__":
-    # Test the liquidity tracker
+
     async def test():
         tracker = HyperLiquidLiquidityTracker()
         liquid_assets = await tracker.get_liquid_assets(min_liquidity_score=0.4, max_count=20)

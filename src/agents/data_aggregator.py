@@ -16,17 +16,17 @@ from typing import Any, Dict, List, Optional, Tuple
 try:
     from termcolor import safe_cprint
 except ImportError:
-    # Fallback if termcolor is not available
+
     def safe_cprint(text, color=None, attrs=None):
         print(text)
+
 
 def safe_safe_cprint(text, color):
     """Safe print that handles Unicode encoding issues"""
     try:
         safe_cprint(text, color)
     except UnicodeEncodeError:
-        # Remove emojis and special characters for compatibility
-        clean_text = text.encode('ascii', 'ignore').decode('ascii')
+        clean_text = text.encode("ascii", "ignore").decode("ascii")
         print(clean_text)
 
 
@@ -79,10 +79,8 @@ class DataAggregator:
         self.data_dir = self.project_path / "data" / "aggregator"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Historique des agrégations
         self.aggregation_history: List[AggregationResult] = []
 
-        # Métriques de fiabilité
         self.reliability_metrics = {
             "total_aggregations": 0,
             "successful_aggregations": 0,
@@ -116,7 +114,6 @@ class DataAggregator:
         safe_safe_cprint(f"\n[AGGREGATOR] Starting aggregation {aggregation_id}", "cyan")
         safe_safe_cprint(f"[AGGREGATOR] Processing {len(agent_results)} agents", "cyan")
 
-        # 1. Convertir les résultats en AgentData
         agents_data = []
         for agent_name, result in agent_results.items():
             agent_data = self._convert_to_agent_data(agent_name, result)
@@ -127,27 +124,20 @@ class DataAggregator:
                 "white",
             )
 
-        # 2. Valider chaque agent
         for agent_data in agents_data:
             agent_data = self._validate_agent_data(agent_data)
 
-        # 3. Calculer le consensus
         consensus = self._calculate_consensus(agents_data)
 
-        # 4. Calculer la décision finale
         final_decision = self._determine_final_decision(consensus, agents_data)
 
-        # 5. Calculer les scores globaux
         confidence_score = self._calculate_confidence_score(agents_data)
         reliability_score = self._calculate_reliability_score(agents_data)
 
-        # 6. Valider le système global
         validation_results = self._validate_system(agents_data, consensus, context_data)
 
-        # 7. Collecter warnings et erreurs
         warnings, errors = self._collect_warnings_errors(agents_data, validation_results)
 
-        # 8. Créer le résultat
         result = AggregationResult(
             aggregation_id=aggregation_id,
             timestamp=timestamp,
@@ -167,13 +157,10 @@ class DataAggregator:
             },
         )
 
-        # 9. Sauvegarder
         self._save_aggregation_result(result)
 
-        # 10. Mettre à jour l'historique et les métriques
         self._update_metrics(result)
 
-        # 11. Afficher le résumé
         self._print_aggregation_summary(result)
 
         return result
@@ -197,13 +184,11 @@ class DataAggregator:
         """Valide les données d'un agent"""
         validations = []
 
-        # 1. Vérifier le succès
         if not agent_data.success:
             agent_data.validation_status = "INVALID"
             validations.append("Agent execution failed")
             return agent_data
 
-        # 2. Vérifier la confiance
         if agent_data.confidence < 0.3:
             agent_data.validation_status = "WARNING"
             validations.append("Low confidence score")
@@ -213,25 +198,20 @@ class DataAggregator:
         else:
             agent_data.validation_status = "VALID"
 
-        # 3. Vérifier la convergence
         if not agent_data.convergence and agent_data.confidence < 0.7:
             agent_data.validation_status = "WARNING"
             validations.append("No convergence with low confidence")
 
-        # 4. Vérifier l'exécution
         if agent_data.execution_time > 120:  # Plus de 2 minutes
             agent_data.validation_status = "WARNING"
             validations.append("Slow execution")
 
-        # 5. Vérifier les itérations
         if agent_data.iterations > 5:
             agent_data.validation_status = "WARNING"
             validations.append("Too many iterations")
 
-        # 6. Calculer le score de fiabilité
         agent_data.reliability_score = self._calculate_agent_reliability(agent_data)
 
-        # 7. Calculer les métriques de qualité
         agent_data.quality_metrics = {
             "confidence": agent_data.confidence,
             "convergence": 1.0 if agent_data.convergence else 0.0,
@@ -248,20 +228,16 @@ class DataAggregator:
 
         score = 0.0
 
-        # Confiance (40%)
         score += agent_data.confidence * 0.4
 
-        # Convergence (30%)
         if agent_data.convergence:
             score += 0.3
         else:
             score += agent_data.confidence * 0.3
 
-        # Vitesse d'exécution (15%)
         speed_score = max(0.0, 1.0 - (agent_data.execution_time / 120))
         score += speed_score * 0.15
 
-        # Stabilité (nombre d'itérations raisonnable) (15%)
         stability_score = max(0.0, 1.0 - abs(agent_data.iterations - 3) / 3)
         score += stability_score * 0.15
 
@@ -272,7 +248,6 @@ class DataAggregator:
         if not agents_data:
             return {"decision": "HOLD", "confidence": 0.0, "agreements": []}
 
-        # Collecter les décisions
         decisions = {}
         confidences = []
         agreements = []
@@ -281,7 +256,6 @@ class DataAggregator:
             if not agent_data.success:
                 continue
 
-            # Extraire la décision du parsed_data
             decision = self._extract_decision(agent_data)
             if decision:
                 decisions[agent_data.agent_name] = {
@@ -291,7 +265,6 @@ class DataAggregator:
                 }
                 confidences.append(agent_data.confidence)
 
-        # Calculer le consensus
         if not decisions:
             return {
                 "decision": "HOLD",
@@ -300,19 +273,16 @@ class DataAggregator:
                 "reason": "No valid decisions",
             }
 
-        # Compter les décisions
         decision_counts = {}
         for agent_name, data in decisions.items():
             dec = data["decision"]
             weight = data["confidence"] * data["reliability"]
             decision_counts[dec] = decision_counts.get(dec, 0) + weight
 
-        # Trouver la décision majoritaire
         best_decision = max(decision_counts.items(), key=lambda x: x[1])
         final_decision = best_decision[0]
         final_confidence = best_decision[1] / sum(decision_counts.values())
 
-        # Construire la liste des accords
         for agent_name, data in decisions.items():
             agreements.append(
                 {
@@ -336,7 +306,6 @@ class DataAggregator:
         """Extrait la décision du parsed_data de l'agent"""
         data = agent_data.parsed_data
 
-        # Chercher dans différentes structures possibles
         if isinstance(data, dict):
             if "decision" in data:
                 return data["decision"].upper()
@@ -345,7 +314,6 @@ class DataAggregator:
             if "action" in data:
                 return data["action"].upper()
 
-        # Chercher dans le raw_response
         text = agent_data.raw_response.upper()
         if "BUY" in text or "SELL" in text or "HOLD" in text:
             if "BUY" in text and text.count("BUY") > text.count("SELL"):
@@ -361,11 +329,9 @@ class DataAggregator:
         self, consensus: Dict[str, Any], agents_data: List[AgentData]
     ) -> str:
         """Détermine la décision finale"""
-        # Si on a un consensus clair
         if consensus.get("confidence", 0) > 0.7:
             return consensus["decision"]
 
-        # Sinon, décision conservative
         return "HOLD"
 
     def _calculate_confidence_score(self, agents_data: List[AgentData]) -> float:
@@ -377,7 +343,6 @@ class DataAggregator:
         if not valid_agents:
             return 0.0
 
-        # Moyenne pondérée par la fiabilité
         total_weight = sum(a.reliability_score for a in valid_agents)
         if total_weight == 0:
             return 0.0
@@ -410,20 +375,17 @@ class DataAggregator:
             "critical_issues": [],
         }
 
-        # 1. Vérifier le nombre d'agents
         num_successful = sum(1 for a in agents_data if a.success)
         if num_successful < 2:
             validation_results["critical_issues"].append("Less than 2 agents successful")
             validation_results["overall_status"] = "INVALID"
 
-        # 2. Vérifier la dispersion des confiances
         confidences = [a.confidence for a in agents_data if a.success]
         if confidences:
             avg_conf = sum(confidences) / len(confidences)
             if avg_conf < 0.5:
                 validation_results["warnings"].append("Low average confidence")
 
-        # 3. Vérifier l'accord des agents
         agreements = consensus.get("agreements", [])
         if agreements:
             matches = sum(1 for a in agreements if a["matches_final"])
@@ -431,7 +393,6 @@ class DataAggregator:
             if agreement_rate < 0.5:
                 validation_results["warnings"].append("Low agreement rate between agents")
 
-        # 4. Vérifier la cohérence temporelle
         timestamps = [datetime.fromisoformat(a.timestamp) for a in agents_data if a.success]
         if len(timestamps) > 1:
             time_diffs = [(max(timestamps) - min(timestamps)).total_seconds() for _ in timestamps]
@@ -439,7 +400,6 @@ class DataAggregator:
             if max_time_diff > 300:  # Plus de 5 minutes
                 validation_results["warnings"].append("Large time dispersion between agents")
 
-        # 5. Vérifier les données de contexte
         if context_data:
             required_fields = ["symbol", "price"]
             missing_fields = [f for f in required_fields if f not in context_data]
@@ -455,7 +415,6 @@ class DataAggregator:
         warnings = []
         errors = []
 
-        # Depuis les agents
         for agent_data in agents_data:
             if agent_data.validation_status == "WARNING":
                 warnings.append(f"{agent_data.agent_name}: {agent_data.validation_status}")
@@ -464,7 +423,6 @@ class DataAggregator:
             if agent_data.error:
                 errors.append(f"{agent_data.agent_name}: {agent_data.error}")
 
-        # Depuis la validation système
         warnings.extend(validation_results.get("warnings", []))
         errors.extend(validation_results.get("critical_issues", []))
 
@@ -476,7 +434,6 @@ class DataAggregator:
         filename = f"aggregation_{result.aggregation_id}_{timestamp}.json"
         filepath = self.data_dir / filename
 
-        # Convertir en dict pour sérialisation
         result_dict = {
             "aggregation_id": result.aggregation_id,
             "timestamp": result.timestamp,
@@ -524,7 +481,6 @@ class DataAggregator:
         else:
             self.reliability_metrics["successful_aggregations"] += 1
 
-        # Moyennes mobiles
         total = self.reliability_metrics["total_aggregations"]
         self.reliability_metrics["average_confidence"] = (
             self.reliability_metrics["average_confidence"] * (total - 1) + result.confidence_score
@@ -533,7 +489,6 @@ class DataAggregator:
             self.reliability_metrics["average_reliability"] * (total - 1) + result.reliability_score
         ) / total
 
-        # Taux de succès par agent
         for agent_data in result.agents_data:
             agent_name = agent_data.agent_name
             if agent_name not in self.reliability_metrics["agent_success_rates"]:
@@ -545,7 +500,6 @@ class DataAggregator:
             if agent_data.success:
                 self.reliability_metrics["agent_success_rates"][agent_name]["successful"] += 1
 
-        # Taux d'échec de validation
         if result.validation_results.get("critical_issues"):
             self.reliability_metrics["validation_failure_rate"] = (
                 self.reliability_metrics["validation_failure_rate"] * (total - 1) + 1
@@ -581,7 +535,6 @@ class DataAggregator:
             "white",
         )
 
-        # Statut de validation
         validation = result.validation_results
         if validation.get("critical_issues"):
             safe_cprint(
@@ -596,7 +549,6 @@ class DataAggregator:
         else:
             safe_cprint(f"\n  Status: VALID", "green")
 
-        # Avertissements et erreurs
         if result.warnings:
             safe_cprint(f"\n  Warnings: {len(result.warnings)}", "yellow")
             for warning in result.warnings[:3]:  # Afficher max 3
@@ -628,7 +580,6 @@ class DataAggregator:
             "agent_reliability": {},
         }
 
-        # Statistiques par agent
         for agent_name, stats in self.reliability_metrics["agent_success_rates"].items():
             if stats["total"] > 0:
                 success_rate = stats["successful"] / stats["total"]
@@ -642,10 +593,8 @@ class DataAggregator:
 
     def is_system_reliable(self, threshold: float = 0.7) -> bool:
         """Vérifie si le système est fiable"""
-        # Critères de fiabilité
         metrics = self.reliability_metrics
 
-        # 1. Taux de succès global > threshold
         if metrics["total_aggregations"] == 0:
             return False
 
@@ -653,19 +602,15 @@ class DataAggregator:
         if success_rate < threshold:
             return False
 
-        # 2. Confiance moyenne > threshold
         if metrics["average_confidence"] < threshold:
             return False
 
-        # 3. Fiabilité moyenne > threshold
         if metrics["average_reliability"] < threshold:
             return False
 
-        # 4. Taux d'échec de validation < 0.3
         if metrics["validation_failure_rate"] > 0.3:
             return False
 
-        # 5. Tous les agents ont un taux de succès > 0.5
         for stats in metrics["agent_success_rates"].values():
             if stats["total"] > 0:
                 if stats["successful"] / stats["total"] < 0.5:
@@ -696,11 +641,9 @@ class DataAggregator:
         return status
 
 
-# Test du module
 if __name__ == "__main__":
     aggregator = DataAggregator()
 
-    # Test avec des données simulées
     test_results = {
         "claude-strategy-advisor": {
             "success": True,

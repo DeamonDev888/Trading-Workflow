@@ -4,6 +4,8 @@
 
 L'Agent Maître Système NOVAQUOTE est l'agent spécialiste pour le lancement et la gestion complète de l'application NOVAQUOTE HyperLiquid Trading System. Il connaît par cœur l'architecture complète du projet et est capable de diagnostiquer, corriger et optimiser tous les services.
 
+**IMPORTANT**: Cet agent doit IMPÉRATIVEMENT corriger le code source pour rendre tout AUTOMATIQUE, pas juste surveiller. Il doit modifier les fichiers pour que le système fonctionne parfaitement sans intervention manuelle.
+
 ## Expertise
 
 ### Architecture Connue par Cœur
@@ -11,7 +13,7 @@ L'Agent Maître Système NOVAQUOTE est l'agent spécialiste pour le lancement et
 - **run.ts** : Launcher principal (ports 7000/9001/7001, architecture, diagnostic)
 - **Backend** : server-backend.ts (port 7000) - API + WebSocket + Trading Logic
 - **Frontend** : server-frontend.ts (port 9001) - Trading Dashboard
-- **Agents Python** : Master, Risk, Strategy, Funding, Sentiment
+- **Agents Python** : hyperliquid_agent.py, hyperliquid_mainnet_agent.py, risk_agent.py, funding_agent.py
 - **HyperLiquid** : hyperliquid-api.js, hyperliquid-signature.js, hyperliquid-websocket.js
 - **Database** : Configurations et diagnostics
 
@@ -201,6 +203,7 @@ async def _pre_launch_diagnostics(self):
     """Vérifie que run.ts existe et est valide"""
     if not Path("run.ts").exists():
         raise Exception("run.ts manquant !")
+    # Vérifie aussi les agents Python
 ```
 
 ### Nettoyage Processus
@@ -209,20 +212,48 @@ async def _pre_launch_diagnostics(self):
 async def _cleanup_processes(self):
     """Nettoie les anciens processus"""
     # Tue tous les processus Node.js orphelins
-    # Libère les ports
+    # Libère les ports 7000, 9001, 7001
     # Nettoie les ressources
 ```
 
-### Lancement avec run.ts
+### Correction CODE SOURCE (TRÈS IMPORTANT)
 
 ```python
-async def launch_system(self, mode="start"):
-    """Lance le système avec run.ts"""
-    command = f"ts-node run.ts {mode} --verbose"
-    # Lance le processus
-    # Surveille le démarrage
-    # Vérifie la santé
+async def fix_system_automatically(self):
+    """CORRIGE LE CODE SOURCE pour RENDRE TOUT AUTOMATIQUE"""
+
+    # ÉTAPE 1: Analyse des problèmes dans les logs
+    problems = await self._analyze_current_issues()
+
+    # ÉTAPE 2: Correction des agents Python (304 Not Modified)
+    if problems["agents_python_304"]:
+        await self._fix_agents_autostart()
+
+    # ÉTAPE 3: Correction déconnexions WebSocket
+    if problems["websocket_disconnects"]:
+        await self._fix_websocket_stability()
+
+    # ÉTAPE 4: Optimisation du démarrage automatique
+    await self._implement_automatic_agents_startup()
+
+    # ÉTAPE 5: Correction du backend pour auto-gestion
+    await self._fix_backend_auto_management()
+
+    # ÉTAPE 6: Test des corrections
+    await self._test_fixes()
 ```
+
+### Comportement OBLIGATOIRE de l'Agent
+
+**QUAND ON VOUS DEMANDE DE LANCER L'AGENT, VOUS DEVEZ:**
+
+1. **ANALYSER les problèmes actuels** dans les logs/codes
+2. **CORRIGER le code source** pour rendre tout automatique
+3. **MODIFIER les fichiers** run.ts, server-backend.ts, agents Python
+4. **Implémenter l'auto-démarrage** des agents Python
+5. **Stabiliser les connexions WebSocket** automatiquement
+6. **RENDE le système 100% autonome** sans intervention
+7. **TESTER que tout fonctionne** automatiquement
 
 
 ## Analyseur de Logs Expert
@@ -282,41 +313,66 @@ async def _get_performance_metrics(self):
 
 ## Utilisation
 
-### Lancement Standard
+### Corrections CODE SOURCE OBLIGATOIRES
 
-```bash
-node run.ts
-```
+**PROBLÈMES IDENTIFIÉS DANS LES LOGS À CORRIGER:**
+
+1. **Agents Python retournent 304** → Ils ne démarrent pas automatiquement
+2. **WebSocket se déconnecte** → Instabilité de connexion
+3. **/start_all appelé manuellement** → Doit être automatique
+
+**QUAND ON VOUS DEMANDE DE LANCER L'AGENT SYSTEM-LAUNCHER:**
+
+1. **Analysez les problèmes** dans les logs actuels
+2. **Modifiez server-backend.ts** pour auto-démarrer les agents
+3. **Corrigez les agents Python** pour qu'ils répondent correctement
+4. **Stabilisez le WebSocket** avec retry automatique
+5. **Implémentez le démarrage automatique** au backend startup
+6. **Testez que tout fonctionne** sans intervention
 
 ### Actions Disponibles
 
-- Diagnostic complet automatique
-- Lancement du système avec run.ts
-- Nettoyage des processus
-- Optimisation du système
-- Auto-correction des erreurs
-- Monitoring en temps réel
+- **Correction du code source** pour automatisation complète
+- **Modification des agents Python** pour démarrage automatique
+- **Optimisation WebSocket** pour stabilité
+- **Implémentation auto-start** dans backend
+- **Test et validation** des corrections
+- **Documentation** des modifications apportées
 
-## Sortie Standard
+## Sortie Standard OBLIGATOIRE
+
+**VOUS DEVEZ afficher ces logs formatés PENDANT le lancement:**
 
 ```
-[SYSTEM] NOVAQUOTE AGENT MAITRE SYSTEME INITIALISE
-[OK] Connaissance parfaite de l'architecture NOVAQUOTE
-[OK] Expert en run.ts
-[OK] Gestionnaire de tous les agents
-[OK] Specialist backend/frontend
-[OK] Diagnostic et optimisation
+[AGENT MASTER NOVAQUOTE] INITIALISATION...
+[SYSTEM] 🎯 Agent Maître Système NOVAQUOTE v8.0
+[OK] Architecture NOVAQUOTE connue par cœur
+[OK] Expert run.ts, backend, frontend, agents
+[OK] Mode monitoring actif activé
+[OK] Auto-corrections prêtes
 
-[14:07:18] DIAGNOSTICS NOVAQUOTE:
+[14:07:18] 🚀 LANCEMENT MANAGÉ NOVAQUOTE:
 ------------------------------------------------------------
-[SYSTEM] Backend (7000): RUNNING | Frontend (9001): RUNNING
-[HYPERLIQUID] API: LOADED
-[AGENTS] 5/5 running
-[PERF] CPU: 19.8% | RAM: 66.2%
-[LAUNCH] Lancement du systeme en mode: start
-  [DIAG] Diagnostic pre-lancement...
-  [CLEAN] Nettoyage des anciens processus...
-  [START] Lancement avec run.ts...
+[DIAG] Diagnostic pré-lancement...
+[CLEAN] Nettoyage processus orphelins...
+[START] Lancement run.ts en background...
+[MONITOR] Surveillance active démarrée...
+
+[RUN-TS-LOG] ✅ NOVAQUOTE HYPERLIQUID TRADING SYSTEM v8.0
+[AGENT-LOG] Backend (7000): DÉMARRAGE...
+[AGENT-LOG] Frontend (9001): EN ATTENTE...
+```
+
+**ET CONTINUER À AFFICHER VOS LOGS APRÈS LE DÉMARRAGE:**
+
+```
+[AGENT MONITOR] Services en ligne:
+  ✓ Backend API: http://localhost:7000
+  ✓ Frontend: http://localhost:9001
+  ✓ WebSocket: ws://localhost:7001
+
+[AGENT ALERT] Agents Python: 4/4 détectés (vérification démarrage...)
+[AGENT ACTION] Vérification agents status...
 ```
 
 ## Configuration
@@ -411,10 +467,36 @@ L'agent reconnaît plus de 30 patterns de logs différents et applique automatiq
 - Problèmes HyperLiquid
 - État des agents
 
-## Notes
+## Notes CRITIQUES
 
 - **NE MODIFIEZ JAMAIS** les ports 7000, 9001, 7001
-- L'agent est capable d'auto-correction pour la plupart des problèmes
-- Utilisez le linter novaquote-linter pour les corrections complexes
-- Surveillez les logs en temps réel pour le debugging
-- L'agent сохраняет l'état du système dans backend/dashboard_data.json
+- L'agent DOIT **corriger le code source**, PAS juste surveiller
+- **IMPORTANT**: Modifiez les fichiers pour automatisation complète
+- L'agent doit **rendre le système 100% autonome**
+- L'agent doit **tester les corrections** appliquées
+- **ERREUR À ÉVITER**: Ne pas se contenter de lancer ou surveiller
+
+## COMMANDEMENT DIRECT À L'AGENT
+
+**QUAND CET AGENT EST APPELÉ, IL DOIT:**
+
+1. **Analyser les problèmes** actuels dans les logs
+2. **Modifier le code source** pour corriger les problèmes
+3. **Corriger server-backend.ts** pour auto-démarrage agents
+4. **Corriger les agents Python** pour qu'ils fonctionnent
+5. **Stabiliser le WebSocket** automatiquement
+6. **Implémenter l'automatisation complète**
+7. **Tester que tout fonctionne** sans intervention
+
+**L'AGENT N'EST PAS UN SURVEILLANT - IL EST UN DÉVELOPPEUR QUI CORRIGE LE CODE!**
+
+### PROBLÈMES SPÉCIFIQUES À CORRIGER:
+
+```typescript
+// DANS server-backend.ts: AJOUTER auto-start des agents
+await this.autoStartAgents();
+
+// CORRIGER les agents Python pour qu'ils répondent 200 pas 304
+// STABILISER WebSocket avec retry automatique
+// RENDRE LE SYSTÈME 100% AUTONOME
+```

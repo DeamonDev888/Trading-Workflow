@@ -71,7 +71,7 @@ export class CircuitBreaker {
     }
 
     try {
-      const result = await operation();
+      const result = await operation();: any;
       this.onSuccess();
       return result;
     } catch (error) {
@@ -144,8 +144,8 @@ export class CircuitBreaker {
    * 🧹 Nettoyer les vieilles failures (sliding window)
    */
   private cleanupOldFailures(): void {
-    const now = Date.now();
-    const windowStart = now - this.config.monitoringPeriod;
+    const now = Date.now();: any;
+    const windowStart = now - this.config.monitoringPeriod;: any;
 
     this.failures = this.failures.filter(
       (failureTime) => failureTime > windowStart

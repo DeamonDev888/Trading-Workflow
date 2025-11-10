@@ -144,7 +144,6 @@ class PersistentAgentClient:
             results = {}
 
             if trade_type in ["analysis", "execution"]:
-                # Step 1: Strategy Analysis
                 print(f"[STEP 1/4] Strategy analysis for {symbol}...")
                 strategy_task = TradingTask(
                     task_id=f"strategy_{symbol}_{int(time.time())}",
@@ -164,7 +163,6 @@ class PersistentAgentClient:
                 results["strategy"] = strategy_result
 
                 if strategy_result and strategy_result.get("success"):
-                    # Step 2: Risk Assessment
                     print(f"[STEP 2/4] Risk assessment for {symbol}...")
                     risk_task = TradingTask(
                         task_id=f"risk_{symbol}_{int(time.time())}",
@@ -183,7 +181,6 @@ class PersistentAgentClient:
                     risk_result = await self.get_task_result(risk_task_id, timeout=90)
                     results["risk"] = risk_result
 
-                    # Step 3: Liquidity Analysis
                     print(f"[STEP 3/4] Liquidity analysis for {symbol}...")
                     liquidity_task = TradingTask(
                         task_id=f"liquidity_{symbol}_{int(time.time())}",
@@ -205,7 +202,6 @@ class PersistentAgentClient:
                     results["liquidity"] = liquidity_result
 
                     if trade_type == "execution":
-                        # Step 4: Trade Execution
                         print(f"[STEP 4/4] Trade execution for {symbol}...")
                         execution_task = TradingTask(
                             task_id=f"execution_{symbol}_{int(time.time())}",
@@ -232,7 +228,6 @@ class PersistentAgentClient:
                         results["execution"] = execution_result
 
             elif trade_type == "risk_assessment":
-                # Risk-only workflow
                 print(f"[STEP 1/2] Getting current {symbol} data...")
                 market_data = await self._get_market_data(symbol)
 
@@ -255,7 +250,6 @@ class PersistentAgentClient:
                 risk_result = await self.get_task_result(risk_task_id, timeout=120)
                 results["risk_assessment"] = risk_result
 
-            # Calculate workflow metrics
             workflow_time = time.time() - workflow_start
             results["workflow"] = {
                 "symbol": symbol,
@@ -289,7 +283,6 @@ class PersistentAgentClient:
     async def _get_market_data(self, symbol: str) -> Dict[str, Any]:
         """Get market data for a symbol (mock implementation)"""
         try:
-            # In production, this would fetch real market data
             return {
                 "symbol": symbol,
                 "price": 45000 if symbol == "BTC" else 3000 if symbol == "ETH" else 100,
@@ -334,7 +327,6 @@ class PersistentAgentClient:
     async def restart_agent(self, agent_type: str) -> bool:
         """Restart a specific agent"""
         try:
-            # Find agent ID by type
             status = await self.get_agent_status()
             agent_id = None
 
@@ -362,7 +354,6 @@ class PersistentAgentClient:
             return False
 
 
-# Convenience functions for common workflows
 async def quick_analysis(symbol: str) -> Dict[str, Any]:
     """Quick trading analysis for a symbol"""
     async with PersistentAgentClient() as client:
@@ -382,20 +373,17 @@ async def risk_assessment(symbol: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    # Example usage
+
     async def main():
         async with PersistentAgentClient() as client:
-            # Check agent status
             print("🔍 Checking agent status...")
             status = await client.get_agent_status()
             print(json.dumps(status, indent=2))
 
-            # Run quick analysis
             print("\n📊 Running BTC analysis...")
             result = await client.execute_trading_workflow("BTC", "analysis")
             print(f"Analysis result: {json.dumps(result, indent=2)}")
 
-            # Monitor agents for 30 seconds
             print("\n👀 Monitoring agents for 30s...")
             await client.monitor_agents(30)
 

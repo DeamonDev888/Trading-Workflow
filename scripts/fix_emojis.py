@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
 """Script to remove emojis from all agent files"""
 import os
 
-# Emoji replacement map
 EMOJI_MAP = {
     '🌙': '[OK]',
     '✨': '[OK]',

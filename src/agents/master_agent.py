@@ -29,6 +29,7 @@ from src.agents.funding_agent import FundingAgent
 from src.agents.risk_agent import RiskAgent
 from src.agents.sentiment_analysis_agent import SentimentAnalysisAgent
 from src.agents.strategy_agent import StrategyAgent
+
 try:
     from src.logger import get_logger
 except ImportError:
@@ -36,7 +37,6 @@ except ImportError:
     def get_logger(name):
         return logging.getLogger(name)
 
-# Configuration logging
 logger = get_logger("master_agent")
 
 
@@ -84,7 +84,6 @@ class MasterAgent:
         self.current_cycle_id = None
         self.cycle_count = 0
 
-        # Initialiser les agents
         self.agents = {
             "risk_agent": RiskAgent(),
             "strategy_agent": StrategyAgent(),
@@ -92,16 +91,13 @@ class MasterAgent:
             "sentiment_agent": SentimentAnalysisAgent(),
         }
 
-        # Chemins des backtests
         self.backtests_dir = Path(__file__).parent.parent / "data" / "production_backtests"
         self.backtests_results_dir = (
             Path(__file__).parent.parent / "data" / "rbi_v3" / "10_23_2025" / "backtests_final"
         )
 
-        # Historique des cycles
         self.cycle_history: List[CycleMetrics] = []
 
-        # Métriques de performance
         self.performance_metrics = {
             "total_cycles": 0,
             "successful_decisions": 0,
@@ -134,7 +130,6 @@ class MasterAgent:
                 cycle_start = datetime.now()
                 self.cycle_count += 1
 
-                # Générer ID unique pour le cycle
                 self.current_cycle_id = cycle_start.strftime("%Y-%m-%d_%H:%M")
                 cprint(f"\n{'='*80}", "yellow")
                 cprint(
@@ -144,24 +139,18 @@ class MasterAgent:
                 )
                 cprint(f"{'='*80}\n", "yellow")
 
-                # Exécuter le cycle
                 cycle_metrics = await self.execute_cycle()
 
-                # Sauvegarder les résultats
                 await self.save_cycle_metrics(cycle_metrics)
 
-                # Mise à jour des métriques de performance
                 self.update_performance_metrics(cycle_metrics)
 
-                # Affichage du résumé
                 self.display_cycle_summary(cycle_metrics)
 
-                # Calcul du temps d'attente pour le prochain cycle
                 cycle_end = datetime.now()
                 cycle_duration = (cycle_end - cycle_start).total_seconds()
                 sleep_time = max(0, self.cycle_duration_seconds - cycle_duration)
 
-                # Affichage compte à rebours
                 if sleep_time > 0:
                     cprint(f"\n⏳ Attente du prochain cycle...", "blue")
                     cprint(
@@ -190,7 +179,6 @@ class MasterAgent:
         agents_results = []
 
         try:
-            # ==================== PHASE 1: RISK AGENT (SÉCURITÉ PREMIÈRE) ====================
             cprint(
                 "\n[SHIELD] [1/4] RISK AGENT - Contrôle sécurité...",
                 "magenta",
@@ -211,7 +199,6 @@ class MasterAgent:
                     cycle_start, agents_results, "RISK_AGENT_CRITICAL"
                 )
 
-            # ==================== PHASE 2: STRATEGY AGENT (ANALYSE TECHNIQUE) ====================
             cprint(
                 "\n[STATS] [2/4] STRATEGY AGENT - Analyse technique...",
                 "magenta",
@@ -224,7 +211,6 @@ class MasterAgent:
             )
             agents_results.append(strategy_result)
 
-            # ==================== PHASE 3: FUNDING AGENT (ARBITRAGE) ====================
             cprint(
                 "\n[MONEY] [3/4] FUNDING AGENT - Analyse funding...",
                 "magenta",
@@ -235,7 +221,6 @@ class MasterAgent:
             )
             agents_results.append(funding_result)
 
-            # ==================== PHASE 4: SENTIMENT AGENT (ANALYSE SOCIALE) ====================
             cprint(
                 "\n[CHAT] [4/4] SENTIMENT AGENT - Analyse sentiment...",
                 "magenta",
@@ -251,7 +236,6 @@ class MasterAgent:
             )
             agents_results.append(sentiment_result)
 
-            # ==================== PHASE 5: DÉCISION UNIFIÉE ====================
             cprint(
                 "\n[WINNER] [5/5] AGENT MASTER - Synthèse et décision...",
                 "cyan",
@@ -259,17 +243,14 @@ class MasterAgent:
             )
             combined_decision = await self.make_combined_decision(agents_results)
 
-            # ==================== BACKTEST VALIDATION ====================
             cprint("\n[TEST] VALIDATION BACKTESTS TEMPS RÉEL", "cyan", attrs=["bold"])
             backtests_validation = await self.validate_with_backtests(
                 agents_results, combined_decision
             )
 
-            # ==================== FINALISATION ====================
             cycle_end = datetime.now()
             duration_ms = (cycle_end - cycle_start).total_seconds() * 1000
 
-            # Créer les métriques complètes
             cycle_metrics = CycleMetrics(
                 cycle_id=self.current_cycle_id,
                 start_time=cycle_start.isoformat(),
@@ -285,7 +266,6 @@ class MasterAgent:
                 ).isoformat(),
             )
 
-            # Mise à jour du dashboard
             await self.update_dashboard(cycle_metrics)
 
             return cycle_metrics
@@ -309,19 +289,15 @@ class MasterAgent:
         timestamp = datetime.now().isoformat()
 
         try:
-            # Appel de la fonction spécifique de l'agent
             agent_data = await agent_function()
 
             execution_time_ms = (time.time() - start_time) * 1000
 
-            # Déterminer le status
             status = self.determine_agent_status(agent_name, agent_data)
             confidence = self.calculate_agent_confidence(agent_name, agent_data)
 
-            # Comptage des appels LLM (simulation pour l'instant)
             llm_calls = self.count_llm_calls(agent_name, agent_data)
 
-            # Résultat sans backtest pour l'instant
             result = AgentResult(
                 agent_name=agent_name,
                 status=status,
@@ -333,7 +309,6 @@ class MasterAgent:
                 backtest_results=None,
             )
 
-            # Affichage du statut
             status_color = {
                 "SUCCESS": "green",
                 "WARNING": "yellow",
@@ -368,10 +343,8 @@ class MasterAgent:
 
     async def run_risk_analysis(self) -> Dict[str, Any]:
         """[SHIELD] Analyse du risque par le Risk Agent"""
-        # Simuler l'analyse du risk agent
         await asyncio.sleep(0.1)  # Simulation
 
-        # Données simulées (à remplacer par de vraies données)
         return {
             "portfolio_value": 45230.50,
             "daily_pnl": 1250.75,
@@ -487,11 +460,9 @@ class MasterAgent:
         [WINNER] PRISE DE DÉCISION UNIFIÉE
         Combine les résultats des 4 agents pour une décision finale
         """
-        # Calculer le score combiné
         total_confidence = sum(result.confidence for result in agents_results)
         avg_confidence = total_confidence / len(agents_results) if agents_results else 0.0
 
-        # Analyser les signaux BUY/SELL
         buy_signals = 0
         sell_signals = 0
         strong_signals = []
@@ -506,7 +477,6 @@ class MasterAgent:
                     elif signal.get("signal") == "SELL":
                         sell_signals += 1
 
-        # Déterminer la décision finale
         if buy_signals > sell_signals and avg_confidence > 0.7:
             decision = "EXECUTER_BUY_SIGNALS"
             decision_detail = f"Exécuter {buy_signals} signaux BUY détectés"
@@ -520,7 +490,6 @@ class MasterAgent:
             decision = "WAIT_FOR_BETTER_ENTRY"
             decision_detail = "Attendre une meilleure opportunité"
 
-        # Créer le résumé
         summary = {
             "agents_count": len(agents_results),
             "buy_signals": buy_signals,
@@ -546,17 +515,14 @@ class MasterAgent:
         """
         cprint("   [STATS] Validation backtests...", "blue")
 
-        # Simulation de validation (à remplacer par de vraies données)
         await asyncio.sleep(0.05)
 
-        # Charger les backtests disponibles
         backtest_files = list(self.backtests_dir.glob("*_FINAL_results.json"))
         active_strategies = []
 
         for bt_file in backtest_files[:5]:  # Limiter à 5 pour la démo
             strategy_name = bt_file.stem.replace("_FINAL_results", "")
 
-            # Simuler les résultats (à lire depuis les vrais fichiers)
             validation_result = {
                 "strategy": strategy_name,
                 "backtest_winrate": 0.68 + (hash(strategy_name) % 100) / 1000,  # Simulé
@@ -650,7 +616,6 @@ class MasterAgent:
 
     def count_llm_calls(self, agent_name: str, data: Dict) -> int:
         """Compte le nombre d'appels LLM effectués"""
-        # Simulation basée sur la structure des données
         if "llm_analysis" in data:
             return 1
         return 0
@@ -679,19 +644,15 @@ class MasterAgent:
 
     async def save_cycle_metrics(self, cycle_metrics: CycleMetrics):
         """💾 Sauvegarde les métriques du cycle"""
-        # Créer le dossier s'il n'existe pas
         cycles_dir = Path(__file__).parent.parent / "data" / "cycles"
         cycles_dir.mkdir(parents=True, exist_ok=True)
 
-        # Sauvegarder le cycle individuel
         cycle_file = cycles_dir / f"{cycle_metrics.cycle_id}.json"
         with open(cycle_file, "w", encoding="utf-8") as f:
             json.dump(asdict(cycle_metrics), f, indent=2, ensure_ascii=False)
 
-        # Sauvegarder dans l'historique
         self.cycle_history.append(cycle_metrics)
 
-        # Garder seulement les 100 derniers cycles
         if len(self.cycle_history) > 100:
             self.cycle_history = self.cycle_history[-100:]
 
@@ -701,14 +662,12 @@ class MasterAgent:
         """[STATS] Met à jour les métriques de performance"""
         self.performance_metrics["total_cycles"] += 1
 
-        # Compter les décisions réussies (non-STOP ou WARNING)
         if cycle_metrics.combined_decision not in [
             "EMERGENCY_STOP",
             "WAIT_FOR_BETTER_ENTRY",
         ]:
             self.performance_metrics["successful_decisions"] += 1
 
-        # Mettre à jour la confiance moyenne
         total_confidence = (
             sum(r.confidence for r in cycle_metrics.agents_results)
             / len(cycle_metrics.agents_results)
@@ -716,7 +675,6 @@ class MasterAgent:
             else 0
         )
 
-        # Calculer la moyenne mobile
         current_avg = self.performance_metrics["average_confidence"]
         cycle_count = self.performance_metrics["total_cycles"]
         self.performance_metrics["average_confidence"] = (
@@ -729,7 +687,6 @@ class MasterAgent:
         cprint("[STATS] RÉSUMÉ DU CYCLE", "cyan", attrs=["bold"])
         cprint(f"{'='*80}", "cyan")
 
-        # Métriques générales
         cprint(f"[ID] Cycle ID: {cycle_metrics.cycle_id}", "white")
         cprint(f"[CLOCK] Durée: {cycle_metrics.duration_ms:.1f}ms", "white")
         cprint(
@@ -739,7 +696,6 @@ class MasterAgent:
         )
         cprint(f"[STATS] Confiance: {cycle_metrics.decision_confidence:.2%}", "blue")
 
-        # Résultats des agents
         cprint(f"\n[AI] RÉSULTATS AGENTS:", "yellow")
         for result in cycle_metrics.agents_results:
             status_color = {
@@ -756,7 +712,6 @@ class MasterAgent:
                 status_color,
             )
 
-        # Validation backtests
         if cycle_metrics.backtests_validation:
             bv = cycle_metrics.backtests_validation
             cprint(f"\n[TEST] VALIDATION BACKTESTS:", "yellow")
@@ -767,14 +722,12 @@ class MasterAgent:
             cprint(f"   Stratégies validées: {bv.get('strategies_passed', 0)}", "green")
             cprint(f"   Taux de réussite: {bv.get('success_rate', 0):.1%}", "green")
 
-        # Prochain cycle
         cprint(f"\n[CLOCK] Prochain cycle: {cycle_metrics.next_cycle_time}", "blue")
 
         cprint(f"{'='*80}\n", "cyan")
 
     async def update_dashboard(self, cycle_metrics: CycleMetrics):
         """📱 Met à jour le dashboard frontend"""
-        # Préparer les données pour le dashboard
         dashboard_data = {
             "timestamp": datetime.now().isoformat(),
             "cycle_id": cycle_metrics.cycle_id,
@@ -804,7 +757,6 @@ class MasterAgent:
             "next_cycle": cycle_metrics.next_cycle_time,
         }
 
-        # Sauvegarder pour le backend (le backend lira ce fichier)
         dashboard_file = Path(__file__).parent.parent.parent / "backend" / "dashboard_data.json"
         with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(dashboard_data, f, indent=2, ensure_ascii=False)

@@ -22,7 +22,6 @@ class PermissionController:
         self.name = "Permission Controller"
         self.version = "1.0.0"
 
-        # Permission levels
         self.permission_levels = {
             "read_only": {
                 "description": "Read-only access (positions, balance, market data)",
@@ -71,7 +70,6 @@ class PermissionController:
             },
         }
 
-        # Risk limits
         self.global_risk_limits = {
             "max_total_exposure": float(os.environ.get("MAX_TOTAL_EXPOSURE", "50000")),
             "max_daily_loss": float(os.environ.get("MAX_DAILY_LOSS", "1000")),
@@ -80,7 +78,6 @@ class PermissionController:
             == "true",
         }
 
-        # Action tracking
         self.action_log = []
         self.daily_stats = {
             "date": datetime.now().date().isoformat(),
@@ -122,7 +119,6 @@ class PermissionController:
         try:
             params = params or {}
 
-            # Check if action is allowed by permissions
             permission_check = self._check_permissions(action, wallet_permissions or [])
             if not permission_check["allowed"]:
                 return {
@@ -131,7 +127,6 @@ class PermissionController:
                     "risk_level": "blocked",
                 }
 
-            # Check risk limits
             risk_check = self._check_risk_limits(wallet_address, action, params)
             if not risk_check["allowed"]:
                 return {
@@ -140,7 +135,6 @@ class PermissionController:
                     "risk_level": risk_check["risk_level"],
                 }
 
-            # Check AI confirmation requirement
             if self._requires_ai_confirmation(action, params):
                 return {
                     "allowed": True,
@@ -149,7 +143,6 @@ class PermissionController:
                     "risk_level": "high",
                 }
 
-            # Action is allowed
             return {
                 "allowed": True,
                 "requires_ai_confirmation": False,
@@ -169,18 +162,15 @@ class PermissionController:
         """Check if action is allowed by wallet permissions"""
         allowed_actions = set()
 
-        # Aggregate all allowed actions from permission levels
         for perm_level in wallet_permissions:
             level_config = self.permission_levels.get(perm_level, {})
             level_actions = level_config.get("allowed_actions", [])
 
             if "*" in level_actions:
-                # Full access permission
                 return {"allowed": True, "reason": "Full access granted"}
 
             allowed_actions.update(level_actions)
 
-        # Check if action is allowed
         if action in allowed_actions:
             return {"allowed": True, "reason": "Action permitted"}
         else:
@@ -194,12 +184,10 @@ class PermissionController:
     ) -> Dict[str, Any]:
         """Check if action complies with risk limits"""
         try:
-            # Trading action checks
             if action in ["place_order", "modify_order"]:
                 size = params.get("size", 0)
                 leverage = params.get("leverage", 1)
 
-                # Check position size limit
                 if size * leverage > self.global_risk_limits["max_total_exposure"]:
                     return {
                         "allowed": False,
@@ -207,11 +195,9 @@ class PermissionController:
                         "risk_level": "high",
                     }
 
-            # Withdrawal/transfer checks
             if action in ["withdraw", "transfer_funds", "send_asset"]:
                 amount = params.get("amount", 0)
 
-                # Check daily loss limit
                 if amount > self.global_risk_limits["max_daily_loss"]:
                     return {
                         "allowed": False,
@@ -233,7 +219,6 @@ class PermissionController:
         if not self.global_risk_limits["require_ai_confirmation"]:
             return False
 
-        # High-risk actions always require confirmation
         high_risk_actions = [
             "withdraw",
             "transfer_funds",
@@ -245,7 +230,6 @@ class PermissionController:
         if action in high_risk_actions:
             return True
 
-        # Large trades require confirmation
         if action in ["place_order", "modify_order"]:
             size = params.get("size", 0)
             leverage = params.get("leverage", 1)
@@ -267,7 +251,6 @@ class PermissionController:
         if action in high_risk_actions:
             return "high"
         elif action in medium_risk_actions:
-            # Check size for trading actions
             size = params.get("size", 0)
             leverage = params.get("leverage", 1)
             if size * leverage > 2000:
@@ -281,7 +264,6 @@ class PermissionController:
         """Get limits for an action based on permissions"""
         limits = {}
 
-        # Get the highest permission level
         for perm_level in ["full_access", "trading", "read_only"]:
             if perm_level in wallet_permissions:
                 level_config = self.permission_levels[perm_level]
@@ -326,10 +308,8 @@ class PermissionController:
 
         self.action_log.append(log_entry)
 
-        # Update daily stats
         self._update_daily_stats(action, params, result)
 
-        # Keep only last 1000 actions in memory
         if len(self.action_log) > 1000:
             self.action_log = self.action_log[-1000:]
 
@@ -337,7 +317,6 @@ class PermissionController:
         """Update daily statistics"""
         today = datetime.now().date().isoformat()
 
-        # Reset stats if new day
         if self.daily_stats["date"] != today:
             self.daily_stats = {
                 "date": today,
@@ -347,7 +326,6 @@ class PermissionController:
                 "max_loss": 0.0,
             }
 
-        # Update based on action
         if action in ["place_order", "modify_order"] and result.get("success", False):
             self.daily_stats["total_trades"] += 1
             size = params.get("size", 0)
@@ -409,10 +387,8 @@ class PermissionController:
         Returns:
             Risk status information
         """
-        # Get recent actions for this wallet
         recent_actions = self.get_audit_log(wallet_address, limit=50)
 
-        # Calculate risk metrics
         high_risk_actions = len([a for a in recent_actions if a.get("risk_level") == "high"])
         failed_actions = len(
             [a for a in recent_actions if not a.get("result", {}).get("success", True)]
@@ -451,7 +427,6 @@ class PermissionController:
             Success status
         """
         try:
-            # Log emergency stop
             self.log_action(
                 wallet_address=wallet_address,
                 action="emergency_stop",

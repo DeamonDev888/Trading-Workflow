@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Volatility Engulfing Strategy - FINAL VERSION
 Compatible with backtesting framework - Fully working
@@ -9,8 +7,6 @@ import json
 import os
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
 import talib
 from backtesting import Backtest, Strategy
 
@@ -32,7 +28,6 @@ class VolatilityEngulfingFinal(Strategy):
     atr_multiplier_sl = 1.0
 
     def init(self):
-        # Bollinger Bands
         self.bb_upper, self.bb_middle, self.bb_lower = self.I(
             talib.BBANDS,
             self.data.Close,
@@ -42,13 +37,10 @@ class VolatilityEngulfingFinal(Strategy):
             matype=0,
         )
 
-        # Volume SMA
         self.vol_sma = self.I(talib.SMA, self.data.Volume, timeperiod=self.vol_period)
 
-        # 50 SMA
         self.sma50 = self.I(talib.SMA, self.data.Close, timeperiod=self.sma_period)
 
-        # ATR
         self.atr = self.I(
             talib.ATR,
             self.data.High,
@@ -58,14 +50,12 @@ class VolatilityEngulfingFinal(Strategy):
         )
 
     def next(self):
-        # Skip if not enough data
         if (
             len(self.data)
             < max(self.bb_period, self.vol_period, self.sma_period, self.atr_period) + 1
         ):
             return
 
-        # Current and previous values
         curr_o = self.data.Open[-1]
         curr_h = self.data.High[-1]
         curr_l = self.data.Low[-1]
@@ -75,37 +65,30 @@ class VolatilityEngulfingFinal(Strategy):
         prev_o = self.data.Open[-2]
         prev_c = self.data.Close[-2]
 
-        # Bullish Engulfing detection
         bearish_prev = prev_c < prev_o
         bullish_curr = curr_c > curr_o
         engulfs = (curr_o < prev_c) and (curr_c > prev_o)
         is_bullish_engulfing = bearish_prev and bullish_curr and engulfs
 
-        # Bearish Engulfing for exit
         bearish_engulfs = (
             prev_c > prev_o and (curr_c < curr_o) and (curr_o > prev_c) and (curr_c < prev_o)
         )
         is_bearish_engulfing = bearish_engulfs
 
-        # Entry conditions
         breakout = curr_c > self.bb_upper[-1]
         vol_confirm = curr_v > self.vol_multiplier * self.vol_sma[-1]
         trend_filter = curr_c > self.sma50[-1]
         pattern_confirm = is_bullish_engulfing
 
-        # Entry logic
         if not self.position and breakout and vol_confirm and pattern_confirm and trend_filter:
             self._execute_long_entry(curr_c, curr_l)
 
-        # Position management
         if self.position:
-            # Exit if close below middle BB
             if curr_c < self.bb_middle[-1]:
                 self.position.close()
                 print("Exit - Close below Middle BB")
                 return
 
-            # Exit on bearish engulfing
             if is_bearish_engulfing:
                 self.position.close()
                 print("Exit - Bearish Engulfing Pattern")
@@ -113,11 +96,9 @@ class VolatilityEngulfingFinal(Strategy):
 
     def _execute_long_entry(self, entry_price, current_low):
         """Execute long entry with proper risk management"""
-        # SL below current low minus ATR buffer
         sl_price = current_low - (self.atr_multiplier_sl * self.atr[-1])
         risk_dist = entry_price - sl_price
         if risk_dist > 0:
-            # Use fixed capital like other strategies
             capital = 1000000
             risk_amount = capital * self.risk_per_trade
             units = risk_amount / risk_dist
@@ -132,7 +113,6 @@ class VolatilityEngulfingFinal(Strategy):
 def run_backtest():
     """Execute backtest and generate results"""
 
-    # Try to load existing data
     data_paths = ["src/data/rbi_v3/10_23_2025/BTC-USD-15m-synthetic.csv"]
 
     data = None
@@ -149,7 +129,6 @@ def run_backtest():
         print("No data file found, creating minimal synthetic data")
         data = create_minimal_data()
 
-    # Clean data
     data.columns = data.columns.str.strip().str.lower()
     data = data.drop(columns=[col for col in data.columns if "unnamed" in col.lower()])
     data = data.rename(
@@ -169,14 +148,11 @@ def run_backtest():
     print(f"Period: {data.index[0]} to {data.index[-1]}")
     print("=" * 50)
 
-    # Configure and run backtest
     bt = Backtest(data, VolatilityEngulfingFinal, cash=1000000, commission=0.002)
     stats = bt.run()
 
-    # Display results
     print(stats)
 
-    # Convert to JSON format for frontend
     def get_stat_value(stats_dict, possible_keys, default=0.0):
         """Helper to get statistic value from different possible key names"""
         for key in possible_keys:
@@ -236,7 +212,6 @@ def run_backtest():
             "timestamp": datetime.now().isoformat(),
         }
 
-    # Save results
     output_file = "VolatilityEngulfing_FINAL_results.json"
     with open(output_file, "w") as f:
         json.dump(result, f, indent=2)
@@ -249,11 +224,9 @@ def create_minimal_data():
     """Create minimal synthetic OHLCV data"""
     print("Generating minimal synthetic OHLCV data...")
 
-    # Create 1000 bars of 15min data
     dates = pd.date_range(start="2024-01-01", periods=1000, freq="15min")
     n = len(dates)
 
-    # Simple random walk for BTC prices
     np.random.seed(42)
     returns = np.random.normal(0.0001, 0.015, n)
     price = 45000  # Starting BTC price
@@ -263,7 +236,6 @@ def create_minimal_data():
         price *= 1 + ret
         closes.append(max(price, 1000))  # Minimum price floor
 
-    # Generate OHLC
     highs = []
     lows = []
     opens = []
@@ -274,12 +246,10 @@ def create_minimal_data():
         else:
             opens.append(closes[i - 1])
 
-        # Add some volatility to high/low
         vol = abs(np.random.normal(0, close * 0.008))
         highs.append(close + vol)
         lows.append(max(close - vol, close * 0.95))  # Ensure low < close
 
-    # Volume
     volumes = np.random.lognormal(8, 1, n)
 
     data = pd.DataFrame(

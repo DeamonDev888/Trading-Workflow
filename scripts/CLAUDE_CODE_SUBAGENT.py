@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 CLAUDE CODE SUB-AGENT TASK - NOVAQUOTE Bug Fixer
 VRAI SUB-AGENT TASK POUR CLAUDE CODE CLI
@@ -20,7 +19,6 @@ result = await agent.run()
 
 OU en ligne de commande depuis Claude Code:
 ```python
-# Dans Claude Code
 import subprocess
 result = subprocess.run(["python", "CLAUDE_CODE_SUBAGENT.py", "--path", "src/", "--iterations", "3"])
 ```
@@ -30,7 +28,6 @@ import os
 import sys
 import json
 import argparse
-from datetime import datetime
 from pathlib import Path
 
 def main():
@@ -48,7 +45,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Informations du sub-agent
     agent_info = {
         "name": "novaquote_bug_fixer",
         "type": "sub_agent_task",
@@ -70,9 +66,6 @@ def main():
     print(f"[INFO] Iterations: {args.iterations}")
     print(f"[INFO] Tools available: {', '.join(agent_info['available_tools'])}")
 
-    # Simuler le travail du sub-agent
-    # En réalité, ce script SERA INVOQUÉ par Claude Code qui utilisera
-    # ses propres outils (Read, Edit, Bash) pour faire le travail
 
     if args.check_only:
         print("\n[CHECK] Environment OK")
@@ -82,9 +75,6 @@ def main():
 
     print(f"\n[SUB-AGENT] Starting bug fixing in {args.path}...")
 
-    # Ce script ne fait PAS le travail lui-même
-    # Il informe Claude Code de ce qu'il faut faire
-    # et Claude Code utilisera ses outils pour le faire
 
     instructions = {
         "mission": f"Fix code in {args.path}",
@@ -104,7 +94,6 @@ def main():
         }
     }
 
-    # Sauvegarder les instructions pour que Claude Code puisse les lire
     with open('subagent_instructions.json', 'w') as f:
         json.dump(instructions, f, indent=2)
 

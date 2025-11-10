@@ -71,8 +71,7 @@ class HyperliquidWebSocket:
         await self.disconnect()
 
     def on(self, event: str, callback: Callable):
-
-    """
+        """
         Register an event callback
 
         Args:

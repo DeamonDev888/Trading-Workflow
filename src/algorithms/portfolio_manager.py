@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Portfolio Manager - Dual Mode System
 Mode Simulation vs Mode Mainnet (MetaMask)
@@ -34,7 +33,6 @@ class PortfolioManager:
     def _connect_real_wallet(self) -> bool:
         """Connect to real MetaMask wallet via HyperLiquid API"""
         try:
-            # Check if wallet exists on HyperLiquid
             url = "https://api.hyperliquid.xyz/info/userState"
             headers = {"Content-Type": "application/json"}
 
@@ -50,7 +48,6 @@ class PortfolioManager:
     def get_real_market_prices(self) -> Dict[str, float]:
         """Get real market prices"""
         try:
-            # Binance API for real prices
             symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
             prices = {}
 
@@ -64,12 +61,10 @@ class PortfolioManager:
 
             return prices
         except Exception:
-            # Fallback prices if API fails
             return {"BTC": 103500.0, "ETH": 3400.0, "SOL": 160.0, "BNB": 950.0}
 
     def get_simulation_portfolio(self, prices: Dict[str, float]) -> Dict[str, Any]:
         """Generate realistic simulation portfolio"""
-        # Simulate a realistic trading portfolio
         base_allocation = {
             "BTC": {"percentage": 0.40, "leverage": 2},
             "ETH": {"percentage": 0.30, "leverage": 1.5},
@@ -86,7 +81,6 @@ class PortfolioManager:
             position_value = total_portfolio_value * alloc["percentage"]
             position_size = position_value / prices[symbol] * alloc["leverage"]
 
-            # Simulate realistic P&L based on recent market movements
             pnl_pct = random.gauss(0.02, 0.05)  # 2% avg return, 5% std
             pnl = position_value * pnl_pct
 
@@ -133,7 +127,6 @@ class PortfolioManager:
             }
 
         try:
-            # Get real portfolio data from HyperLiquid
             url = "https://api.hyperliquid.xyz/info/userState"
             headers = {"Content-Type": "application/json"}
             payload = {"user": self.wallet_address}
@@ -143,7 +136,6 @@ class PortfolioManager:
             if response.status_code == 200:
                 data = response.json()
 
-                # Parse real positions
                 positions = []
                 total_pnl = 0
                 margin_used = 0
@@ -178,7 +170,6 @@ class PortfolioManager:
                                 }
                             )
 
-                # Get wallet balance
                 total_balance = float(data.get("crossMarginSummary", {}).get("accountValue", 0))
                 available_balance = total_balance - margin_used
 
@@ -258,7 +249,6 @@ def main():
 
     command = sys.argv[1]
 
-    # Parse mode and wallet from arguments
     mode = "simulation"
     wallet_address = None
 

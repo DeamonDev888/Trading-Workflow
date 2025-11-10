@@ -123,10 +123,8 @@ class IterativeSubagentManager:
             elif mode == IterationMode.ADAPTIVE_LEARNING:
                 session = self._adaptive_learning(prompt, context_data, session)
 
-            # Calculate convergence metrics
             session.convergence_metrics = self._calculate_convergence_metrics(session.responses)
 
-            # Generate final result
             session.final_result = self._generate_final_result(session)
 
         except Exception as e:
@@ -139,7 +137,6 @@ class IterativeSubagentManager:
 
         session.total_time = time.time() - start_time
 
-        # Store session
         self.session_history.append(session)
         self._update_performance_metrics(session)
 
@@ -157,7 +154,6 @@ class IterativeSubagentManager:
                 f"[ITERATION {iteration}/{session.config.max_iterations}] Progressive refinement..."
             )
 
-            # Add previous responses to context
             if session.responses:
                 accumulated_context["previous_responses"] = [
                     {
@@ -169,18 +165,15 @@ class IterativeSubagentManager:
                 ]
                 accumulated_context["refinement_needed"] = True
 
-            # Call subagent
             response = self._make_subagent_call(
                 current_prompt, accumulated_context, iteration, session.config
             )
             session.responses.append(response)
 
-            # Check if we've reached sufficient confidence
             if response.confidence >= session.config.confidence_threshold:
                 print(f"[CONVERGED] Confidence threshold reached: {response.confidence:.2f}")
                 break
 
-            # Prepare next iteration prompt
             if iteration < session.config.max_iterations:
                 current_prompt = self._create_refinement_prompt(response, accumulated_context)
 
@@ -190,7 +183,6 @@ class IterativeSubagentManager:
         self, prompt: str, context_data: dict, session: IterationSession
     ) -> IterationSession:
         """Cross-validation: multiple independent analyses for validation"""
-        # Create different perspectives for validation
         perspectives = [
             {"focus": "technical_analysis", "priority": "indicators"},
             {"focus": "risk_management", "priority": "safety"},
@@ -203,11 +195,9 @@ class IterativeSubagentManager:
                 f"[VALIDATION {i+1}/{len(perspectives)}] Cross-validation: {perspective['focus']}"
             )
 
-            # Add perspective to context
             validation_context = context_data.copy() if context_data else {}
             validation_context.update(perspective)
 
-            # Create validation-specific prompt
             validation_prompt = f"""
             Analyze this from a {perspective['focus']} perspective:
 
@@ -235,7 +225,6 @@ class IterativeSubagentManager:
         for iteration in range(1, session.config.max_iterations + 1):
             print(f"[CONVERGENCE {iteration}] Seeking stable response...")
 
-            # Add convergence context
             convergence_context = context_data.copy() if context_data else {}
             if previous_response:
                 convergence_context["previous_response"] = previous_response.response
@@ -246,7 +235,6 @@ class IterativeSubagentManager:
             )
             session.responses.append(response)
 
-            # Check convergence with previous response
             if previous_response:
                 similarity = self._calculate_response_similarity(response, previous_response)
                 if similarity >= session.config.convergence_threshold:
@@ -266,12 +254,10 @@ class IterativeSubagentManager:
         for iteration in range(1, session.config.max_iterations + 1):
             print(f"[VOTE {iteration}] Collecting independent opinion...")
 
-            # Create independent context for each vote
             vote_context = context_data.copy() if context_data else {}
             vote_context["vote_number"] = iteration
             vote_context["independent_analysis"] = True
 
-            # Slightly vary the prompt for diversity
             vote_prompt = f"""
             Independent analysis {iteration}:
 
@@ -286,13 +272,11 @@ class IterativeSubagentManager:
             )
             session.responses.append(response)
 
-            # Extract vote (simplified - in production, you'd parse the response more carefully)
             decision = self._extract_decision(response.response)
             if decision not in votes:
                 votes[decision] = []
             votes[decision].append(response.confidence)
 
-        # Store voting results in session metadata
         session.final_result = {
             "voting_results": votes,
             "majority_decision": max(votes.keys(), key=lambda k: len(votes[k])),
@@ -305,7 +289,6 @@ class IterativeSubagentManager:
         self, prompt: str, context_data: dict, session: IterationSession
     ) -> IterationSession:
         """Adaptive learning: use historical performance to guide iterations"""
-        # Get relevant historical sessions
         relevant_history = self._get_relevant_history(prompt, context_data)
 
         current_prompt = prompt
@@ -314,7 +297,6 @@ class IterativeSubagentManager:
         for iteration in range(1, session.config.max_iterations + 1):
             print(f"[LEARNING {iteration}] Adaptive learning iteration...")
 
-            # Add learning context
             if relevant_history:
                 learning_context["historical_performance"] = relevant_history[
                     :3
@@ -326,7 +308,6 @@ class IterativeSubagentManager:
             )
             session.responses.append(response)
 
-            # Adaptive refinement based on performance patterns
             if iteration < session.config.max_iterations:
                 refinement = self._generate_adaptive_refinement(response, relevant_history)
                 if refinement:
@@ -347,7 +328,6 @@ class IterativeSubagentManager:
         start_time = time.time()
 
         try:
-            # Build the full prompt
             full_prompt = f"""
             Iteration {iteration} Analysis Request:
 
@@ -364,7 +344,6 @@ class IterativeSubagentManager:
             Format your response clearly with confidence score at the end.
             """
 
-            # Execute Claude Code with subagent
             cmd = [
                 "claude",
                 "--dangerously-skip-permissions",
@@ -396,7 +375,6 @@ class IterativeSubagentManager:
                     execution_time=time.time() - start_time,
                 )
 
-            # Parse response for confidence
             response_text = result.stdout
             confidence = self._extract_confidence(response_text)
             reasoning = self._extract_reasoning(response_text)
@@ -440,7 +418,6 @@ class IterativeSubagentManager:
         """Extract confidence score from response text"""
         import re
 
-        # Look for confidence patterns
         patterns = [
             r"confidence[:\s]*(\d+\.?\d*)",
             r"confident[:\s]*(\d+\.?\d*)",
@@ -453,14 +430,12 @@ class IterativeSubagentManager:
             if match:
                 try:
                     confidence = float(match.group(1))
-                    # Normalize to 0-1 range
                     if confidence > 1:
                         confidence = confidence / 100
                     return min(1.0, max(0.0, confidence))
                 except ValueError:
                     continue
 
-        # Default confidence if not found
         return 0.5
 
     def _extract_reasoning(self, response: str) -> str:
@@ -496,15 +471,12 @@ class IterativeSubagentManager:
         self, response1: SubagentResponse, response2: SubagentResponse
     ) -> float:
         """Calculate similarity between two responses"""
-        # Simple similarity based on confidence difference
         confidence_similarity = 1 - abs(response1.confidence - response2.confidence)
 
-        # Decision similarity
         decision1 = self._extract_decision(response1.response)
         decision2 = self._extract_decision(response2.response)
         decision_similarity = 1.0 if decision1 == decision2 else 0.0
 
-        # Weighted average
         return confidence_similarity * 0.4 + decision_similarity * 0.6
 
     def _create_refinement_prompt(self, response: SubagentResponse, context: dict) -> str:
@@ -528,7 +500,6 @@ class IterativeSubagentManager:
         relevant_sessions = []
 
         for session in self.session_history[-10:]:  # Last 10 sessions
-            # Simple relevance check (could be made more sophisticated)
             if any(word in prompt.lower() for word in ["trading", "strategy", "signal"]):
                 relevant_sessions.append(
                     {
@@ -567,7 +538,6 @@ class IterativeSubagentManager:
         if len(responses) < 2:
             return {"stability": 1.0, "confidence_trend": 0.0, "consistency": 1.0}
 
-        # Stability: how similar are consecutive responses
         stability_scores = []
         for i in range(1, len(responses)):
             similarity = self._calculate_response_similarity(responses[i], responses[i - 1])
@@ -575,10 +545,8 @@ class IterativeSubagentManager:
 
         stability = sum(stability_scores) / len(stability_scores) if stability_scores else 1.0
 
-        # Confidence trend: is confidence improving?
         confidence_trend = responses[-1].confidence - responses[0].confidence
 
-        # Consistency: variance in confidence
         confidences = [r.confidence for r in responses]
         avg_confidence = sum(confidences) / len(confidences)
         variance = sum((c - avg_confidence) ** 2 for c in confidences) / len(confidences)
@@ -675,7 +643,6 @@ class IterativeSubagentManager:
         return recommendations
 
 
-# Convenience functions for different iteration modes
 def progressive_refinement_call(
     prompt: str, context_data: dict = None, max_iterations: int = 3
 ) -> IterationSession:
@@ -710,7 +677,7 @@ def convergence_call(
 
 
 if __name__ == "__main__":
-    # Test the iterative subagent system
+
     def test_progressive_refinement():
         print("Testing Progressive Refinement...")
 
@@ -739,6 +706,5 @@ if __name__ == "__main__":
 
         return session
 
-    # Run tests
     test_progressive_refinement()
     test_cross_validation()

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 OUTIL AUTONOME DE CORRECTION - NOVAQUOTE Bug Fixer
 OUTIL STANDALONE QUI APPELLE CLAUDE CODE CLI
@@ -65,12 +64,10 @@ class NOVAQUOTEBugFixerSubAgent:
 
     def _check_claude_cli(self):
         """Vérifie si Claude Code CLI est disponible"""
-        # Essayer plusieurs commandes possibles
         commands_to_try = ["claude", "claude-code", "npx claude"]
 
         for cmd in commands_to_try:
             try:
-                # Utiliser shell=True pour utiliser le PATH complet
                 result = subprocess.run(
                     f"{cmd} --help",
                     capture_output=True,
@@ -78,7 +75,6 @@ class NOVAQUOTEBugFixerSubAgent:
                     timeout=10,
                     shell=True
                 )
-                # Vérifier si la sortie contient "Claude Code"
                 if "Claude Code" in result.stdout or "Claude Code" in result.stderr or result.returncode == 0:
                     return True, cmd
             except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -100,22 +96,17 @@ class NOVAQUOTEBugFixerSubAgent:
         """Vérifie l'environnement et les prérequis"""
         checks = {}
 
-        # Claude Code CLI
         checks["claude_cli"] = self.claude_available
 
-        # Python
         checks["python"] = self._check_command("python --version")
 
-        # Outils de formatage traditionnels
         checks["black"] = self._check_command("python -m black --version")
         checks["isort"] = self._check_command("python -m isort --version")
         checks["eslint"] = self._check_command("npx eslint --version")
         checks["prettier"] = self._check_command("npx prettier --version")
 
-        # Dossier cible
         checks["target_path"] = os.path.exists(self.target_path)
 
-        # Git pour versioning
         checks["git"] = self._check_command("git --version")
 
         return checks
@@ -129,7 +120,6 @@ class NOVAQUOTEBugFixerSubAgent:
         print(f"ITERATION {iteration_num}/{self.max_iterations} - CLAUDE CODE CLI")
         print(f"{'='*70}")
 
-        # Créer un prompt concis mais puissant
         prompt = f"""[ITERATION {iteration_num}] Fix code in {self.target_path}:
 
 1. Use Read/Glob to scan Python/TS files
@@ -140,12 +130,9 @@ ACT NOW with Edit tool.
 """
 
         try:
-            # Exécuter Claude Code CLI avec -p pour mode non-interactif
             print(f"[CLAUDE] Appel de Claude Code CLI ({self.claude_command})...")
             print(f"[CLAUDE] Taille du prompt: {len(prompt)} caractères")
 
-            # NOUVEAU : Flags pour headless + tools + JSON + permissions
-            # Permet à Claude de lire/éditer en mode non-interactif
             flags = (
                 '--allowedTools "Read,Edit,Bash,Grep,Glob"'
                 ' --permission-mode acceptEdits'
@@ -153,7 +140,6 @@ ACT NOW with Edit tool.
                 ' --verbose'
             )
 
-            # SOLUTION FINALE: Utiliser Popen avec encoding pour éviter Unicode errors
             cmd = f'{self.claude_command} -p - {flags}'
             process = subprocess.Popen(
                 cmd,
@@ -166,10 +152,8 @@ ACT NOW with Edit tool.
                 shell=True
             )
 
-            # Écrire le prompt dans stdin et attendre
             try:
                 stdout, stderr = process.communicate(input=prompt, timeout=600)
-                # Vérifier que stdout n'est pas None
                 if stdout is None:
                     stdout = ""
                 if stderr is None:
@@ -187,7 +171,6 @@ ACT NOW with Edit tool.
             if result.returncode == 0:
                 print(f"[CLAUDE] [OK] Itération {iteration_num} terminée avec succès")
 
-                # NOUVEAU : Afficher la réponse brute pour debug
                 response = result.stdout
                 print(f"\n{'='*70}")
                 print(f"[CLAUDE RAW RESPONSE - {len(response)} chars]")
@@ -195,7 +178,6 @@ ACT NOW with Edit tool.
                 print(response[:2000] if len(response) > 2000 else response)
                 print(f"{'='*70}\n")
 
-                # Analyser la réponse de Claude
                 corrections = self._parse_claude_response(response, iteration_num)
 
                 return True, corrections, response
@@ -215,15 +197,12 @@ ACT NOW with Edit tool.
         """Parse la réponse de Claude et extrait les corrections (JSON + regex)"""
         corrections = []
 
-        # NOUVEAU : Essayer de parser le JSON d'abord
         try:
-            # Chercher le bloc JSON dans la réponse
             json_match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1)
                 json_data = json.loads(json_str)
 
-                # Extraire les données JSON
                 files_modified = json_data.get('files_modified', [])
                 corrections_list = json_data.get('corrections', [])
 
@@ -242,8 +221,6 @@ ACT NOW with Edit tool.
         except (json.JSONDecodeError, AttributeError) as e:
             print(f"[PARSE] JSON non trouvé ou invalide, utilisation des regex... ({str(e)[:50]})")
 
-        # FALLBACK : Patterns regex améliorés
-        # Patterns plus flexibles pour capturer différents formats de réponse
         patterns = [
             (r'["\']?files?["\']?\s*modified[:\s]+([^\n,}]+)', 'file_modification'),
             (r'["\']?corrections?[:\s]+([^\n}]+)', 'correction'),
@@ -264,14 +241,12 @@ ACT NOW with Edit tool.
                         'type': corr_type
                     })
 
-        # Afficher un résumé
         if corrections:
             print(f"[PARSE] {len(corrections)} corrections détectées dans la réponse")
             for corr in corrections[-5:]:  # Afficher les 5 dernières
                 print(f"  [{corr['type']}] {corr['description']}")
         else:
             print(f"[PARSE] Aucune correction détectée (réponse peut être vide ou sans edits)")
-            # Afficher un extrait de la réponse pour debug
             preview = response[:300].replace('\n', ' ')
             print(f"  Aperçu réponse: {preview}...")
 
@@ -290,7 +265,6 @@ ACT NOW with Edit tool.
         }
 
         for root, dirs, files in os.walk(self.target_path):
-            # Ignorer certains dossiers
             dirs[:] = [d for d in dirs if d not in ['__pycache__', '.git', 'node_modules', '.pytest_cache']]
 
             for file in files:
@@ -314,13 +288,10 @@ ACT NOW with Edit tool.
         print(f"  - Fichiers TypeScript/JS: {stats['typescript_files']}")
         print(f"  - Lignes totales: {stats['total_lines']}")
 
-        # NOUVEAU : Détection d'issues avec les linters
         print(f"\n[PRE-SCAN] Détection des problèmes avec linters...")
         issues = []
 
-        # Python linters
         try:
-            # Black pour formatage
             result = subprocess.run(
                 f'python -m black --check {self.target_path} --diff',
                 shell=True, capture_output=True, text=True, timeout=60
@@ -329,7 +300,6 @@ ACT NOW with Edit tool.
                 issues.append(f"Black: {len(result.stdout.split('would reformat'))-1} fichiers à reformater")
                 print(f"  [WARN] Black: Problèmes de formatage détectés")
 
-            # isort pour imports
             result = subprocess.run(
                 f'python -m isort --check-only {self.target_path}',
                 shell=True, capture_output=True, text=True, timeout=60
@@ -340,9 +310,7 @@ ACT NOW with Edit tool.
         except Exception as e:
             print(f"  [INFO] Linters Python non disponibles: {str(e)[:50]}")
 
-        # TypeScript linters
         try:
-            # ESLint
             result = subprocess.run(
                 f'npx eslint {self.target_path}/**/*.{{ts,js}} --format=json',
                 shell=True, capture_output=True, text=True, timeout=60
@@ -377,10 +345,8 @@ ACT NOW with Edit tool.
         print(f"CLAUDE CODE CLI AUTONOMOUS BUG FIXER - NOVAQUOTE")
         print(f"{'='*70}")
 
-        # Analyser la base de code
         initial_stats = self._analyze_codebase()
 
-        # Vérifier que Claude CLI est disponible
         if not self.claude_available:
             print("\n[ERROR] Claude Code CLI n'est pas disponible!")
             print("Veuillez installer Claude Code CLI: https://claude.ai/code")
@@ -390,7 +356,6 @@ ACT NOW with Edit tool.
         print(f"Cible: {self.target_path}")
         print(f"Itérations max: {self.max_iterations}")
 
-        # Exécuter les itérations
         all_success = True
         for i in range(1, self.max_iterations + 1):
             success, corrections, response = self._run_claude_iteration(i, "")
@@ -402,18 +367,15 @@ ACT NOW with Edit tool.
                 all_success = False
                 print(f"\n[WARN] Itération {i} a rencontré des problèmes")
 
-            # Attendre un peu entre les itérations
             if i < self.max_iterations:
                 print(f"\n[PAUSE] Attente avant l'itération {i+1}...")
                 import time
                 time.sleep(2)
 
-            # Critère d'arrêt: si aucune correction n'est appliquée
             if i > 1 and len(corrections) == 0:
                 print(f"\n[OK] Convergence atteinte! Aucune correction nécessaire à l'itération {i}")
                 break
 
-        # Rapport final
         self._generate_final_report(initial_stats)
 
         return all_success
@@ -432,7 +394,6 @@ ACT NOW with Edit tool.
             for corr in self.corrections_applied[-10:]:  # Dernières 10
                 print(f"  [{corr['iteration']}] {corr['description']}")
 
-        # Vérifier l'état final
         try:
             final_stats = self._analyze_codebase()
             print(f"\nComparaison:")
@@ -447,7 +408,6 @@ ACT NOW with Edit tool.
         print(f"CLAUDE CODE CLI SUB-AGENT - NOVAQUOTE BUG FIXER v{self.version}")
         print(f"{'='*70}")
 
-        # Afficher les métadonnées
         metadata = self.get_metadata()
         print(f"\n[INFO] Sub-Agent: {metadata['name']}")
         print(f"[INFO] Type: {metadata['type']}")
@@ -455,13 +415,11 @@ ACT NOW with Edit tool.
         print(f"[INFO] Cible: {metadata['target_path']}")
         print(f"[INFO] Claude CLI: {'[OK]' if metadata['claude_available'] else '[FAIL]'}")
 
-        # Vérifier l'environnement
         print(f"\n[CHECKING ENVIRONMENT]")
         checks = self.check_environment()
         for tool, status in checks.items():
             print(f"  {'[OK]' if status else '[FAIL]'} {tool}")
 
-        # Lancer la correction itérative
         if all(checks.values()):
             print(f"\n[READY] Environnement prêt, lancement des corrections...")
             success = self.run_iterative_fix()
@@ -494,7 +452,6 @@ ACT NOW with Edit tool.
 
         return status
 
-# MAIN ENTRY POINT
 def main():
     """Point d'entrée principal avec support CLI"""
     import argparse
@@ -545,7 +502,6 @@ Exemples d'utilisation:
 
     args = parser.parse_args()
 
-    # Créer l'agent
     agent = NOVAQUOTEBugFixerSubAgent(
         target_path=args.path,
         max_iterations=args.iterations
@@ -560,7 +516,6 @@ Exemples d'utilisation:
     print(f"Itérations: {args.iterations}")
     print("="*70 + "\n")
 
-    # Mode check-only
     if args.check_only:
         print("[INFO] Mode vérification uniquement\n")
         checks = agent.check_environment()
@@ -572,7 +527,6 @@ Exemples d'utilisation:
         print(json.dumps(status, indent=2))
         return 0 if status["ready"] else 1
 
-    # Mode correction
     if args.watch:
         print("[INFO] Mode surveillance continue activé\n")
         print("Surveillance des fichiers dans:", args.path)
@@ -582,7 +536,6 @@ Exemples d'utilisation:
             import time
             last_run = 0
             while True:
-                # Vérifier les modifications (toutes les 30 secondes)
                 current_time = time.time()
                 if current_time - last_run > 30:
                     print(f"\n[{time.strftime('%H:%M:%S')}] Vérification des modifications...")
@@ -595,7 +548,6 @@ Exemples d'utilisation:
         print("[INFO] Démarrage du processus de correction itératif...\n")
         result = agent.execute("iterative")
 
-    # Afficher le statut final
     print("\n[FINAL STATUS]")
     print(json.dumps(result, indent=2))
 

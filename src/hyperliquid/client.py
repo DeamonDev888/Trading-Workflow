@@ -4,6 +4,7 @@ Complete REST API client for Hyperliquid DEX
 Built with love by Moon Dev 🚀
 """
 
+import json
 from typing import Any, Dict, List, Optional
 
 import aiohttp

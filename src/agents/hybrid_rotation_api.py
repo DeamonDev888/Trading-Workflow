@@ -32,14 +32,12 @@ class HybridRotationAPI:
     async def start_hybrid_rotation(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Start hybrid rotation with specified configuration"""
         try:
-            # Parse request
             control_mode = request_data.get("control_mode", "collaborative")
             max_assets = request_data.get("max_assets", 6)
             auto_weight = request_data.get("auto_weight", 0.6)
             user_weight = request_data.get("user_weight", 0.4)
             learning_enabled = request_data.get("learning_enabled", True)
 
-            # Validate control mode
             try:
                 mode = ControlMode(control_mode)
             except ValueError:
@@ -49,7 +47,6 @@ class HybridRotationAPI:
                     "valid_modes": [m.value for m in ControlMode],
                 }
 
-            # Create configuration
             config = HybridConfig(
                 control_mode=mode,
                 max_assets=max(1, min(20, max_assets)),
@@ -58,21 +55,17 @@ class HybridRotationAPI:
                 learning_enabled=bool(learning_enabled),
             )
 
-            # Ensure weights sum to 1.0
             total_weight = config.auto_rotation_weight + config.user_preference_weight
             if total_weight > 0:
                 config.auto_rotation_weight /= total_weight
                 config.user_preference_weight /= total_weight
 
-            # Stop existing rotation if running
             if self.running and self.hybrid_manager:
                 await self.stop_hybrid_rotation()
 
-            # Create and start hybrid manager
             self.hybrid_manager = HybridRotationManager(config)
             self.running = True
 
-            # Start in background
             task = asyncio.create_task(self._run_hybrid_rotation())
 
             return {
@@ -197,7 +190,6 @@ class HybridRotationAPI:
             if not self.hybrid_manager:
                 return {"success": False, "error": "Hybrid rotation not running"}
 
-            # Validate and prepare preference data
             preference_data = {}
 
             if "preference_score" in request_data:
@@ -348,7 +340,6 @@ class HybridRotationAPI:
             rotation_type = request_data.get("type", "suggestion")
 
             if rotation_type == "manual":
-                # Manual asset selection
                 assets = request_data.get("assets", [])
                 if not assets:
                     return {
@@ -356,7 +347,6 @@ class HybridRotationAPI:
                         "error": "assets required for manual rotation",
                     }
 
-                # Clear current assets and set new ones
                 self.hybrid_manager.current_assets = []
                 for asset in assets:
                     if asset in self.hybrid_manager.auto_rotator.asset_configs:
@@ -373,12 +363,10 @@ class HybridRotationAPI:
                 }
 
             elif rotation_type == "suggestion":
-                # Create and execute a suggestion
                 suggestion_data = request_data.get("suggestion", {})
                 if not suggestion_data:
                     return {"success": False, "error": "suggestion data required"}
 
-                # This would implement creating a custom suggestion
                 return {
                     "success": False,
                     "error": "Custom suggestion generation not implemented yet",
@@ -430,7 +418,6 @@ class HybridRotationAPI:
 
             base_status = self.hybrid_manager.get_hybrid_status()
 
-            # Add detailed metrics
             detailed_metrics = {
                 **base_status["metrics"],
                 "decision_breakdown": {
@@ -450,7 +437,6 @@ class HybridRotationAPI:
                 },
             }
 
-            # Calculate percentages
             total_decisions = detailed_metrics["total_decisions"]
             if total_decisions > 0:
                 detailed_metrics["decision_breakdown"]["user_percentage"] = (
@@ -463,7 +449,6 @@ class HybridRotationAPI:
                     detailed_metrics["collaborative_decisions"] / total_decisions * 100
                 )
 
-            # Calculate suggestion effectiveness
             total_suggestions = detailed_metrics["suggestions_made"]
             if total_suggestions > 0:
                 detailed_metrics["suggestion_effectiveness"]["acceptance_rate"] = (
@@ -486,7 +471,6 @@ class HybridRotationAPI:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    # Private helper methods
     async def _run_hybrid_rotation(self):
         """Run hybrid rotation in background"""
         if self.hybrid_manager:
@@ -526,7 +510,6 @@ class HybridRotationAPI:
         return behaviors.get(mode, "Unknown")
 
 
-# Demo and testing
 if __name__ == "__main__":
 
     async def demo_hybrid_api():

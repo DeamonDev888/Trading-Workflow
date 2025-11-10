@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Golden Crossover Strategy - FINAL VERSION
 Compatible with backtesting framework - Fully working
@@ -9,8 +7,6 @@ import json
 import os
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
 import talib
 from backtesting import Backtest, Strategy
 
@@ -45,19 +41,16 @@ class GoldenCrossoverFinal(Strategy):
         atr = self.atr[-1]
         avg_vol = self.avg_volume[-1]
 
-        # Exit condition: broken uptrend
         if close <= sma200:
             if self.position:
                 self.position.close()
                 print("Exiting long due to broken uptrend below SMA200")
             return
 
-        # Calculate dynamic Fib 61.8% retracement
         fib618 = self._calculate_fib618()
         if fib618 is None:
             return
 
-        # Entry conditions
         crossover = len(self.data) > 1 and self.data.Close[-2] <= self.sma20[-2] and close > sma20
         touch_fib = low <= fib618 + (0.01 * close)  # Tolerance for touch/wick
         volume_confirm = volume > avg_vol
@@ -66,7 +59,6 @@ class GoldenCrossoverFinal(Strategy):
         if crossover and touch_fib and volume_confirm and uptrend and not self.position:
             self._execute_long_entry(close, atr, fib618)
 
-        # Position management
         if self.position:
             self._manage_position(close, high, rsi, atr, sma20)
 
@@ -125,32 +117,27 @@ class GoldenCrossoverFinal(Strategy):
         unrealized_pnl = close - entry_price
         risk = entry_price - current_sl if current_sl else atr * 1.2
 
-        # Trailing stop after 1:1 RR
         if unrealized_pnl >= risk:
             trail_sl = sma20 - atr
             if trail_sl > current_sl:
                 self.position.sl = trail_sl
                 print(f"Trailing SL updated to {trail_sl:.2f} after 1:1 RR")
 
-        # Profit take at 2:1 RR
         if unrealized_pnl >= 2 * risk:
             print("Taking profits at 2:1 RR!")
             self.position.close()
             return
 
-        # Bearish divergence approximation
         if rsi > 70 and len(self.data) > 2 and close > self.data.Close[-2] and rsi < self.rsi[-2]:
             print("Bearish RSI Divergence detected, EXITING!")
             self.position.close()
             return
 
-        # Exit below SMA20 trail
         if close < sma20:
             print("EXITING below SMA20 trail")
             self.position.close()
             return
 
-        # Update peak for next divergence check
         if high > self.last_peak_price:
             self.last_peak_price = high
             self.last_peak_rsi = rsi
@@ -159,7 +146,6 @@ class GoldenCrossoverFinal(Strategy):
 def run_backtest():
     """Execute backtest and generate results"""
 
-    # Try to load existing data
     data_paths = ["src/data/rbi_v3/10_23_2025/BTC-USD-15m-synthetic.csv"]
 
     data = None
@@ -176,7 +162,6 @@ def run_backtest():
         print("No data file found, creating minimal synthetic data")
         data = create_minimal_data()
 
-    # Clean data
     data.columns = data.columns.str.strip().str.lower()
     data = data.drop(columns=[col for col in data.columns if "unnamed" in col.lower()])
     data = data.rename(
@@ -196,14 +181,11 @@ def run_backtest():
     print(f"Period: {data.index[0]} to {data.index[-1]}")
     print("=" * 50)
 
-    # Configure and run backtest
     bt = Backtest(data, GoldenCrossoverFinal, cash=1000000, commission=0.002)
     stats = bt.run()
 
-    # Display results
     print(stats)
 
-    # Convert to JSON format for frontend
     def get_stat_value(stats_dict, possible_keys, default=0.0):
         """Helper to get statistic value from different possible key names"""
         for key in possible_keys:
@@ -263,7 +245,6 @@ def run_backtest():
             "timestamp": datetime.now().isoformat(),
         }
 
-    # Save results
     output_file = "GoldenCrossover_FINAL_results.json"
     with open(output_file, "w") as f:
         json.dump(result, f, indent=2)
@@ -276,11 +257,9 @@ def create_minimal_data():
     """Create minimal synthetic OHLCV data"""
     print("Generating minimal synthetic OHLCV data...")
 
-    # Create 2000 bars of 15min data (about 20 days for SMA200)
     dates = pd.date_range(start="2024-01-01", periods=2000, freq="15min")
     n = len(dates)
 
-    # Simple random walk for BTC prices
     np.random.seed(42)
     returns = np.random.normal(0.0001, 0.015, n)
     price = 45000  # Starting BTC price
@@ -290,7 +269,6 @@ def create_minimal_data():
         price *= 1 + ret
         closes.append(max(price, 1000))  # Minimum price floor
 
-    # Generate OHLC
     highs = []
     lows = []
     opens = []
@@ -301,12 +279,10 @@ def create_minimal_data():
         else:
             opens.append(closes[i - 1])
 
-        # Add some volatility to high/low
         vol = abs(np.random.normal(0, close * 0.008))
         highs.append(close + vol)
         lows.append(max(close - vol, close * 0.95))  # Ensure low < close
 
-    # Volume
     volumes = np.random.lognormal(8, 1, n)
 
     data = pd.DataFrame(

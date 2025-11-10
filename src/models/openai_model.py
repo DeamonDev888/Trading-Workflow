@@ -3,6 +3,8 @@
 Built with love by Deamon Dev
 """
 
+import json
+
 import requests
 from openai import OpenAI
 from termcolor import cprint
@@ -122,17 +124,14 @@ class OpenAIModel(BaseModel):
                 "cyan",
             )
             model_kwargs["reasoning_effort"] = self.reasoning_effort
-            # Remove unsupported parameters for O3
             model_kwargs.pop("max_tokens", None)
             model_kwargs.pop("temperature", None)
         elif self.model_name.startswith("o1"):
-            # Handle O1 specific parameters
             if "max_tokens" in model_kwargs:
                 model_kwargs["max_completion_tokens"] = model_kwargs.pop("max_tokens")
             model_kwargs.pop("temperature", None)
             model_kwargs.pop("reasoning_effort", None)
         elif self.model_name.startswith("gpt-5"):
-            # Handle GPT-5 specific parameter name support
             if "max_tokens" in model_kwargs:
                 provided = model_kwargs.pop("max_tokens")
                 try:
@@ -140,14 +139,11 @@ class OpenAIModel(BaseModel):
                 except Exception:
                     provided_int = 0
                 model_kwargs["max_completion_tokens"] = max(provided_int, 4096)
-            # Temperature not supported for GPT-5 (defaults only)
             model_kwargs.pop("temperature", None)
             model_kwargs.pop("reasoning_effort", None)
-            # Sensible default if not set
             if "max_completion_tokens" not in model_kwargs:
                 model_kwargs["max_completion_tokens"] = 4096
         else:
-            # Remove O3 specific parameters for other models
             model_kwargs.pop("reasoning_effort", None)
 
         return model_kwargs
@@ -155,11 +151,9 @@ class OpenAIModel(BaseModel):
     def generate_response(self, system_prompt, user_content, **kwargs):
         """Generate a response using the OpenAI model"""
         try:
-            # Prefer Responses API for newer models if available (per OpenAI Text guide)
             if self.model_name.startswith(("gpt-5", "o1")):
                 try:
                     content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
-                    # Map token limit for Responses API
                     max_output_tokens = None
                     if "max_tokens" in kwargs:
                         max_output_tokens = kwargs.get("max_tokens")
@@ -174,14 +168,11 @@ class OpenAIModel(BaseModel):
                         max_output_tokens=max_output_tokens,
                     )
 
-                    # Extract text per Responses API
                     content_text = getattr(response, "output_text", None)
                     if not content_text and hasattr(response, "output"):
                         try:
-                            # Try to stitch text parts
                             parts = []
                             for item in response.output:
-                                # item.content may be a list of parts
                                 content_list = getattr(item, "content", None)
                                 if isinstance(content_list, list):
                                     for part in content_list:
@@ -200,7 +191,6 @@ class OpenAIModel(BaseModel):
                             usage=getattr(response, "usage", None),
                         )
                 except AttributeError:
-                    # Responses API not available, fall back to direct HTTP
                     try:
                         content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
                         max_output_tokens = (
@@ -223,7 +213,6 @@ class OpenAIModel(BaseModel):
                         data = http_resp.json()
                         content_text = data.get("output_text")
                         if not content_text:
-                            # stitch from output items
                             output_items = data.get("output", []) or []
                             parts = []
                             for item in output_items:
@@ -252,14 +241,12 @@ class OpenAIModel(BaseModel):
                         )
                         safe_cprint("⚠️ Falling back to Chat Completions", "yellow")
 
-            # Special handling for O3 models via Chat Completions
             if self.model_name.startswith("o3"):
                 safe_cprint(
                     "🧠 Using Deamon Dev's O3 model with reasoning capabilities...",
                     "cyan",
                 )
                 messages = [{"role": "user", "content": user_content}]
-            # Special handling for O1 models
             elif self.model_name.startswith("o1"):
                 messages = [
                     {
@@ -267,7 +254,6 @@ class OpenAIModel(BaseModel):
                         "content": f"Instructions: {system_prompt}\n\nInput: {user_content}",
                     }
                 ]
-            # Standard handling for other models (including GPT-5)
             else:
                 messages = [
                     {"role": "system", "content": system_prompt},
@@ -276,20 +262,16 @@ class OpenAIModel(BaseModel):
 
             safe_cprint(f"🤔 Deamon Dev's {self.model_name} is thinking...", "yellow")
 
-            # Prepare model-specific kwargs
             model_kwargs = self._prepare_model_kwargs(**kwargs)
 
-            # Create completion with appropriate parameters
             response = self.client.chat.completions.create(
                 model=self.model_name, messages=messages, **model_kwargs
             )
 
-            # Robust content extraction to avoid empty content edge cases
             choice = response.choices[0]
             message = choice.message
             content_text = None
 
-            # Debug: show finish_reason and meta
             try:
                 finish_reason = getattr(choice, "finish_reason", None)
                 safe_cprint(f"🧪 Deamon Dev debug: finish_reason={finish_reason}", "cyan")
@@ -297,11 +279,9 @@ class OpenAIModel(BaseModel):
                 pass
 
             if hasattr(message, "content"):
-                # content may be a string or a list of typed objects
                 if isinstance(message.content, str):
                     content_text = message.content.strip()
                 elif isinstance(message.content, list):
-                    # Join any text parts if content is structured (defensive)
                     try:
                         parts = []
                         for part in message.content:
@@ -312,7 +292,6 @@ class OpenAIModel(BaseModel):
                             elif isinstance(part, str):
                                 parts.append(part)
                             else:
-                                # Handle typed content parts like ChatCompletionContentPart with .text
                                 text_val = getattr(part, "text", None)
                                 if isinstance(text_val, str):
                                     parts.append(text_val)
@@ -323,7 +302,6 @@ class OpenAIModel(BaseModel):
             if not content_text:
                 safe_cprint("⚠️ OpenAI returned empty content", "yellow")
 
-            # If still empty, do a single simplified retry (matches other GPT handling)
             if not content_text:
                 safe_cprint(
                     "🔁 Retrying once with simplified prompt format (Deamon Dev fallback)",
@@ -336,7 +314,6 @@ class OpenAIModel(BaseModel):
                     }
                 ]
                 retry_kwargs = self._prepare_model_kwargs(**kwargs)
-                # Ensure no temperature for restricted models
                 retry_kwargs.pop("temperature", None)
                 response = self.client.chat.completions.create(
                     model=self.model_name, messages=retry_messages, **retry_kwargs
@@ -347,7 +324,6 @@ class OpenAIModel(BaseModel):
                 if isinstance(content_text, str):
                     content_text = content_text.strip()
 
-            # If still empty and Responses API available, try Responses API once
             if not content_text and hasattr(self.client, "responses"):
                 try:
                     safe_cprint(
@@ -355,7 +331,6 @@ class OpenAIModel(BaseModel):
                         "yellow",
                     )
                     content_str = f"Instructions: {system_prompt}\n\nInput: {user_content}"
-                    # Map token limit to responses API
                     max_output_tokens = None
                     if "max_tokens" in kwargs:
                         max_output_tokens = kwargs.get("max_tokens")
@@ -388,7 +363,6 @@ class OpenAIModel(BaseModel):
                         "red",
                     )
 
-            # Final safety net: fallback to a stable chat model if nothing came back
             if (not content_text) and self.model_name == "gpt-5":
                 try:
                     safe_cprint(
@@ -400,7 +374,6 @@ class OpenAIModel(BaseModel):
                         {"role": "user", "content": user_content},
                     ]
                     fb_kwargs = kwargs.copy()
-                    # Map tokens for non-O1/O3 models
                     if "max_tokens" not in fb_kwargs and "max_completion_tokens" in fb_kwargs:
                         fb_kwargs["max_tokens"] = fb_kwargs.pop("max_completion_tokens")
                     fb_kwargs.pop("temperature", None)  # keep defaults safe
@@ -432,7 +405,6 @@ class OpenAIModel(BaseModel):
             )
 
         except Exception as e:
-            # Print detailed error info per Deamon Dev style
             safe_cprint(
                 f"❌ OpenAI generation error (Deamon Dev full dump) 🚨: {repr(e)}",
                 "red",

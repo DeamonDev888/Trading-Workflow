@@ -449,7 +449,9 @@ def fast_scan_js_directory(directory):
     """Scan all JS/TS files in a directory"""
     import glob
     files \
-    = glob.glob(f"{directory}/**/*.js", recursive=True) + glob.glob(f"{directory}/**/*.ts", recursive=True)
+    = glob.glob(f"{directory}/**/*.js", recursive=True)
+                                                       + glob.glob(f"{directory}/**/*.ts", recursive=True)
+
     total_issues = 0
     for file_path in files:
         total_issues += fast_scan_js_file(file_path)
@@ -469,7 +471,9 @@ def scan_and_fix_directory(directory, state=None, force=False):
     """Scan and fix all files in directory with persistence"""
     import glob
     files \
-    = glob.glob(f"{directory}/**/*.js", recursive=True) + glob.glob(f"{directory}/**/*.ts", recursive=True)
+    = glob.glob(f"{directory}/**/*.js", recursive=True)
+                                                       + glob.glob(f"{directory}/**/*.ts", recursive=True)
+
     total_fixes = 0
     for file_path in files:
         if state and not force and not should_process_file(state, file_path):

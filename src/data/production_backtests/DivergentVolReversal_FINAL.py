@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Divergent Volatility Reversal Strategy - FINAL VERSION
 Compatible with backtesting framework - Fully working
@@ -9,8 +7,6 @@ import json
 import os
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
 import talib
 from backtesting import Backtest, Strategy
 
@@ -48,23 +44,19 @@ class DivergentVolReversalFinal(Strategy):
         if len(self.data) < 50:
             return
 
-        # Volatility exit for open positions
         if self.position:
             self._manage_position()
             return
 
-        # No position: check for entries
         if self.adx[-1] > self.adx_threshold:
             return  # Trending market, skip entry
         if self.atr[-1] > self.vix_proxy_threshold:
             return  # High vol, avoid entry
 
-        # Long entry - Bullish divergence
         if self.data.Close[-1] < self.sma[-1] and len(self.data) > self.lookback + 1:
             if self._check_bullish_divergence():
                 self._execute_long_entry()
 
-        # Short entry - Bearish divergence
         if self.data.Close[-1] > self.sma[-1] and len(self.data) > self.lookback + 1:
             if self._check_bearish_divergence():
                 self._execute_short_entry()
@@ -120,13 +112,11 @@ class DivergentVolReversalFinal(Strategy):
         if not self.position:
             return
 
-        # Volatility exit
         if self.atr[-1] > self.vol_mult * self.atr_sma[-1]:
             self.position.close()
             print("Exit - Volatility spike")
             return
 
-        # Time-based exit
         if self.entry_bar is not None:
             bars_held = len(self.data) - self.entry_bar
             if bars_held > self.max_bars:
@@ -143,7 +133,6 @@ class DivergentVolReversalFinal(Strategy):
         risk_per_unit = entry_price - sl_price
 
         if risk_per_unit > 0:
-            # Use fixed capital like other strategies
             capital = 1000000
             risk_amount = capital * self.risk_pct
             pos_size = int(round(risk_amount / risk_per_unit))
@@ -163,7 +152,6 @@ class DivergentVolReversalFinal(Strategy):
         risk_per_unit = sl_price - entry_price
 
         if risk_per_unit > 0:
-            # Use fixed capital like other strategies
             capital = 1000000
             risk_amount = capital * self.risk_pct
             pos_size = int(round(risk_amount / risk_per_unit))
@@ -178,7 +166,6 @@ class DivergentVolReversalFinal(Strategy):
 def run_backtest():
     """Execute backtest and generate results"""
 
-    # Try to load existing data
     data_paths = ["src/data/rbi_v3/10_23_2025/BTC-USD-15m-synthetic.csv"]
 
     data = None
@@ -195,7 +182,6 @@ def run_backtest():
         print("No data file found, creating minimal synthetic data")
         data = create_minimal_data()
 
-    # Clean data
     data.columns = data.columns.str.strip().str.lower()
     data = data.drop(columns=[col for col in data.columns if "unnamed" in col.lower()])
     data = data.rename(
@@ -215,14 +201,11 @@ def run_backtest():
     print(f"Period: {data.index[0]} to {data.index[-1]}")
     print("=" * 50)
 
-    # Configure and run backtest
     bt = Backtest(data, DivergentVolReversalFinal, cash=1000000, commission=0.001)
     stats = bt.run()
 
-    # Display results
     print(stats)
 
-    # Convert to JSON format for frontend
     def get_stat_value(stats_dict, possible_keys, default=0.0):
         """Helper to get statistic value from different possible key names"""
         for key in possible_keys:
@@ -282,7 +265,6 @@ def run_backtest():
             "timestamp": datetime.now().isoformat(),
         }
 
-    # Save results
     output_file = "DivergentVolReversal_FINAL_results.json"
     with open(output_file, "w") as f:
         json.dump(result, f, indent=2)
@@ -295,11 +277,9 @@ def create_minimal_data():
     """Create minimal synthetic OHLCV data"""
     print("Generating minimal synthetic OHLCV data...")
 
-    # Create 1000 bars of 15min data
     dates = pd.date_range(start="2024-01-01", periods=1000, freq="15min")
     n = len(dates)
 
-    # Simple random walk for BTC prices
     np.random.seed(42)
     returns = np.random.normal(0.0001, 0.015, n)
     price = 45000  # Starting BTC price
@@ -309,7 +289,6 @@ def create_minimal_data():
         price *= 1 + ret
         closes.append(max(price, 1000))  # Minimum price floor
 
-    # Generate OHLC
     highs = []
     lows = []
     opens = []
@@ -320,12 +299,10 @@ def create_minimal_data():
         else:
             opens.append(closes[i - 1])
 
-        # Add some volatility to high/low
         vol = abs(np.random.normal(0, close * 0.008))
         highs.append(close + vol)
         lows.append(max(close - vol, close * 0.95))  # Ensure low < close
 
-    # Volume
     volumes = np.random.lognormal(8, 1, n)
 
     data = pd.DataFrame(

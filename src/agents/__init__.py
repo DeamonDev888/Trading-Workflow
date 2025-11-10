@@ -16,13 +16,10 @@ __version__ = "1.0.0"
 __author__ = "Deamon Dev"
 
 from .funding_agent import FundingAgent
-
-# True AI Agents (with LLM API calls)
 from .risk_agent import RiskAgent
 from .sentiment_analysis_agent import SentimentAnalysisAgent
 from .strategy_agent import StrategyAgent
 
-# Available AI Agents
 AI_AGENTS = {
     "risk_agent": RiskAgent,
     "funding_agent": FundingAgent,
@@ -37,7 +34,3 @@ __all__ = [
     "SentimentAnalysisAgent",
     "AI_AGENTS",
 ]
-
-# Clear distinction between Agents and Algorithms
-# Agents = Scripts with LLM API calls (4 total)
-# Algorithms = Scripts without LLM API calls (46+ in ../algorithms/)

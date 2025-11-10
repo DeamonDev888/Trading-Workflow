@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] NOVAQUOTE Claude Code Integration - Demo & Summary
 Built with love by Deamon Dev [ROCKET]
@@ -11,9 +10,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -52,7 +49,6 @@ def main():
 
     print_header("NOVAQUOTE CLAUDE CODE INTEGRATION - DÉMONSTRATION")
 
-    # 1. Présentation de l'implémentation
     print_section("1. IMPLÉMENTATION RÉALISÉE")
 
     print_success("4 agents NOVAQUOTE configurés et opérationnels")
@@ -76,7 +72,6 @@ def main():
     print_info("  - Exemples d'usage")
     print_info("  - Dépannage")
 
-    # 2. Structure des fichiers
     print_section("2. STRUCTURE DES FICHIERS")
 
     files_info = {
@@ -102,7 +97,6 @@ def main():
             cprint(f"  ❌ {file_path} (MANQUANT)", "red")
         print_info(f"     {description}")
 
-    # 3. Exemples d'utilisation
     print_section("3. EXEMPLES D'UTILISATION")
 
     cprint("\n📌 Mode 1: Agent Unique (Python)", "white", attrs=["bold"])
@@ -132,7 +126,6 @@ def main():
     cprint("\n📌 Windows Batch: Menu Interactif", "white", attrs=["bold"])
     print_code("run_claude_agents.bat")
 
-    # 4. Pattern d'appel
     print_section("4. PATTERN D'APPEL CLAUDE CODE")
 
     cprint("\n🎯 Pattern documenté: claude --agents @.claude/agents/", "green", attrs=["bold"])
@@ -149,7 +142,6 @@ def main():
     print_code('claude --agents @claude-agents.json \\')
     print_code('           --workflow complete_trading_analysis')
 
-    # 5. Fonctionnalités avancées
     print_section("5. FONCTIONNALITÉS AVANCÉES")
 
     features = [
@@ -167,7 +159,6 @@ def main():
         print_success(f"{feature}")
         print_info(f"  {description}")
 
-    # 6. Comparaison avec l'ancien système
     print_section("6. ÉVOLUTION DE L'ARCHITECTURE")
 
     cprint("\n🔄 AVANT (Ancien système):", "yellow", attrs=["bold"])
@@ -184,7 +175,6 @@ def main():
     print_info("  - Métriques de convergence sophistiquées")
     print_info("  - Scripts d'automatisation Python/PowerShell")
 
-    # 7. Statistiques de l'implémentation
     print_section("7. STATISTIQUES")
 
     cprint(f"\n  📁 Fichiers créés: 15+", "cyan")
@@ -194,7 +184,6 @@ def main():
     cprint(f"  🧪 Tests: 1 suite complète", "cyan")
     cprint(f"  🔧 Agents configurés: 4", "cyan")
 
-    # 8. Prochaines étapes
     print_section("8. PROCHAINES ÉTAPES RECOMMANDÉES")
 
     next_steps = [
@@ -209,7 +198,6 @@ def main():
     for i, step in enumerate(next_steps, 1):
         print_success(f"{i}. {step}")
 
-    # 9. Ressources
     print_section("9. RESSOURCES")
 
     resources = {
@@ -229,7 +217,6 @@ def main():
         else:
             cprint(f"  {name}: {path} (Vérifiez le chemin)", "yellow")
 
-    # 10. Résumé final
     print_header("RÉSUMÉ")
 
     cprint("""
@@ -256,7 +243,6 @@ def main():
    - docs/CLAUDE_CODE_INTEGRATION_GUIDE.md (guide complet)
     """, "white", attrs=["bold"])
 
-    # 11. Question pour continuer
     print("\n" + "="*70)
     cprint("Voulez-vous lancer les tests maintenant? (y/n)", "cyan", attrs=["bold"])
     cprint("Ou appuyez sur Entrée pour quitter.", "cyan")

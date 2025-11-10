@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Real Market Data Agent
 Agent pour obtenir des vraies données de marché depuis des sources publiques
@@ -15,7 +14,6 @@ import requests
 def get_binance_prices() -> Dict[str, float]:
     """Obtenir les prix depuis Binance API (publique)"""
     try:
-        # Pairs USDT
         symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
         prices = {}
 
@@ -50,7 +48,6 @@ def get_coinbase_prices() -> Dict[str, float]:
                 elif coin == "ETH":
                     prices[coin] = float(data["data"]["rates"]["USD"])
                 elif coin == "SOL":
-                    # SOL price calculé depuis ETH
                     eth_usd = prices.get("ETH", 2000)
                     sol_eth = float(data["data"]["rates"].get("ETH", 0.05))
                     prices[coin] = eth_usd * sol_eth
@@ -68,7 +65,6 @@ def generate_realistic_portfolio_data(prices: Dict[str, float]) -> Dict[str, Any
     sol_price = prices.get("SOL", 100)
     bnb_price = prices.get("BNB", 300)
 
-    # Simuler un portefeuille réaliste
     btc_position = 0.05  # 0.05 BTC
     eth_position = 1.2  # 1.2 ETH
     sol_position = 15  # 15 SOL
@@ -81,7 +77,6 @@ def generate_realistic_portfolio_data(prices: Dict[str, float]) -> Dict[str, Any
 
     total_balance = btc_value + eth_value + sol_value + bnb_value
 
-    # Simuler P&L réel
     btc_pnl = btc_value * 0.025  # 2.5% profit
     eth_pnl = eth_value * -0.015  # -1.5% loss
     sol_pnl = sol_value * 0.08  # 8% profit
@@ -156,18 +151,14 @@ def main():
     command = sys.argv[1]
 
     if command == "--get-dashboard-data":
-        # Obtenir les vrais prix
         binance_prices = get_binance_prices()
         coinbase_prices = get_coinbase_prices()
 
-        # Combiner les prix (privilégier Binance)
         all_prices = {**coinbase_prices, **binance_prices}
 
         if not all_prices:
-            # Fallback prix fixes si APIs indisponibles
             all_prices = {"BTC": 43250.0, "ETH": 2250.0, "SOL": 98.5, "BNB": 315.0}
 
-        # Générer les données du dashboard
         dashboard_data = generate_realistic_portfolio_data(all_prices)
         dashboard_data["timestamp"] = datetime.now().isoformat()
         dashboard_data["data_source"] = "real_market_api"
@@ -175,7 +166,6 @@ def main():
         print(json.dumps(dashboard_data, indent=2))
 
     elif command == "--get-tokens":
-        # Données de tokens pour le frontend
         binance_prices = get_binance_prices()
 
         tokens = []
@@ -204,7 +194,6 @@ def main():
         )
 
     elif command == "--get-exchange-info":
-        # Informations exchange réelles
         print(
             json.dumps(
                 {

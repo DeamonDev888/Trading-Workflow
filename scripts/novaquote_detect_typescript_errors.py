@@ -7,7 +7,6 @@ V1.0 - Complément à NovaQuote Linter v2.0
 import json
 import os
 import re
-import sys
 from datetime import datetime
 from pathlib import Path
 

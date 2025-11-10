@@ -60,10 +60,8 @@ class AgentInferenceMonitor:
         self.monitoring = False
         self.session = None
 
-        # Initialize metrics for all agents
         self._initialize_metrics()
 
-        # Logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
 
@@ -89,16 +87,13 @@ class AgentInferenceMonitor:
 
         self.logger.info("[INFERENCE MONITOR] Starting agent monitoring...")
 
-        # Start monitoring tasks
         tasks = [
             asyncio.create_task(self._monitor_agent(agent_type))
             for agent_type in self.agent_endpoints.keys()
         ]
 
-        # Start orchestrator monitoring
         tasks.append(asyncio.create_task(self._monitor_orchestrator()))
 
-        # Start cleanup task
         tasks.append(asyncio.create_task(self._cleanup_old_inferences()))
 
         try:
@@ -122,14 +117,12 @@ class AgentInferenceMonitor:
 
         while self.monitoring:
             try:
-                # Check agent health
                 async with self.session.get(f"{endpoint}/health", timeout=5) as response:
                     if response.status == 200:
                         health_data = await response.json()
                         metrics.status = "online"
                         metrics.current_task = health_data.get("current_task")
 
-                        # Get recent inferences
                         await self._fetch_recent_inferences(agent_type, endpoint)
                     else:
                         metrics.status = "error"
@@ -142,7 +135,6 @@ class AgentInferenceMonitor:
                 metrics.status = "offline"
                 metrics.last_error = str(e)
 
-            # Update uptime percentage
             await self._update_uptime_percentage(agent_type)
 
             await asyncio.sleep(2)  # Check every 2 seconds
@@ -155,15 +147,12 @@ class AgentInferenceMonitor:
                     data = await response.json()
 
                     for inference_data in data.get("recent_inferences", []):
-                        # Process only new inferences
                         inference_timestamp = datetime.fromisoformat(inference_data["timestamp"])
 
-                        # Check if we already have this inference
                         if not any(
                             inf.agent_type == agent_type and inf.timestamp == inference_timestamp
                             for inf in self.inference_history
                         ):
-                            # Create new inference result
                             inference = InferenceResult(
                                 agent_type=agent_type,
                                 timestamp=inference_timestamp,
@@ -175,10 +164,8 @@ class AgentInferenceMonitor:
                                 error_message=inference_data.get("error_message"),
                             )
 
-                            # Add to history
                             self.inference_history.append(inference)
 
-                            # Update metrics
                             self._update_agent_metrics(agent_type, inference)
 
         except Exception as e:
@@ -194,7 +181,6 @@ class AgentInferenceMonitor:
                     if response.status == 200:
                         status_data = await response.json()
 
-                        # Update system-wide metrics from orchestrator
                         for agent_status in status_data.get("agents", []):
                             agent_type = agent_status.get("type")
                             if agent_type in self.agent_metrics:
@@ -210,14 +196,12 @@ class AgentInferenceMonitor:
         """Clean up old inference results (keep last 100 per agent)"""
         while self.monitoring:
             try:
-                # Group inferences by agent
                 agent_inferences = {}
                 for inference in self.inference_history:
                     if inference.agent_type not in agent_inferences:
                         agent_inferences[inference.agent_type] = []
                     agent_inferences[inference.agent_type].append(inference)
 
-                # Sort and keep only last 100 per agent
                 new_history = []
                 for agent_type, inferences in agent_inferences.items():
                     inferences.sort(key=lambda x: x.timestamp, reverse=True)
@@ -240,7 +224,6 @@ class AgentInferenceMonitor:
 
         metrics.last_inference = inference.timestamp
 
-        # Update averages
         if inference.success:
             total_successful = metrics.successful_inferences
             metrics.average_confidence = (
@@ -253,13 +236,10 @@ class AgentInferenceMonitor:
 
     async def _update_uptime_percentage(self, agent_type: str):
         """Update uptime percentage based on recent status checks"""
-        # This is a simplified calculation - in reality you'd track over time
         metrics = self.agent_metrics[agent_type]
         if metrics.status == "online":
-            # Gradually increase uptime
             metrics.uptime_percentage = min(100.0, metrics.uptime_percentage + 0.1)
         else:
-            # Gradually decrease uptime
             metrics.uptime_percentage = max(0.0, metrics.uptime_percentage - 0.5)
 
     def get_agent_metrics_json(self, agent_type: str) -> str:
@@ -269,7 +249,6 @@ class AgentInferenceMonitor:
 
         metrics = self.agent_metrics[agent_type]
 
-        # Convert datetime to string for JSON serialization
         metrics_dict = asdict(metrics)
         if metrics_dict["last_inference"]:
             metrics_dict["last_inference"] = metrics_dict["last_inference"].isoformat()
@@ -282,11 +261,9 @@ class AgentInferenceMonitor:
             inference for inference in self.inference_history if inference.agent_type == agent_type
         ]
 
-        # Sort by timestamp (newest first)
         agent_inferences.sort(key=lambda x: x.timestamp, reverse=True)
         agent_inferences = agent_inferences[:limit]
 
-        # Convert to JSON-serializable format
         result = []
         for inference in agent_inferences:
             inference_dict = asdict(inference)
@@ -315,7 +292,6 @@ class AgentInferenceMonitor:
             },
         }
 
-        # Convert datetime objects to strings
         for agent_data in summary["agents"].values():
             if agent_data["last_inference"]:
                 agent_data["last_inference"] = agent_data["last_inference"].isoformat()
@@ -323,7 +299,6 @@ class AgentInferenceMonitor:
         return json.dumps(summary)
 
 
-# Global monitor instance
 monitor = AgentInferenceMonitor()
 
 if __name__ == "__main__":

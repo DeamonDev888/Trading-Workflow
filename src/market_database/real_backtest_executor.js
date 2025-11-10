@@ -17,7 +17,7 @@ class RealBacktestExecutor {
   async initialize() {
     await this.marketDb.initialize();
     this.db = this.marketDb.db;
-    console.log('✅ Connected to market database for backtesting');
+    console.info('✅ Connected to market database for backtesting');
   }
 
   /**
@@ -25,7 +25,7 @@ class RealBacktestExecutor {
    */
   async executeBacktest(strategy, symbol, timeframe = '1h') {
     try {
-      console.log(`🔧 Executing real backtest: ${strategy} on ${symbol}`);
+      console.info(`🔧 Executing real backtest: ${strategy} on ${symbol}`);
 
       // Get real OHLCV data
       const ohlcvData = await this.getRealMarketData(symbol, timeframe);
@@ -42,7 +42,7 @@ class RealBacktestExecutor {
       // Save results to database
       await this.saveBacktestResults(strategy, symbol, timeframe, results);
 
-      console.log(`✅ Backtest completed for ${strategy}`);
+      console.info(`✅ Backtest completed for ${strategy}`);
       return results;
     } catch (error) {
       console.error(`❌ Backtest failed for ${strategy}:`, error.message);
@@ -55,7 +55,7 @@ class RealBacktestExecutor {
    */
   async getRealMarketData(symbol, timeframe, limit = 1000) {
     return new Promise((resolve, reject) => {
-      const query = `
+      const query = `;
                 SELECT timestamp, open, high, low, close, volume
                 FROM ohlcv_data
                 WHERE symbol = ? AND timeframe = ?
@@ -77,7 +77,7 @@ class RealBacktestExecutor {
    * Run trading strategy on real data
    */
   async runStrategy(strategyName, ohlcvData) {
-    const results = {
+    const results = {;
       strategy: strategyName,
       symbol: ohlcvData[0]?.symbol || 'UNKNOWN',
       trades: [],
@@ -128,16 +128,16 @@ class RealBacktestExecutor {
    * Golden Crossover Strategy (SMA 20/200)
    */
   async goldenCrossoverStrategy(data, results) {
-    const sma20 = this.calculateSMA(
+    const sma20 = this.calculateSMA(;
       data.map((d) => d.close),
       20
     );
-    const sma200 = this.calculateSMA(
+    const sma200 = this.calculateSMA(;
       data.map((d) => d.close),
       200
     );
 
-    for (let i = 201; i < data.length; i++) {
+    for (let i = 201; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const currentSMA20 = sma20[i - 201];
       const currentSMA200 = sma200[i - 201];
@@ -147,7 +147,7 @@ class RealBacktestExecutor {
       // Buy signal: SMA20 crosses above SMA200
       if (sma20[i - 202] <= sma200[i - 202] && currentSMA20 > currentSMA200) {
         if (results.positions.length === 0) {
-          const positionSize = results.balance * 0.1; // 10% position
+          const positionSize = results.balance * 0.1; // 10% position;
           results.positions.push({
             type: 'LONG',
             entryPrice: currentPrice,
@@ -186,7 +186,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -227,12 +227,12 @@ class RealBacktestExecutor {
    * RSI Momentum Strategy
    */
   async rsiMomentumStrategy(data, results) {
-    const rsi = this.calculateRSI(
+    const rsi = this.calculateRSI(;
       data.map((d) => d.close),
       14
     );
 
-    for (let i = 14; i < data.length; i++) {
+    for (let i = 14; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const currentRSI = rsi[i - 14];
 
@@ -240,7 +240,7 @@ class RealBacktestExecutor {
 
       // Buy signal: RSI oversold (< 30)
       if (currentRSI < 30 && results.positions.length === 0) {
-        const positionSize = results.balance * 0.15; // 15% position
+        const positionSize = results.balance * 0.15; // 15% position;
         results.positions.push({
           type: 'LONG',
           entryPrice: currentPrice,
@@ -276,7 +276,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -317,7 +317,7 @@ class RealBacktestExecutor {
   async macdTrendStrategy(data, results) {
     const macdData = this.calculateMACD(data.map((d) => d.close));
 
-    for (let i = 26; i < data.length; i++) {
+    for (let i = 26; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const macdLine = macdData.macd[i - 26];
       const signalLine = macdData.signal[i - 26];
@@ -330,7 +330,7 @@ class RealBacktestExecutor {
         macdLine > signalLine
       ) {
         if (results.positions.length === 0) {
-          const positionSize = results.balance * 0.12; // 12% position
+          const positionSize = results.balance * 0.12; // 12% position;
           results.positions.push({
             type: 'LONG',
             entryPrice: currentPrice,
@@ -372,7 +372,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -414,7 +414,7 @@ class RealBacktestExecutor {
     const volumes = data.map((d) => d.volume);
     const avgVolume = this.calculateSMA(volumes, 20);
 
-    for (let i = 20; i < data.length; i++) {
+    for (let i = 20; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const currentVolume = data[i].volume;
       const avgVol = avgVolume[i - 20];
@@ -427,7 +427,7 @@ class RealBacktestExecutor {
         currentPrice > data[i - 1].close &&
         results.positions.length === 0
       ) {
-        const positionSize = results.balance * 0.08; // 8% position
+        const positionSize = results.balance * 0.08; // 8% position;
         results.positions.push({
           type: 'LONG',
           entryPrice: currentPrice,
@@ -443,7 +443,7 @@ class RealBacktestExecutor {
         results.positions[0].type === 'LONG'
       ) {
         const position = results.positions[0];
-        const pnlPercent =
+        const pnlPercent =;
           ((currentPrice - position.entryPrice) / position.entryPrice) * 100;
 
         if (pnlPercent >= 5 || pnlPercent <= -4) {
@@ -467,7 +467,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -507,16 +507,16 @@ class RealBacktestExecutor {
    * Mean Reversion Strategy
    */
   async meanReversionStrategy(data, results) {
-    const mean50 = this.calculateSMA(
+    const mean50 = this.calculateSMA(;
       data.map((d) => d.close),
       50
     );
-    const std20 = this.calculateStandardDeviation(
+    const std20 = this.calculateStandardDeviation(;
       data.map((d) => d.close),
       20
     );
 
-    for (let i = 50; i < data.length; i++) {
+    for (let i = 50; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const currentMean = mean50[i - 50];
       const currentStd = std20[i - 20];
@@ -528,7 +528,7 @@ class RealBacktestExecutor {
         currentPrice < currentMean - 2 * currentStd &&
         results.positions.length === 0
       ) {
-        const positionSize = results.balance * 0.05; // 5% position
+        const positionSize = results.balance * 0.05; // 5% position;
         results.positions.push({
           type: 'LONG',
           entryPrice: currentPrice,
@@ -571,7 +571,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -610,12 +610,12 @@ class RealBacktestExecutor {
    * Momentum Following Strategy
    */
   async momentumFollowStrategy(data, results) {
-    const momentum10 = this.calculateMomentum(
+    const momentum10 = this.calculateMomentum(;
       data.map((d) => d.close),
       10
     );
 
-    for (let i = 10; i < data.length; i++) {
+    for (let i = 10; i < data.length; i++) {;
       const currentPrice = data[i].close;
       const currentMomentum = momentum10[i - 10];
 
@@ -623,7 +623,7 @@ class RealBacktestExecutor {
 
       // Buy signal: Strong positive momentum (> 2%)
       if (currentMomentum > 2 && results.positions.length === 0) {
-        const positionSize = results.balance * 0.1; // 10% position
+        const positionSize = results.balance * 0.1; // 10% position;
         results.positions.push({
           type: 'LONG',
           entryPrice: currentPrice,
@@ -659,7 +659,7 @@ class RealBacktestExecutor {
 
       // Update equity curve
       if (results.positions.length > 0) {
-        const unrealizedPnL =
+        const unrealizedPnL =;
           (currentPrice - results.positions[0].entryPrice) *
           results.positions[0].size;
         results.equityCurve.push(results.balance + unrealizedPnL);
@@ -697,11 +697,11 @@ class RealBacktestExecutor {
   // Technical Indicators
   calculateSMA(data, period) {
     const sma = [];
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {;
       if (i < period - 1) {
         sma.push(null);
       } else {
-        const sum = data
+        const sum = data;
           .slice(i - period + 1, i + 1)
           .reduce((a, b) => a + b, 0);
         sma.push(sum / period);
@@ -715,7 +715,7 @@ class RealBacktestExecutor {
     const gains = [];
     const losses = [];
 
-    for (let i = 1; i < data.length; i++) {
+    for (let i = 1; i < data.length; i++) {;
       const change = data[i] - data[i - 1];
       if (change >= 0) {
         gains.push(change);
@@ -726,14 +726,14 @@ class RealBacktestExecutor {
       }
     }
 
-    for (let i = 0; i < gains.length; i++) {
+    for (let i = 0; i < gains.length; i++) {;
       if (i < period - 1) {
         rsi.push(null);
       } else {
-        const avgGain =
+        const avgGain =;
           gains.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) /
           period;
-        const avgLoss =
+        const avgLoss =;
           losses.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) /
           period;
         const rs = avgGain / avgLoss;
@@ -749,7 +749,7 @@ class RealBacktestExecutor {
     const macdLine = [];
     const signalLine = [];
 
-    for (let i = 0; i < ema26.length; i++) {
+    for (let i = 0; i < ema26.length; i++) {;
       if (ema12[i] && ema26[i]) {
         macdLine.push(ema12[i] - ema26[i]);
       } else {
@@ -758,7 +758,7 @@ class RealBacktestExecutor {
     }
 
     // Signal line is 9-period EMA of MACD line
-    for (let i = 0; i < macdLine.length; i++) {
+    for (let i = 0; i < macdLine.length; i++) {;
       if (i < 8) {
         signalLine.push(null);
       } else {
@@ -774,10 +774,10 @@ class RealBacktestExecutor {
   calculateEMA(data, period) {
     const ema = [];
     const multiplier = 2 / (period + 1);
-    let previousEMA = data[0]; // Start with first price
+    let previousEMA = data[0]; // Start with first price;
     let currentEMA;
 
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {;
       if (i === 0) {
         ema.push(data[i]);
       } else {
@@ -792,7 +792,7 @@ class RealBacktestExecutor {
   calculateEMAValue(data, period) {
     const multiplier = 2 / (period + 1);
     let ema = data[0];
-    for (let i = 1; i < data.length; i++) {
+    for (let i = 1; i < data.length; i++) {;
       ema = (data[i] - ema) * multiplier + ema;
     }
     return ema;
@@ -800,13 +800,13 @@ class RealBacktestExecutor {
 
   calculateStandardDeviation(data, period) {
     const std = [];
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {;
       if (i < period - 1) {
         std.push(null);
       } else {
         const slice = data.slice(i - period + 1, i + 1);
         const mean = slice.reduce((a, b) => a + b, 0) / period;
-        const variance =
+        const variance =;
           slice.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / period;
         std.push(Math.sqrt(variance));
       }
@@ -816,7 +816,7 @@ class RealBacktestExecutor {
 
   calculateMomentum(data, period) {
     const momentum = [];
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {;
       if (i < period - 1) {
         momentum.push(null);
       } else {
@@ -840,7 +840,7 @@ class RealBacktestExecutor {
 
     // Profit Factor
     const totalProfits = winningTrades.reduce((sum, t) => sum + t.pnl, 0);
-    const totalLosses = results.trades
+    const totalLosses = results.trades;
       .filter((t) => t.pnl < 0)
       .reduce((sum, t) => sum + Math.abs(t.pnl), 0);
     results.profitFactor = totalLosses > 0 ? totalProfits / totalLosses : 0;
@@ -848,7 +848,7 @@ class RealBacktestExecutor {
     // Max Drawdown
     let peak = results.initialBalance;
     let maxDD = 0;
-    for (const equity of results.equityCurve) {
+    for (const equity of results.equityCurve) {;
       if (equity > peak) peak = equity;
       const drawdown = ((peak - equity) / peak) * 100;
       if (drawdown > maxDD) maxDD = drawdown;
@@ -858,14 +858,14 @@ class RealBacktestExecutor {
     // Sharpe Ratio (simplified)
     if (results.equityCurve.length > 1) {
       const returns = [];
-      for (let i = 1; i < results.equityCurve.length; i++) {
+      for (let i = 1; i < results.equityCurve.length; i++) {;
         returns.push(
           (results.equityCurve[i] - results.equityCurve[i - 1]) /
             results.equityCurve[i - 1]
         );
       }
       const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
-      const returnStd = Math.sqrt(
+      const returnStd = Math.sqrt(;
         returns.reduce((acc, r) => acc + Math.pow(r - avgReturn, 2), 0) /
           returns.length
       );
@@ -932,10 +932,10 @@ if (require.main === module) {
   executor
     .initialize()
     .then(() => {
-      console.log('🚀 Starting real backtests on market data...');
+      console.info('🚀 Starting real backtests on market data...');
 
       // Run multiple strategies on BTC
-      const strategies = [
+      const strategies = [;
         'GoldenCrossover',
         'RSI_Momentum',
         'MACD_Trend',
@@ -945,29 +945,29 @@ if (require.main === module) {
       ];
       const promises = [];
 
-      for (const strategy of strategies) {
+      for (const strategy of strategies) {;
         promises.push(executor.executeBacktest(strategy, 'BTC/USDT', '1h'));
       }
 
       return Promise.all(promises);
     })
     .then((results) => {
-      console.log('\n📊 BACKTEST RESULTS SUMMARY:');
-      console.log('=====================================');
+      console.info('\n📊 BACKTEST RESULTS SUMMARY:');
+      console.info('=====================================');
 
       results.forEach((result, index) => {
-        console.log(`\n${index + 1}. ${result.strategy}`);
-        console.log(`   Return: ${result.totalReturn.toFixed(2)}%`);
-        console.log(`   Sharpe: ${result.sharpeRatio.toFixed(2)}`);
-        console.log(`   Win Rate: ${result.winRate.toFixed(2)}%`);
-        console.log(`   Max DD: ${result.maxDrawdown.toFixed(2)}%`);
-        console.log(`   Trades: ${result.totalTrades}`);
-        console.log(
+        console.info(`\n${index + 1}. ${result.strategy}`);
+        console.info(`   Return: ${result.totalReturn.toFixed(2)}%`);
+        console.info(`   Sharpe: ${result.sharpeRatio.toFixed(2)}`);
+        console.info(`   Win Rate: ${result.winRate.toFixed(2)}%`);
+        console.info(`   Max DD: ${result.maxDrawdown.toFixed(2)}%`);
+        console.info(`   Trades: ${result.totalTrades}`);
+        console.info(
           `   Final Balance: $${(result.balance / 1000000).toFixed(2)}M`
         );
       });
 
-      console.log('\n✅ All real backtests completed successfully!');
+      console.info('\n✅ All real backtests completed successfully!');
     })
     .catch((err) => {
       console.error('❌ Backtest execution failed:', err.message);

@@ -11,7 +11,6 @@ This file integrates the coin rotation manager with:
 """
 
 import asyncio
-import json
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -39,7 +38,6 @@ class IntegratedRotationSystem:
         self.auto_optimization = True
         self.last_optimization = datetime.now()
 
-        # Enhanced configuration
         self.rotation_manager.config = RotationConfig(
             max_assets=12,
             min_assets=6,
@@ -63,7 +61,6 @@ class IntegratedRotationSystem:
             self.client = client
             self.rotation_manager.client = client
 
-            # Start integrated rotation
             await self.rotation_manager.start_rotation()
 
     async def start_with_workflow_optimization(self):
@@ -74,17 +71,14 @@ class IntegratedRotationSystem:
             self.client = client
             self.rotation_manager.client = client
 
-            # Enhanced initialization with workflow analysis
             await self._initialize_with_workflow_analysis()
             self.rotation_manager.running = True
 
-            # Main rotation loop with workflow optimization
             while self.rotation_manager.running:
                 try:
                     await self._perform_enhanced_rotation_cycle()
                     await asyncio.sleep(self.rotation_manager.config.rotation_interval)
 
-                    # Periodic optimization every 30 minutes
                     if (
                         self.auto_optimization
                         and (datetime.now() - self.last_optimization).seconds > 1800
@@ -100,7 +94,6 @@ class IntegratedRotationSystem:
         """Initialize rotation with comprehensive workflow analysis"""
         print("[INIT] Performing comprehensive workflow analysis...")
 
-        # Get initial market analysis
         market_analysis_task = TradingTask(
             task_id=f"workflow_analysis_{int(time.time())}",
             agent_type="strategy",
@@ -123,10 +116,8 @@ class IntegratedRotationSystem:
         if result and result.get("success"):
             analysis = result.get("response", {})
 
-            # Adjust rotation config based on market analysis
             await self._adjust_config_from_analysis(analysis)
 
-            # Initialize monitoring with enhanced recommendations
             await self._enhanced_initialization(analysis)
         else:
             print("[WARNING] Workflow analysis failed, using default initialization")
@@ -143,7 +134,6 @@ class IntegratedRotationSystem:
                 f"[CONFIG] Market: {market_condition}, Volatility: {volatility_level}, Liquidity: {liquidity_level}"
             )
 
-            # Adaptive configuration based on market conditions
             if market_condition == "HIGH_VOLATILITY":
                 self.rotation_manager.config.strategy = RotationStrategy.LIQUIDITY_FOCUSED
                 self.rotation_manager.config.max_assets = 8
@@ -162,7 +152,6 @@ class IntegratedRotationSystem:
                 self.rotation_manager.config.rotation_interval = 240  # 4 minutes
                 print("[CONFIG] Switched to MEAN_REVERSION strategy for bear market")
 
-            # Adjust based on liquidity
             if liquidity_level == "LOW":
                 self.rotation_manager.config.max_assets = max(
                     5, self.rotation_manager.config.max_assets - 3
@@ -177,7 +166,6 @@ class IntegratedRotationSystem:
     async def _enhanced_initialization(self, analysis: Dict[str, Any]):
         """Enhanced initialization with workflow insights"""
         try:
-            # Get enhanced recommendations
             recommendations_task = TradingTask(
                 task_id=f"enhanced_rotation_{int(time.time())}",
                 agent_type="strategy",
@@ -203,7 +191,6 @@ class IntegratedRotationSystem:
                 response = result.get("response", {})
                 recommendations = response.get("enhanced_recommendations", [])
 
-                # Initialize with enhanced recommendations
                 for asset_data in recommendations[: self.rotation_manager.config.max_assets]:
                     symbol = asset_data.get("symbol", "").upper()
                     if symbol:
@@ -237,20 +224,16 @@ class IntegratedRotationSystem:
             base_priority = asset_data.get("priority", 5)
             confidence = asset_data.get("confidence", 0.5)
 
-            # Market condition adjustments
             market_boost = 0
             if analysis.get("market_condition") == "BULL_MARKET":
                 market_boost = 1  # Boost in bull market
 
-            # Liquidity bonus
             liquidity_score = asset_data.get("liquidity_score", 0.5)
             liquidity_bonus = int(liquidity_score * 2)
 
-            # Trend strength bonus
             trend_score = asset_data.get("trend_score", 0.5)
             trend_bonus = int(trend_score * 2)
 
-            # Composite priority
             priority = (
                 base_priority
                 - int((1 - confidence) * 2)
@@ -272,32 +255,25 @@ class IntegratedRotationSystem:
         print(f"\n[ENHANCED ROTATION] Starting enhanced cycle {cycle_id}")
 
         try:
-            # Step 1: Get comprehensive market analysis
             print("[STEP 1/5] Comprehensive market analysis...")
             market_analysis = await self._get_comprehensive_market_analysis()
 
-            # Step 2: Get performance-based recommendations
             print("[STEP 2/5] Performance-based recommendations...")
             recommendations = await self._get_performance_recommendations()
 
-            # Step 3: Analyze current performance with workflow context
             print("[STEP 3/5] Workflow-aware performance analysis...")
             performance_scores = await self._evaluate_workflow_performance()
 
-            # Step 4: Multi-factor rotation analysis
             print("[STEP 4/5] Multi-factor rotation analysis...")
             rotation_decisions = await self._analyze_enhanced_rotation_needs(
                 recommendations, performance_scores, market_analysis
             )
 
-            # Step 5: Execute optimized rotation
             print("[STEP 5/5] Optimized rotation execution...")
             rotation_results = await self._execute_optimized_rotation(rotation_decisions)
 
-            # Post-rotation optimization
             await self._post_rotation_optimization(rotation_results)
 
-            # Update enhanced metrics
             cycle_time = time.time() - start_time
             self._update_enhanced_metrics(cycle_time, rotation_results)
 
@@ -380,7 +356,6 @@ class IntegratedRotationSystem:
                 continue
 
             try:
-                # Enhanced performance analysis
                 task = TradingTask(
                     task_id=f"workflow_perf_{symbol}_{int(time.time())}",
                     agent_type="strategy",
@@ -406,7 +381,6 @@ class IntegratedRotationSystem:
                 if result and result.get("success"):
                     response = result.get("response", {})
 
-                    # Enhanced performance scoring
                     base_score = self.rotation_manager._calculate_performance_score(
                         response, profile
                     )
@@ -416,7 +390,6 @@ class IntegratedRotationSystem:
                     enhanced_score = min(1.0, base_score + workflow_bonus + execution_bonus)
                     performance_scores[symbol] = enhanced_score
 
-                    # Update profile
                     profile.performance_score = enhanced_score
                     profile.last_updated = datetime.now()
 
@@ -448,15 +421,12 @@ class IntegratedRotationSystem:
             recommended_symbols = {rec.get("symbol", "").upper() for rec in recommendations}
             recommended_symbols.discard("")
 
-            # Market condition influence
             market_influence = self._calculate_market_influence(market_analysis)
 
-            # Analyze assets to add
             for rec in recommendations:
                 symbol = rec.get("symbol", "").upper()
                 if symbol and symbol not in current_symbols and symbol in recommended_symbols:
 
-                    # Composite score calculation
                     performance_score = performance_scores.get(symbol, 0.5)
                     recommendation_score = rec.get("confidence", 0.5) / 10
                     market_score = market_influence.get(symbol, 0.5)
@@ -481,15 +451,12 @@ class IntegratedRotationSystem:
                             }
                         )
 
-            # Analyze assets to remove
             for symbol, profile in self.rotation_manager.monitored_assets.items():
                 current_score = performance_scores.get(symbol, profile.performance_score)
                 market_score = market_influence.get(symbol, 0.5)
 
-                # Combined score for removal decision
                 removal_score = current_score * 0.7 + market_score * 0.3
 
-                # Check if asset should be removed
                 symbol_in_recommendations = symbol in recommended_symbols
                 poor_performance = current_score < 0.25
                 adverse_market = market_score < 0.3
@@ -510,7 +477,6 @@ class IntegratedRotationSystem:
                         }
                     )
 
-            # Sort by composite score
             decisions["assets_to_add"].sort(key=lambda x: x["score"], reverse=True)
             decisions["assets_to_remove"].sort(key=lambda x: x["score"])
 
@@ -543,7 +509,6 @@ class IntegratedRotationSystem:
                     elif trend_data.get("trend") == "STRONGLY_BEARISH":
                         base_influence = 0.2
 
-                # Volume and activity bonus
                 volume_score = trend_data.get("volume_score", 0.5)
                 activity_score = trend_data.get("activity_score", 0.5)
 
@@ -581,18 +546,15 @@ class IntegratedRotationSystem:
         }
 
         try:
-            # Execute removals with validation
             for asset_info in decisions["assets_to_remove"]:
                 await self._execute_removal_with_validation(asset_info, results)
 
-            # Execute additions with validation
             available_slots = self.rotation_manager.config.max_assets - len(
                 self.rotation_manager.monitored_assets
             )
             for asset_info in decisions["assets_to_add"][:available_slots]:
                 await self._execute_addition_with_validation(asset_info, results)
 
-            # Post-execution validation
             await self._validate_rotation_results(results)
 
         except Exception as e:
@@ -607,7 +569,6 @@ class IntegratedRotationSystem:
         """Execute asset removal with validation"""
         symbol = asset_info["symbol"]
 
-        # Validate with Risk Agent before removal
         validation_task = TradingTask(
             task_id=f"validate_removal_{symbol}_{int(time.time())}",
             agent_type="risk",
@@ -629,7 +590,6 @@ class IntegratedRotationSystem:
             removal_approved = response.get("removal_approved", True)
 
             if removal_approved:
-                # Execute removal
                 self.rotation_manager._archive_asset_performance(symbol)
                 del self.rotation_manager.monitored_assets[symbol]
                 results["removed_assets"].append(symbol)
@@ -644,11 +604,9 @@ class IntegratedRotationSystem:
         """Execute asset addition with validation"""
         symbol = asset_info["symbol"]
 
-        # Multi-agent validation before addition
         validation_results = await self._validate_asset_addition(symbol, asset_info)
 
         if all(validation_results.values()):
-            # All validations passed, add asset
             profile = AssetProfile(
                 symbol=symbol,
                 priority=asset_info["priority"],
@@ -677,7 +635,6 @@ class IntegratedRotationSystem:
         """Validate asset addition with multiple agents"""
         validations = {}
 
-        # Strategy Agent validation
         strategy_task = TradingTask(
             task_id=f"validate_strategy_{symbol}_{int(time.time())}",
             agent_type="strategy",
@@ -696,7 +653,6 @@ class IntegratedRotationSystem:
         strategy_result = await self.client.get_task_result(strategy_task_id, timeout=60)
         validations["strategy"] = strategy_result and strategy_result.get("success", False)
 
-        # Risk Agent validation (already done in removal function)
         validations["risk"] = True  # Will be handled separately
 
         return validations
@@ -704,15 +660,12 @@ class IntegratedRotationSystem:
     async def _validate_rotation_results(self, results: Dict[str, Any]):
         """Validate the results of rotation execution"""
         try:
-            # Get final status check
             status = await self.client.get_agent_status()
 
-            # Basic validation
             total_changes = len(results["added_assets"]) + len(results["removed_assets"])
             if total_changes == 0:
                 print("[INFO] No rotation changes made in this cycle")
 
-            # Agent health validation
             agent_health = status.get("orchestrator", {}).get("total_agents", 0)
             if agent_health < 4:
                 results["errors"].append("Not all agents are healthy")
@@ -726,14 +679,11 @@ class IntegratedRotationSystem:
     async def _post_rotation_optimization(self, results: Dict[str, Any]):
         """Post-rotation optimization and analysis"""
         try:
-            # Analyze rotation effectiveness
             if results["added_assets"]:
                 await self._analyze_new_assets_performance(results["added_assets"])
 
-            # Update rotation strategy effectiveness
             await self._update_strategy_effectiveness()
 
-            # Auto-optimize configuration if enabled
             if self.auto_optimization:
                 await self._optimize_rotation_strategy()
 
@@ -744,7 +694,6 @@ class IntegratedRotationSystem:
         """Analyze performance of newly added assets"""
         for symbol in added_assets:
             try:
-                # Submit performance tracking task
                 task = TradingTask(
                     task_id=f"track_new_asset_{symbol}_{int(time.time())}",
                     agent_type="strategy",
@@ -769,15 +718,12 @@ class IntegratedRotationSystem:
 
     def _update_enhanced_metrics(self, cycle_time: float, results: Dict[str, Any]):
         """Update enhanced rotation metrics"""
-        # Update base metrics
         self.rotation_manager._update_rotation_metrics(cycle_time, results)
 
-        # Add enhanced metrics
         self.rotation_manager.performance_metrics["workflow_optimizations"] = (
             self.rotation_manager.performance_metrics.get("workflow_optimizations", 0) + 1
         )
 
-        # Agent task tracking
         if "agent_tasks" in results:
             self.rotation_manager.performance_metrics["agent_tasks_used"] = (
                 self.rotation_manager.performance_metrics.get("agent_tasks_used", 0)
@@ -787,7 +733,6 @@ class IntegratedRotationSystem:
     async def _optimize_rotation_strategy(self):
         """Automatically optimize rotation strategy"""
         try:
-            # Analyze recent performance
             recent_performance = self.rotation_manager.performance_metrics.get(
                 "successful_reallocations", 0
             )
@@ -796,7 +741,6 @@ class IntegratedRotationSystem:
             if total_rotations > 0:
                 success_rate = recent_performance / total_rotations
 
-                # Auto-adjust based on success rate
                 if success_rate > 0.8:
                     print(
                         f"[OPTIMIZE] High success rate ({success_rate:.1%}), expanding asset universe"
@@ -826,8 +770,6 @@ class IntegratedRotationSystem:
     async def _update_strategy_effectiveness(self):
         """Update strategy effectiveness metrics"""
         try:
-            # This would track which strategies are performing well
-            # For now, increment the counter
             current_strategy = self.rotation_manager.config.strategy.value
 
             self.rotation_manager.performance_metrics["strategy_effectiveness"][
@@ -869,7 +811,6 @@ class IntegratedRotationSystem:
         print("[INTEGRATION] Integrated coin rotation stopped")
 
 
-# Main execution and demo
 if __name__ == "__main__":
 
     async def demo_integrated_rotation():
@@ -877,7 +818,6 @@ if __name__ == "__main__":
         print("[INTEGRATED COIN ROTATION DEMO]")
         print("=" * 80)
 
-        # Create integrated system
         system = IntegratedRotationSystem()
         system.rotation_manager.config.max_assets = 10
         system.rotation_manager.config.rotation_interval = 120  # 2 minutes for demo
@@ -886,17 +826,13 @@ if __name__ == "__main__":
             "[DEMO] Starting integrated rotation with workflow optimization (runs for 6 minutes)..."
         )
 
-        # Start integrated rotation
         task = asyncio.create_task(system.start_with_workflow_optimization())
 
-        # Let it run for 6 minutes
         await asyncio.sleep(360)
 
-        # Stop rotation
         system.stop_integrated_rotation()
         task.cancel()
 
-        # Display final status
         status = system.get_integrated_status()
         print(f"\n[FINAL INTEGRATED STATUS]:")
         print(f"   Monitored Assets: {status['rotation_manager']['monitored_assets_count']}")

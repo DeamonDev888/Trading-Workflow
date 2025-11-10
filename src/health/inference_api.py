@@ -14,27 +14,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.agents.agent_inference_monitor import monitor as inference_monitor
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Agent Inference API",
     description="Real-time monitoring API for Claude CLI agent inferences",
     version="1.0.0",
 )
 
-# CORS middleware - Security improvement: limit allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global monitoring task
 monitoring_task = None
 
 
@@ -44,7 +45,6 @@ async def startup_event():
     global monitoring_task
     logger.info("[INFERENCE API] Starting inference monitoring...")
 
-    # Start monitoring in background
     monitoring_task = asyncio.create_task(_start_monitoring())
 
 
@@ -145,7 +145,6 @@ async def get_agent_inferences(
         inferences_json = inference_monitor.get_recent_inferences_json(agent_type, limit)
         inferences_data = json.loads(inferences_json)
 
-        # Filter out successful inferences if requested
         if not include_errors:
             inferences_data = [inf for inf in inferences_data if inf.get("success", True)]
 
@@ -189,7 +188,6 @@ async def get_system_health():
         )
         total_agents = len(inference_monitor.agent_metrics)
 
-        # Calculate overall health score
         health_score = (online_agents / total_agents * 100) if total_agents > 0 else 0
 
         status = "healthy"

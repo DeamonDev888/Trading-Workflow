@@ -45,10 +45,10 @@ class PortfolioManager {
 
   checkMetaMaskAvailability() {
     if (typeof window.ethereum !== 'undefined') {
-      console.log('MetaMask is available');
+      console.info('MetaMask is available');
       this.walletConnected = true;
     } else {
-      console.log('MetaMask is not available');
+      console.info('MetaMask is not available');
       // Show notification to install MetaMask
       this.showNotification(
         'MetaMask non détecté. Veuillez installer MetaMask pour le mode Mainnet.',
@@ -65,7 +65,7 @@ class PortfolioManager {
 
     try {
       // Request account access
-      const accounts = await window.ethereum.request({
+      const accounts = await window.ethereum.request({;
         method: 'eth_requestAccounts',
       });
 
@@ -114,7 +114,7 @@ class PortfolioManager {
 
   async loadPortfolioData() {
     try {
-      const response = await fetch('/api/portfolio/data', {
+      const response = await fetch('/api/portfolio/data', {;
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ class PortfolioManager {
 
   useFallbackData() {
     // Fallback portfolio data based on mode
-    const fallbackData = {
+    const fallbackData = {;
       mode: this.mode,
       connected: this.mode === 'simulation' ? true : this.walletConnected,
       wallet_address: this.walletAddress,
@@ -224,7 +224,7 @@ class PortfolioManager {
     const unrealizedPnlEl = document.querySelector('[data-unrealized-pnl]');
     if (unrealizedPnlEl) {
       const pnl = this.portfolioData.unrealized_pnl;
-      const pnlText =
+      const pnlText =;
         pnl >= 0
           ? `+$${pnl.toLocaleString()}`
           : `-$${Math.abs(pnl).toLocaleString()}`;
@@ -233,7 +233,7 @@ class PortfolioManager {
       unrealizedPnlEl.style.color = pnlColor;
     }
 
-    const availableBalanceEl = document.querySelector(
+    const availableBalanceEl = document.querySelector(;
       '[data-available-balance]'
     );
     if (availableBalanceEl) {
@@ -300,7 +300,7 @@ class PortfolioManager {
       row.insertCell().textContent = `$${position.current_price.toLocaleString()}`;
 
       const pnlCell = row.insertCell();
-      const pnlText =
+      const pnlText =;
         position.pnl >= 0
           ? `+$${position.pnl.toLocaleString()}`
           : `-$${Math.abs(position.pnl).toLocaleString()}`;
@@ -326,7 +326,7 @@ class PortfolioManager {
     }
 
     try {
-      const response = await fetch('/api/trading/close-position', {
+      const response = await fetch('/api/trading/close-position', {;
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -378,7 +378,7 @@ class PortfolioManager {
         `;
 
     // Set background color based on type
-    const colors = {
+    const colors = {;
       success: '#28a745',
       error: '#dc3545',
       warning: '#ffc107',

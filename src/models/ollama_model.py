@@ -14,13 +14,11 @@ from .base_model import BaseModel, ModelResponse, safe_cprint
 class OllamaModel(BaseModel):
     """Implementation for local Ollama models"""
 
-    # Available Ollama models - can be expanded based on what's installed locally
     AVAILABLE_MODELS = [
         "deepseek-r1",  # DeepSeek R1 through Ollama (7B by default)
         "qwen3:8b",  # Qwen 3 8B model - fast reasoning model
         "gemma:2b",  # Google's Gemma 2B model
         "llama3.2",  # Meta's Llama 3.2 model - fast and efficient
-        # implement your own local models through hugging face/ollama here
     ]
 
     def __init__(self, api_key=None, model_name="llama3.2"):
@@ -32,7 +30,6 @@ class OllamaModel(BaseModel):
         """
         self.base_url = "http://localhost:11434/api"  # Default Ollama API endpoint
         self.model_name = model_name
-        # Pass a dummy API key to satisfy BaseModel
         super().__init__(api_key="LOCAL_OLLAMA")
         self.initialize_client()
 
@@ -42,7 +39,6 @@ class OllamaModel(BaseModel):
             response = requests.get(f"{self.base_url}/tags")
             if response.status_code == 200:
                 safe_cprint(f"✨ Successfully connected to Ollama API", "green")
-                # Print available models
                 models = response.json().get("models", [])
                 if models:
                     model_names = [model["name"] for model in models]
@@ -100,13 +96,11 @@ class OllamaModel(BaseModel):
             Generated response text or None if failed
         """
         try:
-            # Format the prompt with system and user content
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ]
 
-            # Prepare the request
             data = {
                 "model": self.model_name,
                 "messages": messages,
@@ -114,7 +108,6 @@ class OllamaModel(BaseModel):
                 "options": {"temperature": temperature},
             }
 
-            # Make the request with 90 second timeout
             response = requests.post(
                 f"{self.base_url}/chat", json=data, timeout=90  # Match swarm timeout
             )
@@ -123,20 +116,16 @@ class OllamaModel(BaseModel):
                 response_data = response.json()
                 raw_content = response_data.get("message", {}).get("content", "")
 
-                # Remove <think>...</think> tags and their content (Qwen reasoning)
                 import re
+import json
 
-                # First, try to remove complete <think>...</think> blocks
                 filtered_content = re.sub(
                     r"<think>.*?</think>", "", raw_content, flags=re.DOTALL
                 ).strip()
 
-                # If <think> tag exists but wasn't removed (unclosed tag due to token limit),
-                # remove everything from <think> onwards
                 if "<think>" in filtered_content:
                     filtered_content = filtered_content.split("<think>")[0].strip()
 
-                # If filtering removed everything, return the original (in case it's not a Qwen model)
                 final_content = filtered_content if filtered_content else raw_content
 
                 return ModelResponse(
@@ -152,7 +141,6 @@ class OllamaModel(BaseModel):
 
         except Exception as e:
             safe_cprint(f"❌ Error generating response: {str(e)}", "red")
-            # Don't re-raise - let swarm agent handle failed responses gracefully
             return ModelResponse(
                 content="",
                 raw_response={"error": str(e)},
@@ -176,7 +164,6 @@ class OllamaModel(BaseModel):
             model_name = self.model_name
 
         try:
-            # For specific known models
             known_models = {
                 "deepseek-r1": "7B",
                 "qwen3:8b": "8B",

@@ -30,7 +30,13 @@ from src.config import (
     MONITORED_TOKENS,
 )
 
-# Import HyperLiquid exchange manager for HyperLiquid-only trading
+STRATEGY_MIN_CONFIDENCE = 0.7
+MAX_POSITION_PERCENTAGE = 10.0
+EXCLUDED_TOKENS = []
+usd_size = 1000.0
+max_usd_order_size = 5000.0
+slippage = 0.001
+
 try:
     from src.exchange_manager import HyperLiquidExchangeManager
 
@@ -40,7 +46,6 @@ except ImportError:
 
     USE_EXCHANGE_MANAGER = False
 
-# [TARGET] Strategy Evaluation Prompt
 STRATEGY_EVAL_PROMPT = """
 You are Deamon Dev's Strategy Validation Assistant [OK]
 
@@ -85,7 +90,6 @@ class StrategyAgent:
         """Initialize the Strategy Agent"""
         self.strategy_library = PROVEN_STRATEGIES
 
-        # Initialize HyperLiquid exchange manager if available
         if USE_EXCHANGE_MANAGER:
             self.em = HyperLiquidExchangeManager()
             cprint("[OK] Strategy Agent using HyperLiquidExchangeManager", "green")
@@ -93,7 +97,6 @@ class StrategyAgent:
             self.em = None
             cprint("[OK] Strategy Agent using direct nice_funcs", "green")
 
-        # Initialize trackers
         self.volatility_tracker = HyperLiquidVolatilityTracker()
         self.liquidity_tracker = HyperLiquidLiquidityTracker()
         self.volatile_assets_cache = []
@@ -101,7 +104,6 @@ class StrategyAgent:
         self.cache_timestamp = 0
         self.cache_duration = 3600  # 1 hour cache
 
-        # Initialize iterative subagent manager
         iterative_config = IterationConfig(
             max_iterations=3,
             confidence_threshold=0.85,
@@ -113,7 +115,6 @@ class StrategyAgent:
         self.iterative_manager = IterativeSubagentManager(iterative_config)
         cprint("[OK] Iterative Subagent Manager initialized", "cyan")
 
-        # Display validated strategies
         self._display_validated_strategies()
 
     def call_subagent(self, prompt: str, context_data: dict = None) -> str:
@@ -133,7 +134,7 @@ class StrategyAgent:
         import json
         import subprocess
 
-        full_prompt = f"""Use the claude-strategy-advisor subagent to analyze this strategy scenario:
+        full_prompt = f"""Use the Deamon-strategy-advisor subagent to analyze this strategy scenario:
 
 {prompt}
 
@@ -142,17 +143,16 @@ Context Data:
 
 Please provide a detailed strategy validation with clear EXECUTE/REJECT recommendations."""
 
-        # Exécuter Claude Code avec le sub-agent
         cmd = [
             "claude",
             "--dangerously-skip-permissions",
             "--agent",
-            "claude-strategy-advisor",
+            "Deamon-strategy-advisor",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: claude-strategy-advisor (skipping permissions)",
+            f"[INFO] Calling sub-agent: Deamon-strategy-advisor (skipping permissions)",
             "cyan",
         )
 
@@ -185,7 +185,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         print(f"  • Average Win Rate: {stats['average_win_rate']:.1%}")
         print(f"  • Average Profit Factor: {stats['average_profit_factor']:.2f}")
 
-        # Group by category
         categories = {}
         for strategy in self.strategy_library.strategies.values():
             category = strategy["category"]
@@ -213,14 +212,12 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             if not signals:
                 return None
 
-            # Format signals for prompt
             signals_str = json.dumps(signals, indent=2)
 
             prompt = STRATEGY_EVAL_PROMPT.format(
                 strategy_signals=signals_str, market_data=market_data
             )
 
-            # Prepare context data
             context_data = {
                 "signals_count": len(signals),
                 "ai_model": AI_MODEL,
@@ -230,10 +227,8 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             cprint("[AI] Using Sub-Agent for strategy evaluation...", "cyan")
 
-            # Call sub-agent
             response = self.call_subagent(prompt, context_data)
 
-            # Parse response
             lines = response.split("\n")
             decisions = lines[0].strip().split(",")
             reasoning = "\n".join(lines[1:])
@@ -263,7 +258,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[AI] ITERATIVE SIGNAL EVALUATION - {mode.upper()}")
             print(f"{'='*80}")
 
-            # Prepare comprehensive context data
             context_data = {
                 "signals_count": len(signals),
                 "market_data": market_data,
@@ -275,10 +269,8 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 "trading_mode": "ZERO_RISK",
             }
 
-            # Format signals for prompt
             signals_str = json.dumps(signals, indent=2)
 
-            # Create detailed prompt
             prompt = f"""
             You are Deamon Dev's Advanced Strategy Validation Assistant [OK]
 
@@ -312,7 +304,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             print(f"[INFO] Starting iterative evaluation with {len(signals)} signals...")
 
-            # Choose iteration mode
             if mode == "progressive_refinement":
                 session = self.iterative_manager.call_subagent_iteration(
                     prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT
@@ -330,12 +321,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     prompt, context_data, IterationMode.MAJORITY_VOTING
                 )
             else:
-                # Default to progressive refinement
                 session = self.iterative_manager.call_subagent_iteration(
                     prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT
                 )
 
-            # Display iteration results
             print(f"\n[ITERATION RESULTS]")
             print(f"  • Mode: {session.mode.value}")
             print(f"  • Iterations: {len(session.responses)}")
@@ -345,7 +334,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"  • Recommended Action: {session.final_result.get('recommended_action', 'UNKNOWN')}"
             )
 
-            # Parse final decisions
             final_decisions = self._parse_iterative_decisions(session.final_result, signals)
 
             print(f"\n[FINAL DECISIONS]")
@@ -382,7 +370,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[AI] CROSS-VALIDATION SIGNAL EVALUATION")
             print(f"{'='*80}")
 
-            # Define validation perspectives
             perspectives = [
                 {"name": "Technical Analysis", "focus": "indicators", "weight": 0.3},
                 {"name": "Risk Management", "focus": "safety", "weight": 0.3},
@@ -397,7 +384,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 "validation_mode": "CROSS_VALIDATION",
             }
 
-            # Create cross-validation prompt
             prompt = f"""
             CROSS-VALIDATION ANALYSIS REQUIRED
 
@@ -416,12 +402,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             print(f"[INFO] Starting cross-validation with {len(perspectives)} perspectives...")
 
-            # Execute cross-validation
             session = self.iterative_manager.call_subagent_iteration(
                 prompt, context_data, IterationMode.CROSS_VALIDATION
             )
 
-            # Aggregate cross-validation results
             validation_results = self._aggregate_cross_validation(session, signals, perspectives)
 
             print(f"\n[CROSS-VALIDATION RESULTS]")
@@ -482,7 +466,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             print(f"[INFO] Starting progressive refinement (max {max_refinements} iterations)...")
 
-            # Configure for single signal refinement
             config = IterationConfig(
                 max_iterations=max_refinements,
                 confidence_threshold=0.9,  # Higher threshold for single signals
@@ -494,7 +477,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 prompt, context_data, IterationMode.PROGRESSIVE_REFINEMENT, config
             )
 
-            # Extract refined signal
             refined_signal = self._extract_refined_signal(session.final_result, signal)
 
             print(f"\n[REFINEMENT RESULTS]")
@@ -524,13 +506,11 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[AI] STRATEGY AGENT - ANALYZING {token}")
             print(f"{'='*80}")
 
-            # 1. Get current market conditions for strategy selection
             market_conditions = self._get_market_conditions(token)
             print(f"\n[STATS] Current Market Conditions:")
             for key, value in market_conditions.items():
                 print(f"  • {key}: {value}")
 
-            # 2. SELECT optimal strategy from validated library
             print(f"\n[TARGET] Selecting optimal validated strategy for {token}...")
             best_strategy = self.strategy_library.get_best_strategy_for_conditions(
                 market_conditions, token
@@ -551,7 +531,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"  • Recent Win Rate: {best_strategy['current_validation']['last_24_hours']['win_rate']:.1%}"
             )
 
-            # 3. Check if strategy is currently validated
             if not best_strategy["current_validation"]["valid"]:
                 print(f"[ERROR] Strategy {best_strategy['name']} is NOT currently validated")
                 print(
@@ -559,7 +538,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 )
                 return []
 
-            # 4. Check if strategy conditions are met
             print(f"\n[SEARCH] Checking if {best_strategy['name']} conditions are met...")
             conditions_met = self._check_strategy_conditions(
                 best_strategy, market_conditions, token
@@ -576,7 +554,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             for condition, status in conditions_met["details"].items():
                 print(f"   [OK] {condition}")
 
-            # 5. Generate signal based on selected strategy
             print(f"\n[IDEA] Generating signal using {best_strategy['name']}...")
             signal = self._generate_signal_from_strategy(best_strategy, token, market_conditions)
 
@@ -584,7 +561,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 print(f"[WARNING] No signal generated from validated strategy")
                 return []
 
-            # 6. Validate signal with backtest proof
             print(f"\n[SHIELD] VALIDATING SIGNAL WITH BACKTEST PROOF...")
             validation = {
                 "strategy_name": best_strategy["name"],
@@ -612,7 +588,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"   • Profit Factor: {validation['profit_factor']:.2f} [OK]")
             print(f"   • Conditions Met: YES [OK]")
 
-            # 7. Create approved signal with full validation info
             approved_signal = {
                 "token": token,
                 "strategy_name": best_strategy["name"],
@@ -638,7 +613,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 },
             }
 
-            # 8. Execute the validated signal
             print(f"\n[TARGET] EXECUTING VALIDATED STRATEGY SIGNAL...")
             print(f"{'='*80}")
             print(f"[OK] Strategy: {approved_signal['strategy_name']}")
@@ -666,14 +640,11 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             print(f"[TARGET] Getting REAL market conditions for {token}...")
 
-            # Must have exchange manager
             if not self.em:
                 raise Exception("[ERROR] Exchange manager required - NO FALLBACKS")
 
-            # Get basic market data
             conditions = {"symbol": token, "timestamp": time.time()}
 
-            # Get REAL price data from HyperLiquid
             price_data = self.em.get_token_data(token)
             if not price_data:
                 raise Exception(f"[ERROR] No price data for {token}")
@@ -682,10 +653,8 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             conditions["volume"] = price_data.get("volume", 0)
             conditions["price_change_24h"] = price_data.get("change_24h", 0)
 
-            # Get REAL market data from HyperLiquid
             print(f"[INFO] Fetching REAL technical indicators for {token}...")
 
-            # Get funding rate from HyperLiquid
             try:
                 funding_data = self.em.get_funding_rate(token)
                 conditions["funding_rate"] = float(funding_data) if funding_data else 0.0
@@ -694,14 +663,11 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 print(f"[ERROR] Could not get funding rate: {e}")
                 conditions["funding_rate"] = 0.0
 
-            # Get REAL technical indicators from price history
             try:
-                # Get recent price data for calculations
                 price_history = self._get_price_history(token, periods=50)
                 if len(price_history) < 20:
                     raise Exception("Insufficient price history")
 
-                # Calculate REAL technical indicators
                 conditions.update(self._calculate_technical_indicators(price_history))
                 print(f"[OK] Real technical indicators calculated")
 
@@ -713,7 +679,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
         except Exception as e:
             print(f"[ERROR] CRITICAL: Cannot get REAL market conditions: {e}")
-            # NO FALLBACKS - Must return empty to prevent fake trades
             return {"error": str(e), "symbol": token}
 
     def _get_price_history(self, token: str, periods: int = 50) -> list:
@@ -721,11 +686,9 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             print(f"[INFO] Fetching {periods} price points from HyperLiquid for {token}...")
 
-            # Get candle data from HyperLiquid
             if hasattr(self.em, "get_candles"):
                 candles = self.em.get_candles(token, timeframe="1h", limit=periods)
             else:
-                # Alternative method using HyperLiquid API
                 import requests
 
                 url = "https://api.hyperliquid.xyz/info"
@@ -744,7 +707,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             if not candles or len(candles) < periods:
                 raise Exception(f"Insufficient candle data: {len(candles) if candles else 0}")
 
-            # Extract close prices
             prices = [float(candle[4]) for candle in candles]  # Close price at index 4
             print(f"[OK] Got {len(prices)} price points from {prices[0]:.4f} to {prices[-1]:.4f}")
 
@@ -762,19 +724,16 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             indicators = {}
 
-            # RSI (14 periods)
             rsi = self._calculate_rsi(price_history, 14)
             indicators["rsi"] = rsi
             print(f"[OK] RSI(14): {rsi:.2f}")
 
-            # MACD (12,26,9)
             macd_line, signal_line, histogram = self._calculate_macd(price_history, 12, 26, 9)
             indicators["macd"] = macd_line
             indicators["macd_signal"] = signal_line
             indicators["macd_histogram"] = histogram
             print(f"[OK] MACD: {macd_line:.4f}, Signal: {signal_line:.4f}")
 
-            # Moving Averages
             sma_9 = sum(price_history[-9:]) / 9
             sma_21 = sum(price_history[-21:]) / 21
             sma_50 = sum(price_history[-50:]) / 50 if len(price_history) >= 50 else sma_21
@@ -785,7 +744,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             indicators["sma_50"] = sma_50
             indicators["current_price"] = current_price
 
-            # Trend analysis
             if current_price > sma_9 > sma_21:
                 indicators["trend"] = "BULLISH"
             elif current_price < sma_9 < sma_21:
@@ -797,7 +755,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[OK] Trend: {indicators['trend']} (Price: {current_price:.4f}, SMA9: {sma_9:.4f}, SMA21: {sma_21:.4f})"
             )
 
-            # Volatility (ATR calculation)
             atr = self._calculate_atr(price_history, 14)
             indicators["atr"] = atr
             indicators["volatility"] = (
@@ -807,7 +764,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             )
             print(f"[OK] ATR: {atr:.4f}, Volatility: {indicators['volatility']}")
 
-            # Volume analysis (using price changes as proxy)
             price_changes = [
                 abs(price_history[i] - price_history[i - 1]) / price_history[i - 1]
                 for i in range(1, len(price_history))
@@ -820,7 +776,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             indicators["volume_analysis"] = "HIGH" if volume_ratio > 2.0 else "NORMAL"
             print(f"[OK] Volume ratio: {volume_ratio:.2f}x")
 
-            # Momentum
             momentum = (
                 (current_price - price_history[-14]) / price_history[-14]
                 if len(price_history) >= 14
@@ -832,7 +787,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             )
             print(f"[OK] Momentum: {momentum:.2%}")
 
-            # Support/Resistance levels
             highs = price_history[-20:]
             lows = price_history[-20:]
             resistance = max(highs)
@@ -883,7 +837,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         if len(prices) < slow:
             return 0, 0, 0
 
-        # Calculate EMAs
         def ema(prices, period):
             multiplier = 2 / (period + 1)
             ema_val = prices[0]
@@ -891,12 +844,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 ema_val = (price * multiplier) + (ema_val * (1 - multiplier))
             return ema_val
 
-        # Fast and slow EMAs
         fast_ema = ema(prices, fast)
         slow_ema = ema(prices, slow)
         macd_line = fast_ema - slow_ema
 
-        # Signal line (simplified - would need MACD line history for proper calculation)
         signal_line = macd_line * 0.9  # Simplified approximation
         histogram = macd_line - signal_line
 
@@ -925,7 +876,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
     ) -> Dict[str, Any]:
         """Check if a strategy's conditions are met - REAL DATA ONLY"""
         try:
-            # Check for error conditions first
             if "error" in market_conditions:
                 raise Exception(f"Cannot check conditions with error: {market_conditions['error']}")
 
@@ -936,7 +886,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             for condition_key, required_value in conditions.items():
                 met = False
 
-                # Use REAL technical indicators from market conditions
                 if condition_key == "rsi_below":
                     current_rsi = market_conditions.get("rsi", 50)
                     met = current_rsi < required_value
@@ -968,7 +917,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     details[f"Breakout confirmed (trend: {trend}, volume: {volume_analysis})"] = met
 
                 elif condition_key == "fear_greed_below":
-                    # Use momentum as proxy for fear/greed
                     momentum = market_conditions.get("momentum", 0)
                     rsi = market_conditions.get("rsi", 50)
                     fear_score = (momentum * 50) + (100 - rsi) / 2  # Scale to 0-100
@@ -979,7 +927,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     macd = market_conditions.get("macd", 0)
                     macd_signal = market_conditions.get("macd_signal", 0)
                     macd_histogram = market_conditions.get("macd_histogram", 0)
-                    # Check for MACD crossover
                     met = (macd > macd_signal) and (macd_histogram > 0)
                     details[f"MACD crossover (MACD: {macd:.4f}, Signal: {macd_signal:.4f})"] = met
 
@@ -1022,7 +969,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     details[f"Trend {current_trend.upper()} matches {required_trend.upper()}"] = met
 
                 else:
-                    # Unknown condition - log but don't fail
                     print(f"[WARNING] Unknown strategy condition: {condition_key}")
                     details[f"{condition_key}: {required_value}"] = True
                     met = True
@@ -1037,7 +983,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
         except Exception as e:
             print(f"[ERROR] CRITICAL: Strategy condition check failed: {e}")
-            # NO FALLBACKS - Fail the strategy
             return {
                 "met": False,
                 "details": {f"Critical error in condition checking: {str(e)}": False},
@@ -1050,7 +995,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             current_time = time.time()
 
-            # Check cache
             if (
                 self.volatile_assets_cache
                 and current_time - self.cache_timestamp < self.cache_duration
@@ -1064,12 +1008,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[TARGET] Fetching volatile assets (min: {min_volatility*100:.1f}%, max: {max_count})"
             )
 
-            # Get fresh volatile assets
             volatile_assets = await self.volatility_tracker.get_top_volatile_assets(
                 min_volatility=min_volatility, max_count=max_count
             )
 
-            # Update cache
             self.volatile_assets_cache = volatile_assets
             self.cache_timestamp = current_time
 
@@ -1084,7 +1026,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
         try:
             current_time = time.time()
 
-            # Check cache
             if (
                 self.liquid_assets_cache
                 and current_time - self.cache_timestamp < self.cache_duration
@@ -1098,12 +1039,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[LIQUIDITY] Fetching liquid assets (min score: {min_liquidity}, max: {max_count})"
             )
 
-            # Get fresh liquid assets
             liquid_assets = await self.liquidity_tracker.get_liquid_assets(
                 min_liquidity_score=min_liquidity, max_count=max_count
             )
 
-            # Update cache
             self.liquid_assets_cache = liquid_assets
             self.cache_timestamp = current_time
 
@@ -1126,14 +1065,12 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[FILTER] Volatility ≥ {min_volatility*100:.1f}% | Liquidity ≥ {min_liquidity}")
             print(f"{'='*80}")
 
-            # Get both volatile and liquid assets
             volatile_assets = await self.get_volatile_assets(min_volatility, max_count * 2)
             liquid_assets = await self.get_liquid_assets(min_liquidity, max_count * 2)
 
             print(f"[INFO] Found {len(volatile_assets)} volatile assets")
             print(f"[INFO] Found {len(liquid_assets)} liquid assets")
 
-            # Find intersection (assets that are both)
             safe_assets = []
             for asset in volatile_assets:
                 if asset in liquid_assets:
@@ -1143,12 +1080,10 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 print(f"[WARNING] No assets meet BOTH volatility AND liquidity criteria!")
                 print(f"[WARNING] Relaxing criteria to find tradable assets...")
 
-                # Fallback: Use liquid assets only (better than volatile with poor liquidity)
                 safe_assets = liquid_assets[:max_count]
 
                 print(f"[FALLBACK] Using {len(safe_assets)} liquid-only assets")
 
-            # Get detailed info for display
             safe_assets_info = []
             for asset in safe_assets:
                 vol_info = self.volatility_tracker.get_volatility_info(asset)
@@ -1166,13 +1101,11 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     }
                 )
 
-            # Sort by combined score (volatility + liquidity)
             safe_assets_info.sort(
                 key=lambda x: (x["volatility_score"] * 0.6 + x["liquidity_score"] * 0.4),
                 reverse=True,
             )
 
-            # Display top assets
             print(f"\n[SAFE TRADING ASSETS - ZERO RISK]")
             for i, asset_info in enumerate(safe_assets_info[:max_count], 1):
                 symbol = asset_info["symbol"]
@@ -1185,7 +1118,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
                 blue_chip_badge = " 🏛️" if is_blue else ""
 
-                # Color coding for safety level
                 safety_score = vol_score * 0.6 + liq_score * 0.4
                 if safety_score > 0.8:
                     color = "green"
@@ -1206,7 +1138,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 print(f"   Safety Score: {safety_score:.3f}")
                 print(f"   Max Leverage: {leverage}x")
 
-            # Update cache with filtered results
             self.volatile_assets_cache = [asset["symbol"] for asset in safe_assets_info]
             self.liquid_assets_cache = self.volatile_assets_cache.copy()
 
@@ -1221,7 +1152,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
     ) -> bool:
         """Check if a specific asset meets BOTH volatility AND liquidity requirements"""
         try:
-            # Quick check against cached safe assets
             if (
                 self.volatile_assets_cache
                 and token in self.volatile_assets_cache
@@ -1230,7 +1160,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             ):
                 return True
 
-            # For non-cached assets, check if it's a blue chip (safe fallback)
             blue_chip_assets = {
                 "BTC",
                 "ETH",
@@ -1264,7 +1193,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[VOLATILITY] GENERATING SIGNALS FOR VOLATILE ASSETS")
             print(f"{'='*80}")
 
-            # Get volatile assets
             volatile_assets = await self.get_volatile_assets(min_volatility, max_assets)
 
             if not volatile_assets:
@@ -1275,7 +1203,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[INFO] Analyzing {len(volatile_assets)} volatile assets: {', '.join(volatile_assets)}"
             )
 
-            # Get signals for volatile assets
             all_signals = []
             for token in volatile_assets:
                 try:
@@ -1286,7 +1213,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     else:
                         print(f"[INFO] No signals for {token}")
 
-                    # Small delay between assets
                     await asyncio.sleep(1)
 
                 except Exception as e:
@@ -1314,7 +1240,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[FILTER] Volatility ≥ {min_volatility*100:.1f}% | Liquidity ≥ {min_liquidity}")
             print(f"[MAX] Maximum {max_assets} assets")
 
-            # Get safe trading assets
             safe_assets = await self.get_safe_trading_assets(
                 min_volatility, min_liquidity, max_assets
             )
@@ -1325,7 +1250,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             print(f"[INFO] Analyzing {len(safe_assets)} safe assets: {', '.join(safe_assets)}")
 
-            # Get signals for safe assets
             all_signals = []
             for token in safe_assets:
                 try:
@@ -1336,7 +1260,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     else:
                         print(f"[INFO] No signals for {token}")
 
-                    # Small delay between assets
                     await asyncio.sleep(1)
 
                 except Exception as e:
@@ -1367,7 +1290,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[FILTER] Volatility: ≥{min_volatility*100:.1f}% | Liquidity: ≥{min_liquidity}")
             print(f"[MAX] Maximum assets: {max_assets}")
 
-            # Get safe signals
             signals = await self.get_safe_signals(min_volatility, min_liquidity, max_assets)
 
             if signals:
@@ -1391,7 +1313,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
     ) -> Optional[Dict]:
         """Generate a trading signal based on a validated strategy - REAL DATA ONLY"""
         try:
-            # Check for error conditions first
             if "error" in market_conditions:
                 raise Exception(f"Cannot generate signal with error: {market_conditions['error']}")
 
@@ -1401,7 +1322,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[INFO] Generating signal from REAL data for {strategy['name']} (category: {category})"
             )
 
-            # Get REAL technical indicators
             current_price = market_conditions.get("current_price", 0)
             rsi = market_conditions.get("rsi", 50)
             trend = market_conditions.get("trend", "RANGING")
@@ -1414,9 +1334,7 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 f"[DATA] Price: {current_price:.4f}, RSI: {rsi:.1f}, Trend: {trend}, Volume: {volume_ratio:.2f}x"
             )
 
-            # Generate direction and strength based on REAL strategy category and conditions
             if category == "risk_management":
-                # Risk management strategies buy on oversold conditions (REAL RSI)
                 if rsi < 30:
                     direction = "BUY"
                     strength = min(0.9, 0.6 + (30 - rsi) / 50)  # Stronger signal with lower RSI
@@ -1426,7 +1344,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     return None
 
             elif category == "technical":
-                # Technical strategies depend on REAL technical indicators
                 if trend == "BULLISH" and rsi < 70:
                     direction = "BUY"
                     strength = min(0.8, 0.5 + (70 - rsi) / 100 + volume_ratio * 0.1)
@@ -1442,7 +1359,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     return None
 
             elif category == "funding":
-                # Funding strategies use REAL funding rates
                 if funding_rate > 0.01:  # >1%
                     direction = "BUY"  # Buy when funding is high (short the perpetual)
                     strength = min(0.9, 0.7 + funding_rate * 10)  # Stronger with higher funding
@@ -1452,7 +1368,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     return None
 
             elif category == "sentiment":
-                # Sentiment strategies use REAL momentum and RSI as proxy
                 sentiment_score = (momentum * 50) + (100 - rsi) / 2  # Convert to 0-100 scale
 
                 if sentiment_score < 20:  # Extreme fear
@@ -1473,7 +1388,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                 print(f"[ERROR] Unknown strategy category: {category}")
                 return None
 
-            # Final validation with REAL data
             if current_price <= 0:
                 raise Exception("Invalid current price - cannot proceed")
 
@@ -1495,7 +1409,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
         except Exception as e:
             print(f"[ERROR] CRITICAL: Signal generation failed: {e}")
-            # NO FALLBACKS - Return None to prevent fake trades
             return None
 
     def combine_with_portfolio(self, signals, current_portfolio):
@@ -1536,7 +1449,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
 
             for signal in approved_signals:
                 try:
-                    # Display signal with full backtest proof
                     print(f"\n{'='*80}")
                     print(f"[TARGET] EXECUTING VALIDATED SIGNAL")
                     print(f"{'='*80}")
@@ -1564,16 +1476,13 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     strength = signal.get("signal_strength", 0)
                     direction = signal.get("direction", "NOTHING")
 
-                    # Skip USDC and other excluded tokens
                     if token in EXCLUDED_TOKENS:
                         print(f"[MONEY] Skipping {token} (excluded token)")
                         continue
 
-                    # Calculate position size based on validated signal strength
                     max_position = usd_size * (MAX_POSITION_PERCENTAGE / 100)
                     target_size = max_position * strength
 
-                    # Get current position value
                     if self.em:
                         current_position = self.em.get_token_balance_usd(token)
                     else:
@@ -1585,7 +1494,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                     print(f"   • Target Size: ${target_size:.2f} USD")
                     print(f"   • Current Position: ${current_position:.2f} USD")
 
-                    # Execute based on direction
                     if direction == "BUY":
                         if current_position < target_size:
                             print(f"\n[OK] EXECUTING BUY ORDER FOR {token}")
@@ -1612,7 +1520,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
                         else:
                             print(f"\n⏸️ No position to sell for {token}")
 
-                    # Log successful execution
                     print(f"\n[OK] SIGNAL EXECUTED SUCCESSFULLY")
                     print(f"   Token: {token}")
                     print(f"   Strategy: {signal.get('strategy_name')}")
@@ -1649,7 +1556,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             print(f"[INFO] Targeting assets with >{min_volatility*100:.1f}% volatility")
             print(f"[INFO] Maximum assets: {max_assets}")
 
-            # Get volatile signals
             signals = await self.get_volatile_signals(min_volatility, max_assets)
 
             if signals:
@@ -1669,7 +1575,6 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             return []
 
 
-# Convenience function for volatility-focused trading
 async def run_volatile_strategy(min_volatility: float = 0.03, max_assets: int = 10):
     """Run volatility-focused strategy trading"""
     agent = StrategyAgent()
@@ -1679,7 +1584,6 @@ async def run_volatile_strategy(min_volatility: float = 0.03, max_assets: int = 
 if __name__ == "__main__":
     import asyncio
 
-    # Example: Run volatility-focused strategy
     async def main():
         agent = StrategyAgent()
         await agent.run_volatile_focused(min_volatility=0.02, max_assets=8)

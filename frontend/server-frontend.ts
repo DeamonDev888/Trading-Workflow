@@ -80,9 +80,9 @@ app.use('/api*', async (req: Request, res: Response): Promise<void> => {
       requestOptions.body = body;
     }
 
-    const response = await fetch(targetUrl, requestOptions);
+    const response = await fetch(targetUrl, requestOptions);: any;
 
-    const data = await response.text();
+    const data = await response.text();: any;
     log.info(`✅ BACKEND: ${response.status} for ${req.originalUrl}`);
 
     res.status(response.status);
@@ -96,7 +96,7 @@ app.use('/api*', async (req: Request, res: Response): Promise<void> => {
 
     // Essayer de parser en JSON si possible
     try {
-      const jsonData = JSON.parse(data);
+      const jsonData = JSON.parse(data);: any;
       res.json(jsonData);
     } catch {
       // Si ce n'est pas du JSON, envoyer comme texte

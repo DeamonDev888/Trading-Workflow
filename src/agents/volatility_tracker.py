@@ -33,7 +33,6 @@ class HyperLiquidVolatilityTracker:
                 async with session.post(self.base_url, json={"type": "meta"}) as response:
                     if response.status == 200:
                         data = await response.json()
-                        # Filter out delisted assets
                         assets = [
                             asset
                             for asset in data.get("universe", [])
@@ -55,7 +54,6 @@ class HyperLiquidVolatilityTracker:
                 async with session.post(self.base_url, json={"type": "allMids"}) as response:
                     if response.status == 200:
                         prices = await response.json()
-                        # Filter out @ symbols (test assets) and keep only real tokens
                         real_prices = {
                             k: float(v)
                             for k, v in prices.items()
@@ -73,27 +71,21 @@ class HyperLiquidVolatilityTracker:
     async def get_historical_data(self, symbol: str, periods: int = 24) -> List[float]:
         """Get historical price data for volatility calculation"""
         try:
-            # For now, simulate with price variations since we need candle data
-            # In production, this would use the candle endpoint
 
-            # Get current price
             current_prices = await self.get_current_prices()
             current_price = current_prices.get(symbol)
             if not current_price:
                 return []
 
-            # Generate realistic price history based on typical crypto volatility
             import random
+import json
 
             prices = []
             base_price = current_price
 
-            # Work backwards creating realistic price movements
             for i in range(periods, 0, -1):
-                # Typical crypto has higher volatility for smaller cap assets
                 volatility_factor = 0.02 if symbol in ["BTC", "ETH"] else 0.04
 
-                # Generate random walk
                 change = random.gauss(0, volatility_factor)
                 base_price = base_price * (1 - change)
                 prices.append(base_price)
@@ -110,7 +102,6 @@ class HyperLiquidVolatilityTracker:
             return {"volatility": 0, "atr": 0, "range_pct": 0}
 
         try:
-            # Calculate returns
             returns = []
             for i in range(1, len(prices)):
                 if prices[i - 1] > 0:
@@ -120,10 +111,8 @@ class HyperLiquidVolatilityTracker:
             if not returns:
                 return {"volatility": 0, "atr": 0, "range_pct": 0}
 
-            # Standard deviation of returns (volatility)
             volatility = statistics.stdev(returns) if len(returns) > 1 else 0
 
-            # Average True Range (ATR)
             tr_values = []
             for i in range(1, len(prices)):
                 high = prices[i]
@@ -136,7 +125,6 @@ class HyperLiquidVolatilityTracker:
             atr = sum(tr_values) / len(tr_values) if tr_values else 0
             atr_pct = (atr / prices[-1]) * 100 if prices[-1] > 0 else 0
 
-            # Price range percentage
             price_range = (max(prices) - min(prices)) / min(prices) * 100 if min(prices) > 0 else 0
 
             return {
@@ -157,23 +145,23 @@ class HyperLiquidVolatilityTracker:
         """Calculate volatility for all available assets"""
         print(f"\n[TARGET] Calculating volatility for all HyperLiquid assets...")
 
-        # Get metadata and current prices
         assets = await self.get_all_metadata()
         current_prices = await self.get_current_prices()
 
         volatility_data = {}
 
-        # Process in batches to avoid rate limiting
         batch_size = 20
         assets_list = [asset["name"] for asset in assets if asset["name"] in current_prices]
 
         for i in range(0, len(assets_list), batch_size):
             batch = assets_list[i : i + batch_size]
             print(
-                f"[INFO] Processing batch {i//batch_size + 1}/{(len(assets_list)-1)//batch_size + 1} ({len(batch)} assets)"
+                f"[INFO] Processing batch {i//batch_size
+                                                        + 1}/{(len(assets_list)-1)//batch_size
+                                                        + 1} ({len(batch)} assets)"
+
             )
 
-            # Get historical data for this batch
             tasks = []
             for symbol in batch:
                 task = self.get_historical_data(symbol, periods=24)
@@ -181,14 +169,12 @@ class HyperLiquidVolatilityTracker:
 
             historical_data = await asyncio.gather(*tasks, return_exceptions=True)
 
-            # Calculate volatility for each symbol
             for j, symbol in enumerate(batch):
                 try:
                     if isinstance(historical_data[j], list) and len(historical_data[j]) > 0:
                         prices = historical_data[j]
                         vol_metrics = self.calculate_volatility(prices)
 
-                        # Add metadata
                         asset_meta = next((a for a in assets if a["name"] == symbol), {})
 
                         volatility_data[symbol] = {
@@ -203,7 +189,6 @@ class HyperLiquidVolatilityTracker:
                     print(f"[ERROR] Failed to calculate volatility for {symbol}: {e}")
                     continue
 
-            # Small delay between batches
             await asyncio.sleep(0.5)
 
         print(f"[OK] Calculated volatility for {len(volatility_data)} assets")
@@ -214,7 +199,6 @@ class HyperLiquidVolatilityTracker:
         ranked_assets = []
 
         for symbol, data in volatility_data.items():
-            # Composite volatility score (weighted)
             volatility_score = (
                 data["volatility"] * 0.4
                 + (data["atr_pct"] / 100) * 0.4
@@ -223,7 +207,6 @@ class HyperLiquidVolatilityTracker:
 
             ranked_assets.append((symbol, {**data, "volatility_score": volatility_score}))
 
-        # Sort by volatility score (descending)
         ranked_assets.sort(key=lambda x: x[1]["volatility_score"], reverse=True)
         return ranked_assets
 
@@ -262,7 +245,6 @@ class HyperLiquidVolatilityTracker:
         for i, (symbol, data) in enumerate(ranked_assets[:limit], 1):
             category = self.get_volatility_category(data["volatility_score"])
 
-            # Color coding
             color = {
                 "EXTREME": "red",
                 "HIGH": "yellow",
@@ -287,21 +269,16 @@ class HyperLiquidVolatilityTracker:
         try:
             print(f"\n[TARGET] Finding most volatile assets...")
 
-            # Calculate all volatility
             volatility_data = await self.calculate_all_volatility()
 
-            # Rank by volatility
             ranked_assets = self.rank_by_volatility(volatility_data)
 
-            # Filter for minimum volatility
             volatile_assets = self.filter_volatility_assets(
                 ranked_assets, min_volatility, max_count
             )
 
-            # Display ranking
             self.display_volatility_ranking(ranked_assets, limit=max_count)
 
-            # Return just the symbols
             symbols = [symbol for symbol, _ in volatile_assets]
 
             print(f"\n[RESULT] Found {len(symbols)} assets meeting volatility criteria")
@@ -314,7 +291,6 @@ class HyperLiquidVolatilityTracker:
             return []
 
 
-# Convenience function
 async def get_volatile_assets(min_volatility: float = 0.03, max_count: int = 20) -> List[str]:
     """Get most volatile assets for trading"""
     tracker = HyperLiquidVolatilityTracker()
@@ -322,7 +298,6 @@ async def get_volatile_assets(min_volatility: float = 0.03, max_count: int = 20)
 
 
 if __name__ == "__main__":
-    # Test the volatility tracker
     async def test():
         tracker = HyperLiquidVolatilityTracker()
         volatile_assets = await tracker.get_top_volatile_assets(min_volatility=0.02, max_count=15)

@@ -20,14 +20,12 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 from termcolor import cprint
 
-# Configuration
 TOKENS_TO_TRACK = ["BTC", "ETH", "SOL", "AVAX", "MATIC", "DOT", "LINK", "UNI"]
 POSTS_PER_PLATFORM = 25  # Number of posts to collect per platform
 DATA_FOLDER = "src/data/sentiment"
 SENTIMENT_HISTORY_FILE = "src/data/sentiment_history.csv"
 CHECK_INTERVAL_MINUTES = 15
 
-# Platform-specific configurations
 REDDIT_SUBREDDITS = [
     "cryptocurrency",
     "bitcoin",
@@ -38,13 +36,10 @@ REDDIT_SUBREDDITS = [
     "CryptoMarkets",
 ]
 DISCORD_WEBHOOKS = [
-    # Add your Discord webhook URLs here
 ]
 TELEGRAM_CHANNELS = [
-    # Add Telegram channel IDs or usernames here
 ]
 
-# Create data directory if it doesn't exist
 Path(DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
 
@@ -64,7 +59,6 @@ class TwitterSentimentCollector:
 
             headers = {"Authorization": f"Bearer {self.bearer_token}"}
 
-            # Search for recent tweets
             query = f"#{token} OR ${token} crypto -is:retweet lang:en"
             params = {
                 "query": query,
@@ -105,7 +99,6 @@ class TwitterSentimentCollector:
     async def _web_scrape_fallback(self, token: str, limit: int) -> List[Dict]:
         """Fallback web scraping method"""
         try:
-            # Use n8n or scraping service as fallback
             print(f"[INFO] Using web scraping fallback for {token}")
             return []
         except Exception as e:
@@ -126,7 +119,6 @@ class RedditSentimentCollector:
         posts = []
 
         try:
-            # Get Reddit access token
             access_token = await self._get_access_token()
             if not access_token:
                 print("[ERROR] Could not get Reddit access token")
@@ -137,7 +129,6 @@ class RedditSentimentCollector:
                 "User-Agent": self.user_agent,
             }
 
-            # Search in subreddits
             query = f"{token.lower()} OR {token.upper()}"
 
             async with aiohttp.ClientSession(headers=headers) as session:
@@ -225,8 +216,6 @@ class DiscordSentimentCollector:
         try:
             for webhook_url in self.webhooks[:2]:  # Limit to 2 webhooks
                 try:
-                    # This would require Discord Bot API instead of webhooks for historical messages
-                    # For now, return empty as webhooks are for sending, not receiving
                     pass
                 except Exception as e:
                     print(f"[ERROR] Discord webhook failed: {e}")
@@ -255,8 +244,6 @@ class TelegramSentimentCollector:
                 print("[WARNING] Telegram bot token not configured")
                 return messages
 
-            # Would need to implement Telegram Bot API
-            # For now, return placeholder
             print(f"[INFO] Telegram collection not implemented yet for {token}")
             return messages
 
@@ -279,7 +266,6 @@ class NewsSentimentCollector:
         articles = []
 
         try:
-            # CoinDesk API
             async with aiohttp.ClientSession() as session:
                 try:
                     async with session.get(
@@ -303,7 +289,6 @@ class NewsSentimentCollector:
                 except:
                     pass
 
-                # CryptoPanic API (free tier)
                 try:
                     async with session.get(
                         "https://cryptopanic.com/api/v1/posts/",
@@ -349,7 +334,6 @@ class SentimentAnalysisAgent:
         print("[PLATFORMS] Twitter/X, Reddit, News, Discord, Telegram")
         print("=" * 80)
 
-        # Initialize collectors
         self.twitter_collector = TwitterSentimentCollector()
         self.reddit_collector = RedditSentimentCollector()
         self.discord_collector = DiscordSentimentCollector()
@@ -373,7 +357,6 @@ class SentimentAnalysisAgent:
             "news": [],
         }
 
-        # Collect from all platforms concurrently
         tasks = [
             self.twitter_collector.collect_tweets(token),
             self.reddit_collector.collect_posts(token),
@@ -393,7 +376,6 @@ class SentimentAnalysisAgent:
             else:
                 print(f"[ERROR] {platform.title()}: Collection failed - {results[i]}")
 
-        # Summary
         total_items = sum(len(data) for data in all_data.values())
         print(f"\n[SUMMARY] Total sentiment items collected: {total_items}")
 
@@ -402,6 +384,7 @@ class SentimentAnalysisAgent:
     def call_subagent(self, prompt: str) -> str:
         """Appeler le sub-agent Claude pour l'analyse de sentiment"""
         import subprocess
+import json
 
         full_prompt = f"""Use the claude-sentiment-analyzer subagent to analyze this sentiment data:
 
@@ -409,7 +392,6 @@ class SentimentAnalysisAgent:
 
 Please provide a detailed sentiment analysis with clear trading recommendations."""
 
-        # Exécuter Claude Code avec le sub-agent
         cmd = [
             "claude",
             "--dangerously-skip-permissions",
@@ -446,10 +428,8 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             print(f"[AI] MULTI-SOURCE SENTIMENT ANALYSIS FOR {token}")
             print(f"{'='*80}")
 
-            # Collect data from all platforms
             sentiment_data = await self.collect_all_sentiment_data(token)
 
-            # Prepare combined data for analysis
             combined_text = self._prepare_sentiment_text(sentiment_data)
 
             if not combined_text.strip():
@@ -464,7 +444,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     "error": "No data collected",
                 }
 
-            # Create analysis prompt
             prompt = f"""
             Analyze sentiment for {token} using this multi-source data:
 
@@ -479,14 +458,11 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             RISK_ASSESSMENT: [brief assessment]
             """
 
-            # Call sub-agent for analysis
             cprint("[AI] Calling Claude Sentiment Analyzer...", "cyan")
             analysis_response = self.call_subagent(prompt)
 
-            # Parse response
             parsed = self._parse_analysis_response(analysis_response)
 
-            # Prepare final result
             result = {
                 "token": token,
                 "timestamp": datetime.now().isoformat(),
@@ -503,7 +479,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 "sources": sentiment_data,
             }
 
-            # Display results
             self._display_analysis_results(result)
 
             return result
@@ -521,13 +496,11 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         """Prepare combined text from all sources for analysis"""
         text_parts = []
 
-        # Twitter data
         if sentiment_data["twitter"]:
             text_parts.append("=== TWITTER/X ===")
             for item in sentiment_data["twitter"][:10]:
                 text_parts.append(f"Tweet: {item.get('text', '')[:200]}...")
 
-        # Reddit data
         if sentiment_data["reddit"]:
             text_parts.append("=== REDDIT ===")
             for item in sentiment_data["reddit"][:10]:
@@ -535,7 +508,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 if item.get("text"):
                     text_parts.append(f"Content: {item['text'][:200]}...")
 
-        # News data
         if sentiment_data["news"]:
             text_parts.append("=== CRYPTO NEWS ===")
             for item in sentiment_data["news"][:10]:
@@ -565,7 +537,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     confidence_str = line.split(":", 1)[1].strip().replace("%", "")
                     parsed["confidence"] = float(confidence_str)
                 elif line.startswith("KEY_FACTORS:"):
-                    # Collect subsequent lines as factors
                     factors = []
                     idx = lines.index(line) + 1
                     while idx < len(lines) and (
@@ -588,7 +559,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         print(f"[RESULT] SENTIMENT ANALYSIS FOR {result['token']}")
         print(f"{'='*80}")
 
-        # Color-coded sentiment
         sentiment = result.get("sentiment", "NEUTRAL")
         color = {
             "VERY_BULLISH": "green",
@@ -625,7 +595,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             print(f"\n[START] Multi-Source Sentiment Analysis Agent V3.0")
             print(f"[TIME] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-            # Analyze all tokens
             all_results = []
 
             for token in TOKENS_TO_TRACK:
@@ -633,7 +602,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 all_results.append(result)
                 await asyncio.sleep(2)  # Rate limiting between tokens
 
-            # Generate overall market sentiment
             self._generate_market_summary(all_results)
 
             print(
@@ -657,7 +625,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 print("[INFO] No results to summarize")
                 return
 
-            # Count sentiments
             sentiment_counts = {}
             total_confidence = 0
             valid_results = 0
@@ -683,7 +650,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             print(f"\n📈 Average Confidence: {avg_confidence:.1f}%")
             print(f"🔢 Tokens Analyzed: {valid_results}")
 
-            # Determine overall market sentiment
             if sentiment_counts:
                 dominant_sentiment = max(sentiment_counts, key=sentiment_counts.get)
                 color = {
@@ -703,7 +669,6 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             print(f"[ERROR] Market summary generation failed: {e}")
 
 
-# Convenience function for running the agent
 async def run_sentiment_analysis():
     """Run the sentiment analysis agent"""
     agent = SentimentAnalysisAgent()
@@ -711,6 +676,5 @@ async def run_sentiment_analysis():
 
 
 if __name__ == "__main__":
-    # Run the agent
     results = asyncio.run(run_sentiment_analysis())
     print(f"\n[FINAL] Analysis complete. Processed {len(results)} tokens.")

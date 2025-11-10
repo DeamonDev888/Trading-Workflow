@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 🔄 CONTEXT GENERATOR - Automatisation quotidienne du contexte
 Génère un context.md à jour avec :
@@ -49,7 +48,6 @@ class ContextGenerator:
     def call_claude_for_analysis(self, context_data):
         """Appelle Claude pour analyser les changements avec IA"""
 
-        # Construire le prompt pour Claude
         prompt = f"""
 Analyse ces changements du projet trading NOVAQUOTE et génère des insights:
 
@@ -79,7 +77,6 @@ Sois précis et technique.
 """
 
         try:
-            # Appel Claude avec PowerShell (Windows)
             ps_cmd = f'''
             claude --dangerously-skip-permissions --print --output-format text --model sonnet << "EOF"
 {prompt}
@@ -99,13 +96,11 @@ EOF
             if process.returncode == 0:
                 return stdout.strip()
             else:
-                # Fallback: analyse simple sans Claude
                 return self._fallback_analysis(context_data)
 
         except subprocess.TimeoutExpired:
             return "Timeout: Claude n'a pas répondu dans le temps imparti"
         except Exception as e:
-            # Fallback: analyse simple sans Claude
             return self._fallback_analysis(context_data)
 
     def _fallback_analysis(self, context_data):
@@ -113,24 +108,20 @@ EOF
 
         analysis_parts = []
 
-        # Analyser les changements Git
         if context_data['git_status']:
             modified_files = len([line for line in context_data['git_status'].split('\n') if line.strip()])
             analysis_parts.append(f"**Impact Changements**: {modified_files} fichiers modifiés détectés")
 
-        # Analyser les logs
         if context_data['git_log']:
             recent_commits = len([line for line in context_data['git_log'].split('\n') if line.strip()])
             analysis_parts.append(f"**Activité**: {recent_commits} commits récents")
 
-        # Analyser l'évolution de l'architecture
         agents = context_data.get('agents_count', 0)
         algorithms = context_data.get('algorithms_count', 0)
         frontend = context_data.get('frontend_count', 0)
 
         analysis_parts.append(f"**Architecture**: {agents} agents IA, {algorithms}+ algorithmes, {frontend} pages frontend")
 
-        # Recommandations basiques
         modified_files = len([line for line in context_data['git_status'].split('\n') if line.strip()]) if context_data['git_status'] else 0
         if modified_files > 5:
             analysis_parts.append("**Risque**: Changements multiples - tester avant production")
@@ -152,7 +143,6 @@ EOF
             )
 
             if result.returncode == 0:
-                # Lire le contexte généré
                 context_file = self.root_path / "contexte" / "context_app.md"
                 if context_file.exists():
                     with open(context_file, 'r', encoding='utf-8') as f:
@@ -194,7 +184,6 @@ EOF
         except UnicodeEncodeError:
             print("Generation du contexte quotidien...")
 
-        # 1. Récupérer les données Git
         try:
             print("Analyse des changements Git...")
         except UnicodeEncodeError:
@@ -203,7 +192,6 @@ EOF
         git_log = self.get_git_log()
         git_diff = self.get_git_diff_stats()
 
-        # 2. Exécuter le snapshot du projet
         try:
             print("Generation du snapshot du projet...")
         except UnicodeEncodeError:
@@ -211,7 +199,6 @@ EOF
         snapshot_content = self.run_project_snapshot()
         counts = self.extract_counts_from_snapshot(snapshot_content)
 
-        # 3. Préparer les données pour Claude
         context_data = {
             'git_status': git_status,
             'git_log': git_log,
@@ -219,14 +206,12 @@ EOF
             **counts
         }
 
-        # 4. Appeler Claude pour analyse
         try:
             print("Analyse IA avec Claude...")
         except UnicodeEncodeError:
             print("Analyse IA avec Claude...")
         claude_analysis = self.call_claude_for_analysis(context_data)
 
-        # 5. Générer le contexte final
         try:
             print("Generation du contexte final...")
         except UnicodeEncodeError:
@@ -240,15 +225,12 @@ EOF
 
 ---
 
-## 🤖 **Analyse IA des Changements (Claude Sonnet)**
 
 {claude_analysis}
 
 ---
 
-## 📊 **État Actuel du Système**
 
-### Architecture
 - **Agents IA** : {counts['agents_count']} scripts avec appels LLM
 - **Algorithmes** : {counts['algorithms_count']}+ scripts de trading purs
 - **Pages Frontend** : {counts['frontend_count']} interfaces web
@@ -257,26 +239,21 @@ EOF
 
 ---
 
-## 🔄 **CHANGEMENTS GIT AUJOURD'HUI**
 
-### 📋 **Fichiers Modifiés**
 ```
 {git_status if git_status else "Aucun changement non commité"}
 ```
 
-### 📈 **Logs Récents**
 ```
 {git_log if git_log else "Aucun commit récent"}
 ```
 
-### 📊 **Statistiques des Changements**
 ```
 {git_diff if git_diff else "Aucun changement statistique"}
 ```
 
 ---
 
-## 🎯 **Actions Recommandées**
 
 Basé sur l'analyse Claude et les changements détectés :
 
@@ -287,7 +264,6 @@ Basé sur l'analyse Claude et les changements détectés :
 
 ---
 
-## 📝 **Méthodologie**
 
 Ce contexte est généré par :
 1. **project_snapshot.py** : Analyse de l'architecture du code
@@ -302,7 +278,6 @@ Ce contexte est généré par :
 *Généré automatiquement le {self.today} avec intelligence artificielle*
 """
 
-        # 6. Écrire le fichier final
         context_file = self.root_path / "context.md"
         with open(context_file, 'w', encoding='utf-8') as f:
             f.write(context_content)

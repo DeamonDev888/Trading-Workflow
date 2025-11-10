@@ -22,7 +22,7 @@ class HyperliquidWebSocket {
       this.websocket = new WebSocket(this.wsUrl);
 
       this.websocket.on('open', () => {
-        console.log('✅ HyperLiquid WebSocket connected');
+        console.info('✅ HyperLiquid WebSocket connected');
         this.connected = true;
         this.reconnectAttempts = 0;
       });
@@ -30,14 +30,14 @@ class HyperliquidWebSocket {
       this.websocket.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
-          console.log('📡 WebSocket message received:', message.type || 'unknown');
+          console.info('📡 WebSocket message received:', message.type || 'unknown');
         } catch (error) {
           console.warn('Failed to parse WebSocket message:', error);
         }
       });
 
       this.websocket.on('close', () => {
-        console.log('❌ HyperLiquid WebSocket disconnected');
+        console.info('❌ HyperLiquid WebSocket disconnected');
         this.connected = false;
         this.attemptReconnect();
       });
@@ -53,7 +53,7 @@ class HyperliquidWebSocket {
   attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`🔄 Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      console.info(`🔄 Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
       setTimeout(() => this.connect(), this.reconnectDelay);
     } else {
       console.error('❌ Max reconnection attempts reached');

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] Test Suite for NOVAQUOTE Claude Code Integration
 Built with love by Deamon Dev [ROCKET]
@@ -18,7 +17,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -256,7 +254,6 @@ class ClaudeCodeIntegrationTester:
 
             report_path = self.manager.save_analysis_report(result, "test_report.json")
 
-            # Vérifier que le rapport a été créé
             report_exists = report_path.exists()
             report_size = report_path.stat().st_size if report_exists else 0
 
@@ -292,7 +289,6 @@ class ClaudeCodeIntegrationTester:
         try:
             context = self.create_test_context()
 
-            # Mesurer le temps d'exécution
             start_time = time.time()
             result = self.manager.run_complete_trading_analysis(context)
             execution_time = time.time() - start_time
@@ -303,7 +299,6 @@ class ClaudeCodeIntegrationTester:
             cprint(f"  📊 Agents processed: {summary.get('total_agents', 0)}", "cyan")
             cprint(f"  📈 Avg confidence: {summary.get('avg_confidence', 0.0):.2f}", "cyan")
 
-            # Critères de performance
             fast_enough = execution_time < 60  # Moins de 60 secondes
             high_confidence = summary.get('avg_confidence', 0.0) > 0.5
 
@@ -364,7 +359,6 @@ class ClaudeCodeIntegrationTester:
                 })
                 total_tests += 1
 
-        # Résumé final
         cprint("\n" + "="*60, "cyan")
         cprint("📊 TEST SUMMARY", "cyan")
         cprint("="*60, "cyan")
@@ -382,7 +376,6 @@ class ClaudeCodeIntegrationTester:
         else:
             cprint("\n❌ MANY TESTS FAILED. Review implementation.", "red")
 
-        # Sauvegarder les résultats
         final_report = {
             "timestamp": datetime.now().isoformat(),
             "summary": {
@@ -411,7 +404,6 @@ def main():
     tester = ClaudeCodeIntegrationTester()
     results = tester.run_all_tests()
 
-    # Exit code basé sur le succès
     success_rate = results["summary"]["success_rate"]
     sys.exit(0 if success_rate >= 80 else 1)
 

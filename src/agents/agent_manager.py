@@ -1,6 +1,5 @@
 import datetime
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -143,29 +142,23 @@ class NovaQuoteAgentManager:
 
         results = {}
 
-        # 1. Bug Fixer
         print("🐛 Étape 1: Bug Fixer...")
         results["bug_fixer"] = self.fix_issues()
 
-        # 2. Code Reviewer (Security Audit)
         print("🔒 Étape 2: Code Reviewer...")
         results["code_reviewer"] = self.security_audit()
 
-        # 3. Performance Optimizer
         print("⚡ Étape 3: Performance Optimizer...")
         results["performance"] = self.optimize_performance()
 
-        # 4. Test Enhancer
         print("🧪 Étape 4: Test Enhancer...")
         results["tests"] = self.enhance_tests()
 
-        # 5. Documentation Generator
         print("📚 Étape 5: Documentation Generator...")
         results["documentation"] = self.generate_docs()
 
         print("✅ Analyse complète terminée !")
 
-        # Résumé des résultats
         print("\n📊 Résumé des résultats:")
         for agent, result in results.items():
             status_icon = "✅" if result["status"] == "success" else "❌"
@@ -174,9 +167,7 @@ class NovaQuoteAgentManager:
         return results
 
 
-# Point d'entrée pour le script
 if __name__ == "__main__":
-    # Récupérer le chemin du projet automatiquement
     current_file = Path(__file__).resolve()
     project_path = current_file.parent.parent.parent
 
@@ -229,7 +220,6 @@ if __name__ == "__main__":
             print("  complete           - Analyse complète")
             exit(1)
     else:
-        # Analyse complète par défaut
         result = manager.complete_analysis()
 
     print(f"\nStatut final: {result.get('status', 'unknown')}")

@@ -26,12 +26,12 @@ class StructuredLogger {
    * 🔧 Créer le logger Winston avec configuration complète
    */
   createLogger() {
-    const logFormat = winston.format.combine(
+    const logFormat = winston.format.combine(;
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
       winston.format.json(),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        const logEntry = {
+        const logEntry = {;
           timestamp,
           level,
           message,
@@ -48,7 +48,7 @@ class StructuredLogger {
     );
 
     // Formater pour la console en développement
-    const consoleFormat = winston.format.combine(
+    const consoleFormat = winston.format.combine(;
       winston.format.colorize(),
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
@@ -63,7 +63,7 @@ class StructuredLogger {
     );
 
     // Transports de base
-    const transports = [
+    const transports = [;
       // Console pour développement
       new winston.transports.Console({
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -335,9 +335,9 @@ class StructuredLogger {
 const logger = StructuredLogger.getInstance();
 
 // Export des middlewares
-const requestLogger = (req, res, next) => {
+const requestLogger = (req, res, next) => {;
   const startTime = Date.now();
-  const requestId =
+  const requestId =;
     req.headers['x-request-id'] ||
     `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -386,7 +386,7 @@ const requestLogger = (req, res, next) => {
   next();
 };
 
-const errorLogger = (error, req, res, next) => {
+const errorLogger = (error, req, res, next) => {;
   logger.error(`Request error: ${req.method} ${req.url}`, error, {
     method: req.method,
     url: req.url,

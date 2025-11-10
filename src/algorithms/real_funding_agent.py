@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Real Funding Arbitrage Agent
 Agent de funding avec données réelles de taux
@@ -14,7 +13,6 @@ from typing import Any, Dict
 def get_real_funding_rates() -> Dict[str, float]:
     """Simuler des taux de funding réels basés sur les conditions du marché"""
 
-    # Taux de base selon les conditions actuelles du marché
     base_rates = {
         "BTC": 0.0001,  # 0.01% daily = ~3.65% annually
         "ETH": 0.00015,  # 0.015% daily = ~5.5% annually
@@ -26,13 +24,10 @@ def get_real_funding_rates() -> Dict[str, float]:
         "AVAX": 0.00017,  # 0.017% daily = ~6.2% annually
     }
 
-    # Ajouter de la volatilité réaliste
     for symbol in base_rates:
-        # Variation aléatoire de ±50%
         variation = random.uniform(0.5, 1.5)
         base_rates[symbol] *= variation
 
-        # Les altcoins ont généralement des taux plus élevés
         if symbol not in ["BTC", "ETH"]:
             base_rates[symbol] *= random.uniform(1.2, 1.8)
 
@@ -42,14 +37,11 @@ def get_real_funding_rates() -> Dict[str, float]:
 def calculate_funding_opportunities(rates: Dict[str, float]) -> Dict[str, Any]:
     """Calculer les opportunités d'arbitrage de funding"""
 
-    # Filtrer les opportunités intéressantes (taux > 0.02% daily)
     good_opportunities = {k: v for k, v in rates.items() if v > 0.0002}
 
-    # Calculer l'exposition totale
     total_exposure = 10000  # $10k exposure simulée
     active_positions = len(good_opportunities)
 
-    # Calculer le funding accumulé (sur 24h)
     accrued_funding = (
         sum(
             rates[symbol] * total_exposure / len(good_opportunities)
@@ -59,10 +51,8 @@ def calculate_funding_opportunities(rates: Dict[str, float]) -> Dict[str, Any]:
         else 0
     )
 
-    # Meilleur rendement
     best_yield = max(good_opportunities.values()) * 100 if good_opportunities else 0
 
-    # Simulation de positions actives
     positions = []
     for symbol, rate in list(good_opportunities.items())[:5]:  # Top 5
         position_size = total_exposure / len(good_opportunities) if good_opportunities else 0
@@ -100,10 +90,8 @@ def main():
     command = sys.argv[1]
 
     if command == "--get-dashboard-summary":
-        # Obtenir les vrais taux de funding
         funding_rates = get_real_funding_rates()
 
-        # Calculer les opportunités
         funding_data = calculate_funding_opportunities(funding_rates)
         funding_data["timestamp"] = datetime.now().isoformat()
         funding_data["data_source"] = "real_funding_rates"

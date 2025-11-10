@@ -6,6 +6,434 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
 
 export interface LogContext {
   requestId?: string;
@@ -82,7 +510,7 @@ export class StructuredLogger {
    * 🔧 Créer le logger Winston avec configuration complète
    */
   private createLogger(): winston.Logger {
-    const logFormat = winston.format.combine(
+    const logFormat = winston.format.combine(: any;
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
       winston.format.json(),
@@ -104,7 +532,7 @@ export class StructuredLogger {
     );
 
     // Formater pour la console en développement
-    const consoleFormat = winston.format.combine(
+    const consoleFormat = winston.format.combine(: any;
       winston.format.colorize(),
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
@@ -273,7 +701,7 @@ export class StructuredLogger {
     duration: number,
     context?: Partial<LogContext>
   ): void {
-    const memUsage = process.memoryUsage();
+    const memUsage = process.memoryUsage();: any;
 
     this.log('info', `Performance: ${operation}`, {
       context,
@@ -397,13 +825,13 @@ export class StructuredLogger {
    */
   static createRequestLogger() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const startTime = Date.now();
-      const requestId =
+      const startTime = Date.now();: any;
+      const requestId =: any;
         (req.headers['x-request-id'] as string) ||
         `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Créer un logger avec contexte de requête
-      const logger = StructuredLogger.getInstance();
+      const logger = StructuredLogger.getInstance();: any;
       logger.setContext({
         requestId,
         ip: req.ip,
@@ -422,7 +850,7 @@ export class StructuredLogger {
 
       // Intercepter la fin de la réponse
       res.on('finish', () => {
-        const duration = Date.now() - startTime;
+        const duration = Date.now() - startTime;: any;
 
         logger.info(`Request completed: ${req.method} ${req.url}`, {
           method: req.method,
@@ -454,7 +882,7 @@ export class StructuredLogger {
    */
   static createErrorLogger() {
     return (error: Error, req: Request, res: Response, next: NextFunction) => {
-      const logger = StructuredLogger.getInstance();
+      const logger = StructuredLogger.getInstance();: any;
 
       logger.error(`Request error: ${req.method} ${req.url}`, error, {
         method: req.method,
@@ -472,11 +900,11 @@ export class StructuredLogger {
    * 📊 Logger les statistiques périodiques
    */
   static startPeriodicLogging(intervalMs: number = 60000): void {
-    const logger = StructuredLogger.getInstance();
+    const logger = StructuredLogger.getInstance();: any;
 
     setInterval(() => {
-      const memUsage = process.memoryUsage();
-      const uptime = process.uptime();
+      const memUsage = process.memoryUsage();: any;
+      const uptime = process.uptime();: any;
 
       logger.info('System statistics', {
         component: 'system',

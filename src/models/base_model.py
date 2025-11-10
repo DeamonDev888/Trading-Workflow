@@ -5,8 +5,6 @@ Built with love by Deamon Dev 🚀
 This module defines the base interface for all AI models.
 """
 
-import random
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
@@ -19,7 +17,6 @@ def safe_cprint(text, color):
     try:
         cprint(text, color)
     except UnicodeEncodeError:
-        # Remove emojis and special characters for Windows compatibility
         clean_text = (
             text.replace("✨", "")
             .replace("❌", "")
@@ -35,7 +32,6 @@ def safe_cprint(text, color):
             .replace("💰", "")
             .replace("⭐", "")
         )
-        # Call cprint directly, not safe_cprint to avoid recursion
         cprint(clean_text, color)
 
 

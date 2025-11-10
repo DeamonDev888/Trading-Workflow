@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] Claude Code Reliability System - Demonstration
 Built with love by Deamon Dev [ROCKET]
@@ -11,12 +10,10 @@ Démontre:
 """
 
 import asyncio
-import json
 import time
 from datetime import datetime
 from pathlib import Path
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 import sys
 sys.path.insert(0, str(project_root))
@@ -139,7 +136,6 @@ async def demo_2_data_aggregation():
 
     print_section("Simulation de résultats d'agents")
 
-    # Simuler des résultats d'agents
     agent_results = {
         "claude-strategy-advisor": {
             "success": True,
@@ -253,7 +249,6 @@ async def demo_3_reliability_monitoring():
 
     print_section("Simulation de données de fiabilité")
 
-    # Créer des données simulées
     aggregator_data = {
         "total_aggregations": 100,
         "successful_aggregations": 85,
@@ -320,7 +315,6 @@ async def demo_3_reliability_monitoring():
 
     print_section("Génération d'alertes")
 
-    # Simuler des alertes
     monitor.create_alert(
         AlertLevel.WARNING,
         "Agent performance degraded",
@@ -363,7 +357,6 @@ async def demo_4_integration():
     orchestrator = ClaudeCodeOrchestrator(config)
     print_success("Orchestrator initialized")
 
-    # Ajouter des callbacks
     def on_success(result):
         print(f"\n[Callback] Success: decision={result.decision}, confidence={result.confidence:.2f}")
 
@@ -381,7 +374,6 @@ async def demo_4_integration():
 
     print_section("Exécution d'un scénario complet")
 
-    # Créer un contexte riche
     market_context = {
         "symbol": "BTC-USD",
         "price": 50000,
@@ -402,7 +394,6 @@ async def demo_4_integration():
 
     print(f"  Context: {market_context['symbol']} @ ${market_context['price']}")
 
-    # Exécuter l'analyse
     result = await orchestrator.execute_trading_analysis(
         task="Comprehensive trading analysis for BTC",
         context_data=market_context,
@@ -443,7 +434,6 @@ async def demo_5_system_verification():
 
     print_section("Test de fiabilité - Scénario 1: Succès")
 
-    # Test avec tous les agents qui réussissent
     good_results = {
         "claude-strategy-advisor": {
             "success": True, "confidence": 0.85, "converged": True,
@@ -480,7 +470,6 @@ async def demo_5_system_verification():
 
     print_section("Test de fiabilité - Scénario 2: Échecs partiels")
 
-    # Test avec quelques agents qui échouent
     mixed_results = {
         "claude-strategy-advisor": {
             "success": True, "confidence": 0.85, "converged": True,
@@ -517,7 +506,6 @@ async def demo_5_system_verification():
 
     print_section("Test de fiabilité - Scénario 3: Échecs massifs")
 
-    # Test avec la plupart des agents qui échouent
     bad_results = {
         "claude-strategy-advisor": {
             "success": True, "confidence": 0.60, "converged": False,
@@ -595,7 +583,6 @@ async def main():
             traceback.print_exc()
             results[demo_name] = {"error": str(e)}
 
-    # Résumé final
     print_header("RÉSUMÉ FINAL")
 
     cprint("Composants démontrés:", "white", attrs=["bold"])

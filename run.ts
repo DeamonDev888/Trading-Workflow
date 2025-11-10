@@ -15,6 +15,863 @@ import fs from 'fs';
 import path from 'path';
 import { createServer as createNetServer, Server as NetServer } from 'net';
 import { request as httpRequest } from 'http';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
+import express from 'express';
 
 // Types
 interface HyperLiquidConfig {
@@ -239,8 +1096,8 @@ async function systemDiagnostic(): Promise<void> {
   // 2. Vérifier les dépendances Node.js pour HyperLiquid
   logger.info('📦 Checking HyperLiquid dependencies...');
   try {
-    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-    const requiredDeps = ['express', 'ws', 'cors', 'winston', 'axios'];
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));: any;
+    const requiredDeps = ['express', 'ws', 'cors', 'winston', 'axios'];: any;
 
     for (const dep of requiredDeps) {
       if (packageJson.dependencies && packageJson.dependencies[dep]) {
@@ -265,10 +1122,10 @@ async function systemDiagnostic(): Promise<void> {
 
   // 4. Vérifier les ports (async pour éviter les blocages)
   logger.info('🌐 Checking port availability...');
-  const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];
+  const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];: any;
   for (const port of ports) {
     try {
-      const portCheck = new Promise<boolean>((resolve) => {
+      const portCheck = new Promise<boolean>((resolve) => {: any;
         const server: NetServer = createNetServer();
 
         server.listen(port, () => {
@@ -300,7 +1157,7 @@ async function systemDiagnostic(): Promise<void> {
 
   // 5. Vérifier les fichiers frontend
   logger.info('🌍 Checking frontend files...');
-  const frontendFiles = [
+  const frontendFiles = [: any;
     'frontend/public/index.html',
     'frontend/public/backtest.html',
     'frontend/public/config.html',
@@ -317,20 +1174,20 @@ async function systemDiagnostic(): Promise<void> {
   // 6. Vérifier Python et les agents HyperLiquid
   logger.info('🐍 Checking Python AI agents...');
   try {
-    const pythonVersion = execSync('python --version 2>&1', {
+    const pythonVersion = execSync('python --version 2>&1', {: any;
       encoding: 'utf8',
     }).trim();
     logger.success(`✅ Python: ${pythonVersion}`);
 
     // Vérifier les agents HyperLiquid
-    const hyperliquidAgents = [
+    const hyperliquidAgents = [: any;
       'src/algorithms/hyperliquid_agent.py',
       'src/algorithms/hyperliquid_mainnet_agent.py',
       'src/algorithms/risk_agent.py',
       'src/algorithms/funding_agent.py',
     ];
 
-    let agentsFound = 0;
+    let agentsFound = 0;: any;
     for (const agent of hyperliquidAgents) {
       if (fs.existsSync(agent)) {
         agentsFound++;
@@ -384,7 +1241,7 @@ async function checkFiles(): Promise<void> {
 
 // Nettoyer les processus sur les ports
 async function cleanupPorts(): Promise<void> {
-  const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];
+  const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];: any;
 
   logger.info('Cleaning up ports...');
 
@@ -392,7 +1249,7 @@ async function cleanupPorts(): Promise<void> {
     try {
       // Tenter avec netstat (Windows/Linux compatible)
       try {
-        const cmd =
+        const cmd =: any;
           process.platform === 'win32'
             ? `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object OwningProcess"`
             : `netstat -tlnp | grep :${port}`;
@@ -400,12 +1257,12 @@ async function cleanupPorts(): Promise<void> {
         const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
 
         if (process.platform === 'win32') {
-          const lines = output.split('\n').slice(3); // Skip headers
+          const lines = output.split('\n').slice(3); // Skip headers: any;
           for (const line of lines) {
             if (line.trim()) {
-              const match = line.trim().match(/\d+/);
+              const match = line.trim().match(/\d+/);: any;
               if (match) {
-                const pid = parseInt(match[0]);
+                const pid = parseInt(match[0]);: any;
                 if (pid > 0) {
                   try {
                     execSync(
@@ -424,11 +1281,11 @@ async function cleanupPorts(): Promise<void> {
           }
         } else {
           // Linux/Unix handling
-          const lines = output.split('\n');
+          const lines = output.split('\n');: any;
           for (const line of lines) {
             const match = line.match(/:(\d+)\s+.*?(\d+)\//);
             if (match && parseInt(match[1]) === port) {
-              const pid = parseInt(match[2]);
+              const pid = parseInt(match[2]);: any;
               if (pid > 0) {
                 try {
                   execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
@@ -459,7 +1316,7 @@ function startServer(
   serverConfig: ServerConfig & { type: string }
 ): Promise<ChildProcess | undefined> {
   return new Promise((resolve, reject) => {
-    const logPrefix = `[${serverConfig.type.toUpperCase()}]`;
+    const logPrefix = `[${serverConfig.type.toUpperCase()}]`;: any;
     logger.info(`${logPrefix} Starting ${serverConfig.file}...`);
 
     // Vérifier si le fichier existe
@@ -471,10 +1328,10 @@ function startServer(
     }
 
     // Déterminer si c'est un fichier TypeScript
-    const isTypeScript = serverConfig.file.endsWith('.ts');
+    const isTypeScript = serverConfig.file.endsWith('.ts');: any;
     const command = isTypeScript ? 'ts-node' : 'node';
 
-    const proc = spawn(command, [serverConfig.file], {
+    const proc = spawn(command, [serverConfig.file], {: any;
       stdio: verbose ? 'inherit' : ['pipe', 'pipe', 'pipe'],
       detached: false,
       env: { ...process.env, NODE_ENV: 'development' },
@@ -484,7 +1341,7 @@ function startServer(
     // Gérer stdout
     if (proc.stdout) {
       proc.stdout.on('data', (data: Buffer) => {
-        const output = data.toString().trim();
+        const output = data.toString().trim();: any;
         if (output) {
           if (verbose || debug) {
             console.log(`${logPrefix} ${output}`);
@@ -497,7 +1354,7 @@ function startServer(
     // Gérer stderr
     if (proc.stderr) {
       proc.stderr.on('data', (data: Buffer) => {
-        const output = data.toString().trim();
+        const output = data.toString().trim();: any;
         if (output) {
           if (
             verbose ||
@@ -626,7 +1483,7 @@ async function main(): Promise<void> {
 
     // Démarrer Backend (Trading APIs + WebSocket)
     try {
-      const backendProcess = await startServer({
+      const backendProcess = await startServer({: any;
         ...ARCHITECTURE.backend,
         type: 'backend',
       });
@@ -646,7 +1503,7 @@ async function main(): Promise<void> {
 
     // Vérifier que le backend est bien démarré
     try {
-      const options = {
+      const options = {: any;
         hostname: 'localhost',
         port: ARCHITECTURE.backend.port,
         path: '/api/health',
@@ -656,8 +1513,8 @@ async function main(): Promise<void> {
 
       const healthCheck = (): Promise<void> => {
         return new Promise((checkResolve, checkReject) => {
-          const req = httpRequest(options, (res) => {
-            let data = '';
+          const req = httpRequest(options, (res) => {: any;
+            let data = '';: any;
             res.on('data', (chunk) => (data += chunk));
             res.on('end', () => {
               if (res.statusCode === 200) {
@@ -682,7 +1539,7 @@ async function main(): Promise<void> {
       };
 
       // Tenter le health check avec retries
-      let backendHealthy = false;
+      let backendHealthy = false;: any;
       for (let i = 0; i < 5; i++) {
         try {
           await healthCheck();
@@ -709,7 +1566,7 @@ async function main(): Promise<void> {
 
     // Démarrer Frontend (Trading Dashboard)
     try {
-      const frontendProcess = await startServer({
+      const frontendProcess = await startServer({: any;
         ...ARCHITECTURE.frontend,
         type: 'frontend',
       });
@@ -923,7 +1780,7 @@ ${colors.cyan}SAFETY TIPS:${colors.reset}
 
 // Créer les répertoires nécessaires au démarrage
 function ensureDirectories(): void {
-  const directories = ['logs', 'logs/archive'];
+  const directories = ['logs', 'logs/archive'];: any;
 
   for (const dir of directories) {
     if (!fs.existsSync(dir)) {

@@ -71,7 +71,6 @@ class XAIModel(BaseModel):
                 "green",
             )
 
-            # Show model info if available
             model_info = self.AVAILABLE_MODELS.get(self.model_name, {})
             if model_info:
                 if "context_window" in model_info:

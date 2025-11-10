@@ -24,7 +24,6 @@ class SignatureEngine:
         self.name = "Signature Engine"
         self.version = "1.0.0"
 
-        # Load private key - REQUIRE REAL KEY
         if private_key:
             self.private_key = private_key
         else:
@@ -43,7 +42,6 @@ class SignatureEngine:
             )
 
         try:
-            # Validate and load the real private key
             self.account = Account.from_key(self.private_key)
             self.address = self.account.address
             cprint(
@@ -55,7 +53,6 @@ class SignatureEngine:
                 f"❌ Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
             )
 
-        # Nonce management
         self.current_nonce = int(time.time() * 1000)  # Start with timestamp
 
         cprint(f"🔐 {self.name} v{self.version} initialized", "cyan")
@@ -73,18 +70,14 @@ class SignatureEngine:
             Signature dictionary
         """
         try:
-            # Use provided nonce or auto-increment
             if nonce is None:
                 nonce = self.current_nonce
                 self.current_nonce += 1
 
-            # Create the message to sign
             message = self._create_l1_message(action, nonce)
 
-            # Sign the message with real account
             signed_message = self.account.sign_message(encode_defunct(text=message))
 
-            # Return signature in expected format
             signature = {
                 "r": signed_message.r.to_bytes(32, byteorder="big").hex(),
                 "s": signed_message.s.to_bytes(32, byteorder="big").hex(),
@@ -112,18 +105,14 @@ class SignatureEngine:
             Signature dictionary
         """
         try:
-            # Use provided nonce or auto-increment
             if nonce is None:
                 nonce = self.current_nonce
                 self.current_nonce += 1
 
-            # Create typed data for EIP-712 signing
             typed_data = self._create_typed_data(action, nonce)
 
-            # Sign the typed data with real account
             signed_message = self.account.sign_typed_data(typed_data)
 
-            # Return signature
             signature = {
                 "r": signed_message.r.to_bytes(32, byteorder="big").hex(),
                 "s": signed_message.s.to_bytes(32, byteorder="big").hex(),
@@ -148,10 +137,8 @@ class SignatureEngine:
         Returns:
             Message string to sign
         """
-        # Convert action to canonical JSON string
         action_json = json.dumps(action, separators=(",", ":"), sort_keys=True)
 
-        # Create message with vault address if present
         vault_address = action.get("vaultAddress", "")
         if vault_address:
             message = f"{self.address}{vault_address}{action_json}{nonce}"
@@ -173,7 +160,6 @@ class SignatureEngine:
         """
         action_type = action.get("type", "")
 
-        # Define type structures based on action type
         if action_type == "usdSend":
             types = {
                 "HyperliquidTransaction:UsdSend": [
@@ -251,7 +237,6 @@ class SignatureEngine:
         else:
             raise ValueError(f"Unsupported action type for typed data: {action_type}")
 
-        # Create the full typed data structure
         typed_data = {
             "types": types,
             "primaryType": primary_type,
@@ -278,12 +263,10 @@ class SignatureEngine:
             True if signature is valid
         """
         try:
-            # Reconstruct signature object
             r = int(signature["r"], 16)
             s = int(signature["s"], 16)
             v = signature["v"]
 
-            # Recover address from signature
             recovered_address = Account.recover_message(
                 encode_defunct(text=message), signature=f"0x{r:064x}{s:064x}{v:02x}"
             )

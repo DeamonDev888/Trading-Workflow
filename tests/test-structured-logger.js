@@ -3,18 +3,18 @@
  * Test du nouveau système de logging avec Winston et logs structurés
  */
 
-const {
+const {;
   StructuredLogger,
   logger,
   requestLogger,
   errorLogger,
 } = require('../src/logging/structured-logger');
 
-console.log('🔍 Test du système de logging structuré NOVAQUOTE');
-console.log('==================================================\n');
+console.info('🔍 Test du système de logging structuré NOVAQUOTE');
+console.info('==================================================\n');
 
 // Test des logs basiques
-console.log('📝 1. Test des logs basiques...\n');
+console.info('📝 1. Test des logs basiques...\n');
 
 logger.info('Message informatif de test', {
   component: 'test',
@@ -40,7 +40,7 @@ logger.error("Message d'erreur de test", new Error('Erreur de test'), {
 });
 
 // Test des logs de performance
-console.log('⚡ 2. Test des logs de performance...\n');
+console.info('⚡ 2. Test des logs de performance...\n');
 
 const startTime = Date.now();
 setTimeout(() => {
@@ -52,7 +52,7 @@ setTimeout(() => {
 }, 100);
 
 // Test des logs de trading
-console.log('💰 3. Test des logs de trading...\n');
+console.info('💰 3. Test des logs de trading...\n');
 
 logger.trading('BUY', {
   symbol: 'BTC-PERP',
@@ -73,7 +73,7 @@ logger.trading('SELL', {
 });
 
 // Test des logs de sécurité
-console.log('🔐 4. Test des logs de sécurité...\n');
+console.info('🔐 4. Test des logs de sécurité...\n');
 
 logger.security('Suspicious login attempt detected', {
   threat: 'brute_force',
@@ -92,7 +92,7 @@ logger.security('Rate limit exceeded', {
 });
 
 // Test des logs d'agents
-console.log("🤖 5. Test des logs d'agents...\n");
+console.info("🤖 5. Test des logs d'agents...\n");
 
 logger.agent('risk_agent', 'START', {
   status: 'starting',
@@ -112,7 +112,7 @@ logger.agent('funding_agent', 'EXECUTION', {
 });
 
 // Test des logs WebSocket
-console.log('🔌 6. Test des logs WebSocket...\n');
+console.info('🔌 6. Test des logs WebSocket...\n');
 
 logger.websocket('CLIENT_CONNECTED', {
   clientId: 'client_abc123',
@@ -134,7 +134,7 @@ logger.websocket('CLIENT_DISCONNECTED', {
 });
 
 // Test des logs de health checks
-console.log('🏥 7. Test des logs de health checks...\n');
+console.info('🏥 7. Test des logs de health checks...\n');
 
 logger.health('API Server', 'healthy', {
   responseTime: 45,
@@ -154,7 +154,7 @@ logger.health('WebSocket Server', 'unhealthy', {
 });
 
 // Test des logs de métriques
-console.log('📊 8. Test des logs de métriques...\n');
+console.info('📊 8. Test des logs de métriques...\n');
 
 logger.metric('active_users', 1250, {
   component: 'metrics',
@@ -174,7 +174,7 @@ logger.metric('error_rate', 0.02, {
 });
 
 // Test du contexte global
-console.log('🎯 9. Test du contexte global...\n');
+console.info('🎯 9. Test du contexte global...\n');
 
 logger.setContext({
   requestId: 'req_123456',
@@ -193,7 +193,7 @@ logger.info('Message après nettoyage du contexte', {
 });
 
 // Test du logging avec contexte personnalisé
-console.log('🔧 10. Test avec contexte personnalisé...\n');
+console.info('🔧 10. Test avec contexte personnalisé...\n');
 
 logger.setContext({
   component: 'test-suite',
@@ -227,30 +227,30 @@ logger.info('Scénario de test terminé', {
 
 logger.clearContext();
 
-console.log('\n✅ Tests terminés!');
-console.log('\n📁 Vérifiez les fichiers de logs générés:');
-console.log('   - logs/application-YYYY-MM-DD.log (logs généraux)');
-console.log('   - logs/errors-YYYY-MM-DD.log (erreurs)');
-console.log('   - logs/trading-YYYY-MM-DD.log (logs trading)');
-console.log('   - logs/security-YYYY-MM-DD.log (logs sécurité)');
-console.log('   - logs/performance-YYYY-MM-DD.log (logs performance)');
-console.log("   - logs/audit-YYYY-MM-DD.log (logs d'audit - production)");
-console.log('   - logs/exceptions-YYYY-MM-DD.log (exceptions non capturées)');
-console.log('   - logs/rejections-YYYY-MM-DD.log (rejets de promesses)');
+console.info('\n✅ Tests terminés!');
+console.info('\n📁 Vérifiez les fichiers de logs générés:');
+console.info('   - logs/application-YYYY-MM-DD.log (logs généraux)');
+console.info('   - logs/errors-YYYY-MM-DD.log (erreurs)');
+console.info('   - logs/trading-YYYY-MM-DD.log (logs trading)');
+console.info('   - logs/security-YYYY-MM-DD.log (logs sécurité)');
+console.info('   - logs/performance-YYYY-MM-DD.log (logs performance)');
+console.info("   - logs/audit-YYYY-MM-DD.log (logs d'audit - production)");
+console.info('   - logs/exceptions-YYYY-MM-DD.log (exceptions non capturées)');
+console.info('   - logs/rejections-YYYY-MM-DD.log (rejets de promesses)');
 
-console.log('\n🎯 Fonctionnalités testées:');
-console.log('   ✅ Logs basiques (info, debug, warn, error)');
-console.log('   ✅ Logs de performance avec durée');
-console.log('   ✅ Logs de trading avec détails business');
-console.log('   ✅ Logs de sécurité avec menaces');
-console.log("   ✅ Logs d'agents IA");
-console.log('   ✅ Logs WebSocket');
-console.log('   ✅ Logs de health checks');
-console.log('   ✅ Logs de métriques');
-console.log('   ✅ Contexte global et nettoyage');
-console.log('   ✅ Rotation automatique des fichiers');
-console.log('   ✅ Formatage JSON structuré');
+console.info('\n🎯 Fonctionnalités testées:');
+console.info('   ✅ Logs basiques (info, debug, warn, error)');
+console.info('   ✅ Logs de performance avec durée');
+console.info('   ✅ Logs de trading avec détails business');
+console.info('   ✅ Logs de sécurité avec menaces');
+console.info("   ✅ Logs d'agents IA");
+console.info('   ✅ Logs WebSocket');
+console.info('   ✅ Logs de health checks');
+console.info('   ✅ Logs de métriques');
+console.info('   ✅ Contexte global et nettoyage');
+console.info('   ✅ Rotation automatique des fichiers');
+console.info('   ✅ Formatage JSON structuré');
 
-console.log(
+console.info(
   '\n🚀 Le système de logging structuré est prêt pour la production!'
 );

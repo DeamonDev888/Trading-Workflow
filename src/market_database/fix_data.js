@@ -12,15 +12,15 @@ class DataFixer {
 
   async initialize() {
     await this.db.initialize();
-    console.log('🔧 Data fixer initialized');
+    console.info('🔧 Data fixer initialized');
   }
 
   async fixOHLCVInsertion() {
     try {
-      console.log('🔧 Fixing OHLCV data insertion...');
+      console.info('🔧 Fixing OHLCV data insertion...');
 
       // Test with a small sample of real data
-      const testData = {
+      const testData = {;
         symbol: 'BTC/USDT',
         exchange: 'binance',
         timeframe: '1h',
@@ -57,7 +57,7 @@ class DataFixer {
         ]
       );
 
-      console.log('✅ OHLCV data insertion fixed');
+      console.info('✅ OHLCV data insertion fixed');
       return true;
     } catch (error) {
       console.error('❌ Error fixing OHLCV data:', error.message);
@@ -66,45 +66,45 @@ class DataFixer {
   }
 
   async generateRealTestData() {
-    console.log('🎲 Generating realistic test data...');
+    console.info('🎲 Generating realistic test data...');
 
     // Generate realistic BTC price data for the last 30 days
     const symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
     const timeframes = ['1h', '4h'];
 
-    for (const symbol of symbols) {
-      for (const timeframe of timeframes) {
+    for (const symbol of symbols) {;
+      for (const timeframe of timeframes) {;
         await this.generateSymbolData(symbol, timeframe);
       }
     }
 
-    console.log('✅ Realistic test data generated');
+    console.info('✅ Realistic test data generated');
   }
 
   async generateSymbolData(symbol, timeframe) {
     const now = new Date();
-    const periods = timeframe === '1h' ? 720 : timeframe === '4h' ? 180 : 30; // 30 days
-    const intervalMs =
+    const periods = timeframe === '1h' ? 720 : timeframe === '4h' ? 180 : 30; // 30 days;
+    const intervalMs =;
       timeframe === '1h' ? 3600000 : timeframe === '4h' ? 14400000 : 86400000;
 
-    let basePrice = symbol.includes('BTC')
+    let basePrice = symbol.includes('BTC');
       ? 42000
       : symbol.includes('ETH')
         ? 2200
         : 100;
 
-    for (let i = 0; i < periods; i++) {
+    for (let i = 0; i < periods; i++) {;
       const timestamp = new Date(now.getTime() - (periods - i) * intervalMs);
 
       // Add realistic price movement
-      const changePercent = (Math.random() - 0.5) * 0.02; // ±1%
-      const trend = Math.sin(i * 0.1) * 0.1; // Slow trend
-      const noise = (Math.random() - 0.5) * 0.01; // Random noise
+      const changePercent = (Math.random() - 0.5) * 0.02; // ±1%;
+      const trend = Math.sin(i * 0.1) * 0.1; // Slow trend;
+      const noise = (Math.random() - 0.5) * 0.01; // Random noise;
 
       const totalChange = changePercent + trend + noise;
       const price = basePrice * (1 + totalChange);
 
-      const volatility = 0.02; // 2% volatility
+      const volatility = 0.02; // 2% volatility;
       const high = price * (1 + Math.random() * volatility);
       const low = price * (1 - Math.random() * volatility);
       const volume = 1000 + Math.random() * 5000;
@@ -132,15 +132,15 @@ class DataFixer {
       basePrice = price;
     }
 
-    console.log(`✅ Generated ${periods} candles for ${symbol} ${timeframe}`);
+    console.info(`✅ Generated ${periods} candles for ${symbol} ${timeframe}`);
   }
 
   async collectRealDataSample() {
     try {
-      console.log('🌐 Attempting to collect sample real data...');
+      console.info('🌐 Attempting to collect sample real data...');
 
       // Try to get recent BTC price
-      const response = await fetch(
+      const response = await fetch(;
         'https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT',
         {
           timeout: 5000,
@@ -149,10 +149,10 @@ class DataFixer {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(
+        console.info(
           `✅ BTC Price: $${parseFloat(data.lastPrice).toLocaleString()}`
         );
-        console.log(
+        console.info(
           `✅ 24h Change: ${parseFloat(data.priceChangePercent).toFixed(2)}%`
         );
         return true;
@@ -160,7 +160,7 @@ class DataFixer {
         throw new Error(`API Error: ${response.status}`);
       }
     } catch (error) {
-      console.log('⚠️ Could not collect real data:', error.message);
+      console.info('⚠️ Could not collect real data:', error.message);
       return false;
     }
   }

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] Persistent Agents Launcher
 Starts 4 Claude Code CLI agents with orchestration
@@ -14,10 +13,10 @@ import signal
 import requests
 from datetime import datetime
 
-# Add project root to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src.agents.persistent_agent_orchestrator import PersistentAgentOrchestrator
+import json
 
 class PersistentAgentsLauncher:
     """Launcher for persistent Claude Code CLI agents"""
@@ -34,19 +33,15 @@ class PersistentAgentsLauncher:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Initializing agent orchestrator...")
 
         try:
-            # Initialize orchestrator
             self.orchestrator = PersistentAgentOrchestrator(base_port=8000)
 
-            # Start all agents
             await self.orchestrator.start_all_agents()
 
             print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [SUCCESS] All agents started successfully!")
             self.running = True
 
-            # Display agent status
             await self.display_agent_status()
 
-            # Setup signal handlers
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
 
@@ -59,7 +54,6 @@ class PersistentAgentsLauncher:
             print(f"  • Orchestrator API: http://localhost:7999")
             print(f"\n[INFO] Press Ctrl+C to stop all agents")
 
-            # Keep running
             while self.running:
                 await asyncio.sleep(10)
                 await self.health_check()
@@ -91,7 +85,6 @@ class PersistentAgentsLauncher:
     async def health_check(self):
         """Periodic health check"""
         try:
-            # Check orchestrator API
             response = requests.get("http://localhost:7999/status", timeout=5)
             if response.status_code != 200:
                 print(f"[WARNING] Orchestrator API not responding")
@@ -129,7 +122,6 @@ async def test_agents():
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 🧪 Testing agents...")
 
     try:
-        # Test strategy agent
         response = requests.post("http://localhost:8000/process", json={
             "task_id": "test_001",
             "payload": {
@@ -152,7 +144,6 @@ if __name__ == "__main__":
     launcher = PersistentAgentsLauncher()
 
     try:
-        # Start the agents
         asyncio.run(launcher.start())
 
     except KeyboardInterrupt:
@@ -160,6 +151,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] [ERROR] Fatal error: {e}")
     finally:
-        # Cleanup
         if launcher.running:
             asyncio.run(launcher.stop())

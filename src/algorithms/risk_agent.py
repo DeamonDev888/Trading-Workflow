@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Risk Agent - Agent de gestion des risques et de la position sizing
 Analyse les risques en temps réel et ajuste les stratégies de trading
@@ -11,8 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Tuple
-
-import numpy as np
 
 
 @dataclass
@@ -53,7 +50,6 @@ class RiskAgent:
         self.current_capital = initial_capital
         self.logger = logging.getLogger("RiskAgent")
 
-        # Seuils de risque
         self.risk_thresholds = {
             "max_portfolio_risk": 0.02,  # 2% risque max par trade
             "max_total_exposure": 0.15,  # 15% exposition max totale
@@ -66,7 +62,6 @@ class RiskAgent:
             "max_positions": 8,  # Max 8 positions
         }
 
-        # Métriques de performance
         self.performance_metrics = {
             "total_trades": 0,
             "winning_trades": 0,
@@ -78,7 +73,6 @@ class RiskAgent:
             "position_history": [],
         }
 
-        # Alertes actives
         self.active_alerts: List[RiskAlert] = []
 
     async def calculate_position_size(
@@ -91,8 +85,6 @@ class RiskAgent:
     ) -> PositionSize:
         """Calculer la taille de position optimale selon Kelly Criterion et risque"""
         try:
-            # Kelly Criterion: f* = (bp - q) / b
-            # b = ratio gain/perte, p = prob gain, q = prob perte
             win_rate = signal_strength  # Signal strength comme proxy pour win rate
             avg_win_loss_ratio = 1.5  # Ratio moyen gain/perte
             lose_rate = 1 - win_rate
@@ -102,26 +94,21 @@ class RiskAgent:
             else:
                 kelly_fraction = (avg_win_loss_ratio * win_rate - lose_rate) / avg_win_loss_ratio
 
-            # Ajuster Kelly pour plus de conservatisme (Kelly/4)
             kelly_fraction = max(0, kelly_fraction / 4)
 
-            # Ajuster pour la volatilité
             volatility_adjustment = min(1.0, 0.03 / max(volatility, 0.001))
             kelly_fraction *= volatility_adjustment
 
-            # Limiter par le risque maximum
             max_risk_size = portfolio_value * Decimal(
                 str(self.risk_thresholds["max_portfolio_risk"])
             )
             max_size = max_risk_size / Decimal(str(volatility))
 
-            # Taille finale
             optimal_size = portfolio_value * Decimal(str(kelly_fraction))
             final_size = min(
                 optimal_size, max_size, portfolio_value * Decimal("0.05")
             )  # Max 5% du portfolio
 
-            # Calculer confiance
             confidence = min(1.0, kelly_fraction * 10) if kelly_fraction > 0 else 0
 
             return PositionSize(
@@ -148,27 +135,20 @@ class RiskAgent:
             if not positions:
                 return RiskMetrics(0, 0, 0, 0, 0, 0, 0)
 
-            # Calculer la volatilité du portfolio
             portfolio_volatility = await self._calculate_portfolio_volatility(
                 positions, market_data
             )
 
-            # Calculer le drawdown maximum
             max_drawdown = await self._calculate_max_drawdown()
 
-            # Calculer le Sharpe ratio
             sharpe_ratio = await self._calculate_sharpe_ratio()
 
-            # Calculer la VaR 95%
             var_95 = await self._calculate_var(positions, portfolio_volatility)
 
-            # Calculer la concentration des positions
             concentration = await self._calculate_position_concentration(positions)
 
-            # Calculer le ratio de levier
             leverage_ratio = await self._calculate_leverage_ratio(positions)
 
-            # Calculer le risque de liquidité
             liquidity_risk = await self._calculate_liquidity_risk(positions, market_data)
 
             return RiskMetrics(
@@ -193,15 +173,12 @@ class RiskAgent:
             if len(positions) < 2:
                 return 0.1  # Default volatility
 
-            # Récupérer les rendements historiques (simplifié)
             returns = []
             for pos in positions:
                 symbol = pos.get("symbol", "")
-                # Utiliser la volatilité implicite du marché
                 volatility = market_data.get(symbol, {}).get("volatility", 0.02)
                 returns.append(volatility)
 
-            # Calculer la volatilité pondérée
             weights = [pos.get("weight", 1 / len(positions)) for pos in positions]
             portfolio_vol = np.sqrt(np.average(np.square(returns), weights=weights))
 
@@ -245,7 +222,6 @@ class RiskAgent:
             if std_return == 0:
                 return 0
 
-            # Risk-free rate supposé 2% annuel = 0.0000548 par jour
             risk_free_rate = 0.0000548
             sharpe = (avg_return - risk_free_rate) / std_return
 
@@ -258,7 +234,6 @@ class RiskAgent:
     async def _calculate_var(self, positions: List[Dict], volatility: float) -> float:
         """Calculer la Value at Risk 95%"""
         try:
-            # VaR paramétrique simplifiée
             portfolio_value = sum(pos.get("value", 0) for pos in positions)
             z_score_95 = 1.645  # Z-score pour 95%
 
@@ -279,7 +254,6 @@ class RiskAgent:
             if total_value == 0:
                 return 0
 
-            # Calculer l'indice Herfindahl-Hirschman
             concentrations = [(pos.get("value", 0) / total_value) ** 2 for pos in positions]
             hhi = sum(concentrations)
 
@@ -316,7 +290,6 @@ class RiskAgent:
                 volume_24h = market_data.get(symbol, {}).get("volume_24h", 0)
                 position_value = pos.get("value", 0)
 
-                # Score de liquidité: ratio position/volume 24h
                 if volume_24h > 0:
                     liquidity_score = min(1.0, position_value / volume_24h)
                 else:
@@ -334,7 +307,6 @@ class RiskAgent:
         """Vérifier les limites de risque et générer des alertes"""
         alerts = []
 
-        # Vérifier volatilité
         if risk_metrics.volatility > self.risk_thresholds["max_volatility"]:
             alerts.append(
                 RiskAlert(
@@ -347,7 +319,6 @@ class RiskAgent:
                 )
             )
 
-        # Vérifier drawdown
         if risk_metrics.max_drawdown > self.risk_thresholds["max_drawdown_limit"]:
             alerts.append(
                 RiskAlert(
@@ -360,7 +331,6 @@ class RiskAgent:
                 )
             )
 
-        # Vérifier VaR
         portfolio_value = float(self.current_capital)
         var_pct = risk_metrics.var_95 / portfolio_value if portfolio_value > 0 else 0
         if var_pct > self.risk_thresholds["var_limit"]:
@@ -375,7 +345,6 @@ class RiskAgent:
                 )
             )
 
-        # Vérifier concentration
         if risk_metrics.position_concentration > 0.5:  # 50% max dans une position
             alerts.append(
                 RiskAlert(
@@ -388,7 +357,6 @@ class RiskAgent:
                 )
             )
 
-        # Vérifier levier
         if risk_metrics.leverage_ratio > self.risk_thresholds["max_leverage"]:
             alerts.append(
                 RiskAlert(
@@ -407,7 +375,6 @@ class RiskAgent:
     async def should_reduce_risk(self, risk_metrics: RiskMetrics) -> Tuple[bool, str]:
         """Déterminer s'il faut réduire le risque"""
         try:
-            # Règles de réduction de risque
             if risk_metrics.max_drawdown > self.risk_thresholds["max_drawdown_limit"]:
                 return True, "Drawdown maximum dépassé - réduire positions"
 
@@ -417,7 +384,6 @@ class RiskAgent:
             if risk_metrics.volatility > self.risk_thresholds["max_volatility"] * 2:
                 return True, "Volatilité extrême - réduire risque"
 
-            # Compter les alertes critiques
             critical_alerts = [a for a in self.active_alerts if a.level == "CRITICAL"]
             if len(critical_alerts) >= 2:
                 return True, f"Alertes critiques multiples: {len(critical_alerts)}"
@@ -440,12 +406,10 @@ class RiskAgent:
             else:
                 self.performance_metrics["losing_trades"] += 1
 
-            # Ajouter aux rendements quotidiens
             if self.current_capital > 0:
                 daily_return = float(pnl / self.current_capital)
                 self.performance_metrics["daily_returns"].append(daily_return)
 
-                # Garder seulement les 365 derniers jours
                 if len(self.performance_metrics["daily_returns"]) > 365:
                     self.performance_metrics["daily_returns"] = self.performance_metrics[
                         "daily_returns"
@@ -453,7 +417,6 @@ class RiskAgent:
 
             self.current_capital += pnl
 
-            # Mettre à jour le drawdown actuel
             peak = max(self.initial_capital, self.current_capital)
             current_dd = (peak - self.current_capital) / peak
             self.performance_metrics["current_drawdown"] = Decimal(str(current_dd))
@@ -491,7 +454,6 @@ class RiskAgent:
         }
 
 
-# Instance globale
 _risk_agent = None
 
 
@@ -514,7 +476,6 @@ if __name__ == "__main__":
             command = sys.argv[1]
 
             if command == "--get-dashboard-metrics":
-                # Renvoyer les métriques pour le dashboard
                 try:
                     mock_positions = [
                         {"symbol": "BTC", "value": 5000, "weight": 0.5, "leverage": 3},
@@ -563,7 +524,6 @@ if __name__ == "__main__":
                     print(json.dumps({"active": False, "error": str(e)}))
 
             elif command == "--test":
-                # Test de l'agent de risque
                 print("🛡️ Risk Agent créé")
 
                 size = await agent.calculate_position_size(
@@ -590,7 +550,6 @@ if __name__ == "__main__":
             else:
                 print("Commandes disponibles: --get-dashboard-metrics, --test")
         else:
-            # Test par défaut
             await main()
 
     asyncio.run(main())

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 HyperLiquid Trading Agent - Agent d'exécution de trading réel
 Connection directe à l'API HyperLiquid pour trading live
@@ -101,7 +100,6 @@ class HyperLiquidAgent:
         """Se connecter au WebSocket pour les données temps réel"""
         try:
             async with websockets.connect(self.ws_url) as websocket:
-                # Souscription aux données de prix
                 subscribe_msg = {
                     "method": "subscribe",
                     "subscription": {"type": "allTrades"},
@@ -259,7 +257,6 @@ class HyperLiquidAgent:
         results = []
 
         for position in positions:
-            # Ordre de fermeture
             result = await self.place_order(
                 symbol=position.symbol,
                 side="sell" if position.side == "long" else "buy",
@@ -321,11 +318,9 @@ class HyperLiquidAgent:
     async def get_market_stats(self, symbol: str) -> Dict:
         """Récupérer les statistiques de marché pour un symbole"""
         try:
-            # Récupérer les prix récents
             all_mids = await self.get_all_mids()
             current_price = all_mids.get(symbol, Decimal("0"))
 
-            # Récupérer les métadonnées
             meta = await self.get_meta()
             symbols_data = meta.get("symbols", [])
 
@@ -350,7 +345,6 @@ class HyperLiquidAgent:
             return {}
 
 
-# Instance globale pour l'agent
 _agent_instance = None
 
 
@@ -381,12 +375,10 @@ if __name__ == "__main__":
             testnet=True,
         )
 
-        # Parser les arguments de ligne de commande
         if len(sys.argv) > 1:
             command = sys.argv[1]
 
             if command == "--get-dashboard-data":
-                # Renvoyer les données pour le dashboard
                 try:
                     prices = await agent.get_all_mids()
                     meta = await agent.get_meta()
@@ -437,7 +429,6 @@ if __name__ == "__main__":
                     print(json.dumps(error_data))
 
             elif command == "--get-tokens":
-                # Renvoyer les données de tokens
                 try:
                     prices = await agent.get_all_mids()
                     tokens = []
@@ -465,7 +456,6 @@ if __name__ == "__main__":
                     print(json.dumps({"error": str(e)}))
 
             elif command == "--test":
-                # Test de l'agent
                 prices = await agent.get_all_mids()
                 print(f"Prix BTC: {prices.get('BTC', 'N/A')}")
 
@@ -475,7 +465,6 @@ if __name__ == "__main__":
             else:
                 print("Commandes disponibles: --get-dashboard-data, --get-tokens, --test")
         else:
-            # Test par défaut
             await main()
 
     asyncio.run(main())

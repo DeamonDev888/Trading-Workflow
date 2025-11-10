@@ -8,7 +8,6 @@ import ast
 import json
 import os
 import re
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -65,7 +64,6 @@ class NovaQuoteCriticalErrorFixer:
 
             original_content = content
 
-            # Technique 1: Utiliser AST pour détecter les erreurs
             try:
                 ast.parse(content)
                 print(f"    ✅ Fichier déjà syntaxiquement correct")
@@ -73,47 +71,36 @@ class NovaQuoteCriticalErrorFixer:
             except SyntaxError as e:
                 print(f"    🔍 Erreur syntaxe ligne {e.lineno}: {e.msg}")
 
-            # Technique 2: Correction automatique d'indentation
             lines = content.split('\n')
             fixed_lines = []
 
             for i, line in enumerate(lines):
-                # Correction des espaces/tabulations mixtes
                 if '\t' in line and '    ' in line:
-                    # Convertir tabs en espaces (4 espaces)
                     line = line.replace('\t', '    ')
 
-                # Correction de l'indentation incohérente
                 if line.strip():
-                    # Détecter le niveau d'indentation attendu
                     leading_spaces = len(line) - len(line.lstrip())
                     if leading_spaces % 4 != 0:
-                        # Corriger pour multiple de 4
                         correct_spaces = (leading_spaces // 4) * 4
                         line = ' ' * correct_spaces + line.lstrip()
 
                 fixed_lines.append(line)
 
-            # Technique 3: Correction des structures Python communes
             content = '\n'.join(fixed_lines)
 
-            # Corriger les définitions de fonctions mal indentées
             content = re.sub(r'^(\s*)def\s+(\w+)', lambda m:
                 ('    ' * (len(m.group(1)) // 4)) + f'def {m.group(2)}',
                 content, flags=re.MULTILINE)
 
-            # Corriger les classes mal indentées
             content = re.sub(r'^(\s*)class\s+(\w+)', lambda m:
                 ('    ' * (len(m.group(1)) // 4)) + f'class {m.group(2)}',
                 content, flags=re.MULTILINE)
 
-            # Corriger les blocs if/else/try/except
             block_keywords = ['if', 'elif', 'else', 'try', 'except', 'finally', 'for', 'while', 'with']
             for keyword in block_keywords:
                 pattern = f'^\\s*{keyword}\\s+.*:'
                 content = re.sub(pattern, lambda m: self._fix_block_indentation(m.group()), content, flags=re.MULTILINE)
 
-            # Validation finale
             try:
                 ast.parse(content)
                 if content != original_content:
@@ -135,10 +122,8 @@ class NovaQuoteCriticalErrorFixer:
 
     def _fix_block_indentation(self, line):
         """Fix indentation for Python blocks"""
-        # Simple heuristic for common indentation issues
         stripped = line.strip()
         if stripped.endswith(':'):
-            # Ensure consistent indentation for block starters
             return stripped if not line.startswith(' ') else line
         return line
 
@@ -156,18 +141,13 @@ class NovaQuoteCriticalErrorFixer:
                 line_236 = lines[235]  # Index 235 = ligne 236
                 print(f"    🔍 Ligne 236: {repr(line_236)}")
 
-                # Détecter string literal non terminé
                 if '"' in line_236 and line_236.count('"') % 2 != 0:
-                    # Corriger string non terminé
                     if line_236.rstrip().endswith('"'):
-                        # String terminé mais problème autre part
                         pass
                     else:
-                        # Ajouter le guillemet manquant
                         lines[235] = line_236.rstrip() + '"\n'
                         print(f"    🔧 Ajout guillemet manquant")
 
-                # Vérifier les lignes autour
                 for i in range(max(0, 230), min(len(lines), 245)):
                     line_num = i + 1
                     line_content = lines[i]
@@ -175,11 +155,9 @@ class NovaQuoteCriticalErrorFixer:
                         if '"' in line_content and line_content.count('"') % 2 != 0:
                             print(f"    🔍 Ligne {line_num}: {repr(line_content)}")
 
-                # Appliquer les corrections
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.writelines(lines)
 
-                # Validation
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 try:
@@ -211,9 +189,7 @@ class NovaQuoteCriticalErrorFixer:
 
             for line in lines:
                 if len(line.rstrip()) > 100 and not line.strip().startswith('#'):
-                    # Tenter de répartir la longue ligne
                     if ' + ' in line or '(' in line:
-                        # Répartir sur plusieurs lignes
                         fixed_line = self._split_long_line(line.rstrip())
                         if isinstance(fixed_line, list):
                             fixed_lines.extend(fixed_line)
@@ -221,7 +197,6 @@ class NovaQuoteCriticalErrorFixer:
                         else:
                             fixed_lines.append(line)
                     else:
-                        # Ajouter un commentaire et garder la ligne
                         fixed_lines.append(line.rstrip() + '  # TODO: Shorten this line\n')
                         fixes_count += 1
                 else:
@@ -243,9 +218,7 @@ class NovaQuoteCriticalErrorFixer:
 
     def _split_long_line(self, line):
         """Répartir une longue ligne sur plusieurs lignes"""
-        # Simple heuristic for line splitting
         if ' + ' in line:
-            # Split on string concatenation
             parts = line.split(' + ')
             if len(parts) > 1:
                 result = []
@@ -259,7 +232,6 @@ class NovaQuoteCriticalErrorFixer:
                 return result
 
         if '(' in line and ')' in line:
-            # Split function calls
             open_paren = line.find('(')
             close_paren = line.rfind(')')
             if open_paren != -1 and close_paren != -1 and close_paren > open_paren:
@@ -290,7 +262,6 @@ class NovaQuoteCriticalErrorFixer:
             original_content = content
             fixes_count = 0
 
-            # Fix 1: Remplacer bare except par except Exception:
             lines = content.split('\n')
             for i, line in enumerate(lines):
                 if line.strip() == 'except:':
@@ -300,12 +271,8 @@ class NovaQuoteCriticalErrorFixer:
 
             content = '\n'.join(lines)
 
-            # Fix 2: Variables non utilisées (basique)
-            # Simplification pour éviter les faux positifs
 
-            # Fix 3: Clés de dictionnaire dupliquées dans types.py
             if 'types.py' in file_path:
-                # Détecter et corriger les clés dupliquées
                 content = self._fix_duplicate_dict_keys(content)
 
             if content != original_content:
@@ -329,13 +296,11 @@ class NovaQuoteCriticalErrorFixer:
         fixed_lines = []
 
         for line in lines:
-            # Simple pattern for dictionary keys
             if ':' in line and ('"' in line or "'" in line):
                 key_match = re.search(r'["\']([^"\']+)["\']\s*:', line)
                 if key_match:
                     key = key_match.group(1)
                     if key in seen_keys:
-                        # Skip duplicate key
                         continue
                     seen_keys[key] = True
             fixed_lines.append(line)
@@ -348,7 +313,6 @@ class NovaQuoteCriticalErrorFixer:
         print("🎯 MODE URGENT - 114 erreurs Python à corriger")
         print("="*60)
 
-        # Phase 1: Erreurs d'indentation critiques (15 fichiers)
         print(f"\n🔥 PHASE 1: ERREURS INDENTATION CRITIQUES ({len(self.critical_files)} fichiers)")
 
         indentation_success = 0
@@ -358,11 +322,9 @@ class NovaQuoteCriticalErrorFixer:
                 if self.fix_indentation_errors(file_path):
                     indentation_success += 1
 
-        # Phase 2: SyntaxError critique (groq_model.py)
         print(f"\n🚨 PHASE 2: SYNTAXERROR CRITIQUE")
         syntax_success = self.fix_syntax_error_groq_model()
 
-        # Phase 3: Erreurs de formatting (6 fichiers)
         print(f"\n📏 PHASE 3: ERREURS FORMATTING ({len(self.formatting_files)} fichiers)")
 
         formatting_success = 0
@@ -372,7 +334,6 @@ class NovaQuoteCriticalErrorFixer:
                 if self.fix_formatting_errors(file_path):
                     formatting_success += 1
 
-        # Phase 4: Améliorations qualité (3 fichiers)
         print(f"\n🔧 PHASE 4: QUALITÉ CODE ({len(self.quality_files)} fichiers)")
 
         quality_success = 0
@@ -382,7 +343,6 @@ class NovaQuoteCriticalErrorFixer:
                 if self.fix_quality_issues(file_path):
                     quality_success += 1
 
-        # Rapport final
         print(f"\n" + "="*80)
         print("🏁 RAPPORT FINAL - CORRECTIONS CRITIQUES")
         print("="*80)
@@ -392,7 +352,11 @@ class NovaQuoteCriticalErrorFixer:
         print(f"📏 Formatting corrigé: {formatting_success}")
         print(f"🔧 Qualité améliorée: {quality_success}")
 
-        total_corrections = indentation_success + (1 if syntax_success else 0) + formatting_success + quality_success
+        total_corrections = indentation_success
+                                               + (1 if syntax_success else 0)
+                                               + formatting_success
+                                               + quality_success
+
         print(f"\n🎯 TOTAL CORRECTIONS: {total_corrections}")
 
         if total_corrections > 0:
@@ -400,7 +364,6 @@ class NovaQuoteCriticalErrorFixer:
         else:
             print(f"❌ Aucune correction appliquée - problèmes persistants")
 
-        # Sauvegarder le rapport
         report_data = {
             "timestamp": datetime.now().isoformat(),
             "stats": self.stats,
@@ -464,7 +427,6 @@ def main():
             if Path(file_path).exists():
                 fixer.fix_quality_issues(file_path)
     else:
-        # Mode complet par défaut
         success = fixer.run_critical_fixes()
         print(f"\n🏁 Correction critique terminée - Succès: {'OUI' if success else 'NON'}")
 

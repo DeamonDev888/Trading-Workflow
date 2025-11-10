@@ -41,10 +41,8 @@ class ClaudeCodeIntegrationManager:
         self.agents_path = self.project_path / ".claude" / "agents"
         self.agents_config_file = self.project_path / "claude-agents.json"
 
-        # Initialiser le gestionnaire d'itérations
         self.iteration_manager = IterativeSubagentManager()
 
-        # Mapping des agents trading vers les sub-agents Claude Code
         self.agent_to_subagent_mapping = {
             "strategy_agent": "claude-strategy-advisor",
             "risk_agent": "claude-risk-advisor",
@@ -52,7 +50,6 @@ class ClaudeCodeIntegrationManager:
             "sentiment_agent": "claude-sentiment-analyzer",
         }
 
-        # Vérifier la configuration
         self._verify_configuration()
 
         cprint(
@@ -153,11 +150,9 @@ class ClaudeCodeIntegrationManager:
         Returns:
             Résultat de l'exécution avec métadonnées
         """
-        # Construire le prompt complet
         full_prompt = self._build_prompt(prompt, context_data)
 
         if use_iterations:
-            # Utiliser le système d'itération
             cprint(f"[INFO] Using {iteration_mode.value} for {agent_id}", "cyan")
             session = self.iteration_manager.call_subagent_iteration(
                 prompt=full_prompt,
@@ -178,7 +173,6 @@ class ClaudeCodeIntegrationManager:
                 "success": True,
             }
         else:
-            # Appel direct via CLI
             result = self._direct_cli_call(agent_id, full_prompt)
             return {
                 "agent": agent_id,
@@ -214,11 +208,9 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         Pattern documenté:
         claude --agents @.claude/agents/novaquote-bug-fixer.json --print --dangerously-skip-permissions "task"
         """
-        # Utiliser le pattern documenté avec fichier JSON
         agent_file = self.agents_path / f"{agent_id}.json"
 
         if not agent_file.exists():
-            # Créer le fichier agent si nécessaire
             self._create_agent_config_file(agent_id, agent_file)
 
         cmd = [
@@ -281,7 +273,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         """
         cprint("[INFO] Delegating to Claude Code agents via claude-agents.json", "cyan")
 
-        # Construire le prompt de délégation
         delegation_prompt = f"""
         [NOVAQUOTE TRADING SYSTEM]
         Task: {task_description}
@@ -295,7 +286,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         Context: {json.dumps(context_data, indent=2)}
         """
 
-        # Appel via le fichier combined
         cmd = [
             "claude",
             "--agents",
@@ -347,7 +337,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
 
         results = {}
 
-        # 1. Strategy Analysis
         cprint("[1/4] Strategy Analysis...", "cyan")
         strategy_result = self.call_claude_code_agent(
             agent_id="claude-strategy-advisor",
@@ -357,7 +346,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         )
         results["strategy"] = strategy_result
 
-        # 2. Risk Assessment
         cprint("[2/4] Risk Assessment...", "cyan")
         risk_result = self.call_claude_code_agent(
             agent_id="claude-risk-advisor",
@@ -367,7 +355,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         )
         results["risk"] = risk_result
 
-        # 3. Funding Optimization
         cprint("[3/4] Funding Optimization...", "cyan")
         funding_result = self.call_claude_code_agent(
             agent_id="claude-funding-advisor",
@@ -377,7 +364,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         )
         results["funding"] = funding_result
 
-        # 4. Sentiment Analysis
         cprint("[4/4] Sentiment Analysis...", "cyan")
         sentiment_result = self.call_claude_code_agent(
             agent_id="claude-sentiment-analyzer",
@@ -387,7 +373,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         )
         results["sentiment"] = sentiment_result
 
-        # Calculer le consensus
         consensus = self._calculate_consensus(results)
 
         cprint("[OK] Complete analysis finished!", "green")
@@ -412,9 +397,7 @@ Analysez le contexte et fournissez une réponse détaillée avec:
 
         for agent_name, result in results.items():
             if result.get("success", False):
-                # Extraire la décision du résultat
                 if "result" in result and result["result"]:
-                    # Analyser le texte pour extraire la décision
                     text = str(result["result"])
                     if "BUY" in text or "SELL" in text or "HOLD" in text:
                         decisions.append(agent_name)
@@ -422,7 +405,6 @@ Analysez le contexte et fournissez une réponse détaillée avec:
                 confidences.append(result.get("confidence", 0.0))
                 reasoning_parts.append(f"{agent_name}: {result.get('confidence', 0.0):.2f}")
 
-        # Décision majoritaire simple
         if decisions:
             decision = decisions[0]  # Prendre la première décision
         else:
@@ -453,12 +435,9 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         return report_path
 
 
-# Exemple d'utilisation
 if __name__ == "__main__":
-    # Initialiser le gestionnaire
     manager = ClaudeCodeIntegrationManager()
 
-    # Données de test
     test_market_data = {
         "symbol": "BTC-USD",
         "price": 50000,
@@ -468,7 +447,6 @@ if __name__ == "__main__":
         "timestamp": datetime.now().isoformat(),
     }
 
-    # Test d'appel direct
     print("\n" + "=" * 60)
     print("TEST 1: Direct Agent Call")
     print("=" * 60)
@@ -479,7 +457,6 @@ if __name__ == "__main__":
     )
     print(f"\nResult: {json.dumps(result, indent=2)}")
 
-    # Test de délégation
     print("\n" + "=" * 60)
     print("TEST 2: Delegation via claude-agents.json")
     print("=" * 60)
@@ -489,13 +466,11 @@ if __name__ == "__main__":
     )
     print(f"\nDelegation Result: {json.dumps(delegation_result, indent=2)}")
 
-    # Test d'analyse complète
     print("\n" + "=" * 60)
     print("TEST 3: Complete Trading Analysis")
     print("=" * 60)
     complete_result = manager.run_complete_trading_analysis(test_market_data)
     print(f"\nComplete Result Summary: {json.dumps(complete_result['summary'], indent=2)}")
 
-    # Sauvegarder le rapport
     report_path = manager.save_analysis_report(complete_result)
     print(f"\n📄 Full report saved: {report_path}")

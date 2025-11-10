@@ -82,7 +82,6 @@ class CoinRotationManager:
             "strategy_effectiveness": {},
         }
 
-        # Predefined asset universe
         self.asset_universe = {
             "BLUE_CHIPS": [
                 "BTC",
@@ -111,10 +110,8 @@ class CoinRotationManager:
         async with PersistentAgentClient() as client:
             self.client = client
 
-            # Initialize asset monitoring
             await self._initialize_monitoring()
 
-            # Start rotation loop
             while self.running:
                 try:
                     await self._perform_rotation_cycle()
@@ -128,7 +125,6 @@ class CoinRotationManager:
         """Initialize asset monitoring based on strategy recommendations"""
         print("[INIT] Initializing asset monitoring...")
 
-        # Get initial asset recommendations from Strategy Agent
         recommended_assets = await self._get_strategy_recommendations()
 
         for asset_data in recommended_assets[: self.config.max_assets]:
@@ -153,7 +149,6 @@ class CoinRotationManager:
     async def _get_strategy_recommendations(self) -> List[Dict[str, Any]]:
         """Get asset recommendations from Strategy Agent"""
         try:
-            # Submit strategy task to get market-wide recommendations
             task = TradingTask(
                 task_id=f"rotation_recommendations_{int(time.time())}",
                 agent_type="strategy",
@@ -178,7 +173,6 @@ class CoinRotationManager:
                 response = result.get("response", {})
                 recommendations = response.get("recommended_assets", [])
 
-                # If no specific recommendations, use default blue chips
                 if not recommendations:
                     recommendations = [
                         {"symbol": asset, "priority": i + 1, "confidence": 0.8}
@@ -206,7 +200,6 @@ class CoinRotationManager:
             else 2 if asset_data.get("risk_level") == "MEDIUM" else 4
         )
 
-        # Adjust priority based on configuration weights
         priority = base_priority
         priority += int((1 - confidence) * 3)  # Higher confidence = lower priority number
         priority += risk_adjustment
@@ -223,25 +216,20 @@ class CoinRotationManager:
         print(f"[CONFIG] Max assets: {self.config.max_assets}")
 
         try:
-            # Step 1: Get fresh strategy recommendations
             print("[STEP 1/4] Getting strategy recommendations...")
             fresh_recommendations = await self._get_strategy_recommendations()
 
-            # Step 2: Evaluate current performance
             print("[STEP 2/4] Evaluating current performance...")
             performance_scores = await self._evaluate_current_performance()
 
-            # Step 3: Determine rotation needs
             print("[STEP 3/4] Analyzing rotation needs...")
             rotation_decisions = await self._analyze_rotation_needs(
                 fresh_recommendations, performance_scores
             )
 
-            # Step 4: Execute rotation changes
             print("[STEP 4/4] Executing rotation changes...")
             rotation_results = await self._execute_rotation(rotation_decisions)
 
-            # Update metrics
             cycle_time = time.time() - start_time
             self._update_rotation_metrics(cycle_time, rotation_results)
 
@@ -262,7 +250,6 @@ class CoinRotationManager:
                 continue
 
             try:
-                # Get performance analysis from Strategy Agent
                 task = TradingTask(
                     task_id=f"perf_{symbol}_{int(time.time())}",
                     agent_type="strategy",
@@ -283,11 +270,9 @@ class CoinRotationManager:
                 if result and result.get("success"):
                     response = result.get("response", {})
 
-                    # Calculate composite performance score
                     score = self._calculate_performance_score(response, profile)
                     performance_scores[symbol] = score
 
-                    # Update asset profile
                     profile.performance_score = score
                     profile.last_updated = datetime.now()
 
@@ -304,16 +289,13 @@ class CoinRotationManager:
     ) -> float:
         """Calculate comprehensive performance score"""
         try:
-            # Extract performance metrics
             win_rate = response.get("win_rate", 0.5)
             profitability = response.get("profitability", 0)
             volatility = response.get("volatility", 0.5)
             trend_strength = response.get("trend_strength", 0.5)
 
-            # Calculate risk-adjusted score
             risk_multiplier = {"LOW": 1.0, "MEDIUM": 0.8, "HIGH": 0.5}.get(profile.risk_level, 0.7)
 
-            # Composite score calculation
             score = (
                 win_rate * 0.3 + profitability * 0.3 + (1 - volatility) * 0.2 + trend_strength * 0.2
             ) * risk_multiplier
@@ -340,7 +322,6 @@ class CoinRotationManager:
         recommended_symbols = {rec.get("symbol", "").upper() for rec in recommendations}
         recommended_symbols.discard("")  # Remove empty strings
 
-        # Identify assets to add (recommended but not monitored)
         for rec in recommendations:
             symbol = rec.get("symbol", "").upper()
             if symbol and symbol not in current_symbols and symbol in recommended_symbols:
@@ -355,7 +336,6 @@ class CoinRotationManager:
                         }
                     )
 
-        # Identify assets to remove (monitored but not recommended or poor performance)
         for symbol, profile in self.monitored_assets.items():
             symbol_in_recommendations = symbol in recommended_symbols
             symbol_performance_ok = performance_scores.get(symbol, 0) > 0.3
@@ -370,7 +350,6 @@ class CoinRotationManager:
                     }
                 )
 
-        # Sort by score
         decisions["assets_to_add"].sort(key=lambda x: x["score"], reverse=True)
         decisions["assets_to_remove"].sort(key=lambda x: x["score"])
 
@@ -382,7 +361,6 @@ class CoinRotationManager:
         """Calculate composite score combining recommendation and performance"""
         recommendation_score = recommendation.get("confidence", 0.5) / 10.0  # Normalize to 0-0.1
 
-        # Apply configuration weights
         composite_score = (
             performance_score * self.config.performance_weight
             + recommendation_score * (1 - self.config.performance_weight)
@@ -400,21 +378,17 @@ class CoinRotationManager:
         }
 
         try:
-            # Remove underperforming assets
             for asset_info in decisions["assets_to_remove"]:
                 symbol = asset_info["symbol"]
                 if symbol in self.monitored_assets:
-                    # Stop monitoring
                     self.monitored_assets[symbol].monitoring_active = False
 
-                    # Archive performance data
                     self._archive_asset_performance(symbol)
 
                     del self.monitored_assets[symbol]
                     results["removed_assets"].append(symbol)
                     print(f"  [-] Removed {symbol} from monitoring")
 
-            # Add new high-priority assets
             available_slots = self.config.max_assets - len(self.monitored_assets)
 
             for asset_info in decisions["assets_to_add"][:available_slots]:
@@ -436,7 +410,6 @@ class CoinRotationManager:
                 results["added_assets"].append(symbol)
                 print(f"  [+] Added {symbol} to monitoring")
 
-            # Re-sort priorities
             await self._update_asset_priorities()
 
             print(
@@ -453,11 +426,9 @@ class CoinRotationManager:
     async def _update_asset_priorities(self):
         """Update asset priorities based on current performance"""
         for symbol, profile in self.monitored_assets.items():
-            # Recalculate priority based on performance score
             performance_priority = int((1 - profile.performance_score) * 10) + 1
             strategy_priority = profile.priority
 
-            # Use weighted average
             new_priority = performance_priority * 0.6 + strategy_priority * 0.4
             profile.priority = max(1, min(10, int(new_priority)))
 
@@ -466,7 +437,6 @@ class CoinRotationManager:
         if symbol in self.monitored_assets:
             profile = self.monitored_assets[symbol]
 
-            # Store in performance history
             self.performance_metrics["asset_performance"][symbol] = {
                 "final_score": profile.performance_score,
                 "total_monitoring_time": (datetime.now() - profile.last_updated).total_seconds(),
@@ -579,7 +549,6 @@ class CoinRotationManager:
         print("[ROTATION] Coin rotation stopped")
 
 
-# Convenience functions
 async def start_coin_rotation(config: Optional[RotationConfig] = None) -> None:
     """Start coin rotation manager with default or custom config"""
     manager = CoinRotationManager(config)
@@ -590,13 +559,11 @@ async def get_top_performers(limit: int = 10) -> List[Tuple[str, float]]:
     """Get top performing assets from current monitoring"""
     manager = CoinRotationManager()
 
-    # This would need access to the current monitoring state
-    # For now, return empty list
     return []
 
 
 if __name__ == "__main__":
-    # Demo the coin rotation manager
+
     async def demo_rotation():
         print("\n" + "=" * 60)
         print("[COIN ROTATION MANAGER DEMO]")
@@ -613,15 +580,12 @@ if __name__ == "__main__":
 
         print("🎯 Starting demo rotation (will run for 3 minutes)...")
 
-        # Run rotation for 3 minutes
         task = asyncio.create_task(manager.start_rotation())
         await asyncio.sleep(180)  # 3 minutes
 
-        # Stop rotation
         manager.stop_rotation()
         task.cancel()
 
-        # Display final status
         status = manager.get_rotation_status()
         print(f"\n[FINAL STATUS]:")
         print(f"   Assets Monitored: {status['monitored_assets_count']}")

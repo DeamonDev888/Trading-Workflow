@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 AUTO BUG FIXER CLI - Correction automatique intelligente
 Détecte et corrige automatiquement TOUS les bugs
@@ -22,7 +21,6 @@ def fix_var_to_let_const(file_path, errors):
     original_content = content
     fixes_made = 0
 
-    # DEBUG
     if errors and 'test_var' in file_path:
         print(f"  [DEBUG2] fix_var_to_let_const called with {len(errors)} errors")
 
@@ -31,11 +29,9 @@ def fix_var_to_let_const(file_path, errors):
             print(f"  [DEBUG2] Processing error: {error}")
 
         if "no-var" in str(error.get('ruleId', '')) or "no-var" in str(error):
-            # Obtenir le numéro de ligne (format ESLint ou fallback)
             if isinstance(error, dict):
                 line_num = error.get('line', error.get('lineNumber', 0))
             else:
-                # Parse ESLint error format: /path/to/file.js:line:col: error message
                 parts = error.split(':')
                 line_num = int(parts[1]) if len(parts) >= 2 else 0
 
@@ -43,7 +39,6 @@ def fix_var_to_let_const(file_path, errors):
                 lines = content.split('\n')
                 if 1 <= line_num <= len(lines):
                     line = lines[line_num - 1]
-                    # Remplacer 'var ' par 'let ' ou 'const '
                     if ' = ' in line or 'const' in line:
                         new_line = re.sub(r'\bvar\s+', 'const ', line)
                         replacement = 'const'
@@ -80,7 +75,6 @@ def remove_unused_vars(file_path, errors):
 
     for error in errors:
         if "no-unused-vars" in error:
-            # Parse ESLint error
             parts = error.split(':')
             if len(parts) >= 2:
                 try:
@@ -89,7 +83,6 @@ def remove_unused_vars(file_path, errors):
 
                     if 1 <= line_num <= len(lines):
                         line = lines[line_num - 1]
-                        # Simple removal for unused vars
                         if line.strip().startswith('const ') or line.strip().startswith('let '):
                             new_line = re.sub(r'^(const|let)\s+\w+\s*(=.*)?;?', '', line).strip()
                             if new_line:
@@ -113,7 +106,6 @@ def remove_unused_vars(file_path, errors):
 def run_eslint(file_path):
     """Exécute ESLint sur un fichier et retourne les erreurs"""
     try:
-        # Essayer npx d'abord
         result = subprocess.run(
             ['npx', 'eslint', file_path, '--format=json'],
             capture_output=True,
@@ -132,14 +124,12 @@ def run_eslint(file_path):
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
         pass
 
-    # FALLBACK: Détection directe sans ESLint
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
         errors = []
         for i, line in enumerate(lines, 1):
-            # Détecter var
             if re.search(r'\bvar\s+', line):
                 errors.append({
                     'line': i,
@@ -160,14 +150,11 @@ def fix_all_bugs():
     print("AUTO BUG FIXER CLI - Correction automatique intelligente")
     print("="*60)
 
-    # Fichiers TypeScript/JavaScript à corriger
     ts_files = []
     try:
-        # Chercher dans tous les dossiers
         all_js = list(Path(".").rglob("*.js"))
         all_ts = list(Path(".").rglob("*.ts"))
         ts_files = all_js + all_ts
-        # Filtrer les fichiers node_modules
         ts_files = [f for f in ts_files if 'node_modules' not in str(f)]
     except Exception as e:
         print(f"  [WARN] Error finding files: {e}")
@@ -184,7 +171,6 @@ def fix_all_bugs():
         file_str = str(file_path)
         print(f"\n[PROCESSING] {file_str}")
 
-        # Détecter les erreurs avec ESLint
         errors = run_eslint(file_str)
 
         if not errors:
@@ -193,16 +179,13 @@ def fix_all_bugs():
             continue
 
         print(f"  [ERRORS] {len(errors)} erreur(s) détectée(s)")
-        # DEBUG: Print first error to verify format
         if errors and 'test_var_fix' in file_str:
             print(f"  [DEBUG] First error: {errors[0]}")
             print(f"  [DEBUG] Error type: {type(errors[0])}")
 
-        # Corriger automatiquement var -> let/const
         fixes = fix_var_to_let_const(file_str, errors)
         total_fixes += fixes
 
-        # Retirer les variables non utilisées
         removals = remove_unused_vars(file_str, errors)
         total_fixes += removals
 

@@ -3,6 +3,8 @@
 Built with love by Deamon Dev
 """
 
+import time
+
 from groq import Groq
 from termcolor import cprint
 
@@ -13,7 +15,6 @@ class GroqModel(BaseModel):
     """Implementation for Groq's models"""
 
     AVAILABLE_MODELS = {
-        # Production Models
         "mixtral-8x7b-32768": {
             "description": "Mixtral 8x7B - Production - 32k context",
             "input_price": "$0.27/1M tokens",
@@ -49,7 +50,6 @@ class GroqModel(BaseModel):
             "input_price": "$0.10/1M tokens",
             "output_price": "$0.10/1M tokens",
         },
-        # Preview Models
         "deepseek-r1-distill-llama-70b": {
             "description": "DeepSeek R1 Distill Llama 70B - Preview - 128k context",
             "input_price": "$0.70/1M tokens",
@@ -81,7 +81,6 @@ class GroqModel(BaseModel):
         try:
             safe_cprint(f"\n🌙 Deamon Dev's Groq Model Initialization", "cyan")
 
-            # Validate API key
             if not api_key or len(api_key.strip()) == 0:
                 raise ValueError("API key is empty or None")
 
@@ -96,7 +95,6 @@ class GroqModel(BaseModel):
                 "cyan",
             )
 
-            # Validate model name
             safe_cprint(f"\n📝 Model validation:", "cyan")
             safe_cprint(f"  ├─ Requested: {model_name}", "cyan")
             if model_name not in self.AVAILABLE_MODELS:
@@ -110,7 +108,6 @@ class GroqModel(BaseModel):
 
             self.model_name = model_name
 
-            # Call parent class initialization
             safe_cprint(f"\n📡 Parent class initialization...", "cyan")
             super().__init__(api_key, **kwargs)
             safe_cprint(f"✅ Parent class initialized", "green")
@@ -141,7 +138,6 @@ class GroqModel(BaseModel):
             self.client = Groq(api_key=self.api_key)
             safe_cprint(f"  ├─ ✅ Groq client created", "green")
 
-            # Get list of available models first
             safe_cprint(f"  ├─ Fetching available models from Groq API...", "cyan")
             available_models = self.client.models.list()
             api_models = [model.id for model in available_models.data]
@@ -152,7 +148,6 @@ class GroqModel(BaseModel):
                 safe_cprint(f"  ├─ Falling back to mixtral-8x7b-32768", "yellow")
                 self.model_name = "mixtral-8x7b-32768"
 
-            # Test the connection with a simple completion
             safe_cprint(f"  ├─ Testing connection with model: {self.model_name}", "cyan")
             test_response = self.client.chat.completions.create(
                 model=self.model_name,
@@ -178,7 +173,6 @@ class GroqModel(BaseModel):
             safe_cprint(f"  ├─ Error type: {type(e).__name__}", "red")
             safe_cprint(f"  ├─ Error message: {str(e)}", "red")
 
-            # Check for specific error types
             if "api_key" in str(e).lower():
                 safe_cprint(f"  ├─ 🔑 This appears to be an API key issue", "red")
                 safe_cprint(f"  ├─ Make sure your GROQ_API_KEY is correct", "red")
@@ -207,7 +201,6 @@ class GroqModel(BaseModel):
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
         """Generate response with no caching"""
         try:
-            # Force unique request every time
             timestamp = int(time.time() * 1000)  # Millisecond precision
 
             response = self.client.chat.completions.create(
@@ -224,23 +217,17 @@ class GroqModel(BaseModel):
                 stream=False,  # Disable streaming to prevent caching
             )
 
-            # Extract content and filter out thinking tags
             raw_content = response.choices[0].message.content
 
-            # Remove <think>...</think> tags and their content (Qwen reasoning)
             import re
 
-            # First, try to remove complete <think>...</think> blocks
             filtered_content = re.sub(
                 r"<think>.*?</think>", "", raw_content, flags=re.DOTALL
             ).strip()
 
-            # If <think> tag exists but wasn't removed (unclosed tag due to token limit),
-            # remove everything from <think> onwards
             if "<think>" in filtered_content:
                 filtered_content = filtered_content.split("<think>")[0].strip()
 
-            # If filtering removed everything, return the original (in case it's not a Qwen model)
             final_content = filtered_content if filtered_content else raw_content
 
             return ModelResponse(
@@ -253,12 +240,10 @@ class GroqModel(BaseModel):
         except Exception as e:
             error_str = str(e)
 
-            # Handle rate limit errors (413)
             if "413" in error_str or "rate_limit_exceeded" in error_str:
                 safe_cprint(f"⚠️  Groq rate limit exceeded (request too large)", "yellow")
                 safe_cprint(f"   Model: {self.model_name}", "yellow")
                 if "Requested" in error_str and "Limit" in error_str:
-                    # Extract token info from error message
                     import re
 
                     limit_match = re.search(r"Limit (\d+)", error_str)
@@ -271,11 +256,9 @@ class GroqModel(BaseModel):
                 safe_cprint(f"   💡 Skipping this model for this request...", "cyan")
                 return None
 
-            # Raise 503 errors (service unavailable)
             if "503" in error_str:
                 raise e
 
-            # Log other errors
             safe_cprint(f"❌ Groq error: {error_str}", "red")
             return None
 

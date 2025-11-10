@@ -23,7 +23,6 @@ from dotenv import load_dotenv
 from src.agents.base_agent import BaseAgent
 from src.agents.volatility_tracker import HyperLiquidVolatilityTracker
 
-# Load environment variables
 load_dotenv()
 
 
@@ -34,33 +33,26 @@ class AdvancedRiskAgent(BaseAgent):
         """Initialize Advanced Risk Agent"""
         super().__init__("advanced_risk_agent", enable_postgres=True)
 
-        # Aggressive trading configuration
         self.aggressive_mode = aggressive_mode
         self.subagent_name = "claude-risk-advisor"
 
-        # Initialize volatility tracker
         self.volatility_tracker = HyperLiquidVolatilityTracker()
 
-        # High leverage configuration
         self.max_leverage = 50 if aggressive_mode else 10
         self.default_leverage = 25 if aggressive_mode else 5
 
-        # Position sizing for aggressive trading
         self.max_capital_allocation = 1.0 if aggressive_mode else 0.3  # 100% or 30%
         self.max_single_position_risk = 0.40 if aggressive_mode else 0.10  # 40% or 10%
 
-        # Risk thresholds (more permissive for aggressive mode)
         self.max_drawdown = 0.20 if aggressive_mode else 0.08  # 20% or 8%
         self.max_portfolio_risk = 0.50 if aggressive_mode else 0.15  # 50% or 15%
         self.max_leverage_usage = 0.8 if aggressive_mode else 0.5  # 80% or 50%
 
-        # Initialize portfolio tracking
         self.start_balance = self.get_portfolio_value()
         self.current_value = self.start_balance
         self.active_positions = {}
         self.risk_assessments = {}
 
-        # High-leverage asset preferences
         self.high_leverage_assets = {
             "BTC": {"max_leverage": 50, "confidence_threshold": 0.85},
             "ETH": {"max_leverage": 40, "confidence_threshold": 0.80},
@@ -102,13 +94,11 @@ class AdvancedRiskAgent(BaseAgent):
             print(f"\n[ASSESSMENT] Evaluating {side} {symbol} @ " f"{proposed_leverage}x leverage")
             print(f"[CONFIDENCE] Trade confidence: {trade_confidence*100:.1f}%")
 
-            # Get asset-specific limits
             asset_config = self.high_leverage_assets.get(
                 symbol,
                 {"max_leverage": self.default_leverage, "confidence_threshold": 0.70},
             )
 
-            # Check basic requirements
             if proposed_leverage > asset_config["max_leverage"]:
                 return {
                     "approved": False,
@@ -129,15 +119,12 @@ class AdvancedRiskAgent(BaseAgent):
                     "required_confidence": asset_config["confidence_threshold"],
                 }
 
-            # Get volatility data
             volatility_data = await self._get_volatility_data(symbol)
 
-            # Calculate position parameters
             current_price = await self._get_current_price(symbol)
             portfolio_value = self.get_portfolio_value()
             max_position_size = portfolio_value * self.max_capital_allocation
 
-            # Risk calculations
             position_size_usd = min(
                 max_position_size,
                 portfolio_value * self.max_single_position_risk,
@@ -156,7 +143,6 @@ class AdvancedRiskAgent(BaseAgent):
                 position_size_usd,
             )
 
-            # Prepare AI assessment prompt
             assessment_prompt = self._create_assessment_prompt(
                 symbol,
                 side,
@@ -170,10 +156,8 @@ class AdvancedRiskAgent(BaseAgent):
                 market_analysis,
             )
 
-            # Get AI validation
             ai_decision = await self._get_ai_risk_assessment(assessment_prompt)
 
-            # Final decision
             approved = self._make_final_decision(ai_decision, risk_metrics, trade_confidence)
 
             result = {
@@ -209,7 +193,6 @@ class AdvancedRiskAgent(BaseAgent):
     async def _get_volatility_data(self, symbol: str) -> Dict:
         """Get volatility data for risk assessment"""
         try:
-            # Use volatility tracker
             volatile_assets = await self.volatility_tracker.get_top_volatile_assets(
                 min_volatility=0.01, max_count=50
             )
@@ -240,7 +223,6 @@ class AdvancedRiskAgent(BaseAgent):
     async def _get_current_price(self, symbol: str) -> float:
         """Get current price for symbol"""
         try:
-            # Use HyperLiquid API
             import aiohttp
 
             async with aiohttp.ClientSession() as session:
@@ -261,9 +243,6 @@ class AdvancedRiskAgent(BaseAgent):
     ) -> float:
         """Calculate liquidation price for position"""
         try:
-            # Simplified liquidation calculation
-            # For long: liquidation_price = entry_price * (1 - 1/leverage + maintenance_margin)
-            # For short: liquidation_price = entry_price * (1 + 1/leverage - maintenance_margin)
 
             maintenance_margin = 0.005  # 0.5% maintenance margin
 
@@ -290,24 +269,19 @@ class AdvancedRiskAgent(BaseAgent):
         try:
             portfolio_value = self.get_portfolio_value()
 
-            # Distance to liquidation
             if liquidation_price:
                 distance_to_liq = abs(current_price - liquidation_price) / current_price
             else:
                 distance_to_liq = 1.0
 
-            # Portfolio impact
             portfolio_impact = position_size_usd / portfolio_value
 
-            # Liquidation risk
             liquidation_risk = max(
                 0, (0.1 - distance_to_liq) / 0.1
             )  # Higher risk if close to liquidation
 
-            # Leverage risk
             leverage_risk = min(1.0, leverage / self.max_leverage)
 
-            # Combined risk score
             risk_score = portfolio_impact * 0.4 + liquidation_risk * 0.4 + leverage_risk * 0.2
 
             return {
@@ -438,7 +412,6 @@ Should this aggressive position be approved with the proposed parameters?
                     "reasoning": "Sub-agent error - rejecting for safety",
                 }
 
-            # Parse AI response
             return self._parse_ai_response(result.stdout)
 
         except Exception as e:
@@ -481,7 +454,6 @@ Should this aggressive position be approved with the proposed parameters?
                 elif line.startswith("REASONING:"):
                     parsed["reasoning"] = line.split(":", 1)[1].strip()
                 elif line.startswith("RISK_FACTORS:"):
-                    # Collect subsequent lines as risk factors
                     factors = []
                     idx = lines.index(line) + 1
                     while idx < len(lines) and (
@@ -503,11 +475,9 @@ Should this aggressive position be approved with the proposed parameters?
     ) -> bool:
         """Make final approval decision"""
         try:
-            # AI recommendation is primary
             ai_recommendation = ai_decision.get("recommendation", "REJECT")
             ai_confidence = ai_decision.get("confidence", 0)
 
-            # Risk-based overrides
             if risk_metrics["overall_risk_score"] > 0.9:
                 print(
                     f"[OVERRIDE] Rejection due to extreme risk score: "
@@ -522,7 +492,6 @@ Should this aggressive position be approved with the proposed parameters?
                 )
                 return False
 
-            # Combined decision logic
             if ai_recommendation == "APPROVE":
                 if ai_confidence > 0.7:
                     return True
@@ -531,7 +500,6 @@ Should this aggressive position be approved with the proposed parameters?
                 else:
                     return False
             elif ai_recommendation == "MODIFY":
-                # Allow modification but with conditions
                 return ai_confidence > 0.6
             else:  # REJECT
                 return False
@@ -589,8 +557,6 @@ Should this aggressive position be approved with the proposed parameters?
     def get_portfolio_value(self) -> float:
         """Get current portfolio value"""
         try:
-            # This would get actual portfolio value from your system
-            # For now, return a default value
             return 10000.0  # $10,000 default
         except Exception as e:
             print(f"[ERROR] Could not get portfolio value: {e}")
@@ -614,7 +580,6 @@ Should this aggressive position be approved with the proposed parameters?
         return result.get("approved", False)
 
 
-# Convenience functions
 async def validate_btc_short(leverage: float = 25.0, confidence: float = 0.9) -> bool:
     """Validate short BTC position with specified leverage"""
     agent = AdvancedRiskAgent(aggressive_mode=True)
@@ -630,15 +595,13 @@ async def assess_high_leverage_trade(
 
 
 if __name__ == "__main__":
-    # Example usage
+
     async def main():
         print("Testing Advanced Risk Agent...")
 
-        # Test BTC short 25x with high confidence
         approved = await validate_btc_short(leverage=25.0, confidence=0.9)
         print(f"BTC short 25x approved: {approved}")
 
-        # Comprehensive assessment
         result = await assess_high_leverage_trade("BTC", "SHORT", 25.0, 0.95)
         print(f"Assessment result: {json.dumps(result, indent=2)}")
 

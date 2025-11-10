@@ -33,7 +33,6 @@ class RotationController:
         self.manual_assets: List[str] = []
         self.rotation_history: List[Dict[str, Any]] = []
 
-        # Default configuration
         self.config = RotationConfig()
 
     async def start_rotation(
@@ -41,24 +40,19 @@ class RotationController:
     ) -> Dict[str, Any]:
         """Start rotation with specified parameters"""
         try:
-            # Update configuration
             self.config.mode = RotationMode(mode)
             self.config.rotation_interval = interval
             self.config.max_assets = max_assets
 
-            # Create rotator if not exists
             if not self.rotator:
                 self.rotator = AutomaticCoinRotator(self.config)
 
-            # Stop existing rotation if running
             if self.running:
                 await self.stop_rotation()
 
-            # Clear user override for automatic rotation
             self.user_override_active = False
             self.manual_assets = []
 
-            # Start rotation
             self.running = True
             task = asyncio.create_task(self._run_rotation())
 
@@ -82,32 +76,27 @@ class RotationController:
             if not assets:
                 return {"success": False, "error": "No assets specified"}
 
-            # Validate assets
             available_assets = await self._get_available_assets()
             valid_assets = [asset for asset in assets if asset in available_assets]
 
             if not valid_assets:
                 return {"success": False, "error": "No valid assets specified"}
 
-            # Set manual override
             self.user_override_active = True
             self.manual_assets = valid_assets
 
-            # Create manual rotator
             manual_config = RotationConfig(
                 mode=RotationMode.AUTOMATIC,
                 rotation_interval=600,  # Longer interval for manual
                 max_assets=len(valid_assets),
             )
 
-            # Stop existing rotation
             if self.running:
                 await self.stop_rotation()
 
             self.rotator = AutomaticCoinRotator(manual_config)
             self.running = True
 
-            # Initialize with manual assets
             await self._initialize_manual_rotation(valid_assets)
 
             return {
@@ -159,7 +148,6 @@ class RotationController:
                     "user_override": False,
                 }
 
-            # Get rotator status
             rotator_metrics = self.rotator.get_rotation_metrics()
 
             return {
@@ -180,7 +168,6 @@ class RotationController:
     async def update_configuration(self, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update rotation configuration"""
         try:
-            # Validate updates
             valid_updates = {}
 
             if "mode" in updates:
@@ -212,11 +199,9 @@ class RotationController:
                         "error": "max_assets must be between 1 and 20",
                     }
 
-            # Apply updates
             for key, value in valid_updates.items():
                 setattr(self.config, key, value)
 
-            # Update rotator if running
             if self.rotator:
                 self.rotator.config = self.config
 
@@ -242,7 +227,6 @@ class RotationController:
             if not self.running or not self.rotator:
                 return {"success": False, "error": "Rotation not running"}
 
-            # Validate assets
             available_assets = await self._get_available_assets()
 
             if assets_to_add:
@@ -253,7 +237,6 @@ class RotationController:
                     asset for asset in assets_to_remove if asset in available_assets
                 ]
 
-            # Execute forced rotation
             decision = {
                 "should_rotate": True,
                 "reason": "Manual forced rotation",
@@ -263,7 +246,6 @@ class RotationController:
 
             results = await self.rotator._execute_rotation(decision)
 
-            # Record in history
             self.rotation_history.append(
                 {
                     "type": "forced",
@@ -292,7 +274,6 @@ class RotationController:
         try:
             available_assets = await self._get_available_assets()
 
-            # Get asset configurations
             asset_info = {}
             for asset in available_assets:
                 if asset in self.rotator.asset_configs if self.rotator else {}:
@@ -336,21 +317,17 @@ class RotationController:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    # Private methods
     async def _run_rotation(self):
         """Run the rotation loop"""
         if not self.user_override_active:
-            # Automatic rotation
             await self.rotator.start_automatic_rotation()
         else:
-            # Manual rotation - just keep alive
             while self.running:
                 await asyncio.sleep(60)
                 await self._update_manual_performance()
 
     async def _initialize_manual_rotation(self, assets: List[str]):
         """Initialize manual rotation with specified assets"""
-        # Set current assets manually
         self.rotator.current_assets = []
         for asset in assets:
             if asset in self.rotator.asset_configs:
@@ -368,8 +345,6 @@ class RotationController:
     async def _get_available_assets(self) -> List[str]:
         """Get list of available assets"""
         try:
-            # In a real implementation, this would query the liquidity tracker
-            # For now, return predefined list
             return [
                 "BTC",
                 "ETH",
@@ -386,7 +361,6 @@ class RotationController:
             return ["BTC", "ETH", "SOL"]
 
 
-# API Endpoints for Frontend Integration
 class RotationAPI:
     """API endpoints for frontend integration"""
 
@@ -434,7 +408,6 @@ class RotationAPI:
         return await self.controller.get_rotation_history(limit)
 
 
-# Demo usage
 if __name__ == "__main__":
 
     async def demo_rotation_interface():
@@ -444,35 +417,28 @@ if __name__ == "__main__":
 
         api = RotationAPI()
 
-        # Demo automatic rotation
         print("\n[DEMO] Starting automatic rotation...")
         result = await api.start_rotation(
             {"mode": "hybrid", "interval": 60, "max_assets": 4}  # 1 minute for demo
         )
         print(f"Result: {result}")
 
-        # Wait a bit
         await asyncio.sleep(5)
 
-        # Get status
         print("\n[DEMO] Getting status...")
         status = await api.get_status()
         print(f"Status: {json.dumps(status, indent=2)}")
 
-        # Get available assets
         print("\n[DEMO] Getting available assets...")
         assets = await api.get_assets()
         print(f"Assets: {assets}")
 
-        # Demo manual rotation
         print("\n[DEMO] Starting manual rotation...")
         manual_result = await api.start_manual_rotation({"assets": ["BTC", "ETH", "SOL"]})
         print(f"Manual result: {manual_result}")
 
-        # Wait a bit
         await asyncio.sleep(3)
 
-        # Stop rotation
         print("\n[DEMO] Stopping rotation...")
         stop_result = await api.stop_rotation()
         print(f"Stop result: {stop_result}")

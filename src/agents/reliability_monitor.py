@@ -53,13 +53,10 @@ class ReliabilityMonitor:
         self.alerts_dir = self.project_path / "logs" / "reliability"
         self.alerts_dir.mkdir(parents=True, exist_ok=True)
 
-        # Alertes actives
         self.active_alerts: List[ReliabilityAlert] = []
 
-        # Historique des alertes
         self.alert_history: List[ReliabilityAlert] = []
 
-        # Métriques en temps réel
         self.metrics = {
             "uptime_start": datetime.now(),
             "total_checks": 0,
@@ -70,10 +67,8 @@ class ReliabilityMonitor:
             "last_health_check": None,
         }
 
-        # Callbacks d'alerte
         self.alert_callbacks: List[Callable[[ReliabilityAlert], None]] = []
 
-        # Seuils de监控
         self.thresholds = {
             "min_success_rate": 0.7,  # Taux de succès minimum
             "min_confidence": 0.6,  # Confiance minimum moyenne
@@ -117,26 +112,20 @@ class ReliabilityMonitor:
             "recommendations": [],
         }
 
-        # 1. Vérifier les métriques du système
         system_check = self._check_system_metrics(aggregator_data)
         health_report["checks"]["system"] = system_check
 
-        # 2. Vérifier les agents
         agents_check = self._check_agents_health(agent_status)
         health_report["checks"]["agents"] = agents_check
 
-        # 3. Vérifier les performances
         performance_check = self._check_performance(aggregator_data)
         health_report["checks"]["performance"] = performance_check
 
-        # 4. Vérifier la cohérence des données
         consistency_check = self._check_data_consistency(aggregator_data)
         health_report["checks"]["consistency"] = consistency_check
 
-        # 5. Calculer le score global
         health_report["health_score"] = self._calculate_health_score(health_report["checks"])
 
-        # 6. Déterminer le statut global
         if health_report["health_score"] >= 0.8:
             health_report["overall_status"] = "HEALTHY"
         elif health_report["health_score"] >= 0.6:
@@ -146,15 +135,12 @@ class ReliabilityMonitor:
         else:
             health_report["overall_status"] = "CRITICAL"
 
-        # 7. Générer des recommandations
         health_report["recommendations"] = self._generate_recommendations(health_report["checks"])
 
-        # 8. Mettre à jour les métriques
         self.metrics["system_health_score"] = health_report["health_score"]
         if health_report["overall_status"] in ["UNHEALTHY", "CRITICAL"]:
             self.metrics["failed_checks"] += 1
 
-        # 9. Sauvegarder le rapport
         self._save_health_report(health_report)
 
         return health_report
@@ -169,7 +155,6 @@ class ReliabilityMonitor:
             check_result["warnings"].append("No aggregator data available")
             return check_result
 
-        # Vérifier le taux de succès
         total = aggregator_data.get("total_aggregations", 0)
         successful = aggregator_data.get("successful_aggregations", 0)
 
@@ -186,7 +171,6 @@ class ReliabilityMonitor:
                 check_result["score"] = 0.7
                 check_result["warnings"].append(f"Success rate below optimal: {success_rate:.2f}")
 
-        # Vérifier la confiance moyenne
         avg_confidence = aggregator_data.get("average_confidence", 0.0)
         check_result["details"]["average_confidence"] = avg_confidence
 
@@ -194,7 +178,6 @@ class ReliabilityMonitor:
             check_result["score"] = min(check_result["score"], 0.4)
             check_result["warnings"].append(f"Average confidence low: {avg_confidence:.2f}")
 
-        # Vérifier la fiabilité moyenne
         avg_reliability = aggregator_data.get("average_reliability", 0.0)
         check_result["details"]["average_reliability"] = avg_reliability
 
@@ -243,7 +226,6 @@ class ReliabilityMonitor:
 
             check_result["details"]["agents"][agent_name] = agent_info
 
-        # Vérifier le nombre d'agents en ligne
         if healthy_agents < self.thresholds["min_agents_online"]:
             check_result["status"] = "FAIL"
             check_result["score"] = 0.2
@@ -263,7 +245,6 @@ class ReliabilityMonitor:
         if not aggregator_data:
             return check_result
 
-        # Vérifier le temps d'exécution
         recent_aggregations = aggregator_data.get("recent_aggregations", [])
         if recent_aggregations:
             avg_execution_times = [
@@ -290,7 +271,6 @@ class ReliabilityMonitor:
         if not aggregator_data:
             return check_result
 
-        # Vérifier la dispersion des décisions
         recent_decisions = [
             a.get("final_decision") for a in aggregator_data.get("recent_aggregations", [])[-10:]
         ]
@@ -326,7 +306,6 @@ class ReliabilityMonitor:
         """Génère des recommandations"""
         recommendations = []
 
-        # Recommandations basées sur les vérifications
         if checks.get("system", {}).get("status") == "FAIL":
             recommendations.append("Check system metrics - low success rate detected")
             recommendations.append("Review recent aggregation results for patterns")
@@ -377,17 +356,14 @@ class ReliabilityMonitor:
         self.alert_history.append(alert)
         self.metrics["alerts_generated"] += 1
 
-        # Notifier les callbacks
         for callback in self.alert_callbacks:
             try:
                 callback(alert)
             except Exception as e:
                 cprint(f"[MONITOR] Alert callback failed: {e}", "red")
 
-        # Logger l'alerte
         self._log_alert(alert)
 
-        # Afficher l'alerte
         self._display_alert(alert)
 
         return alert
@@ -501,14 +477,11 @@ class ReliabilityMonitor:
         return filepath
 
 
-# Test du moniteur
 if __name__ == "__main__":
     monitor = ReliabilityMonitor()
 
-    # Test d'alertes
     monitor.create_alert(AlertLevel.WARNING, "Test warning alert", "test", {"test_data": "value"})
 
-    # Test de vérification de santé
     mock_aggregator_data = {
         "total_aggregations": 100,
         "successful_aggregations": 85,
@@ -543,7 +516,6 @@ if __name__ == "__main__":
     print(f"  Last 24h: {summary['last_24h']}")
     print(f"  Unresolved Critical: {summary['unresolved_critical']}")
 
-    # Exporter les métriques
     metrics_file = monitor.export_metrics()
     print(f"\n  Metrics exported to: {metrics_file}")
 

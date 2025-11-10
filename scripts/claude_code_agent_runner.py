@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 [OK] NOVAQUOTE Claude Code Agent Runner
 Built with love by Deamon Dev [ROCKET]
@@ -12,14 +11,12 @@ Pattern d'utilisation:
 
 import argparse
 import json
-import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -50,14 +47,12 @@ class NovaQuoteAgentRunner:
         cprint(f"🚀 Running Agent: {agent_id}", "cyan")
         cprint(f"{'='*60}\n", "cyan")
 
-        # Charger le contexte
         context_data = {}
         if context_file and Path(context_file).exists():
             with open(context_file, "r") as f:
                 context_data = json.load(f)
             cprint(f"📋 Loaded context from: {context_file}", "green")
 
-        # Exécuter l'agent
         start_time = time.time()
         result = self.manager.call_claude_code_agent(
             agent_id=agent_id,
@@ -67,7 +62,6 @@ class NovaQuoteAgentRunner:
         )
         execution_time = time.time() - start_time
 
-        # Afficher le résultat
         cprint(f"\n✅ Agent completed in {execution_time:.2f}s", "green")
         cprint(f"📊 Confidence: {result.get('confidence', 0.0):.2f}", "cyan")
         cprint(f"🔄 Iterations: {result.get('iterations', 1)}", "cyan")
@@ -77,7 +71,6 @@ class NovaQuoteAgentRunner:
         else:
             cprint("⚠️ Did not fully converge", "yellow")
 
-        # Sauvegarder le rapport
         if save_report:
             report = {
                 "timestamp": datetime.now().isoformat(),
@@ -98,14 +91,12 @@ class NovaQuoteAgentRunner:
         cprint(f"🎯 Delegating via claude-agents.json", "cyan")
         cprint(f"{'='*60}\n", "cyan")
 
-        # Charger le contexte
         context_data = {}
         if context_file and Path(context_file).exists():
             with open(context_file, "r") as f:
                 context_data = json.load(f)
             cprint(f"📋 Loaded context from: {context_file}", "green")
 
-        # Déléguer
         start_time = time.time()
         result = self.manager.delegate_to_claude_agents(task, context_data)
         execution_time = time.time() - start_time
@@ -113,7 +104,6 @@ class NovaQuoteAgentRunner:
         cprint(f"\n✅ Delegation completed in {execution_time:.2f}s", "green")
         cprint(f"🤖 Success: {result.get('success', False)}", "cyan")
 
-        # Sauvegarder
         report = {
             "timestamp": datetime.now().isoformat(),
             "task": task,
@@ -133,14 +123,12 @@ class NovaQuoteAgentRunner:
         cprint(f"🎯 Complete NOVAQUOTE Analysis", "cyan")
         cprint(f"{'='*60}\n", "cyan")
 
-        # Charger le contexte
         context_data = {}
         if context_file and Path(context_file).exists():
             with open(context_file, "r") as f:
                 context_data = json.load(f)
             cprint(f"📋 Loaded context from: {context_file}", "green")
         else:
-            # Contexte par défaut
             context_data = {
                 "symbol": "BTC-USD",
                 "price": 50000,
@@ -149,10 +137,8 @@ class NovaQuoteAgentRunner:
             }
             cprint("📋 Using default market context", "yellow")
 
-        # Exécuter l'analyse complète
         result = self.manager.run_complete_trading_analysis(context_data)
 
-        # Afficher le résumé
         cprint(f"\n{'='*60}", "cyan")
         cprint("📊 ANALYSIS SUMMARY", "cyan")
         cprint(f"{'='*60}", "cyan")
@@ -166,7 +152,6 @@ class NovaQuoteAgentRunner:
         consensus = result.get("consensus", {})
         cprint(f"\n🤝 Consensus: {consensus.get('reasoning', 'N/A')}", "green")
 
-        # Sauvegarder
         report_path = self.manager.save_analysis_report(
             result, f"complete_analysis_{int(time.time())}.json"
         )
@@ -196,7 +181,6 @@ class NovaQuoteAgentRunner:
         cprint(f"{'='*60}\n", "cyan")
 
         if parallel:
-            # TODO: Implémentation parallèle
             cprint("⚠️ Parallel mode not yet implemented", "yellow")
             parallel = False
 
@@ -244,15 +228,12 @@ class NovaQuoteAgentRunner:
                 iteration += 1
                 cprint(f"\n[Iteration {iteration}]", "cyan")
 
-                # Exécuter l'analyse complète
                 result = self.run_complete_analysis(context_file)
 
-                # Vérifier si on doit s'arrêter
                 if max_iterations and iteration >= max_iterations:
                     cprint("\n✅ Reached max iterations", "green")
                     break
 
-                # Attendre avant la prochaine itération
                 cprint(f"\n⏳ Waiting {interval_seconds}s for next iteration...", "yellow")
                 time.sleep(interval_seconds)
 
@@ -269,7 +250,6 @@ def main():
         description="NOVAQUOTE Claude Code Agent Runner"
     )
 
-    # Modes d'exécution
     parser.add_argument(
         "--mode",
         choices=["single", "delegation", "complete", "batch", "autonomous"],
@@ -277,32 +257,26 @@ def main():
         help="Mode d'exécution",
     )
 
-    # Paramètres pour mode single
     parser.add_argument("--agent", help="Agent ID (pour mode single)")
     parser.add_argument("--task", help="Description de la tâche")
 
-    # Paramètres communs
     parser.add_argument("--context", help="Fichier de contexte (JSON)")
     parser.add_argument("--iterations", type=int, default=3, help="Nombre d'itérations")
     parser.add_argument(
         "--no-save", action="store_true", help="Ne pas sauvegarder le rapport"
     )
 
-    # Paramètres pour batch
     parser.add_argument("--tasks-file", help="Fichier de tâches (JSON)")
 
-    # Paramètres pour autonomous
     parser.add_argument("--interval", type=int, default=300, help="Intervalle en secondes")
     parser.add_argument("--max-iterations", type=int, help="Nombre max d'itérations")
 
-    # Paramètres généraux
     parser.add_argument(
         "--project-path", help="Chemin vers le projet (défaut: courant)"
     )
 
     args = parser.parse_args()
 
-    # Initialiser le runner
     runner = NovaQuoteAgentRunner(args.project_path)
 
     try:

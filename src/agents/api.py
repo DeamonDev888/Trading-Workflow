@@ -3,6 +3,7 @@
 Compatibility layer for API connections
 """
 
+import json
 import logging
 from typing import Dict
 
@@ -74,7 +75,6 @@ class DeamonDevAPI:
             return {"success": False, "error": str(e)}
 
 
-# Global API instance
 api_client = DeamonDevAPI()
 
 

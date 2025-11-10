@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Optimisation Automatique de Toutes les Stratégies
 Utilise l'API backend pour charger les données réelles et optimiser toutes les stratégies
@@ -6,7 +5,6 @@ Utilise l'API backend pour charger les données réelles et optimiser toutes les
 
 import json
 import requests
-import numpy as np
 from datetime import datetime
 
 class StrategyOptimizer:
@@ -40,7 +38,13 @@ class StrategyOptimizer:
         pf_score = min(10, (strategy.get('profitFactor', 0) * 5))
         trades_score = 10 if 50 <= strategy.get('totalTrades', 0) <= 300 else 5
 
-        return min(100, return_score + sharpe_score + win_rate_score + dd_score + pf_score + trades_score)
+        return min(100, return_score
+                                    + sharpe_score
+                                    + win_rate_score
+                                    + dd_score
+                                    + pf_score
+                                    + trades_score)
+
 
     def analyze_strategy(self, strategy):
         """Analyse une stratégie et génère des recommandations"""
@@ -51,7 +55,6 @@ class StrategyOptimizer:
             'recommendations': []
         }
 
-        # Analyser les métriques
         if strategy.get('returns', 0) < 0.20:
             analysis['issues'].append('Low return')
             analysis['recommendations'].append('Improve entry signals or extend holding periods')
@@ -84,7 +87,6 @@ class StrategyOptimizer:
         for strategy in self.backtests:
             analysis = self.analyze_strategy(strategy)
 
-            # Générer des optimisations spécifiques
             optimizations.append({
                 'original_strategy': strategy.get('name', 'Unknown'),
                 'current_score': analysis['score'],
@@ -94,7 +96,6 @@ class StrategyOptimizer:
                 'optimizations': []
             })
 
-            # Ajouter des optimisations basées sur les problèmes identifiés
             if 'Low return' in analysis['issues']:
                 optimizations[-1]['optimizations'].append('Enhanced entry signal confirmation')
             if 'Poor Sharpe ratio' in analysis['issues']:
@@ -132,7 +133,6 @@ class StrategyOptimizer:
         print(f"Average expected score: {report['summary']['avg_expected_score']:.1f}/100")
         print(f"Total optimizations recommended: {report['summary']['total_optimizations']}")
 
-        # Top 3 des stratégies à optimiser
         top_optimizations = sorted(
             optimizations,
             key=lambda x: x['current_score']
@@ -159,20 +159,16 @@ def main():
     print("INTELLIGENT STRATEGY OPTIMIZATION SYSTEM")
     print("="*80)
 
-    # Initialiser l'optimizer
     optimizer = StrategyOptimizer()
 
-    # Charger les backtests depuis l'API
     if not optimizer.load_backtests():
         print("Failed to load backtests. Make sure the backend API is running on http://localhost:7000")
         return
 
-    # Optimiser toutes les stratégies
     print("\nOptimizing strategies...")
     optimizations = optimizer.optimize_all_strategies()
 
     if optimizations:
-        # Exporter le rapport
         report = optimizer.export_report(optimizations)
         print("\nOptimization complete!")
     else:

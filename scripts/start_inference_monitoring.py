@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Simple Inference Monitoring Starter
 Starts the inference API for agent monitoring
@@ -16,13 +15,10 @@ def main():
     print("=" * 60)
 
     try:
-        # Start inference API
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Starting Inference API on port 8004...")
 
-        # Change to the project directory
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-        # Start the inference API
         cmd = [sys.executable, "-m", "uvicorn", "src.health.inference_api:app",
                "--host", "0.0.0.0", "--port", "8004", "--reload"]
 
@@ -37,7 +33,6 @@ def main():
         print("Press Ctrl+C to stop the inference API")
         print("-" * 60)
 
-        # Handle graceful shutdown
         def signal_handler(sig, frame):
             print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Shutting down Inference API...")
             process.terminate()
@@ -48,7 +43,6 @@ def main():
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
-        # Stream output
         try:
             for line in iter(process.stdout.readline, ''):
                 if line.strip():

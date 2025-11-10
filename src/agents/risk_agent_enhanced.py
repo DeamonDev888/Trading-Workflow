@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-# Ajouter le chemin du projet
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
@@ -19,7 +18,6 @@ class EnhancedRiskAgent:
 
         self.project_path = project_path
 
-        # Utiliser le manager si disponible, sinon fallback CLI
         if NovaQuoteAgentManager:
             self.manager = NovaQuoteAgentManager(project_path)
             self.use_manager = True
@@ -39,7 +37,6 @@ class EnhancedRiskAgent:
         results = {}
 
         if self.use_manager:
-            # 1. Analyse et correction des bugs
             print("🐛 Étape 1: Bug Fixer pour risk_agent.py")
             bug_result = self.manager.run_agent(
                 "bug-fixer",
@@ -47,7 +44,6 @@ class EnhancedRiskAgent:
             )
             results["bug_fixer"] = bug_result
 
-            # 2. Audit de sécurité du module de risque
             print("🔒 Étape 2: Audit de sécurité")
             security_result = self.manager.run_agent(
                 "code-reviewer",
@@ -55,7 +51,6 @@ class EnhancedRiskAgent:
             )
             results["security"] = security_result
 
-            # 3. Optimisation des performances
             print("⚡ Étape 3: Optimisation performance")
             perf_result = self.manager.run_agent(
                 "perf-optimizer",
@@ -63,7 +58,6 @@ class EnhancedRiskAgent:
             )
             results["performance"] = perf_result
 
-            # 4. Création de tests
             print("🧪 Étape 4: Tests complets")
             test_result = self.manager.run_agent(
                 "test-enhancer",
@@ -71,7 +65,6 @@ class EnhancedRiskAgent:
             )
             results["tests"] = test_result
 
-            # 5. Documentation du module
             print("📚 Étape 5: Documentation")
             docs_result = self.manager.run_agent(
                 "docs-generator",
@@ -79,7 +72,6 @@ class EnhancedRiskAgent:
             )
             results["documentation"] = docs_result
         else:
-            # Fallback CLI direct
             print("⚠️  Mode CLI direct - exécution séquentielle...")
             import subprocess
 
@@ -127,7 +119,6 @@ class EnhancedRiskAgent:
                         "error": str(e),
                     }
 
-        # Résumé des résultats
         self._print_summary(results)
 
         return results
@@ -143,7 +134,6 @@ class EnhancedRiskAgent:
             agent_name = agent.replace("_", " ").title()
             print(f"{status_icon} {agent_name}: {result.get('status', 'unknown')}")
 
-            # Afficher un extrait des résultats
             if result.get("stdout") and len(result["stdout"]) > 100:
                 print(f"   📄 {result['stdout'][:100]}...")
 
@@ -260,9 +250,9 @@ class EnhancedRiskAgent:
         return result
 
 
-# Point d'entrée principal
 if __name__ == "__main__":
     import argparse
+import json
 
     parser = argparse.ArgumentParser(description="Enhanced Risk Agent with NOVAQUOTE integration")
     parser.add_argument(
@@ -276,24 +266,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Initialiser l'agent
     risk_agent = EnhancedRiskAgent()
 
     if args.action == "analyze":
-        # Analyse complète
         results = risk_agent.comprehensive_analysis()
 
     elif args.action == "fix" and args.issue:
-        # Correction spécifique
         result = risk_agent.quick_fix(args.issue)
 
     elif args.action == "validate":
-        # Validation de la logique
         result = risk_agent.validate_risk_logic()
         print(f"Validation : {result.get('status')}")
 
     elif args.action == "quick":
-        # Analyse rapide
         result = risk_agent.analyze_file(args.file)
 
     else:

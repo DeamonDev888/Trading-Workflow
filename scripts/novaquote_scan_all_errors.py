@@ -8,7 +8,6 @@ import ast
 import json
 import os
 import re
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -61,7 +60,6 @@ class NovaQuoteUniversalErrorScanner:
         root = Path(root_path)
         all_files = []
 
-        # Scanner tous les fichiers, exclure seulement les dossiers système
         exclude_patterns = {
             '__pycache__', 'node_modules', '.git', 'venv', 'env',
             'dist', 'build', '.pytest_cache', '.coverage', 'htmlcov',
@@ -74,17 +72,14 @@ class NovaQuoteUniversalErrorScanner:
 
         print(f"📊 Fichiers trouvés: {len(all_files)}")
 
-        # Catégoriser les fichiers par type
         categorized_files = self._categorize_files(all_files)
 
-        # Scanner chaque catégorie
         for language, files in categorized_files.items():
             if files:
                 print(f"\n🔍 SCANNING {language.upper()} ({len(files)} fichiers)")
                 self.stats['languages_processed'].add(language)
                 self._scan_language_files(files, language)
 
-        # Générer le rapport universel
         self._generate_universal_report()
 
         return self.error_categories
@@ -104,7 +99,6 @@ class NovaQuoteUniversalErrorScanner:
                     categorized_language = language
                     break
 
-            # Si aucun langage spécifique, essayer de deviner
             if not categorized_language:
                 categorized_language = self._guess_file_type(file_path)
 
@@ -122,7 +116,6 @@ class NovaQuoteUniversalErrorScanner:
                 first_line = f.readline().strip()
                 content = f.read(1000)  # Lire 1000 premiers caractères
 
-            # Détection par shebang
             if first_line.startswith('#!'):
                 if 'python' in first_line:
                     return 'python'
@@ -131,7 +124,6 @@ class NovaQuoteUniversalErrorScanner:
                 elif 'node' in first_line:
                     return 'javascript'
 
-            # Détection par contenu
             if 'function' in content or 'const' in content or 'let' in content:
                 return 'javascript'
             elif 'def ' in content or 'import ' in content or 'class ' in content:
@@ -196,7 +188,6 @@ class NovaQuoteUniversalErrorScanner:
         """Scanner complet pour fichiers Python"""
         errors = {category: [] for category in self.error_categories.keys()}
 
-        # 1. Erreurs de syntaxe (AST parsing)
         try:
             ast.parse(content)
         except SyntaxError as e:
@@ -208,9 +199,7 @@ class NovaQuoteUniversalErrorScanner:
                 'severity': 'HIGH'
             })
 
-        # 2. Erreurs de formatting
         for i, line in enumerate(lines, 1):
-            # Lignes trop longues
             if len(line.rstrip()) > 120:  # Standard un peu plus permissif
                 errors['formatting'].append({
                     'file': str(file_path),
@@ -220,7 +209,6 @@ class NovaQuoteUniversalErrorScanner:
                     'severity': 'LOW'
                 })
 
-            # Tabs vs espaces
             if '\t' in line and '    ' in line:
                 errors['formatting'].append({
                     'file': str(file_path),
@@ -230,10 +218,8 @@ class NovaQuoteUniversalErrorScanner:
                     'severity': 'MEDIUM'
                 })
 
-        # 3. Qualité du code
         content_lines = content.split('\n')
         for i, line in enumerate(content_lines):
-            # Variables non utilisées (basique)
             if line.strip().startswith('import ') or line.strip().startswith('from '):
                 module_name = re.search(r'import\s+(\w+)|from\s+\w+\s+import\s+(\w+)', line)
                 if module_name:
@@ -247,7 +233,6 @@ class NovaQuoteUniversalErrorScanner:
                             'severity': 'MEDIUM'
                         })
 
-        # 4. Imports
         imports_missing = []
         if 'json' in content and 'import json' not in content:
             imports_missing.append('import json')
@@ -269,9 +254,7 @@ class NovaQuoteUniversalErrorScanner:
         """Scanner complet pour fichiers JavaScript/TypeScript"""
         errors = {category: [] for category in self.error_categories.keys()}
 
-        # 1. Erreurs de syntaxe
         for i, line in enumerate(lines, 1):
-            # Points-virgules manquants
             stripped = line.strip()
             if (stripped.endswith(('var ', 'let ', 'const ')) or
                 (re.match(r'^(var|let|const)\s+\w+\s*=', stripped) and not stripped.endswith(';'))):
@@ -283,7 +266,6 @@ class NovaQuoteUniversalErrorScanner:
                     'severity': 'MEDIUM'
                 })
 
-        # 2. Types manquants (TypeScript)
         if file_path.suffix in ['.ts', '.tsx']:
             for i, line in enumerate(lines, 1):
                 if re.match(r'^(const|let|var)\s+\w+\s*=', line) and ':' not in line:
@@ -295,7 +277,6 @@ class NovaQuoteUniversalErrorScanner:
                         'severity': 'MEDIUM'
                     })
 
-        # 3. Imports manquants
         if 'fetch(' in content and 'import fetch' not in content:
             errors['imports'].append({
                 'file': str(file_path),
@@ -332,7 +313,6 @@ class NovaQuoteUniversalErrorScanner:
             import yaml
             yaml.safe_load(content)
         except ImportError:
-            # yaml non disponible, ignorer
             pass
         except Exception as e:
             errors['syntax'].append({
@@ -351,7 +331,6 @@ class NovaQuoteUniversalErrorScanner:
 
         lines = content.split('\n')
         for i, line in enumerate(lines, 1):
-            # Lignes très longues
             if len(line.rstrip()) > 150:
                 errors['formatting'].append({
                     'file': str(file_path),
@@ -367,9 +346,7 @@ class NovaQuoteUniversalErrorScanner:
         """Scanner générique pour tous les autres types de fichiers"""
         errors = {category: [] for category in self.error_categories.keys()}
 
-        # Vérifications basiques universelles
         for i, line in enumerate(lines, 1):
-            # Lignes vides excessives
             if line.strip() == '':
                 consecutive_empty = 1
                 j = i
@@ -394,14 +371,12 @@ class NovaQuoteUniversalErrorScanner:
         print("🌍 RAPPORT UNIVERSNEL GLOBAL - TOUS LES ERREURS")
         print("="*100)
 
-        # Statistiques globales
         print(f"\n📊 STATISTIQUES GLOBALES")
         print(f"   📁 Fichiers scannés: {self.stats['files_scanned']}")
         print(f"   🔢 Erreurs trouvées: {self.stats['errors_found']}")
         print(f"   🌐 Langages traités: {len(self.stats['languages_processed'])}")
         print(f"   📝 Langages: {', '.join(sorted(self.stats['languages_processed']))}")
 
-        # Erreurs par catégorie
         print(f"\n🔍 ERREURS PAR CATÉGORIE")
         total_errors = 0
         for category, errors in self.error_categories.items():
@@ -415,7 +390,6 @@ class NovaQuoteUniversalErrorScanner:
                 print(f"      🔴 HIGH: {severity_counts['HIGH']}, 🟡 MEDIUM: {severity_counts['MEDIUM']}, 🟢 LOW: {severity_counts['LOW']}")
                 total_errors += len(errors)
 
-        # Top 10 des fichiers avec le plus d'erreurs
         file_error_counts = {}
         for category_errors in self.error_categories.values():
             for error in category_errors:
@@ -429,7 +403,6 @@ class NovaQuoteUniversalErrorScanner:
         for i, (file_path, count) in enumerate(sorted_files, 1):
             print(f"   {i:2d}. {file_path}: {count} erreurs")
 
-        # Actions recommandées
         print(f"\n🎯 ACTIONS RECOMMANDÉES")
 
         high_priority_errors = []
@@ -455,7 +428,6 @@ class NovaQuoteUniversalErrorScanner:
         if low_priority_errors:
             print(f"   🟢 PRIORITÉ BASSE - Nettoyer {len(low_priority_errors)} détails")
 
-        # Sauvegarder le rapport complet
         report_data = {
             "timestamp": datetime.now().isoformat(),
             "stats": self.stats,
@@ -511,11 +483,8 @@ class NovaQuoteUniversalErrorScanner:
                     lines[line_num] = lines[line_num].rstrip() + ';'
 
             elif error['type'] == 'EXCESSIVE_EMPTY_LINES':
-                # Supprimer les lignes vides excessives
-                # (Implémentation simplifiée)
                 pass
 
-            # Écrire le fichier corrigé
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
 
@@ -543,7 +512,6 @@ def main():
 
     if args.language:
         print(f"🎯 Langage spécifié: {args.language}")
-        # Implémenter scan langage spécifique si nécessaire
     else:
         errors = scanner.scan_all_files(args.path)
 
