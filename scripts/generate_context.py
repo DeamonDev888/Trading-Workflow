@@ -7,9 +7,8 @@ Génère un context.md à jour avec :
 3. Appel Claude pour analyse IA des changements
 """
 
-import os
+import re
 import subprocess
-import json
 from pathlib import Path
 from datetime import datetime
 
@@ -173,18 +172,14 @@ EOF
         lines = snapshot_content.split('\n')
         for line in lines:
             if 'agents IA véritables' in line:
-                # Extraire le nombre avant "agents IA"
-                import re
                 match = re.search(r'(\d+)\s+agents IA', line)
                 if match:
                     counts['agents_count'] = int(match.group(1))
             elif 'algorithmes de trading ordinaires' in line:
-                import re
                 match = re.search(r'(\d+)\+?\s+algorithmes', line)
                 if match:
                     counts['algorithms_count'] = int(match.group(1))
             elif 'pages frontend' in line:
-                import re
                 match = re.search(r'(\d+)\s+pages', line)
                 if match:
                     counts['frontend_count'] = int(match.group(1))

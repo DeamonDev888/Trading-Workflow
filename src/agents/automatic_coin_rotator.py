@@ -1,7 +1,7 @@
-"""
-[OK] Automatic Coin Rotator
+"""Automatic Coin Rotator
+
 True automatic rotation system that cycles through crypto assets
-Built with love by Deamon Dev [ROCKET]
+Built with love by Deamon Dev
 
 This system implements true automatic rotation:
 - Automatically cycles through different crypto assets

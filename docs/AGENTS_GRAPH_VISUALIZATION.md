@@ -1,6 +1,6 @@
 # Agents IA - Fonctionnement Réel
 
-## Vue d'ensemble (4 agents)
+## Vue d'ensemble (7 agents)
 
 ```mermaid
 graph TD
@@ -37,7 +37,10 @@ Market Data → Claude Sub-Agents → Strategy Library → Order Execution
 
 ## Métriques
 
+- **advanced_risk_agent.py**: Sub-agent claude-advanced_risk-advisor
 - **funding_agent.py**: Sub-agent claude-funding-advisor
+- **iterative_subagent_manager.py**: Sub-agent claude-iterative_subagent_manager.py-advisor
+- **persistent_agent_orchestrator.py**: Sub-agent claude-persistent_agent_orchestrator.py-advisor
 - **risk_agent.py**: Sub-agent claude-risk-advisor
 - **sentiment_analysis_agent.py**: Sub-agent claude-sentiment_analysis-advisor
 - **strategy_agent.py**: Sub-agent claude-strategy-advisor

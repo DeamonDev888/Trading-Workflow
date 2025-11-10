@@ -8,7 +8,6 @@ import json
 import requests
 import numpy as np
 from datetime import datetime
-from pathlib import Path
 
 class StrategyOptimizer:
     def __init__(self, api_url="http://localhost:7000"):
@@ -34,7 +33,7 @@ class StrategyOptimizer:
 
     def calculate_strategy_score(self, strategy):
         """Calcule un score de performance (0-100)"""
-        return_score = min(25, (strategy.get('return', 0) * 50))
+        return_score = min(25, (strategy.get('returns', 0) * 50))
         sharpe_score = min(20, (strategy.get('sharpe', 0) * 10))
         win_rate_score = min(20, (strategy.get('winRate', 0) * 20))
         dd_score = min(15, max(0, (0.30 - (strategy.get('maxDrawdown', 0))) * 50))
@@ -53,7 +52,7 @@ class StrategyOptimizer:
         }
 
         # Analyser les métriques
-        if strategy.get('return', 0) < 0.20:
+        if strategy.get('returns', 0) < 0.20:
             analysis['issues'].append('Low return')
             analysis['recommendations'].append('Improve entry signals or extend holding periods')
 

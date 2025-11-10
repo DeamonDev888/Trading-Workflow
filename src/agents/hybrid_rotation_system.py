@@ -1,7 +1,7 @@
-"""
-[OK] Hybrid Rotation System
+"""Hybrid Rotation System
+
 Intelligent system combining automatic rotation with user control
-Built with love by Deamon Dev [ROCKET]
+Built with love by Deamon Dev
 
 This system provides the best of both worlds:
 - Automatic rotation for optimal performance

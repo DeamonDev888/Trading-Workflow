@@ -20,7 +20,24 @@ from termcolor import cprint
 from src import config
 from src import nice_funcs as n
 from src.agents.base_agent import BaseAgent
-from src.config import *
+from src.config import (
+    AI_MAX_TOKENS,
+    AI_MODEL,
+    AI_TEMPERATURE,
+    CASH_PERCENTAGE,
+    MAX_CONCURRENT_POSITIONS,
+    MAX_DAILY_LOSS,
+    MAX_GAIN_USD,
+    MAX_LOSS_GAIN_CHECK_HOURS,
+    MAX_LOSS_PERCENT,
+    MAX_LOSS_USD,
+    MINIMUM_BALANCE_USD,
+    MONITORED_TOKENS,
+    USE_PERCENTAGE,
+)
+
+# Define excluded tokens (USDC and SOL to be excluded from position monitoring)
+EXCLUDED_TOKENS = ["USDC", "SOL"]
 
 # Load environment variables
 load_dotenv()

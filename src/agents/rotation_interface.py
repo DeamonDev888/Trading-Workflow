@@ -1,7 +1,7 @@
-"""
-[OK] Rotation Interface
+"""Rotation Interface
+
 User interface for controlling automatic coin rotation
-Built with love by Deamon Dev [ROCKET]
+Built with love by Deamon Dev
 
 Provides both programmatic and frontend interfaces for rotation control:
 - API endpoints for frontend integration

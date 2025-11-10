@@ -195,4 +195,3 @@ EXIT_ALL_POSITIONS = False
 DO_NOT_TRADE_LIST = []
 CLOSED_POSITIONS_TXT = ""
 MINIMUM_TRADES_IN_LAST_HOUR = 2
-# Test line that is way too long and should be split by the linter to test its capabilities and make sure it works properly

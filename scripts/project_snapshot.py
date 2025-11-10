@@ -3,7 +3,6 @@
 NOVAQUOTE Project Snapshot - Génère contexte dynamique basé sur l'analyse réelle
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -42,7 +41,7 @@ class ProjectSnapshot:
                 print(f"{prefix}{connector}{item.name}")
             elif item.is_dir():
                 print(f"{prefix}{connector}{item.name}/")
-                extension = "    " if is_last_item else "│   "
+                extension = "    " if is_last_item else "|   "
                 self.print_tree(item, prefix + extension, is_last_item)
 
     def print_tree_to_list(self, dir_path: Path, output_lines: list, prefix: str = "", is_last: bool = True):
@@ -69,7 +68,7 @@ class ProjectSnapshot:
                 output_lines.append(f"{prefix}{connector}{item.name}")
             elif item.is_dir():
                 output_lines.append(f"{prefix}{connector}{item.name}/")
-                extension = "    " if is_last_item else "│   "
+                extension = "    " if is_last_item else "|   "
                 self.print_tree_to_list(item, output_lines, prefix + extension, is_last_item)
 
     def analyze_codebase(self):

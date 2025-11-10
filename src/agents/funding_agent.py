@@ -22,7 +22,15 @@ from termcolor import cprint
 
 from src.agents.base_agent import BaseAgent
 from src.agents.strategy_library import PROVEN_STRATEGIES
-from src.config import *
+from src.config import (
+    AI_MAX_TOKENS,
+    AI_MODEL,
+    AI_TEMPERATURE,
+    DATA_TIMEFRAME,
+    HYPERLIQUID_SYMBOLS,
+    MAX_ORDER_SIZE_USD,
+    MONITORED_TOKENS,
+)
 from src.hyperliquid import HyperliquidClient
 
 # Get the project root directory

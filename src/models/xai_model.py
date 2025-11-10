@@ -1,36 +1,12 @@
-"""
-🌙 Deamon Dev's xAI Grok Model Implementation
-Built with love by Deamon Dev 🚀
+"""Deamon Dev's xAI Grok Model Implementation
+
+Built with love by Deamon Dev
 """
 
 from openai import OpenAI
 from termcolor import cprint
 
-from .base_model import BaseModel, ModelResponse
-
-
-def safe_cprint(text, color):
-    """Safe print that handles Unicode encoding issues"""
-    try:
-        cprint(text, color)
-    except UnicodeEncodeError:
-        # Remove emojis and special characters for Windows compatibility
-        clean_text = (
-            text.replace("✨", "")
-            .replace("❌", "")
-            .replace("🌙", "")
-            .replace("🚀", "")
-            .replace("⚡", "")
-            .replace("💎", "")
-            .replace("📈", "")
-            .replace("📉", "")
-            .replace("🌟", "")
-            .replace("🤖", "")
-            .replace("🔥", "")
-            .replace("💰", "")
-            .replace("⭐", "")
-        )
-        safe_cprint(clean_text, color)
+from .base_model import BaseModel, ModelResponse, safe_cprint
 
 
 class XAIModel(BaseModel):

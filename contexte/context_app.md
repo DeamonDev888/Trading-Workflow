@@ -1,8 +1,6 @@
 ---
 name: deamon-dev-ai-trading-expert
-description:
-  Expert NOVAQUOTE - 4 agents IA (Claude Code sub-agents exclusivement), 7+
-  algorithmes, Claude Code CLI (4 sub-agents), Winston, 6 pages, HyperLiquid.
+description: Expert NOVAQUOTE - 7 agents IA (Claude Code sub-agents exclusivement), 17+ algorithmes, Claude Code CLI (4 sub-agents), Winston, 6 pages, HyperLiquid.
 ---
 
 # NOVAQUOTE Trading System
@@ -14,8 +12,8 @@ description:
 
 ## Vue d'ensemble
 
-- 4 agents IA véritable (Claude Code sub-agents)
-- 7+ algorithmes trading ordinaires
+- 7 agents IA véritable (Claude Code sub-agents)
+- 17+ algorithmes trading ordinaires
 - Claude Code CLI: 4 sub-agents (strategy/risk/funding/sentiment)
 - Winston logging: 7 loggers
 - 6 pages frontend
@@ -25,7 +23,7 @@ description:
 
 ```
 projet trading/
-├── src/agents/            # 11 scripts (4 agents + 7+ algorithmes)
+├── src/agents/            # 24 scripts (7 agents + 17+ algorithmes)
 ├── src/models/            # Model Factory (anciennement)
 ├── frontend/public/       # 6 pages HTML
 ├── backend/               # server-backend.ts (Port 7000)
@@ -34,33 +32,52 @@ projet trading/
 └── docs/                  # Documentation
 ```
 
-## Agents IA (4 scripts)
+## Agents IA (7 scripts)
 
 Utilisent **exclusivement Claude Code sub-agents**:
 
-1. **`funding_agent.py`** ✅
+1. **`advanced_risk_agent.py`** ✅
    - Claude Code sub-agents
 
-2. **`risk_agent.py`** ✅
+2. **`funding_agent.py`** ✅
    - Claude Code sub-agents
 
-3. **`sentiment_analysis_agent.py`** ✅
+3. **`iterative_subagent_manager.py`** ✅
    - Claude Code sub-agents
 
-4. **`strategy_agent.py`** ✅
+4. **`persistent_agent_orchestrator.py`** ✅
    - Claude Code sub-agents
 
-## Algorithmes (7+ scripts)
+5. **`risk_agent.py`** ✅
+   - Claude Code sub-agents
+
+6. **`sentiment_analysis_agent.py`** ✅
+   - Claude Code sub-agents
+
+7. **`strategy_agent.py`** ✅
+   - Claude Code sub-agents
+
+## Algorithmes (17+ scripts)
 
 Scripts Python purs sans IA:
 
 - `__init__.py`
+- `agent_inference_monitor.py`
 - `api.py`
+- `automatic_coin_rotator.py`
 - `base_agent.py`
+- `coin_rotation_integration.py`
+- `coin_rotation_manager.py`
+- `hybrid_rotation_api.py`
+- `hybrid_rotation_system.py`
 - `intelligent_backtest_optimizer.py`
+- `liquidity_tracker.py`
 - `manager.py`
 - `master_agent.py`
+- `persistent_agent_client.py`
+- `rotation_interface.py`
 - `strategy_library.py`
+- `volatility_tracker.py`
 
 ## Pattern Claude Code
 
@@ -88,8 +105,7 @@ def call_subagent(self, prompt: str, context_data: dict = None) -> str:
 
 ## Winston Loggers (7)
 
-apiLogger, wsLogger, agentsLogger, backtestsLogger, tradingLogger,
-walletsLogger, systemLogger
+apiLogger, wsLogger, agentsLogger, backtestsLogger, tradingLogger, walletsLogger, systemLogger
 
 ## API HyperLiquid
 

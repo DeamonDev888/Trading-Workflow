@@ -71,9 +71,8 @@ class AdvancedRiskAgent(BaseAgent):
         }
 
         print(f"\n{'='*80}")
-        print(
-            f"[RISK] ADVANCED RISK AGENT V3.0 - {'AGGRESSIVE' if aggressive_mode else 'CONSERVATIVE'} MODE"
-        )
+        mode_str = 'AGGRESSIVE' if aggressive_mode else 'CONSERVATIVE'
+        print(f"[RISK] ADVANCED RISK AGENT V3.0 - {mode_str} MODE")
         print(f"{'='*80}")
         print(f"[LEVERAGE] Max Leverage: {self.max_leverage}x")
         print(f"[CAPITAL] Max Allocation: {self.max_capital_allocation*100:.0f}%")
@@ -101,28 +100,38 @@ class AdvancedRiskAgent(BaseAgent):
         """
         try:
             print(
-                f"\n[ASSESSMENT] Evaluating {side} {symbol} @ {proposed_leverage}x leverage"
+                f"\n[ASSESSMENT] Evaluating {side} {symbol} @ "
+                f"{proposed_leverage}x leverage"
             )
             print(f"[CONFIDENCE] Trade confidence: {trade_confidence*100:.1f}%")
 
             # Get asset-specific limits
             asset_config = self.high_leverage_assets.get(
                 symbol,
-                {"max_leverage": self.default_leverage, "confidence_threshold": 0.70},
+                {
+                    "max_leverage": self.default_leverage,
+                    "confidence_threshold": 0.70
+                },
             )
 
             # Check basic requirements
             if proposed_leverage > asset_config["max_leverage"]:
                 return {
                     "approved": False,
-                    "reason": f'Leverage {proposed_leverage}x exceeds max {asset_config["max_leverage"]}x for {symbol}',
+                    "reason": (
+                        f'Leverage {proposed_leverage}x exceeds max '
+                        f'{asset_config["max_leverage"]}x for {symbol}'
+                    ),
                     "adjusted_leverage": asset_config["max_leverage"],
                 }
 
             if trade_confidence < asset_config["confidence_threshold"]:
                 return {
                     "approved": False,
-                    "reason": f'Confidence {trade_confidence*100:.1f}% below threshold {asset_config["confidence_threshold"]*100:.1f}% for {symbol}',
+                    "reason": (
+                        f'Confidence {trade_confidence*100:.1f}% below threshold '
+                        f'{asset_config["confidence_threshold"]*100:.1f}% for {symbol}'
+                    ),
                     "required_confidence": asset_config["confidence_threshold"],
                 }
 
@@ -379,7 +388,9 @@ CURRENT MARKET:
 - Distance to Liquidation: {risk_metrics['distance_to_liquidation_pct']:.2f}%
 
 RISK ANALYSIS:
-- Overall Risk Score: {risk_metrics['overall_risk_score']:.3f} ({risk_metrics['risk_level']})
+- Overall Risk Score: {risk_metrics['overall_risk_score']:.3f} (
+    {risk_metrics['risk_level']}
+)
 - Portfolio Impact: {risk_metrics['portfolio_impact_pct']:.1f}%
 - Liquidation Risk: {risk_metrics['liquidation_risk_score']:.3f}
 - Leverage Risk: {risk_metrics['leverage_risk_score']:.3f}
@@ -522,13 +533,15 @@ Should this aggressive position be approved with the proposed parameters?
             # Risk-based overrides
             if risk_metrics["overall_risk_score"] > 0.9:
                 print(
-                    f"[OVERRIDE] Rejection due to extreme risk score: {risk_metrics['overall_risk_score']:.3f}"
+                    f"[OVERRIDE] Rejection due to extreme risk score: "
+                    f"{risk_metrics['overall_risk_score']:.3f}"
                 )
                 return False
 
             if risk_metrics["distance_to_liquidation_pct"] < 2.0:
                 print(
-                    f"[OVERRIDE] Rejection due to liquidation proximity: {risk_metrics['distance_to_liquidation_pct']:.2f}%"
+                    f"[OVERRIDE] Rejection due to liquidation proximity: "
+                    f"{risk_metrics['distance_to_liquidation_pct']:.2f}%"
                 )
                 return False
 
@@ -553,9 +566,8 @@ Should this aggressive position be approved with the proposed parameters?
     def _display_assessment_result(self, result: Dict):
         """Display comprehensive assessment result"""
         print(f"\n{'='*80}")
-        print(
-            f"[ASSESSMENT RESULT] {'✅ APPROVED' if result['approved'] else '❌ REJECTED'}"
-        )
+        approved_symbol = '✅ APPROVED' if result['approved'] else '❌ REJECTED'
+        print(f"[ASSESSMENT RESULT] {approved_symbol}")
         print(f"{'='*80}")
 
         if result.get("error"):
@@ -566,22 +578,25 @@ Should this aggressive position be approved with the proposed parameters?
             f"[TRADE] {result.get('side', 'UNKNOWN')} {result.get('symbol', 'UNKNOWN')}"
         )
         print(
-            f"[LEVERAGE] {result.get('proposed_leverage', 0):.1f}x → {result.get('approved_leverage', 0):.1f}x"
+            f"[LEVERAGE] {result.get('proposed_leverage', 0):.1f}x → "
+            f"{result.get('approved_leverage', 0):.1f}x"
         )
         print(f"[SIZE] ${result.get('position_size_usd', 0):,.2f}")
 
         if result.get("current_price") and result.get("liquidation_price"):
             print(
-                f"[PRICES] Entry: ${result['current_price']:,.2f} | Liq: ${result['liquidation_price']:,.2f}"
+                f"[PRICES] Entry: ${result['current_price']:,.2f} | "
+                f"Liq: ${result['liquidation_price']:,.2f}"
             )
 
         risk_metrics = result.get("risk_metrics", {})
         if risk_metrics:
+            risk_score = risk_metrics.get('overall_risk_score', 0)
+            risk_level = risk_metrics.get('risk_level', 'UNKNOWN')
+            print(f"[RISK] Score: {risk_score:.3f} ({risk_level})")
             print(
-                f"[RISK] Score: {risk_metrics.get('overall_risk_score', 0):.3f} ({risk_metrics.get('risk_level', 'UNKNOWN')})"
-            )
-            print(
-                f"[RISK] Distance to Liq: {risk_metrics.get('distance_to_liquidation_pct', 0):.2f}%"
+                f"[RISK] Distance to Liq: "
+                f"{risk_metrics.get('distance_to_liquidation_pct', 0):.2f}%"
             )
 
         ai_confidence = result.get("ai_confidence", 0)

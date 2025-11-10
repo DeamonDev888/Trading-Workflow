@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Script to remove emojis from all agent files"""
 import os
-import re
 
 # Emoji replacement map
 EMOJI_MAP = {
@@ -51,7 +50,6 @@ EMOJI_MAP = {
     '💪': '[STRONG]',
     '🎊': '[CONFETTI]',
     '🌊': '[WAVE]',
-    '🎯': '[TARGET]',
     '🔮': '[CRYSTAL]',
     '🎲': '[DICE]',
     '🎁': '[GIFT]',
@@ -77,14 +75,6 @@ EMOJI_MAP = {
     '🌴': '[PALM]',
     '🌵': '[CACTUS]',
     '🌾': '[RICE]',
-    '🌾': '[WHEAT]',
-    '🌾': '[CEREAL]',
-    '🌾': '[CROP]',
-    '🌾': '[FIELD]',
-    '🌾': '[FARM]',
-    '🌾': '[AGRICULTURE]',
-    '🌾': '[FARMING]',
-    '🌾': '[AGRICULTURE]',
 }
 
 def fix_file(filepath):

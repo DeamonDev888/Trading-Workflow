@@ -21,7 +21,14 @@ from src.agents.iterative_subagent_manager import (
 from src.agents.liquidity_tracker import HyperLiquidLiquidityTracker
 from src.agents.strategy_library import PROVEN_STRATEGIES
 from src.agents.volatility_tracker import HyperLiquidVolatilityTracker
-from src.config import *
+from src.config import (
+    AI_MODEL,
+    AI_MAX_TOKENS,
+    AI_TEMPERATURE,
+    DATA_TIMEFRAME,
+    HYPERLIQUID_SYMBOLS,
+    MONITORED_TOKENS,
+)
 
 # Import HyperLiquid exchange manager for HyperLiquid-only trading
 try:

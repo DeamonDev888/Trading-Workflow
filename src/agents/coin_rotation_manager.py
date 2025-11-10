@@ -17,7 +17,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-
 from src.agents.persistent_agent_client import (
     PersistentAgentClient,
     TaskPriority,
@@ -264,7 +263,7 @@ class CoinRotationManager:
         """Evaluate current performance of monitored assets"""
         performance_scores = {}
 
-        for symbol, profile in self.monitored_items():
+        for symbol, profile in self.monitored_assets.items():
             if not profile.monitoring_active:
                 continue
 
@@ -374,7 +373,7 @@ class CoinRotationManager:
                     )
 
         # Identify assets to remove (monitored but not recommended or poor performance)
-        for symbol, profile in self.monitored_items().items():
+        for symbol, profile in self.monitored_assets.items():
             symbol_in_recommendations = symbol in recommended_symbols
             symbol_performance_ok = performance_scores.get(symbol, 0) > 0.3
 

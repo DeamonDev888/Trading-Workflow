@@ -1,40 +1,12 @@
-"""
-🌙 Deamon Dev's Groq Model Implementation
-Built with love by Deamon Dev 🚀
-"""
+"""Deamon Dev's Groq Model Implementation
 
-import time
+Built with love by Deamon Dev
+"""
 
 from groq import Groq
 from termcolor import cprint
 
-from .base_model import BaseModel, ModelResponse
-
-
-def safe_cprint(text, color):
-    """Safe print that handles Unicode encoding issues"""
-    try:
-        cprint(text, color)
-    except UnicodeEncodeError:
-        # Remove emojis and special characters for Windows compatibility
-        clean_text = (
-            text.replace("✨", "")
-            .replace("❌", "")
-            .replace("🌙", "")
-            .replace("🚀", "")
-            .replace("⚡", "")
-            .replace("💎", "")
-            .replace("📈", "")
-            .replace("📉", "")
-            .replace("🌟", "")
-            .replace("🤖", "")
-            .replace("🔥", "")
-            .replace("💰", "")
-            .replace("⭐", "")
-            .replace("🔑", "")
-        )
-        # Call cprint directly, not safe_cprint to avoid recursion
-        cprint(clean_text, color)
+from .base_model import BaseModel, ModelResponse, safe_cprint
 
 
 class GroqModel(BaseModel):

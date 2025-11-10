@@ -72,19 +72,13 @@ export class SecurityHeadersService {
     crossOriginEmbedderPolicy: false, // Désactivé pour compatibilité
 
     // Politique d'ouverture cross-origin
-    crossOriginOpenerPolicy: {
-      policy: 'same-origin' as any,
-    },
+    crossOriginOpenerPolicy: false,
 
     // Politique de ressource cross-origin
-    crossOriginResourcePolicy: {
-      policy: 'cross-origin' as any,
-    },
+    crossOriginResourcePolicy: false,
 
     // Contrôle du DNS prefetching
-    dnsPrefetchControl: {
-      allow: false as any,
-    },
+    dnsPrefetchControl: false,
 
     // Protection contre le clickjacking
     frameguard: {
@@ -277,7 +271,7 @@ export class SecurityHeadersService {
   static getTestConfig(): SecurityConfig {
     return {
       ...this.config,
-      contentSecurityPolicy: false, // Désactivé pour les tests
+      contentSecurityPolicy: { directives: { defaultSrc: ["'self'"] } }, // Config minimale pour les tests
       hsts: false as any,
       frameguard: { action: 'sameorigin' }, // Moins strict pour les tests
     };

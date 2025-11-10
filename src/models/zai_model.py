@@ -1,25 +1,13 @@
-"""
-🌙 Z.AI GLM-4.6 Model - Compatible Roo Code Implementation
+"""Z.AI GLM-4.6 Model - Compatible Roo Code Implementation
+
 GLM-4.6 fonctionne parfaitement dans Roo Code - cette implémentation est identique
 """
 
-import json
 from typing import Any, Dict, Optional
 
 from termcolor import cprint
 
-from .base_model import BaseModel
-
-
-def safe_cprint(text, color):
-    """Safe print that handles Unicode encoding issues"""
-    try:
-        cprint(text, color)
-    except UnicodeEncodeError:
-        clean_text = (
-            text.replace("✨", "").replace("❌", "").replace("🌙", "").replace("🚀")
-        )
-        cprint(clean_text, color)
+from .base_model import BaseModel, ModelResponse, safe_cprint
 
 
 # Import des SDKs - essayer OpenAI SDK d'abord (compatible Roo Code)

@@ -55,7 +55,8 @@ class BaseModel(ABC):
     def __init__(self, api_key: str, **kwargs):
         self.api_key = api_key
         self.client = None
-        self._model_type = None  # Attribut privé avec underscore
+        self._model_type = None
+        self.max_tokens = 2048  # Default max tokens
         self.initialize_client(**kwargs)
 
     @property

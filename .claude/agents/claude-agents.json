@@ -1,0 +1,19 @@
+{
+  "agents": [
+    "@claude-strategy-advisor.json",
+    "@claude-risk-advisor.json",
+    "@claude-funding-advisor.json",
+    "@claude-sentiment-analyzer.json"
+  ],
+  "system": {
+    "name": "NOVAQUOTE Trading System",
+    "description": "Multi-agent AI trading system for HyperLiquid perpetuals",
+    "version": "1.0.0"
+  },
+  "orchestration": {
+    "mode": "collaborative",
+    "consensus_threshold": 0.7,
+    "max_iterations": 3,
+    "parallel_execution": true
+  }
+}

@@ -1,146 +1,199 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Validation Page Configuration</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-        .success { background-color: #d4edda; border-color: #c3e6cb; }
-        .error { background-color: #f8d7da; border-color: #f5c6cb; }
-        .pending { background-color: #fff3cd; border-color: #ffeaa7; }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .test {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .pending {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🔍 Validation de la Page Configuration</h1>
 
     <div id="tests-container">
-        <div class="test pending" id="test-frontend">Test: Frontend accessible...</div>
-        <div class="test pending" id="test-backend">Test: Backend API accessible...</div>
-        <div class="test pending" id="test-backtest-api">Test: API Backtests fonctionnelle...</div>
-        <div class="test pending" id="test-title">Test: Titre modifié correctement...</div>
-        <div class="test pending" id="test-functions">Test: Fonctions JavaScript présentes...</div>
-        <div class="test pending" id="test-content">Test: Contenu système présent...</div>
+      <div class="test pending" id="test-frontend">
+        Test: Frontend accessible...
+      </div>
+      <div class="test pending" id="test-backend">
+        Test: Backend API accessible...
+      </div>
+      <div class="test pending" id="test-backtest-api">
+        Test: API Backtests fonctionnelle...
+      </div>
+      <div class="test pending" id="test-title">
+        Test: Titre modifié correctement...
+      </div>
+      <div class="test pending" id="test-functions">
+        Test: Fonctions JavaScript présentes...
+      </div>
+      <div class="test pending" id="test-content">
+        Test: Contenu système présent...
+      </div>
     </div>
 
-    <div style="margin-top: 30px;">
-        <h3>Résultats de validation:</h3>
-        <div id="validation-results"></div>
+    <div style="margin-top: 30px">
+      <h3>Résultats de validation:</h3>
+      <div id="validation-results"></div>
     </div>
 
     <script>
-        async function runTests() {
-            let results = [];
+      async function runTests() {
+        let results = [];
 
-            // Test 1: Frontend accessible
-            try {
-                const response = await fetch('http://localhost:9001/config.html');
-                if (response.ok) {
-                    document.getElementById('test-frontend').className = 'test success';
-                    document.getElementById('test-frontend').innerHTML = '✅ Frontend accessible (HTTP 200)';
-                    results.push('Frontend: OK');
-                } else {
-                    throw new Error('HTTP ' + response.status);
-                }
-            } catch (error) {
-                document.getElementById('test-frontend').className = 'test error';
-                document.getElementById('test-frontend').innerHTML = '❌ Frontend inaccessible: ' + error.message;
-                results.push('Frontend: ERROR');
-            }
+        // Test 1: Frontend accessible
+        try {
+          const response = await fetch('http://localhost:9001/config.html');
+          if (response.ok) {
+            document.getElementById('test-frontend').className = 'test success';
+            document.getElementById('test-frontend').innerHTML =
+              '✅ Frontend accessible (HTTP 200)';
+            results.push('Frontend: OK');
+          } else {
+            throw new Error('HTTP ' + response.status);
+          }
+        } catch (error) {
+          document.getElementById('test-frontend').className = 'test error';
+          document.getElementById('test-frontend').innerHTML =
+            '❌ Frontend inaccessible: ' + error.message;
+          results.push('Frontend: ERROR');
+        }
 
-            // Test 2: Backend API accessible
-            try {
-                const response = await fetch('http://localhost:7000/api/health');
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('test-backend').className = 'test success';
-                    document.getElementById('test-backend').innerHTML = '✅ Backend API accessible - Status: ' + data.status;
-                    results.push('Backend API: OK');
-                } else {
-                    throw new Error('HTTP ' + response.status);
-                }
-            } catch (error) {
-                document.getElementById('test-backend').className = 'test error';
-                document.getElementById('test-backend').innerHTML = '❌ Backend API inaccessible: ' + error.message;
-                results.push('Backend API: ERROR');
-            }
+        // Test 2: Backend API accessible
+        try {
+          const response = await fetch('http://localhost:7000/api/health');
+          if (response.ok) {
+            const data = await response.json();
+            document.getElementById('test-backend').className = 'test success';
+            document.getElementById('test-backend').innerHTML =
+              '✅ Backend API accessible - Status: ' + data.status;
+            results.push('Backend API: OK');
+          } else {
+            throw new Error('HTTP ' + response.status);
+          }
+        } catch (error) {
+          document.getElementById('test-backend').className = 'test error';
+          document.getElementById('test-backend').innerHTML =
+            '❌ Backend API inaccessible: ' + error.message;
+          results.push('Backend API: ERROR');
+        }
 
-            // Test 3: API Backtests fonctionnelle
-            try {
-                const response = await fetch('http://localhost:7000/api/backtests');
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('test-backtest-api').className = 'test success';
-                    document.getElementById('test-backtest-api').innerHTML = '✅ API Backtests fonctionnelle - ' + data.total_count + ' backtests trouvés';
-                    results.push('API Backtests: OK');
-                } else {
-                    throw new Error('HTTP ' + response.status);
-                }
-            } catch (error) {
-                document.getElementById('test-backtest-api').className = 'test error';
-                document.getElementById('test-backtest-api').innerHTML = '❌ API Backtests inaccessible: ' + error.message;
-                results.push('API Backtests: ERROR');
-            }
+        // Test 3: API Backtests fonctionnelle
+        try {
+          const response = await fetch('http://localhost:7000/api/backtests');
+          if (response.ok) {
+            const data = await response.json();
+            document.getElementById('test-backtest-api').className =
+              'test success';
+            document.getElementById('test-backtest-api').innerHTML =
+              '✅ API Backtests fonctionnelle - ' +
+              data.total_count +
+              ' backtests trouvés';
+            results.push('API Backtests: OK');
+          } else {
+            throw new Error('HTTP ' + response.status);
+          }
+        } catch (error) {
+          document.getElementById('test-backtest-api').className = 'test error';
+          document.getElementById('test-backtest-api').innerHTML =
+            '❌ API Backtests inaccessible: ' + error.message;
+          results.push('API Backtests: ERROR');
+        }
 
-            // Test 4: Vérifier le contenu HTML
-            try {
-                const response = await fetch('http://localhost:9001/config.html');
-                const html = await response.text();
+        // Test 4: Vérifier le contenu HTML
+        try {
+          const response = await fetch('http://localhost:9001/config.html');
+          const html = await response.text();
 
-                // Vérifier que le titre a été modifié
-                if (html.includes('État du Système</h2>') && !html.includes('État du Système Backtest</h2>')) {
-                    document.getElementById('test-title').className = 'test success';
-                    document.getElementById('test-title').innerHTML = '✅ Titre modifié correctement (plus de "Backtest")';
-                    results.push('Titre: OK');
-                } else {
-                    document.getElementById('test-title').className = 'test error';
-                    document.getElementById('test-title').innerHTML = '❌ Titre non modifié correctement';
-                    results.push('Titre: ERROR');
-                }
+          // Vérifier que le titre a été modifié
+          if (
+            html.includes('État du Système</h2>') &&
+            !html.includes('État du Système Backtest</h2>')
+          ) {
+            document.getElementById('test-title').className = 'test success';
+            document.getElementById('test-title').innerHTML =
+              '✅ Titre modifié correctement (plus de "Backtest")';
+            results.push('Titre: OK');
+          } else {
+            document.getElementById('test-title').className = 'test error';
+            document.getElementById('test-title').innerHTML =
+              '❌ Titre non modifié correctement';
+            results.push('Titre: ERROR');
+          }
 
-                // Vérifier que les fonctions JavaScript sont présentes
-                if (html.includes('refreshSystemStatus') && html.includes('testConnections')) {
-                    document.getElementById('test-functions').className = 'test success';
-                    document.getElementById('test-functions').innerHTML = '✅ Fonctions JavaScript présentes';
-                    results.push('Fonctions JS: OK');
-                } else {
-                    document.getElementById('test-functions').className = 'test error';
-                    document.getElementById('test-functions').innerHTML = '❌ Fonctions JavaScript manquantes';
-                    results.push('Fonctions JS: ERROR');
-                }
+          // Vérifier que les fonctions JavaScript sont présentes
+          if (
+            html.includes('refreshSystemStatus') &&
+            html.includes('testConnections')
+          ) {
+            document.getElementById('test-functions').className =
+              'test success';
+            document.getElementById('test-functions').innerHTML =
+              '✅ Fonctions JavaScript présentes';
+            results.push('Fonctions JS: OK');
+          } else {
+            document.getElementById('test-functions').className = 'test error';
+            document.getElementById('test-functions').innerHTML =
+              '❌ Fonctions JavaScript manquantes';
+            results.push('Fonctions JS: ERROR');
+          }
 
-                // Vérifier que le contenu système est présent
-                if (html.includes('system-overview') && html.includes('status-grid')) {
-                    document.getElementById('test-content').className = 'test success';
-                    document.getElementById('test-content').innerHTML = '✅ Contenu système amélioré présent';
-                    results.push('Contenu système: OK');
-                } else {
-                    document.getElementById('test-content').className = 'test error';
-                    document.getElementById('test-content').innerHTML = '❌ Contenu système manquant';
-                    results.push('Contenu système: ERROR');
-                }
+          // Vérifier que le contenu système est présent
+          if (
+            html.includes('system-overview') &&
+            html.includes('status-grid')
+          ) {
+            document.getElementById('test-content').className = 'test success';
+            document.getElementById('test-content').innerHTML =
+              '✅ Contenu système amélioré présent';
+            results.push('Contenu système: OK');
+          } else {
+            document.getElementById('test-content').className = 'test error';
+            document.getElementById('test-content').innerHTML =
+              '❌ Contenu système manquant';
+            results.push('Contenu système: ERROR');
+          }
+        } catch (error) {
+          document.getElementById('test-title').className = 'test error';
+          document.getElementById('test-title').innerHTML =
+            '❌ Erreur lors de la vérification du contenu: ' + error.message;
+          results.push('Contenu: ERROR');
+        }
 
-            } catch (error) {
-                document.getElementById('test-title').className = 'test error';
-                document.getElementById('test-title').innerHTML = '❌ Erreur lors de la vérification du contenu: ' + error.message;
-                results.push('Contenu: ERROR');
-            }
+        // Afficher le résumé
+        const successCount = results.filter((r) => r.includes('OK')).length;
+        const totalCount = results.length;
 
-            // Afficher le résumé
-            const successCount = results.filter(r => r.includes('OK')).length;
-            const totalCount = results.length;
-
-            document.getElementById('validation-results').innerHTML = `
+        document.getElementById('validation-results').innerHTML = `
                 <div style="padding: 15px; background: ${successCount === totalCount ? '#d4edda' : '#fff3cd'}; border-radius: 5px;">
                     <h4>🎯 Résultat: ${successCount}/${totalCount} tests réussis</h4>
-                    <ul>${results.map(r => `<li>${r}</li>`).join('')}</ul>
+                    <ul>${results.map((r) => `<li>${r}</li>`).join('')}</ul>
                     <p><strong>Page Configuration: ${successCount === totalCount ? '✅ VALIDÉE' : '⚠️ PARTIELLEMENT VALIDÉE'}</strong></p>
                     <p><a href="http://localhost:9001/config.html" target="_blank">🔗 Ouvrir la page configuration</a></p>
                 </div>
             `;
-        }
+      }
 
-        // Lancer les tests au chargement de la page
-        window.onload = runTests;
+      // Lancer les tests au chargement de la page
+      window.onload = runTests;
     </script>
-</body>
+  </body>
 </html>

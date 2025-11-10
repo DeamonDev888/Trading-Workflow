@@ -1,31 +1,12 @@
-"""
-🌙 Deamon Dev's Claude Model Implementation
-Built with love by Deamon Dev 🚀
+"""Deamon Dev's Claude Model Implementation
+
+Built with love by Deamon Dev
 """
 
 from anthropic import Anthropic
 from termcolor import cprint
 
-from .base_model import BaseModel, ModelResponse
-
-
-def safe_cprint(text, color):
-    """Safe print that handles Unicode encoding issues"""
-    try:
-        cprint(text, color)
-    except UnicodeEncodeError:
-        # Remove emojis and special characters for Windows compatibility
-        clean_text = (
-            text.replace("✨", "")
-            .replace("❌", "")
-            .replace("🌙", "")
-            .replace("🚀", "")
-            .replace("⚡", "")
-            .replace("💎", "")
-            .replace("📈", "")
-            .replace("📉", "")
-        )
-        cprint(clean_text, color)
+from .base_model import BaseModel, ModelResponse, safe_cprint
 
 
 class ClaudeModel(BaseModel):
@@ -83,7 +64,7 @@ class ClaudeModel(BaseModel):
             )
 
         except Exception as e:
-            cprint(f"❌ Claude generation error: {str(e)}", "red")
+            safe_cprint(f"❌ Claude generation error: {str(e)}", "red")
             raise
 
     def is_available(self) -> bool:
