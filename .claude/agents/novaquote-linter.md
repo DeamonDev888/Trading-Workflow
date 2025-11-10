@@ -67,32 +67,44 @@ mypy src/ --ignore-missing-imports
 
 ### Phase 3: Correction Automatisée
 
-#### Scripts disponibles
+#### Scripts NovaQuote DÉDIÉS SPÉCIFIQUEMENT
 
-- `scripts/CLAUDE_AUTO_LINTER.py` : Linter automatique
-- `scripts/auto_bug_fixer_cli.py` : Fix automatique des bugs
-- `scripts/lint-format-py.py` : Lint et format Python
-- `scripts/fix_emojis.py` : Correction des emojis
-- `scripts/CLAUDE_CODE_SUBAGENT.py` : Subagent Claude Code
+- `scripts/novaquote_scan_novaquote_project.py` ⭐ **NOUVEAU PRINCIPAL** - Scanner 100% DÉDIÉ au projet NovaQuote Trading
+- `scripts/novaquote_detect_fix_critical_errors.py` - Correction ciblée erreurs critiques NovaQuote
+- `scripts/novaquote_detect_typescript_errors.py` - Détecteur TypeScript pour architecture NovaQuote
+- `scripts/novaquote_detect_fix_python_errors.py` - Détecteur Python pour agents NovaQuote
+- `scripts/novaquote_detect_critical_errors.py` - Détecteur erreurs critiques écosystème NovaQuote
+- `scripts/novaquote_detect_all_project_errors.py` - Scan complet projet NovaQuote
+- `scripts/novaquote_detect_auto_errors.py` - Détection automatique patterns NovaQuote
+- `scripts/novaquote_detect_python_format_errors.py` - Formatting Python pour conventions NovaQuote
+- `scripts/novaquote_detect_intelligent_errors.py` - Analyse intelligente écosystème NovaQuote
+- `scripts/novaquote_detect_clear_errors.py` - Reporting clair projet NovaQuote
 
 #### Stratégies de correction
 
-1. **Erreurs TypeScript** :
-   - Correction automatique des types manquants
-   - Import manquants
-   - Erreurs de syntaxe
-   - Propriétés manquantes
+1. **Agents NovaQuote** :
+   - Validation structure agents (__init__, run, execute_trade)
+   - Configuration agents (self.config, risk management)
+   - Patterns NovaQuote (error handling, logging spécifique)
+   - Imports internes NovaQuote (agents, algorithms, models)
 
-2. **Erreurs Python** :
-   - Formattage avec black
-   - Tri des imports avec isort
-   - Correction des violations flake8
-   - Ajout de type hints
+2. **Algorithmes Trading** :
+   - Risk management (stop_loss, position sizing)
+   - Performance tracking (latency, execution time)
+   - Trading patterns (funding rates, arbitrage logic)
+   - Validation HyperLiquid integration
 
-3. **Erreurs de formatting** :
-   - Application Prettier sur TypeScript/JavaScript
-   - Application Black sur Python
-   - Normalisation des line endings
+3. **Intégrations Spécifiques** :
+   - Security API keys (encryption, environment variables)
+   - WebSocket handling (reconnect logic, error recovery)
+   - Signature validation (HL signing, private key handling)
+   - Wallet security (permissions, encryption)
+
+4. **Architecture NovaQuote** :
+   - Dépendances internes (src/, patterns imports)
+   - Conventions de code (logging, configuration, error handling)
+   - Performance trading (low-latency, memory efficiency)
+   - Documentation (patterns NovaQuote, interfaces standards)
 
 ### Phase 4: Validation et Reporting
 
