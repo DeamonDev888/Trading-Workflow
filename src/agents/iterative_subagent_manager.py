@@ -348,11 +348,11 @@ class IterativeSubagentManager:
                 "claude",
                 "--dangerously-skip-permissions",
                 "--agent",
-                "claude-strategy-advisor",
+                "Deamon-strategy-advisor",
                 full_prompt,
             ]
 
-            print(f"[SUBAGENT] Calling claude-strategy-advisor (iteration {iteration})")
+            print(f"[SUBAGENT] Calling Deamon-strategy-advisor (iteration {iteration})")
 
             result = subprocess.run(
                 cmd,

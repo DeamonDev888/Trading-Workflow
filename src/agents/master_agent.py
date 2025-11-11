@@ -225,9 +225,6 @@ class MasterAgent:
                 "\n[CHAT] [4/4] SENTIMENT AGENT - Analyse sentiment...",
                 "magenta",
                 attrs=["bold"],
-            )[MASK] [4/4] SENTIMENT AGENT - Analyse sentiment...",
-                "magenta",
-                attrs=["bold"],
             )
             sentiment_result = await self.execute_agent_with_backtest(
                 "sentiment_agent",

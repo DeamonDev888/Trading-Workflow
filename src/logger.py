@@ -474,7 +474,7 @@ def get_simple_logger(name: str) -> logging.Logger:
     return logger
 
 
-print("🚀 NOVAQUOTE EXPERT LOGGING SYSTEM - 100% Visibility Platform Initialized")
+print("[INIT] NOVAQUOTE EXPERT LOGGING SYSTEM - 100% Visibility Platform Initialized")
 print(
-    "📊 Features: Structured JSON | Real-time Monitoring | Agent Tracking | Trade Logging | Risk Management"
+    "[FEATURES] Structured JSON | Real-time Monitoring | Agent Tracking | Trade Logging | Risk Management"
 )

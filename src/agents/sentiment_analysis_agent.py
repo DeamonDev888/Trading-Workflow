@@ -386,7 +386,7 @@ class SentimentAnalysisAgent:
         import subprocess
 import json
 
-        full_prompt = f"""Use the claude-sentiment-analyzer subagent to analyze this sentiment data:
+        full_prompt = f"""Use the Deamon-sentiment-analyzer subagent to analyze this sentiment data:
 
 {prompt}
 
@@ -396,12 +396,12 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             "claude",
             "--dangerously-skip-permissions",
             "--agent",
-            "claude-sentiment-analyzer",
+            "Deamon-sentiment-analyzer",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: claude-sentiment-analyzer",
+            f"[INFO] Calling sub-agent: Deamon-sentiment-analyzer",
             "cyan",
         )
 

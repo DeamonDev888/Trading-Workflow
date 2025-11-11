@@ -7,12 +7,12 @@ Built with love by Moon Dev 🚀
 from . import signing
 from .client import HyperliquidClient
 from .types import AssetInfo, Candle, L2Book, Order, Position, Trade
-from .websocket import HyperliquidWebSocket
+# from .websocket import HyperliquidWebSocket  # TEMPORARILY DISABLED - syntax errors
 
 __version__ = "1.0.0"
 __all__ = [
     "HyperliquidClient",
-    "HyperliquidWebSocket",
+    # "HyperliquidWebSocket",  # TEMPORARILY DISABLED
     "signing",
     "AssetInfo",
     "Order",

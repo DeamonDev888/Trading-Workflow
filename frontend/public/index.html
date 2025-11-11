@@ -1870,7 +1870,8 @@
       const apiClient = new TradingAPIClient();
 
       // ====== AGENT CONTROL SYSTEM ======
-      const agentStates = {
+      // Global agent states - accessible to all functions
+      window.agentStates = {
         risk: { active: true, status: 'ACTIVE', pending: false },
         strategy: { active: true, status: 'ACTIVE', pending: false },
         funding: { active: true, status: 'ACTIVE', pending: false },
@@ -1881,7 +1882,7 @@
       async function toggleAgent(agentType, event) {
         event.stopPropagation(); // Prevent card click event
 
-        const agent = agentStates[agentType];
+        const agent = window.agentStates[agentType];
         if (agent.pending) return; // Prevent rapid clicking
 
         // Get elements
@@ -1982,7 +1983,7 @@
 
         // Update all agents to pending state first
         agentTypes.forEach((agentType) => {
-          if (agentStates[agentType].active !== start) {
+          if (window.agentStates[agentType].active !== start) {
             const toggle = document.getElementById(`${agentType}-agent-toggle`);
             const status = document.getElementById(`${agentType}-agent-status`);
             const card = document.getElementById(`${agentType}-agent-card`);
@@ -2018,10 +2019,10 @@
           if (result.success) {
             // Update all agent states
             agentTypes.forEach((agentType) => {
-              const wasActive = agentStates[agentType].active;
-              agentStates[agentType].active = start;
-              agentStates[agentType].status = start ? 'ACTIVE' : 'INACTIVE';
-              agentStates[agentType].pending = false;
+              const wasActive = window.agentStates[agentType].active;
+              window.agentStates[agentType].active = start;
+              window.agentStates[agentType].status = start ? 'ACTIVE' : 'INACTIVE';
+              window.agentStates[agentType].pending = false;
 
               if (wasActive !== start) {
                 // Update UI
@@ -2036,7 +2037,7 @@
 
                 toggle.classList.remove('pending');
                 toggle.classList.add(start ? 'active' : 'inactive');
-                status.textContent = agentStates[agentType].status;
+                status.textContent = window.agentStates[agentType].status;
                 status.classList.remove('pending');
                 status.classList.add(start ? 'active' : 'inactive');
                 card.classList.remove('agent-pending');
@@ -2071,18 +2072,18 @@
 
             toggle.classList.remove('pending');
             toggle.classList.add(
-              agentStates[agentType].active ? 'active' : 'inactive'
+              window.agentStates[agentType].active ? 'active' : 'inactive'
             );
-            status.textContent = agentStates[agentType].status;
+            status.textContent = window.agentStates[agentType].status;
             status.classList.remove('pending');
             status.classList.add(
-              agentStates[agentType].active ? 'active' : 'inactive'
+              window.agentStates[agentType].active ? 'active' : 'inactive'
             );
             card.classList.remove('agent-pending');
             card.classList.add(
-              agentStates[agentType].active ? 'agent-online' : 'agent-offline'
+              window.agentStates[agentType].active ? 'agent-online' : 'agent-offline'
             );
-            agentStates[agentType].pending = false;
+            window.agentStates[agentType].pending = false;
           });
 
           showNotification(
@@ -2118,14 +2119,23 @@
             `${agentType}-agent-response`
           );
 
-          if (data.confidence && confidenceEl) {
+          // Vérifier que data existe et que les valeurs sont valides
+          if (data && data.confidence && typeof data.confidence === 'number' && !isNaN(data.confidence) && confidenceEl) {
             confidenceEl.textContent = `${data.confidence}%`;
+          } else if (confidenceEl) {
+            confidenceEl.textContent = '--';
           }
-          if (data.llm_calls && callsEl) {
+
+          if (data && data.llm_calls && typeof data.llm_calls === 'number' && !isNaN(data.llm_calls) && callsEl) {
             callsEl.textContent = data.llm_calls;
+          } else if (callsEl) {
+            callsEl.textContent = '--';
           }
-          if (data.response_time && responseEl) {
+
+          if (data && data.response_time && typeof data.response_time === 'number' && !isNaN(data.response_time) && responseEl) {
             responseEl.textContent = `${data.response_time}ms`;
+          } else if (responseEl) {
+            responseEl.textContent = '--';
           }
         } catch (error) {
           console.error(
@@ -2138,6 +2148,8 @@
       // Update master control panel
       function updateMasterControlPanel() {
         try {
+          // Access global agentStates
+          const agentStates = window.agentStates || {};
           const activeCount = Object.values(agentStates).filter(
             (agent) => agent.active
           ).length;
@@ -2269,12 +2281,12 @@
                                 ${inference.input_data?.task || 'Processing request...'}
                             </div>
                             <div class="inference-confidence ${confidenceClass}">
-                                ${Math.round(confidence * 100)}%
+                                ${confidence && !isNaN(confidence) ? Math.round(confidence * 100) + '%' : '--'}
                             </div>
                         </div>
                         <div class="inference-details">
                             <span class="inference-time">${timeAgo}</span>
-                            <span class="inference-duration">${Math.round(inference.processing_time)}ms</span>
+                            <span class="inference-duration">${inference.processing_time && !isNaN(inference.processing_time) ? Math.round(inference.processing_time) + 'ms' : '--'}</span>
                             <span class="inference-status">${inference.success ? 'Success' : 'Error'}</span>
                         </div>
                         ${
@@ -2357,22 +2369,22 @@
 
           if (result.success && result.data) {
             Object.keys(result.data).forEach((agentType) => {
-              if (agentStates[agentType]) {
+              if (window.agentStates[agentType]) {
                 const serverActive = result.data[agentType].active;
-                const localActive = agentStates[agentType].active;
+                const localActive = window.agentStates[agentType].active;
 
                 // Update if states differ
                 if (
                   serverActive !== localActive &&
-                  !agentStates[agentType].pending
+                  !window.agentStates[agentType].pending
                 ) {
                   console.log(
                     `[STATUS] ${getAgentDisplayName(agentType)} state mismatch, updating...`
                   );
                   // Update to match server state
                   updateAgentUI(agentType, serverActive);
-                  agentStates[agentType].active = serverActive;
-                  agentStates[agentType].status = serverActive
+                  window.agentStates[agentType].active = serverActive;
+                  window.agentStates[agentType].status = serverActive
                     ? 'ACTIVE'
                     : 'INACTIVE';
                 }

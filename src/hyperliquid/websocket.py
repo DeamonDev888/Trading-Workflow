@@ -79,13 +79,12 @@ class HyperliquidWebSocket:
             callback: Callback function
         """
         if event in self.callbacks:
-        self.callbacks[event].append(callback)
+            self.callbacks[event].append(callback)
         else:
             cprint(f"⚠️ Unknown event type: {event}", "yellow")
 
     def off(self, event: str, callback: Callable):
-
-    """
+        """
         Unregister an event callback
 
         Args:
@@ -93,8 +92,8 @@ class HyperliquidWebSocket:
             callback: Callback function to remove
         """
         if event in self.callbacks:
-        try:
-        self.callbacks[event].remove(callback)
+            try:
+                self.callbacks[event].remove(callback)
             except ValueError:
                 pass
 
@@ -107,19 +106,19 @@ class HyperliquidWebSocket:
             data: Event data
         """
         if event in self.callbacks:
-        for callback in self.callbacks[event]:
+            for callback in self.callbacks[event]:
                 try:
-                if asyncio.iscoroutinefunction(callback):
-                    await callback(data)
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(data)
                     else:
                         callback(data)
                 except Exception as e:
-                    cprint(f"❌ Error in {event} callback: {str(e)}", "red")
+                    cprint(f"[ERROR] Error in {event} callback: {str(e)}", "red")
 
     async def connect(self):
         """Connect to the WebSocket"""
         try:
-        cprint("🔌 Connecting to Hyperliquid WebSocket...", "cyan")
+            cprint("[INFO] Connecting to Hyperliquid WebSocket...", "cyan")
 
             self.websocket = await websockets.connect(
                 self.base_url,
@@ -145,18 +144,15 @@ class HyperliquidWebSocket:
         self.connected = False
 
         if self._receive_task:
-
-        self._receive_task.cancel()
+            self._receive_task.cancel()
         if self._heartbeat_task:
-        self._heartbeat_task.cancel()
+            self._heartbeat_task.cancel()
         if self._reconnect_task:
-        self._reconnect_task.cancel()
+            self._reconnect_task.cancel()
 
         if self.websocket:
-
-        try:
-
-        await self.websocket.close()
+            try:
+                await self.websocket.close()
             except Exception:
                 pass
 
@@ -166,61 +162,57 @@ class HyperliquidWebSocket:
     async def _handle_reconnect(self):
         """Handle reconnection logic"""
         if self.reconnect_count >= self.max_reconnects:
-        cprint(f"❌ Max reconnect attempts ({self.max_reconnects}) reached", "red")
+            cprint(f"[ERROR] Max reconnect attempts ({self.max_reconnects}) reached", "red")
             return
 
         self.reconnect_count += 1
         cprint(
-          f"🔄 Reconnecting in {self.reconnect_delay}s (attempt {self.reconnect_count})",
+            f"[INFO] Reconnecting in {self.reconnect_delay}s (attempt {self.reconnect_count})",
             "yellow",
         )
 
         await asyncio.sleep(self.reconnect_delay)
 
         if not self._reconnect_task or self._reconnect_task.done():
-
-        self._reconnect_task = asyncio.create_task(self.connect())
+            self._reconnect_task = asyncio.create_task(self.connect())
 
     async def _receive_loop(self):
         """Main receive loop for WebSocket messages"""
         try:
-        while self.connected and self.websocket:
+            while self.connected and self.websocket:
                 try:
-                message = await self.websocket.recv()
+                    message = await self.websocket.recv()
                     await self._handle_message(message)
 
                 except ConnectionClosedError:
-                    cprint("🔌 WebSocket connection closed", "yellow")
+                    cprint("[INFO] WebSocket connection closed", "yellow")
                     break
 
                 except WebSocketException as e:
-                    cprint(f"❌ WebSocket error: {str(e)}", "red")
+                    cprint(f"[ERROR] WebSocket error: {str(e)}", "red")
                     break
 
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            cprint(f"❌ Receive loop error: {str(e)}", "red")
+            cprint(f"[ERROR] Receive loop error: {str(e)}", "red")
 
         if self.connected:
-
-        self.connected = False
+            self.connected = False
             await self._emit("disconnected")
             await self._handle_reconnect()
 
     async def _heartbeat_loop(self):
         """Send periodic heartbeat messages"""
         try:
-        while self.connected:
+            while self.connected:
                 await asyncio.sleep(30)  # Send heartbeat every 30 seconds
 
                 if self.websocket and self.connected:
-
-                try:
-
-                await self.websocket.ping()
+                    try:
+                        await self.websocket.ping()
                     except Exception as e:
-                        cprint(f"❌ Heartbeat failed: {str(e)}", "red")
+                        cprint(f"[ERROR] Heartbeat failed: {str(e)}", "red")
                         break
 
         except asyncio.CancelledError:
@@ -234,16 +226,14 @@ class HyperliquidWebSocket:
             message: Raw message string
         """
         try:
-        data = json.loads(message)
+            data = json.loads(message)
 
             if "channel" in data:
-
-            channel = data["channel"]
+                channel = data["channel"]
                 payload = data.get("data", {})
 
                 if channel == "trades":
-
-                await self._handle_trades(payload)
+                    await self._handle_trades(payload)
                 elif channel == "l2Book":
                     await self._handle_l2_book(payload)
                 elif channel == "orderUpdates":
@@ -266,13 +256,13 @@ class HyperliquidWebSocket:
     async def _handle_trades(self, data: Dict[str, Any]):
         """Handle trade updates"""
         try:
-        coin = data.get("coin", "")
+            coin = data.get("coin", "")
             trades_data = data.get("trades", [])
 
             trades = []
             for trade_data in trades_data:
                 if isinstance(trade_data, dict):
-                trade = Trade.from_dict(trade_data)
+                    trade = Trade.from_dict(trade_data)
                     trades.append(trade)
 
             await self._emit("trade", {"coin": coin, "trades": trades})

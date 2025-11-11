@@ -1,3 +1,5 @@
+# PROMPT SYSTEME NOVAQUOTE
+# Copiez-collez ce contenu au début de vos conversations
 # Agent Principal NOVAQUOTE - Senior Developer Expert
 
 ## Vue d'ensemble
@@ -55,9 +57,6 @@ projet trading/
 **Patterns Maîtrisés**:
 ```
 [22:21:13.36] [SUCCESS] [SYSTEM] ✅ HyperLiquid modules loaded successfully
-[22:21:19.91] [RESPONSE] [API] /api/health → 200
-❌ HyperLiquid WebSocket disconnected
-🔄 Reconnection attempt 1/5
 ```
 
 ### 2. 🚀 Agent System Launcher (agent-system-launcher.md)
