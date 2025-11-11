@@ -11,6 +11,113 @@ L'Agent Maître Système NOVAQUOTE est l'agent spécialiste pour le lancement et
 
 **IMPORTANT**: Cet agent doit IMPÉRATIVEMENT corriger le code source pour rendre tout AUTOMATIQUE, pas juste surveiller. Il doit modifier les fichiers pour que le système fonctionne parfaitement sans intervention manuelle.
 
+## ⚡ PROTOCOLE SIMPLIFIÉ - run.ts GESTIONNAIRE PRINCIPAL ⚡
+
+**RÔLE DE L'AGENT**: Simple wrapper autour de `run.ts` - NE PAS faire de nettoyage manuel !
+
+### SÉQUENCE EXACTE:
+
+#### 1. APPELER run.ts AVEC AUTO-CLEANUP
+```bash
+ts-node run.ts start
+```
+
+**run.ts gère TOUT automatiquement:**
+- ✅ Kill des ports 7000/9001 s'ils sont occupés (auto-kill intégré)
+- ✅ Diagnostic du système
+- ✅ Lancement des services
+- ✅ Health checks
+- ✅ Monitoring
+
+#### 2. MONITORING PASSIF
+- Surveiller la sortie de run.ts
+- Vérifier l'état final
+- Rapporter les résultats
+
+#### 3. STATUS REPORT
+- État des services (7000, 9001, 7001)
+- URL d'accès
+- Problèmes éventuels
+
+**❌ INTERDICTIONS ABSOLUES:**
+- ❌ NE PAS lire de fichiers lengthy
+- ❌ NE PAS faire de nettoyage manuel des ports
+- ❌ NE PAS utiliser netstat/kill/etc. manuellement
+- ❌ NE PAS诊断 complexes
+
+**✅ SEULE ACTION:**
+- ✅ APPELER `ts-node run.ts start`
+- ✅ MONITORER la sortie
+- ✅ RAPPORTER l'état
+
+**TOUT LE TRAVAIL EST FAIT PAR run.ts - L'AGENT EST UN SIMPLE WRAPPER !**
+
+### COMMANDES run.ts DISPONIBLES:
+
+```bash
+# ACTIONS PRINCIPALES:
+ts-node run.ts start          # Lancer le système (avec auto-kill ports 7000/9001)
+ts-node run.ts stop           # Arrêter tous les services proprement
+ts-node run.ts restart        # Redémarrer le système (stop + start)
+ts-node run.ts test           # Tests de diagnostic
+ts-node run.ts db             # Initialiser la base de données SQL
+ts-node run.ts database       # Alias pour db (même fonction)
+
+# AVEC ARGUMENTS:
+ts-node run.ts start --verbose    # Lancer avec logs détaillés
+ts-node run.ts start --debug      # Lancer en mode debug complet
+ts-node run.ts start -v           # Version courte de --verbose
+ts-node run.ts start -d           # Version courte de --debug
+ts-node run.ts --help             # Afficher l'aide complète
+ts-node run.ts --version          # Afficher la version v8.0
+ts-node run.ts --test             # Tests système
+```
+
+### ARGUMENTS POSSIBLES:
+
+**FLAGS GLOBAUX:**
+- `--help` ou `-h`: Affiche l'aide complète (actions, options, exemples)
+- `--version`: Affiche la version du launcher (v8.0)
+- `--verbose` ou `-v`: Active les logs détaillés (recommandé pour debugging)
+- `--debug` ou `-d`: Active le mode debug (stack traces, logs complets)
+- `--test`: Lance les tests de diagnostic système
+
+**WORKFLOW RECOMMANDÉ:**
+1. **Database**: `ts-node run.ts db` (initialiser la DB SQL)
+2. **Diagnostic**: `ts-node run.ts test` (vérifie tout avant)
+3. **Lancement**: `ts-node run.ts start --verbose` (avec logs)
+4. **Monitoring**: Surveiller les URLs http://localhost:7000/9001
+5. **Arrêt**: `ts-node run.ts stop` (arrêt propre)
+
+**FONCTIONNALITÉS INTÉGRÉES:**
+- ⚡ Auto-kill des ports occupés (7000, 9001)
+- 🔍 Diagnostic complet (fichiers, dépendances, Python)
+- 📊 Health checks automatiques
+- 🎯 HyperLiquid API + WebSocket
+- 🤖 Auto-démarrage agents Python
+- 🗄️ **Database SQL SQLite intégrée** avec 4 tables optimisées
+
+**BASE DE DONNÉES INTÉGRÉE:**
+
+**Tables Créées:**
+- `ohlcv_data` → Données de marché OHLCV (prix, volume, timeframes)
+- `markets` → Métadonnées des 8 marchés HyperLiquid (BTC, ETH, SOL, ARB, APT, ADA, AVAX, BNB)
+- `backtest_results` → Résultats des stratégies (retours, Sharpe, win rate)
+- `btc_dominance` → Métriques Bitcoin dominance et market cap
+
+**Indexes Optimisés:**
+- `idx_ohlcv_symbol_time` → Requêtes OHLCV rapides
+- `idx_ohlcv_exchange_symbol` → Filtrage par exchange
+- `idx_backtest_strategy` → Analyse stratégies
+- `idx_btc_dominance_time` → Séries temporelles
+
+**Commandes Database:**
+- `ts-node run.ts db` → Initialise la database (4 tables + 8 marchés + indexes)
+- `ts-node run.ts database` → Alias pour db
+- Auto-création sur `ts-node run.ts start`
+
+**L'AGENT EST UN WRAPPER INTELLIGENT - IL CONNAÎT run.ts PARFAITEMENT !**
+
 ## Expertise
 
 ### Architecture Connue par Cœur

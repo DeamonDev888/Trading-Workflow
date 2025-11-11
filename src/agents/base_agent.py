@@ -1,7 +1,7 @@
 """
 🚀 NOVAQUOTE Enhanced BaseAgent - 100% Visibility System
 Expert-level base agent with comprehensive logging and monitoring
-Built with love by Moon Dev [ROCKET] - Professional Trading Operations
+Built with love by Deamon Dev [ROCKET] - Professional Trading Operations
 """
 
 import json

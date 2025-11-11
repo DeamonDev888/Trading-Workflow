@@ -10,11 +10,39 @@ const path = require('path');
 const http = require('http');
 const ws = require('ws');
 
-// Configuration NOVAQUOTE
-const NOVAQUOTE_LOGS_DIR = path.join(__dirname, 'tests', 'logs');
+// Configuration NOVAQUOTE - Chemins corrigés
+const NOVAQUOTE_LOGS_DIR = path.join(__dirname, '..', 'logs');
 const NOVAQUOTE_BACKEND_PORT = 7000;
-const NOVAQUOTE_WEBSOCKET_PORT = 7002;
+const NOVAQUOTE_WEBSOCKET_PORT = 7001;
 const AGENT_LOGS_PORT = 9004;
+
+// Ajouter Winston pour le monitoring
+const winston = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
+
+// Créer un logger Winston pour le monitoring
+const monitorLogger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new DailyRotateFile({
+      filename: path.join(__dirname, '..', 'logs', 'agent-monitor-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d'
+    })
+  ]
+});
 
 // Patterns NOVAQUOTE à surveiller
 const NOVAQUOTE_PATTERNS = {
@@ -121,7 +149,10 @@ class NovaQuoteLogsMonitor {
   }
 
   monitorLogs() {
-    console.log('📋 Démarrage monitoring des logs NOVAQUOTE...');
+    monitorLogger.info('📋 Démarrage monitoring des logs NOVAQUOTE...', {
+      logsDir: NOVAQUOTE_LOGS_DIR,
+      timestamp: new Date().toISOString()
+    });
 
     // Scanner les logs existants
     this.scanExistingLogs();
@@ -135,10 +166,16 @@ class NovaQuoteLogsMonitor {
   scanExistingLogs() {
     try {
       if (!fs.existsSync(NOVAQUOTE_LOGS_DIR)) {
+        monitorLogger.warn('📁 Répertoire de logs non trouvé', { logsDir: NOVAQUOTE_LOGS_DIR });
         return;
       }
 
       const logFiles = fs.readdirSync(NOVAQUOTE_LOGS_DIR).filter(file => file.endsWith('.log'));
+
+      monitorLogger.info('📂 Analyse des fichiers de logs...', {
+        logFilesCount: logFiles.length,
+        logFiles: logFiles
+      });
 
       logFiles.forEach(file => {
         const filePath = path.join(NOVAQUOTE_LOGS_DIR, file);
@@ -148,126 +185,207 @@ class NovaQuoteLogsMonitor {
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n').filter(line => line.trim());
 
+        // Analyser les logs JSON structurés
         lines.forEach(line => {
-          this.processLogLine(line, file);
+          this.analyzeLogLine(line, file, stats);
         });
       });
+
+      // Mettre à jour le statut du système
+      this.updateSystemStatus();
+
     } catch (error) {
-      console.error('❌ Erreur lecture logs:', error.message);
+      monitorLogger.error('❌ Erreur lors de l\'analyse des logs', {
+        error: error.message,
+        stack: error.stack
+      });
     }
   }
 
-  processLogLine(line, file) {
+  analyzeLogLine(line, fileName, stats) {
     try {
-      let logEntry;
-
-      // Parser les logs JSON
-      if (line.startsWith('{')) {
-        logEntry = JSON.parse(line);
+      // Analyser si c'est un log JSON (format NOVAQUOTE)
+      if (line.startsWith('{') && line.endsWith('}')) {
+        const logEntry = JSON.parse(line);
+        this.processNovaQuoteLog(logEntry, fileName, stats);
       } else {
-        // Parser les logs texte avec patterns NOVAQUOTE
-        logEntry = this.parseTextLog(line, file);
+        // Analyser les logs texte traditionnels
+        this.processTextLog(line, fileName, stats);
+      }
+    } catch (error) {
+      // Ignorer les erreurs de parsing JSON
+      this.logsData.errors++;
+    }
+  }
+
+  processNovaQuoteLog(logEntry, fileName, stats) {
+    try {
+      this.logsData.total++;
+
+      // Catégoriser par niveau de log
+      switch (logEntry.level?.toUpperCase()) {
+        case 'SUCCESS':
+        case 'SUCCESSFUL':
+        case 'OK':
+          this.logsData.success++;
+          break;
+        case 'ERROR':
+        case 'FATAL':
+        case 'CRITICAL':
+          this.logsData.errors++;
+          monitorLogger.error('🚨 Erreur critique détectée', {
+            logEntry,
+            fileName,
+            timestamp: logEntry.timestamp
+          });
+          break;
+        case 'WARNING':
+        case 'WARN':
+          this.logsData.warnings++;
+          break;
+        case 'TRADE':
+        case 'RISK':
+          this.logsData.trading++;
+          break;
+        case 'AGENT':
+        case 'MASTER_AGENT':
+        case 'RISK_AGENT':
+        case 'STRATEGY_AGENT':
+        case 'FUNDING_AGENT':
+          this.logsData.agents++;
+          break;
+        case 'WEBSOCKET':
+          this.logsData.websocket++;
+          break;
+        case 'PERFORMANCE':
+          this.logsData.performance++;
+          break;
+        default:
+          // Logs INFO ne nécessitent pas de comptage spécial
+          break;
       }
 
-      if (!logEntry) return;
+      // Log spécifique pour les metrics de performance
+      if (logEntry.duration || logEntry.responseTime) {
+        this.logsData.performance++;
+      }
 
-      // Catégoriser le log
-      this.categorizeLog(logEntry);
+      // Log des événements système importants
+      if (logEntry.event) {
+        monitorLogger.info('🔄 Événement système', {
+          event: logEntry.event,
+          agent: logEntry.logger_name,
+          timestamp: logEntry.timestamp
+        });
+      }
 
-      // Ajouter aux logs récents
-      this.recentLogs.unshift({
-        ...logEntry,
-        file,
+    } catch (error) {
+      monitorLogger.error('❌ Erreur traitement log JSON', {
+        logEntry,
+        error: error.message
+      });
+    }
+  }
+
+  updateSystemStatus() {
+    try {
+      // Calculer le health score basé sur les métriques de logs
+      const totalLogs = this.logsData.total;
+      const errorRate = totalLogs > 0 ? (this.logsData.errors / totalLogs) * 100 : 0;
+
+      // Déterminer l'état de santé global
+      if (errorRate > 10) {
+        this.systemStatus.health = 'CRITICAL';
+        this.addAlert('ERROR', {
+          message: `Taux d'erreurs critique: ${errorRate.toFixed(2)}%`,
+          category: 'SYSTEM_HEALTH',
+          timestamp: new Date().toISOString()
+        });
+      } else if (errorRate > 5) {
+        this.systemStatus.health = 'WARNING';
+      } else if (errorRate > 1) {
+        this.systemStatus.health = 'CAUTION';
+      } else {
+        this.systemStatus.health = 'HEALTHY';
+      }
+
+      // Logger le statut système avec Winston
+      monitorLogger.info('📊 Mise à jour statut système', {
+        health: this.systemStatus.health,
+        errorRate: `${errorRate.toFixed(2)}%`,
+        totalLogs,
+        errors: this.logsData.errors,
+        warnings: this.logsData.warnings,
         timestamp: new Date().toISOString()
       });
 
-      // Limiter la taille des logs récents
-      if (this.recentLogs.length > 100) {
-        this.recentLogs = this.recentLogs.slice(0, 100);
+      // Performance monitoring
+      if (this.logsData.performance > 0) {
+        monitorLogger.debug('⚡ Performance monitoring', {
+          performanceLogs: this.logsData.performance,
+          tradingActivity: this.logsData.trading,
+          agentActivity: this.logsData.agents
+        });
       }
 
     } catch (error) {
-      // Ignorer les erreurs de parsing
+      monitorLogger.error('❌ Erreur mise à jour statut système', {
+        error: error.message,
+        stack: error.stack
+      });
     }
   }
 
-  parseTextLog(line, file) {
-    const patterns = {
-      timestamp: /(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})/,
-      level: /\[(INFO|ERROR|WARN|SUCCESS|DEBUG)\]/,
-      category: /\[([A-Z-_]+)\]/,
-      message: /] (.+)$/
-    };
+  processTextLog(line, fileName, stats) {
+    try {
+      this.logsData.total++;
 
-    const timestamp = line.match(patterns.timestamp)?.[1] || new Date().toISOString();
-    const level = line.match(patterns.level)?.[1] || 'INFO';
-    const category = line.match(patterns.category)?.[1] || 'SYSTEM';
-    const message = line.match(patterns.message)?.[1] || line;
-
-    return {
-      timestamp,
-      level,
-      category,
-      message,
-      file
-    };
-  }
-
-  categorizeLog(logEntry) {
-    const message = (logEntry.message || '').toLowerCase();
-    const category = (logEntry.category || '').toUpperCase();
-    const level = (logEntry.level || '').toUpperCase();
-
-    this.logsData.total++;
-
-    // Détection par patterns NOVAQUOTE
-    for (const [patternName, patterns] of Object.entries(NOVAQUOTE_PATTERNS)) {
-      for (const pattern of patterns) {
-        if (pattern.test(message) || pattern.test(category)) {
-          switch (patternName) {
-            case 'SUCCESS':
-              this.logsData.success++;
-              return;
-            case 'ERRORS':
-              this.logsData.errors++;
-              this.addAlert('ERROR', logEntry);
-              return;
-            case 'WARNINGS':
-              this.logsData.warnings++;
-              this.addAlert('WARNING', logEntry);
-              return;
-            case 'TRADING':
-              this.logsData.trading++;
-              return;
-            case 'AGENTS':
-              this.logsData.agents++;
-              return;
-            case 'WEBSOCKET':
-              this.logsData.websocket++;
-              return;
-            case 'PERFORMANCE':
-              this.logsData.performance++;
-              return;
+      // Analyse des patterns texte pour logs non-JSON
+      for (const [category, patterns] of Object.entries(NOVAQUOTE_PATTERNS)) {
+        for (const pattern of patterns) {
+          if (pattern.test(line)) {
+            switch (category) {
+              case 'SUCCESS':
+                this.logsData.success++;
+                break;
+              case 'ERRORS':
+                this.logsData.errors++;
+                monitorLogger.error('🚨 Erreur texte détectée', { line, fileName });
+                this.addTextAlert('ERROR', line, fileName);
+                break;
+              case 'WARNINGS':
+                this.logsData.warnings++;
+                this.addTextAlert('WARNING', line, fileName);
+                break;
+              case 'TRADING':
+                this.logsData.trading++;
+                break;
+              case 'AGENTS':
+                this.logsData.agents++;
+                break;
+              case 'WEBSOCKET':
+                this.logsData.websocket++;
+                break;
+              case 'PERFORMANCE':
+                this.logsData.performance++;
+                break;
+            }
+            break; // Sortir après première correspondance
           }
         }
       }
-    }
-
-    // Catégorisation par niveau
-    if (level === 'ERROR') {
-      this.logsData.errors++;
-      this.addAlert('ERROR', logEntry);
-    } else if (level === 'WARN') {
-      this.logsData.warnings++;
+    } catch (error) {
+      monitorLogger.error('❌ Erreur analyse log texte', { error: error.message });
     }
   }
 
-  addAlert(type, logEntry) {
+  addTextAlert(type, message, fileName) {
     const alert = {
       type,
-      message: logEntry.message,
-      category: logEntry.category,
-      timestamp: logEntry.timestamp || new Date().toISOString(),
+      message: message.substring(0, 200), // Limiter la longueur
+      category: 'TEXT_LOG',
+      file: fileName,
+      timestamp: new Date().toISOString(),
       severity: type === 'ERROR' ? 'HIGH' : 'MEDIUM'
     };
 

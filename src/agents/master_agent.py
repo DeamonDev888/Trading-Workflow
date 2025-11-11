@@ -11,7 +11,7 @@ Fonctionnalités principales :
 - Mise à jour du dashboard
 - Boucles de feedback et amélioration continue
 
-Built with love by Moon Dev [ROCKET]
+Built with love by Deamon Dev [ROCKET]
 """
 
 import asyncio
@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 from termcolor import cprint
 
 from src.agents.base_agent import BaseAgent
+from src.utils.unicode_support import safe_print, create_safe_cprint
 from src.agents.funding_agent import FundingAgent
 from src.agents.risk_agent import RiskAgent
 from src.agents.sentiment_analysis_agent import SentimentAnalysisAgent
@@ -38,6 +39,9 @@ except ImportError:
         return logging.getLogger(name)
 
 logger = get_logger("master_agent")
+
+# Créer une fonction cprint sécurisée spécifique pour cet agent
+safe_cprint = create_safe_cprint(cprint)
 
 
 @dataclass
@@ -653,7 +657,7 @@ class MasterAgent:
         if len(self.cycle_history) > 100:
             self.cycle_history = self.cycle_history[-100:]
 
-        cprint(f"   💾 Métriques sauvegardées: {cycle_file}", "blue")
+        safe_print(f"   [SAUVEGARDE] Métriques sauvegardées: {cycle_file}", "blue")
 
     def update_performance_metrics(self, cycle_metrics: CycleMetrics):
         """[STATS] Met à jour les métriques de performance"""
@@ -758,11 +762,11 @@ class MasterAgent:
         with open(dashboard_file, "w", encoding="utf-8") as f:
             json.dump(dashboard_data, f, indent=2, ensure_ascii=False)
 
-        cprint(f"   📱 Dashboard mis à jour", "blue")
+        safe_print(f"   [DASHBOARD] Dashboard mis à jour", "blue")
 
     def stop(self):
         """🛑 Arrête l'Agent Master"""
-        cprint("\n🛑 Arrêt de l'Agent Master...", "yellow", attrs=["bold"])
+        safe_print("\n[ARRET] Arrêt de l'Agent Master...", "yellow", attrs=["bold"])
         self.is_running = False
         cprint("[OK] Agent Master arrêté", "green")
 
@@ -782,4 +786,17 @@ async def main():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Master Agent - AI Trading Coordinator')
+    parser.add_argument('--auto-start', action='store_true', help='Start agent in background mode')
+    parser.add_argument('--background', action='store_true', help='Run in background mode')
+
+    args = parser.parse_args()
+
+    # Log startup mode
+    if args.auto_start or args.background:
+        print("[AUTO-START] Master Agent starting in background mode")
+        logger.info("Master Agent auto-starting in background mode")
+
     asyncio.run(main())

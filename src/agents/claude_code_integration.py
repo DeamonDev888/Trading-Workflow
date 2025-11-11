@@ -101,7 +101,7 @@ class ClaudeCodeIntegrationManager:
                 {
                     "id": "claude-funding-advisor",
                     "name": "Funding Advisor",
-                    "description": "Arbitrage et optimisation des taux de funding",
+                    "description": "Analyse de corrélation et optimisation des taux de funding",
                     "tools": ["Read", "Bash", "Grep"],
                     "model": "sonnet",
                     "temperature": 0.3,
@@ -355,10 +355,10 @@ Analysez le contexte et fournissez une réponse détaillée avec:
         )
         results["risk"] = risk_result
 
-        cprint("[3/4] Funding Optimization...", "cyan")
+        cprint("[3/4] Funding Correlation Analysis...", "cyan")
         funding_result = self.call_claude_code_agent(
             agent_id="claude-funding-advisor",
-            prompt="Optimize funding rates and arbitrage opportunities",
+            prompt="Analyze funding rate correlations with market variables and regime-based opportunities",
             context_data=market_data,
             use_iterations=True,
         )

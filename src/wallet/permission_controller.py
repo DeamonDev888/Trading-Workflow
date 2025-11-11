@@ -1,7 +1,7 @@
 """
-🌙 Permission Controller
+ Permission Controller
 Manages wallet permissions and access control for Hyperliquid trading
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import os

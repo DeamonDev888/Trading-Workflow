@@ -6,400 +6,24 @@
 import helmet, { HelmetOptions } from 'helmet';
 import { Request, Response, NextFunction } from 'express';
 import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
 
 export interface SecurityConfig {
   contentSecurityPolicy?: {
-    directives?: any;
+    directives?
     reportOnly?: boolean;
   };
   crossOriginEmbedderPolicy?: boolean;
   crossOriginOpenerPolicy?: boolean;
-  crossOriginResourcePolicy?: any;
+  crossOriginResourcePolicy?
   dnsPrefetchControl?: boolean;
-  frameguard?: any;
+  frameguard?
   hidePoweredBy?: boolean;
-  hsts?: any;
+  hsts?
   ieNoOpen?: boolean;
   noSniff?: boolean;
   originAgentCluster?: boolean;
   permittedCrossDomainPolicies?: boolean;
-  referrerPolicy?: any;
+  referrerPolicy?
   xssFilter?: boolean;
   customHeaders?: Array<{
     name: string;
@@ -431,7 +55,7 @@ export class SecurityHeadersService {
           'wss:',
           'https://api.hyperliquid.xyz',
           'http://localhost:7000',
-          'http://localhost:7002',
+          'http://localhost:7001',
         ],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
         objectSrc: ["'none'"],
@@ -526,7 +150,7 @@ export class SecurityHeadersService {
    * 🛡️ Créer le middleware Helmet avec configuration complète
    */
   static createHelmet(config: Partial<SecurityConfig> = {}) {
-    const finalConfig = { ...this.config, ...config };: any;
+    const finalConfig = { ...this.config, ...config };
 
     const helmetOptions: HelmetOptions = {
       contentSecurityPolicy: finalConfig.contentSecurityPolicy,
@@ -554,7 +178,7 @@ export class SecurityHeadersService {
   static createCustomHeaders(
     customHeaders?: Array<{ name: string; value: string }>
   ) {
-    const headers = customHeaders || this.config.customHeaders || [];: any;
+    const headers = customHeaders || this.config.customHeaders || [];
 
     return (req: Request, res: Response, next: NextFunction) => {
       headers.forEach((header) => {
@@ -568,8 +192,8 @@ export class SecurityHeadersService {
    * 🚀 Créer un middleware de sécurité complet
    */
   static createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
-    const helmetMiddleware = this.createHelmet(config);: any;
-    const customHeadersMiddleware = this.createCustomHeaders(: any;
+    const helmetMiddleware = this.createHelmet(config);
+    const customHeadersMiddleware = this.createCustomHeaders(
       config.customHeaders
     );
 
@@ -677,7 +301,7 @@ export class SecurityHeadersService {
   static createSecurityMonitor() {
     return (req: Request, res: Response, next: NextFunction) => {
       // Détecter les patterns suspects dans les headers
-      const suspiciousPatterns = [: any;
+      const suspiciousPatterns = [
         /<script/i,
         /javascript:/i,
         /on\w+\s*=/i,
@@ -689,9 +313,9 @@ export class SecurityHeadersService {
       };
 
       // Vérifier les headers courants
-      const headersToCheck = ['user-agent', 'referer', 'x-forwarded-for'];: any;
+      const headersToCheck = ['user-agent', 'referer', 'x-forwarded-for'];
       for (const header of headersToCheck) {
-        const value = req.get(header);: any;
+        const value = req.get(header);
         if (value && checkString(value)) {
           console.warn(
             `[Security] Suspicious pattern detected in ${header}:`,
@@ -720,16 +344,16 @@ export class SecurityHeadersService {
    */
   static createAdvancedCORS() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const origin = req.get('Origin');: any;
-      const allowedOrigins = [: any;
+      const origin = req.get('Origin');
+      const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
         'https://yourdomain.com', // Ajouter vos domaines de production
       ];
 
       // En développement, autoriser localhost avec n'importe quel port
-      const isDevelopment = process.env['NODE_ENV'] === 'development';: any;
-      const isAllowedOrigin =: any;
+      const isDevelopment = process.env['NODE_ENV'] === 'development';
+      const isAllowedOrigin =
         (isDevelopment && origin?.startsWith('http://localhost:')) ||
         allowedOrigins.includes(origin || '');
 
@@ -762,10 +386,10 @@ export class SecurityHeadersService {
    */
   static createSecurityLogger() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const start = Date.now();: any;
+      const start = Date.now();
 
       // Logger les informations de requête
-      const logData = {: any;
+      const logData = {
         timestamp: new Date().toISOString(),
         method: req.method,
         url: req.url,
@@ -779,7 +403,7 @@ export class SecurityHeadersService {
 
       // Logger la réponse
       res.on('finish', () => {
-        const duration = Date.now() - start;: any;
+        const duration = Date.now() - start;
         console.log('[Security] Response:', {
           ...logData,
           statusCode: res.statusCode,
@@ -795,11 +419,11 @@ export class SecurityHeadersService {
    * 🎯 Créer un middleware de sécurité complet et intégré
    */
   static createCompleteSecuritySuite(env?: string) {
-    const config = this.getConfigForEnvironment(env);: any;
-    const securityMiddleware = this.createSecurityMiddleware(config);: any;
-    const corsMiddleware = this.createAdvancedCORS();: any;
-    const securityMonitor = this.createSecurityMonitor();: any;
-    const securityLogger = this.createSecurityLogger();: any;
+    const config = this.getConfigForEnvironment(env);
+    const securityMiddleware = this.createSecurityMiddleware(config);
+    const corsMiddleware = this.createAdvancedCORS();
+    const securityMonitor = this.createSecurityMonitor();
+    const securityLogger = this.createSecurityLogger();
 
     return [
       securityLogger,

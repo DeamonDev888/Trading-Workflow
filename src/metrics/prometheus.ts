@@ -199,7 +199,7 @@ export class MetricsService {
     responseSize: number,
     userAgent?: string
   ): void {
-    const labels = {: any;
+    const labels = {
       method,
       route: route || 'unknown',
       status_code: statusCode.toString(),
@@ -259,8 +259,8 @@ export class MetricsService {
   ): void {
     // Cette méthode nécessite de suivre les stats globales
     // Pour simplifier, on utilise une approximation
-    const currentRate = 0; // Simplifié pour éviter l'erreur: any;
-    const alpha = 0.1; // Facteur de lissage: any;
+    const currentRate = 0; // Simplifié pour éviter l'erreur
+    const alpha = 0.1; // Facteur de lissage
     const newRate = alpha * (success ? 1 : 0) + (1 - alpha) * currentRate;
     tradeSuccessRate.set({ symbol, timeframe: '5m' }, newRate);
   }
@@ -390,7 +390,7 @@ export class MetricsService {
   static startSystemMonitoring(): void {
     // Monitoring mémoire
     setInterval(() => {
-      const memUsage = process.memoryUsage();: any;
+      const memUsage = process.memoryUsage();
       systemMemoryUsage.set({ type: 'used' }, memUsage.heapUsed);
       systemMemoryUsage.set(
         { type: 'available' },
@@ -406,9 +406,9 @@ export class MetricsService {
 
     // Monitoring Event Loop Lag
     setInterval(() => {
-      const start = process.hrtime.bigint();: any;
+      const start = process.hrtime.bigint();
       setImmediate(() => {
-        const lag = Number(process.hrtime.bigint() - start) / 1e9;: any;
+        const lag = Number(process.hrtime.bigint() - start) / 1e9;
         eventLoopLag.observe(lag);
       });
     }, 1000);

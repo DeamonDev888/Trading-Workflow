@@ -62,15 +62,15 @@ export class RetryManager {
     operation: () => Promise<T>,
     operationName: string = 'unknown'
   ): Promise<T> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
     const retryDelays: number[] = [];
 
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
       try {
-        const result = await operation();: any;
+        const result = await operation();
 
         if (attempt > 1) {
-          const totalTime = Date.now() - startTime;: any;
+          const totalTime = Date.now() - startTime;
           console.log(
             `[RetryManager] ✅ ${operationName} succeeded on attempt ${attempt}/${this.config.maxAttempts} (${totalTime}ms total)`
           );
@@ -78,7 +78,7 @@ export class RetryManager {
 
         return result;
       } catch (error) {
-        const err = error as Error;: any;
+        const err = error as Error;
 
         // Vérifier si l'erreur est retryable
         if (
@@ -86,7 +86,7 @@ export class RetryManager {
           attempt === this.config.maxAttempts
         ) {
           if (attempt > 1) {
-            const totalTime = Date.now() - startTime;: any;
+            const totalTime = Date.now() - startTime;
             console.error(
               `[RetryManager] ❌ ${operationName} failed after ${attempt} attempts (${totalTime}ms total)`
             );
@@ -95,7 +95,7 @@ export class RetryManager {
         }
 
         // Calculer le délai de retry
-        const delay = this.calculateDelay(attempt);: any;
+        const delay = this.calculateDelay(attempt);
         retryDelays.push(delay);
 
         console.warn(
@@ -120,12 +120,12 @@ export class RetryManager {
     operation: () => Promise<T>,
     operationName: string = 'unknown'
   ): Promise<RetryResult<T>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
     const retryDelays: number[] = [];
 
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
       try {
-        const result = await operation();: any;
+        const result = await operation();
 
         return {
           success: true,
@@ -135,7 +135,7 @@ export class RetryManager {
           retryDelays,
         };
       } catch (error) {
-        const err = error as Error;: any;
+        const err = error as Error;
 
         if (
           !this.isRetryableError(err) ||
@@ -150,7 +150,7 @@ export class RetryManager {
           };
         }
 
-        const delay = this.calculateDelay(attempt);: any;
+        const delay = this.calculateDelay(attempt);
         retryDelays.push(delay);
 
         await this.sleep(delay);
@@ -170,8 +170,8 @@ export class RetryManager {
    * 🎯 Vérifier si une erreur est retryable
    */
   private isRetryableError(error: Error): boolean {
-    const errorMessage = error.message;: any;
-    const errorName = error.constructor.name;: any;
+    const errorMessage = error.message;
+    const errorName = error.constructor.name;
 
     // Vérifier les erreurs non-retryables
     if (
@@ -196,7 +196,7 @@ export class RetryManager {
    */
   private calculateDelay(attempt: number): number {
     // Backoff exponentiel
-    let delay =: any;
+    let delay =
       this.config.baseDelay *
       Math.pow(this.config.backoffMultiplier, attempt - 1);
 
@@ -205,7 +205,7 @@ export class RetryManager {
 
     // Ajouter du jitter pour éviter les cascades
     if (this.config.jitter) {
-      const jitterAmount = delay * 0.1; // 10% de jitter: any;
+      const jitterAmount = delay * 0.1; // 10% de jitter
       delay += Math.random() * jitterAmount * 2 - jitterAmount; // ±10%
     }
 
@@ -241,8 +241,8 @@ export class RetryManager {
     operationName: string = 'unknown',
     maxAttempts: number = 2
   ): Promise<T> {
-    const quickConfig = { ...this.config, maxAttempts };: any;
-    const tempRetryManager = new RetryManager(quickConfig);: any;
+    const quickConfig = { ...this.config, maxAttempts };
+    const tempRetryManager = new RetryManager(quickConfig);
     return tempRetryManager.execute(operation, operationName);
   }
 }

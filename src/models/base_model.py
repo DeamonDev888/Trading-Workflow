@@ -1,5 +1,5 @@
 """
-🌙 Deamon Dev's Model Interface
+ Deamon Dev's Model Interface
 Built with love by Deamon Dev 🚀
 
 This module defines the base interface for all AI models.
@@ -20,7 +20,7 @@ def safe_cprint(text, color):
         clean_text = (
             text.replace("✨", "")
             .replace("❌", "")
-            .replace("🌙", "")
+            .replace("", "")
             .replace("🚀", "")
             .replace("⚡", "")
             .replace("💎", "")

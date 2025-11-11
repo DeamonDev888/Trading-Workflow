@@ -1,7 +1,7 @@
 """
-🌙 Wallet Registry
+ Wallet Registry
 Central registry for managing approved wallets and their permissions
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import json

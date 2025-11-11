@@ -67,7 +67,7 @@ class XAIModel(BaseModel):
         try:
             self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
             safe_cprint(
-                f"✨ Deamon Dev's magic initialized xAI Grok model: {self.model_name} 🌙",
+                f"✨ Deamon Dev's magic initialized xAI Grok model: {self.model_name} ",
                 "green",
             )
 
@@ -109,7 +109,7 @@ class XAIModel(BaseModel):
 
             content = response.choices[0].message.content.strip()
 
-            safe_cprint(f"✅ Grok response received! 🌙", "green")
+            safe_cprint(f"✅ Grok response received! ", "green")
 
             return ModelResponse(
                 content=content,

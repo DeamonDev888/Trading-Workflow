@@ -1,7 +1,7 @@
 """
-🌙 Hyperliquid API Integration
+Hyperliquid API Integration
 Complete Hyperliquid DEX API client with wallet integration
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 from . import signing

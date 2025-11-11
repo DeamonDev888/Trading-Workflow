@@ -7,433 +7,6 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { Request, Response, NextFunction } from 'express';
 import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
-import express from 'express';
 
 export interface LogContext {
   requestId?: string;
@@ -510,7 +83,7 @@ export class StructuredLogger {
    * 🔧 Créer le logger Winston avec configuration complète
    */
   private createLogger(): winston.Logger {
-    const logFormat = winston.format.combine(: any;
+    const logFormat = winston.format.combine(
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
       winston.format.json(),
@@ -532,7 +105,7 @@ export class StructuredLogger {
     );
 
     // Formater pour la console en développement
-    const consoleFormat = winston.format.combine(: any;
+    const consoleFormat = winston.format.combine(
       winston.format.colorize(),
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
@@ -701,7 +274,7 @@ export class StructuredLogger {
     duration: number,
     context?: Partial<LogContext>
   ): void {
-    const memUsage = process.memoryUsage();: any;
+    const memUsage = process.memoryUsage();
 
     this.log('info', `Performance: ${operation}`, {
       context,
@@ -825,13 +398,13 @@ export class StructuredLogger {
    */
   static createRequestLogger() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const startTime = Date.now();: any;
-      const requestId =: any;
+      const startTime = Date.now();
+      const requestId =
         (req.headers['x-request-id'] as string) ||
         `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       // Créer un logger avec contexte de requête
-      const logger = StructuredLogger.getInstance();: any;
+      const logger = StructuredLogger.getInstance();
       logger.setContext({
         requestId,
         ip: req.ip,
@@ -850,7 +423,7 @@ export class StructuredLogger {
 
       // Intercepter la fin de la réponse
       res.on('finish', () => {
-        const duration = Date.now() - startTime;: any;
+        const duration = Date.now() - startTime;
 
         logger.info(`Request completed: ${req.method} ${req.url}`, {
           method: req.method,
@@ -882,7 +455,7 @@ export class StructuredLogger {
    */
   static createErrorLogger() {
     return (error: Error, req: Request, res: Response, next: NextFunction) => {
-      const logger = StructuredLogger.getInstance();: any;
+      const logger = StructuredLogger.getInstance();
 
       logger.error(`Request error: ${req.method} ${req.url}`, error, {
         method: req.method,
@@ -900,11 +473,11 @@ export class StructuredLogger {
    * 📊 Logger les statistiques périodiques
    */
   static startPeriodicLogging(intervalMs: number = 60000): void {
-    const logger = StructuredLogger.getInstance();: any;
+    const logger = StructuredLogger.getInstance();
 
     setInterval(() => {
-      const memUsage = process.memoryUsage();: any;
-      const uptime = process.uptime();: any;
+      const memUsage = process.memoryUsage();
+      const uptime = process.uptime();
 
       logger.info('System statistics', {
         component: 'system',

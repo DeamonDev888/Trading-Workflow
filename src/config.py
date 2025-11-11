@@ -1,7 +1,7 @@
 """
 🚀 HYPERLIQUID Trading System Configuration
 Specialized for HyperLiquid Perpetuals Trading
-Built with love by Moon Dev 🌙
+Built with love by Deamon Dev
 """
 
 import os
@@ -154,3 +154,29 @@ EXIT_ALL_POSITIONS = False
 DO_NOT_TRADE_LIST = []
 CLOSED_POSITIONS_TXT = ""
 MINIMUM_TRADES_IN_LAST_HOUR = 2
+
+# ==============================================
+# 🦊 METAMASK WALLET CONFIGURATION
+# ==============================================
+# WARNING: NEVER commit real private keys to git!
+
+# User wallet address (readable format, not sensitive)
+USER_ADDRESS = os.environ.get("USER_ADDRESS", "0x0000000000000000000000000000000000000000")
+
+# Private key for trading (DANGEROUS - keep secure!)
+PRIVATE_KEY = os.environ.get("PRIVATE_KEY", "")
+
+# Alternative: Use encrypted key file
+ENCRYPTED_KEY_FILE = os.environ.get("ENCRYPTED_KEY_FILE", "wallet_key.enc")
+
+# Master key derivation seed (if using HD wallet)
+MASTER_SEED = os.environ.get("MASTER_SEED", "")
+
+# Wallet security settings
+REQUIRE_PRIVATE_KEY = os.environ.get("REQUIRE_PRIVATE_KEY", "true").lower() == "true"
+USE_HARDWARE_WALLET = os.environ.get("USE_HARDWARE_WALLET", "false").lower() == "true"
+HARDWARE_WALLET_TYPE = os.environ.get("HARDWARE_WALLET_TYPE", "ledger")  # ledger, trezor
+
+# Transaction settings
+GAS_PRICE_GWEI = int(os.environ.get("GAS_PRICE_GWEI", "5"))
+MAX_SLIPPAGE_PERCENT = float(os.environ.get("MAX_SLIPPAGE_PERCENT", "0.5"))

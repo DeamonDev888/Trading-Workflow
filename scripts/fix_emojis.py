@@ -2,7 +2,7 @@
 import os
 
 EMOJI_MAP = {
-    '🌙': '[OK]',
+    '': '[OK]',
     '✨': '[OK]',
     '🎯': '[TARGET]',
     '💰': '[MONEY]',

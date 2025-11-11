@@ -1,7 +1,7 @@
 """
 🚀 NOVAQUOTE EXPERT LOGGING SYSTEM - 100% Visibility Platform
 Expert-level logging for trading agents, real-time monitoring, and complete system transparency
-Built by Moon Dev for professional trading operations
+Built by Deamon Dev for professional trading operations
 """
 
 import json

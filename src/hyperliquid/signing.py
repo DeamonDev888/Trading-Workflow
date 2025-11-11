@@ -1,7 +1,7 @@
 """
-🌙 Hyperliquid Signing Module
+ Hyperliquid Signing Module
 Signature generation for HyperLiquid API requests
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import hashlib

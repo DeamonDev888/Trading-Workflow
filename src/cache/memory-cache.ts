@@ -58,7 +58,7 @@ export class MemoryCache {
    * 💾 Mettre en cache une valeur
    */
   set<T>(key: string, value: T, ttl?: number): void {
-    const expires = Date.now() + (ttl || this.config.defaultTTL);: any;
+    const expires = Date.now() + (ttl || this.config.defaultTTL);
 
     // Si le cache est plein, nettoyer les entrées expirées
     if (this.cache.size >= this.config.maxSize) {
@@ -84,7 +84,7 @@ export class MemoryCache {
    * 🔍 Récupérer une valeur du cache
    */
   get<T>(key: string): T | null {
-    const entry = this.cache.get(key);: any;
+    const entry = this.cache.get(key);
 
     if (!entry) {
       this.stats.misses++;
@@ -114,7 +114,7 @@ export class MemoryCache {
    * 🔍 Vérifier si une clé existe
    */
   has(key: string): boolean {
-    const entry = this.cache.get(key);: any;
+    const entry = this.cache.get(key);
     if (!entry) return false;
 
     // Vérifier l'expiration
@@ -131,7 +131,7 @@ export class MemoryCache {
    * 🗑️ Supprimer une valeur du cache
    */
   delete(key: string): boolean {
-    const deleted = this.cache.delete(key);: any;
+    const deleted = this.cache.delete(key);
     if (deleted) {
       this.stats.size = this.cache.size;
     }
@@ -142,7 +142,7 @@ export class MemoryCache {
    * 🧹 Vider le cache
    */
   clear(): void {
-    const oldSize = this.cache.size;: any;
+    const oldSize = this.cache.size;
     this.cache.clear();
     this.stats.size = 0;
     this.stats.totalEntries += oldSize;
@@ -166,8 +166,8 @@ export class MemoryCache {
    * 🗑️ Supprimer les entrées expirées
    */
   evictExpired(): number {
-    const now = Date.now();: any;
-    let evicted = 0;: any;
+    const now = Date.now();
+    let evicted = 0;
 
     for (const [key, entry] of this.cache.entries()) {
       if (now > entry.expires) {
@@ -189,12 +189,12 @@ export class MemoryCache {
     if (this.cache.size === 0) return 0;
 
     // Trier par lastAccessed (plus ancien en premier)
-    const entries = Array.from(this.cache.entries()).sort(: any;
+    const entries = Array.from(this.cache.entries()).sort(
       (a, b) => a[1].lastAccessed - b[1].lastAccessed
     );
 
-    const toEvict = Math.ceil(this.config.maxSize * 0.2); // Éviter 20%: any;
-    const evicted = Math.min(toEvict, entries.length);: any;
+    const toEvict = Math.ceil(this.config.maxSize * 0.2); // Éviter 20%
+    const evicted = Math.min(toEvict, entries.length);
 
     for (let i = 0; i < evicted; i++) {
       this.cache.delete(entries[i][0]);
@@ -211,7 +211,7 @@ export class MemoryCache {
    */
   private startCleanupTimer(): void {
     this.cleanupTimer = setInterval(() => {
-      const evicted = this.evictExpired();: any;
+      const evicted = this.evictExpired();
       if (evicted > 0) {
         console.log(`[MemoryCache] 🧹 Cleaned up ${evicted} expired entries`);
       }
@@ -222,7 +222,7 @@ export class MemoryCache {
    * 📈 Mettre à jour le hit rate
    */
   private updateHitRate(): void {
-    const total = this.stats.hits + this.stats.misses;: any;
+    const total = this.stats.hits + this.stats.misses;
     this.stats.hitRate = total > 0 ? this.stats.hits / total : 0;
   }
 
@@ -234,12 +234,12 @@ export class MemoryCache {
     factory: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
-    const cached = this.get<T>(key);: any;
+    const cached = this.get<T>(key);
     if (cached !== null) {
       return cached;
     }
 
-    const value = await factory();: any;
+    const value = await factory();
     this.set(key, value, ttl);
     return value;
   }
@@ -248,7 +248,7 @@ export class MemoryCache {
    * 🎯 Récupérer plusieurs valeurs en une fois
    */
   mget<T>(keys: string[]): Map<string, T | null> {
-    const result = new Map<string, T | null>();: any;
+    const result = new Map<string, T | null>();
 
     for (const key of keys) {
       result.set(key, this.get<T>(key));
@@ -270,7 +270,7 @@ export class MemoryCache {
    * 🔍 Récupérer toutes les valeurs correspondant à un pattern
    */
   getValuesByPattern<T>(pattern: RegExp): Map<string, T> {
-    const result = new Map<string, T>();: any;
+    const result = new Map<string, T>();
 
     for (const [key, entry] of this.cache.entries()) {
       if (pattern.test(key) && Date.now() <= entry.expires) {
@@ -287,7 +287,7 @@ export class MemoryCache {
    * 🗑️ Supprimer toutes les valeurs correspondant à un pattern
    */
   deleteByPattern(pattern: RegExp): number {
-    let deleted = 0;: any;
+    let deleted = 0;
 
     for (const [key] of this.cache.entries()) {
       if (pattern.test(key)) {
@@ -319,8 +319,8 @@ export class MemoryCache {
     evictions: number;
     totalEntries: number;
   } {
-    const now = Date.now();: any;
-    const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({: any;
+    const now = Date.now();
+    const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
       key,
       size: JSON.stringify(entry.value).length,
       age: now - (entry.expires - this.config.defaultTTL),

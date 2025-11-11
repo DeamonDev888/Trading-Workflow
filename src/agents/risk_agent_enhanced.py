@@ -252,7 +252,7 @@ class EnhancedRiskAgent:
 
 if __name__ == "__main__":
     import argparse
-import json
+    import json
 
     parser = argparse.ArgumentParser(description="Enhanced Risk Agent with NOVAQUOTE integration")
     parser.add_argument(

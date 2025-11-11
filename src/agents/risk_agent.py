@@ -8,6 +8,7 @@ Garde la même logique que V1 mais délègue l'analyse IA au sub-agent claude-ri
 
 import json
 import os
+import pandas as pd
 import subprocess
 import time
 import traceback
@@ -15,6 +16,9 @@ from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from termcolor import cprint
+
+import src.nice_funcs as n
+from src.utils.unicode_support import safe_print, create_safe_cprint, get_utf8_subprocess_kwargs
 
 from src import config
 from src.agents.base_agent import BaseAgent
@@ -37,6 +41,9 @@ from src.config import (
 EXCLUDED_TOKENS = ["USDC", "SOL"]
 
 load_dotenv()
+
+# Créer une fonction cprint sécurisée spécifique pour cet agent
+safe_cprint = create_safe_cprint(cprint)
 
 
 class RiskAgent(BaseAgent):
@@ -99,13 +106,13 @@ Please provide a detailed risk assessment with clear recommendations."""
             "cyan",
         )
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=120,  # 2 minutes timeout
-            cwd=os.getcwd(),
-        )
+        subprocess_kwargs = get_utf8_subprocess_kwargs({
+            'capture_output': True,
+            'timeout': 120,  # 2 minutes timeout
+            'cwd': os.getcwd(),
+        })
+
+        result = subprocess.run(cmd, **subprocess_kwargs)
 
         if result.returncode != 0:
             error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
@@ -124,33 +131,59 @@ Please provide a detailed risk assessment with clear recommendations."""
 
             print("[MONEY] Getting USDC balance...")
             try:
-                print(f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}")
-                usdc_value = n.get_token_balance_usd(config.USDC_ADDRESS)
-                print(f"[OK] USDC Value: ${usdc_value:.2f}")
-                total_value += usdc_value
+                if hasattr(config, 'USDC_ADDRESS') and config.USDC_ADDRESS:
+                    print(f"[SEARCH] Checking USDC balance for address: {config.USDC_ADDRESS}")
+                    # TODO: Implement proper HyperLiquid balance fetching
+                    # usdc_value = n.get_token_balance_usd(config.USDC_ADDRESS)
+                    print("[WARN] get_token_balance_usd not available - skipping USDC balance")
+                    usdc_value = 0.0
+                    print(f"[OK] USDC Value: ${usdc_value:.2f}")
+                    total_value += usdc_value
+                else:
+                    print("[WARN] USDC_ADDRESS not configured, skipping USDC balance check")
+                    usdc_value = 0.0
             except Exception as e:
                 print(f"[ERROR] Error getting USDC balance: {str(e)}")
-                print(f"[SEARCH] Debug info - USDC Address: {config.USDC_ADDRESS}")
+                if hasattr(config, 'USDC_ADDRESS'):
+                    print(f"[SEARCH] Debug info - USDC Address: {config.USDC_ADDRESS}")
                 traceback.print_exc()
 
             print("\n[STATS] Getting monitored token balances...")
             print(f"[TARGET] Total tokens to check: {len(config.MONITORED_TOKENS)}")
             print(f"[NOTE] Token list: {config.MONITORED_TOKENS}")
 
-            for token in config.MONITORED_TOKENS:
-                if token != config.USDC_ADDRESS:  # Skip USDC as we already counted it
-                    try:
-                        print(f"\n[COIN] Checking token: {token[:8]}...")
-                        token_value = n.get_token_balance_usd(token)
-                        if token_value > 0:
-                            print(f"[MONEY] Found position worth: ${token_value:.2f}")
-                            total_value += token_value
-                        else:
-                            print("ℹ️ No balance found for this token")
-                    except Exception as e:
-                        print(f"[ERROR] Error getting balance for {token[:8]}: {str(e)}")
-                        print("[SEARCH] Full error trace:")
-                        traceback.print_exc()
+            # Get portfolio value from HyperLiquid API using nice_funcs
+            try:
+                # Use nice_funcs to get user state (should exist)
+                if hasattr(n, 'get_user_state'):
+                    user_state = n.get_user_state(config.USER_ADDRESS)
+                    if user_state and 'marginSummary' in user_state:
+                        account_value = float(user_state['marginSummary'].get('accountValue', 0))
+                        total_value = account_value
+                        print(f"[MONEY] Total portfolio value from HyperLiquid: ${total_value:.2f}")
+                    else:
+                        print("[WARN] Could not retrieve portfolio value from user state")
+                else:
+                    print("[WARN] get_user_state not available in nice_funcs")
+
+                # Fallback: Skip manual token checking since get_token_balance_usd doesn't exist
+                print("[INFO] Skipping individual token balance checks (function not available)")
+
+            except Exception as e:
+                print(f"[ERROR] Failed to get portfolio value: {e}")
+                print("[SEARCH] Full error trace:")
+                traceback.print_exc()
+
+                # Final fallback: try to get basic info if available
+                try:
+                    if hasattr(n, 'get_user_state'):
+                        user_state = n.get_user_state(config.USER_ADDRESS)
+                        if user_state:
+                            print("[INFO] Successfully connected to HyperLiquid API")
+                    else:
+                        print("[WARN] HyperLiquid API connection unavailable")
+                except Exception as fallback_error:
+                    print(f"[ERROR] Even fallback failed: {fallback_error}")
 
             print(f"\n[DIAMOND] Deamon Dev's Total Portfolio Value: ${total_value:.2f} [OK]")
             return total_value
@@ -209,7 +242,7 @@ Please provide a detailed risk assessment with clear recommendations."""
 
             df.to_csv(balance_file, index=False)
             cprint(
-                f"💾 New portfolio balance logged: ${current_value:.2f}",
+                f"[BALANCE] New portfolio balance logged: ${current_value:.2f}",
                 "white",
                 "on_green",
             )
@@ -323,7 +356,7 @@ Provide a detailed analysis with clear recommendation.
 
             self.override_active = "OVERRIDE" in response.upper()
 
-            cprint("\n🧠 Risk Sub-Agent Analysis:", "white", "on_blue")
+            cprint("\n[BRAIN] Risk Sub-Agent Analysis:", "white", "on_blue")
             print("=" * 80)
             print(response)
             print("=" * 80)
@@ -358,7 +391,7 @@ Provide a detailed analysis with clear recommendation.
                 ) * 100
 
                 if percent_change <= -MAX_LOSS_PERCENT:
-                    cprint("\n🛑 MAXIMUM LOSS PERCENTAGE REACHED", "white", "on_red")
+                    safe_print("\n[ALERTE] MAXIMUM LOSS PERCENTAGE REACHED", "white", "on_red")
                     cprint(
                         f"[DOWN] Loss: {percent_change:.2f}% (Limit: {MAX_LOSS_PERCENT}%)",
                         "red",
@@ -381,7 +414,7 @@ Provide a detailed analysis with clear recommendation.
                 usd_change = self.current_value - self.start_balance
 
                 if usd_change <= -MAX_LOSS_USD:
-                    cprint("\n🛑 MAXIMUM LOSS USD REACHED", "white", "on_red")
+                    safe_print("\n[ALERTE] MAXIMUM LOSS USD REACHED", "white", "on_red")
                     cprint(
                         f"[DOWN] Loss: ${abs(usd_change):.2f} (Limit: ${MAX_LOSS_USD:.2f})",
                         "red",
@@ -458,7 +491,7 @@ Provide a detailed analysis with clear recommendation.
             current_balance = self.get_portfolio_value()
 
             print(f"\n[MONEY] Current PnL: ${current_pnl:.2f}")
-            print(f"💼 Current Balance: ${current_balance:.2f}")
+            print(f"[BALANCE] Current Balance: ${current_balance:.2f}")
             print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
             if current_balance < MINIMUM_BALANCE_USD:
@@ -558,7 +591,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
                 print("[ALERT] Sub-Agent recommends closing all positions!")
                 self.close_all_positions()
             else:
-                print("✋ Sub-Agent recommends holding positions despite breach")
+                print("[HOLD] Sub-Agent recommends holding positions despite breach")
 
         except Exception as e:
             print(f"[ERROR] Error handling limit breach: {str(e)}")
@@ -587,7 +620,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
             current_balance = self.get_portfolio_value()
 
             print(f"\n[MONEY] Current PnL: ${current_pnl:.2f}")
-            print(f"💼 Current Balance: ${current_balance:.2f}")
+            print(f"[BALANCE] Current Balance: ${current_balance:.2f}")
             print(f"[DOWN] Minimum Balance Limit: ${MINIMUM_BALANCE_USD:.2f}")
 
             if current_balance < MINIMUM_BALANCE_USD:
@@ -618,7 +651,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
 
 def main():
     """Main function to run the risk agent"""
-    cprint("🛡🛡[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue")
+    safe_print("[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue")
 
     agent = RiskAgent()
 
@@ -631,13 +664,25 @@ def main():
             time.sleep(300)
 
         except KeyboardInterrupt:
-            print("\n👋 Risk Agent V2 shutting down gracefully...")
+            print("\n[ARRET] Risk Agent V2 shutting down gracefully...")
             break
         except Exception as e:
             print(f"[ERROR] Error: {str(e)}")
-            print("🔧 Deamon Dev suggests checking the logs and trying again!")
+            print("[DEBUG] Deamon Dev suggests checking the logs and trying again!")
             time.sleep(300)  # Still sleep on error
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Risk Agent - AI Risk Management')
+    parser.add_argument('--background', action='store_true', help='Run in background mode')
+    parser.add_argument('--auto-start', action='store_true', help='Start agent in background mode')
+
+    args = parser.parse_args()
+
+    # Log startup mode
+    if args.background or args.auto_start:
+        print("[AUTO-START] Risk Agent starting in background mode")
+
     main()

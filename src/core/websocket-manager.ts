@@ -194,7 +194,7 @@ export class ResilientWebSocket extends EventEmitter {
   private scheduleReconnect(): void {
     this.clearTimers();
 
-    const delay = this.calculateRetryDelay();: any;
+    const delay = this.calculateRetryDelay();
     this.reconnectAttempts++;
     this.status.retryCount = this.reconnectAttempts;
     this.status.totalRetries++;
@@ -209,11 +209,11 @@ export class ResilientWebSocket extends EventEmitter {
   }
 
   private calculateRetryDelay(): number {
-    const baseDelay = this.config.retryDelay;: any;
-    const exponentialDelay =: any;
+    const baseDelay = this.config.retryDelay;
+    const exponentialDelay =
       baseDelay *
       Math.pow(this.config.backoffMultiplier, this.reconnectAttempts - 1);
-    const jitter = Math.random() * 1000; // Jitter pour éviter les cascades: any;
+    const jitter = Math.random() * 1000; // Jitter pour éviter les cascades
 
     return Math.min(exponentialDelay + jitter, 30000); // Max 30s
   }

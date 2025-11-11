@@ -10,7 +10,7 @@ export interface ServiceHealth {
   responseTime?: number;
   lastCheck?: Date;
   uptime?: number;
-  metadata?: any;
+  metadata?
 }
 
 export interface DependencyHealth {
@@ -72,7 +72,7 @@ export class HealthChecker {
    * 🔍 Exécuter tous les health checks
    */
   async runHealthChecks(): Promise<HealthStatus> {
-    const checks = {: any;
+    const checks = {
       total: 0,
       passed: 0,
       failed: 0,
@@ -86,10 +86,10 @@ export class HealthChecker {
     await this.checkDependencies(checks);
 
     // Collecter les métriques système
-    const metrics = await this.collectMetrics();: any;
+    const metrics = await this.collectMetrics();
 
     // Calculer le statut global
-    const overallStatus = this.calculateOverallStatus(checks, metrics);: any;
+    const overallStatus = this.calculateOverallStatus(checks, metrics);
 
     return {
       status: overallStatus,
@@ -108,7 +108,7 @@ export class HealthChecker {
    * 🔧 Vérifier les services internes
    */
   private async checkInternalServices(checks: any): Promise<void> {
-    const serviceChecks = [: any;
+    const serviceChecks = [
       { name: 'Database', check: () => this.checkDatabase() },
       { name: 'WebSocket', check: () => this.checkWebSocket() },
       { name: 'API Server', check: () => this.checkApiServer() },
@@ -122,7 +122,7 @@ export class HealthChecker {
     for (const serviceCheck of serviceChecks) {
       checks.total++;
       try {
-        const health = await serviceCheck.check();: any;
+        const health = await serviceCheck.check();
         this.services.push({
           name: serviceCheck.name,
           ...health,
@@ -158,7 +158,7 @@ export class HealthChecker {
     for (const dependency of this.config.dependencies) {
       checks.total++;
       try {
-        const health = await this.checkExternalDependency(dependency);: any;
+        const health = await this.checkExternalDependency(dependency);
         this.dependencies.push({ name: dependency, ...health });
 
         if (health.status === 'available') {
@@ -182,7 +182,7 @@ export class HealthChecker {
    * 🗄️ Vérifier la base de données
    */
   private async checkDatabase(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
       // Simulation de check de base de données
@@ -212,21 +212,21 @@ export class HealthChecker {
    * 🔌 Vérifier le WebSocket
    */
   private async checkWebSocket(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
       // Vérifier si le serveur WebSocket fonctionne
-      const controller = new AbortController();: any;
-      const timeoutId = setTimeout(() => controller.abort(), 1000);: any;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
 
-      const response = await fetch('http://localhost:7002', {
+      const response = await fetch('http://localhost:7001', {
         method: 'GET',
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      const responseTime = Date.now() - startTime;: any;
+      const responseTime = Date.now() - startTime;
 
       if (response.ok) {
         return {
@@ -234,7 +234,7 @@ export class HealthChecker {
           responseTime,
           lastCheck: new Date(),
           metadata: {
-            port: 7002,
+            port: 7001,
             protocol: 'ws',
           },
         };
@@ -260,11 +260,11 @@ export class HealthChecker {
    * 🌐 Vérifier le serveur API
    */
   private async checkApiServer(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
-      const controller = new AbortController();: any;
-      const timeoutId = setTimeout(() => controller.abort(), 5000);: any;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch('http://localhost:7000/api/health', {
         method: 'GET',
@@ -273,8 +273,8 @@ export class HealthChecker {
 
       clearTimeout(timeoutId);
 
-      const responseTime = Date.now() - startTime;: any;
-      const data = await response.json();: any;
+      const responseTime = Date.now() - startTime;
+      const data = await response.json();
 
       if (response.ok) {
         return {
@@ -306,11 +306,11 @@ export class HealthChecker {
    * 🤖 Vérifier le gestionnaire d'agents
    */
   private async checkAgentManager(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
-      const controller = new AbortController();: any;
-      const timeoutId = setTimeout(() => controller.abort(), 3000);: any;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const response = await fetch('http://localhost:7000/api/agents', {
         method: 'GET',
@@ -319,11 +319,11 @@ export class HealthChecker {
 
       clearTimeout(timeoutId);
 
-      const responseTime = Date.now() - startTime;: any;
-      const data = await response.json();: any;
+      const responseTime = Date.now() - startTime;
+      const data = await response.json();
 
       if (response.ok && (data as any).agents) {
-        const activeAgents = (data as any).agents.filter(: any;
+        const activeAgents = (data as any).agents.filter(
           (agent: any) => agent.status === 'active'
         ).length;
 
@@ -364,12 +364,12 @@ export class HealthChecker {
    * 💾 Vérifier le cache
    */
   private async checkCache(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
       // Simulation de check de cache
-      const cacheSize = Math.floor(Math.random() * 1000000) + 100000;: any;
-      const hitRate = Math.random() * 0.9 + 0.1;: any;
+      const cacheSize = Math.floor(Math.random() * 1000000) + 100000;
+      const hitRate = Math.random() * 0.9 + 0.1;
 
       await new Promise((resolve) => setTimeout(resolve, 5));
 
@@ -398,13 +398,13 @@ export class HealthChecker {
    * 🚀 Vérifier l'API HyperLiquid
    */
   private async checkHyperLiquidAPI(): Promise<Omit<ServiceHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
-      const controller = new AbortController();: any;
-      const timeoutId = setTimeout(() => controller.abort(), 5000);: any;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(: any;
+      const response = await fetch(
         'http://localhost:7000/api/hyperliquid/price/BTC',
         {
           method: 'GET',
@@ -414,8 +414,8 @@ export class HealthChecker {
 
       clearTimeout(timeoutId);
 
-      const responseTime = Date.now() - startTime;: any;
-      const data = (await response.json()) as {: any;
+      const responseTime = Date.now() - startTime;
+      const data = (await response.json()) as {
         success: boolean;
         data?: { price?: number; responseTime?: number };
       };
@@ -457,12 +457,12 @@ export class HealthChecker {
   private async checkExternalDependency(
     name: string
   ): Promise<Omit<DependencyHealth, 'name'>> {
-    const startTime = Date.now();: any;
+    const startTime = Date.now();
 
     try {
       // Simulation de check de dépendance externe
-      const success = Math.random() > 0.1; // 90% de succès: any;
-      const responseTime = Math.random() * 1000 + 50;: any;
+      const success = Math.random() > 0.1; // 90% de succès
+      const responseTime = Math.random() * 1000 + 50;
 
       await new Promise((resolve) => setTimeout(resolve, responseTime));
 
@@ -488,21 +488,21 @@ export class HealthChecker {
    * 📊 Collecter les métriques système
    */
   private async collectMetrics(): Promise<HealthMetrics> {
-    const memUsage = process.memoryUsage();: any;
-    const cpuUsage = Math.random() * 80; // Simulation: any;
-    const activeConnections = Math.floor(Math.random() * 100) + 10;: any;
+    const memUsage = process.memoryUsage();
+    const cpuUsage = Math.random() * 80; // Simulation
+    const activeConnections = Math.floor(Math.random() * 100) + 10;
 
     // Calculer les métriques de performance
-    const now = Date.now();: any;
+    const now = Date.now();
     this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(
       (time) => now - time < 60000
     );
-    const requestsPerSecond = this.metrics.lastMinuteRequests.length / 60;: any;
-    const averageResponseTime =: any;
+    const requestsPerSecond = this.metrics.lastMinuteRequests.length / 60;
+    const averageResponseTime =
       this.metrics.totalRequests > 0
         ? this.metrics.totalResponseTime / this.metrics.totalRequests
         : 0;
-    const errorRate =: any;
+    const errorRate =
       this.metrics.totalRequests > 0
         ? this.metrics.totalErrors / this.metrics.totalRequests
         : 0;
@@ -557,7 +557,7 @@ export class HealthChecker {
     }
 
     // Nettoyer les vieilles requêtes
-    const now = Date.now();: any;
+    const now = Date.now();
     this.metrics.lastMinuteRequests = this.metrics.lastMinuteRequests.filter(
       (time) => now - time < 60000
     );
@@ -580,7 +580,7 @@ export class HealthChecker {
    * 🔍 Obtenir le statut simplifié
    */
   async getSimpleStatus(): Promise<{ status: string; timestamp: string }> {
-    const health = await this.runHealthChecks();: any;
+    const health = await this.runHealthChecks();
     return {
       status: health.status,
       timestamp: health.timestamp,

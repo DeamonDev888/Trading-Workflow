@@ -5,6 +5,8 @@ Built with love by Deamon Dev
 This module provides integration with locally running Ollama models.
 """
 
+import re
+import json
 import requests
 from termcolor import cprint
 
@@ -115,9 +117,6 @@ class OllamaModel(BaseModel):
             if response.status_code == 200:
                 response_data = response.json()
                 raw_content = response_data.get("message", {}).get("content", "")
-
-                import re
-import json
 
                 filtered_content = re.sub(
                     r"<think>.*?</think>", "", raw_content, flags=re.DOTALL

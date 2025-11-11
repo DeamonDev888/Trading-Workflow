@@ -1,7 +1,7 @@
 """
 [WINNER] Stratégies Prouvées par Backtests - Bibliothèque Centrale
 L'ÂME du projet - Les agents ne font qu'exécuter ces stratégies validées
-Built with love by Moon Dev [ROCKET]
+Built with love by Deamon Dev [ROCKET]
 """
 
 import json

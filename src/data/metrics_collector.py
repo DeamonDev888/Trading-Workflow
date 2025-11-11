@@ -12,7 +12,7 @@ Fonctionnalités :
 - Dashboard data (temps réel)
 - Historique et tendances
 
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import asyncio

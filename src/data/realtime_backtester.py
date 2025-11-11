@@ -11,7 +11,7 @@ Fonctionnalités :
 - Ajustement automatique des paramètres
 - Génération de métriques de validation
 
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import asyncio

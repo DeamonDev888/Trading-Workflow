@@ -1,6 +1,6 @@
 # 📚 Documentation Complète de l'API Hyperliquid
 
-_Documentation officielle récupérée et adaptée pour le projet Moon Dev AI
+_Documentation officielle récupérée et adaptée pour le projet Deamon Dev AI
 Agents_
 
 ## 🎯 Vue d'ensemble
@@ -522,4 +522,4 @@ await client.subscribe_trades("BTC")
 
 ---
 
-_Documentation créée pour le projet Moon Dev AI Agents - Version 1.0_
+_Documentation créée pour le projet Deamon Dev AI Agents - Version 1.0_

@@ -25,7 +25,7 @@ class HyperliquidWebSocket {
     this.totalReconnections = 0;
     this.lastConnectedTime = null;
     this.proactiveReconnectTimer = null;
-    this.PROACTIVE_RECONNECT_INTERVAL = 50000; // 50s (10s before 60s timeout)
+    this.PROACTIVE_RECONNECT_INTERVAL = 300000; // 5 minutes (大幅減少不必要的重连)
   }
 
   connect() {
@@ -191,15 +191,15 @@ class HyperliquidWebSocket {
           });
           this.websocket.send(pingMessage);
 
-          // Check for heartbeat timeout (25s to allow for network latency)
+          // Check for heartbeat timeout (35s to allow for network latency)
           setTimeout(() => {
-            if (this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 25000) {
+            if (this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 35000) {
               const timestamp = this.getTimestamp();
               console.warn(`[${timestamp}] [WARNING] [WEBSOCKET] ⚠️  Heartbeat timeout - forcing reconnection`);
               this.websocket.terminate();
               this.handleClose(4000, 'Heartbeat timeout');
             }
-          }, 25000);
+          }, 35000);
         } catch (error) {
           const timestamp = this.getTimestamp();
           console.error(`[${timestamp}] [ERROR] [WEBSOCKET] ❌ Heartbeat failed: ${error.message}`);
@@ -222,19 +222,27 @@ class HyperliquidWebSocket {
   startProactiveReconnection() {
     this.stopProactiveReconnection();
 
+    console.log(`[${this.getTimestamp()} [INFO] [SYSTEM] 🔄 Starting proactive reconnection check (interval: ${this.PROACTIVE_RECONNECT_INTERVAL/1000}s)`);
+
     this.proactiveReconnectTimer = setInterval(() => {
       if (this.connected && this.websocket) {
         const timestamp = this.getTimestamp();
-        console.log(`[${timestamp}] [INFO] [SYSTEM] 🔄 Proactive reconnection to prevent timeout`);
+        const connectionAge = Date.now() - this.lastConnectedTime;
 
-        // Close current connection and reconnect
-        this.websocket.close(1000, 'Proactive reconnection');
-        this.handleClose(1000, 'Proactive reconnection');
+        // Only reconnect if connection is old (avoid disrupting stable connections)
+        if (connectionAge > this.PROACTIVE_RECONNECT_INTERVAL * 0.8) {
+          console.log(`[${timestamp}] [INFO] [SYSTEM] 🔄 Proactive reconnection (connection age: ${Math.round(connectionAge/1000)}s)`);
 
-        // Trigger reconnection after a brief delay
-        setTimeout(() => {
-          this.connect();
-        }, 1000);
+          this.websocket.close(1000, 'Proactive reconnection');
+          this.handleClose(1000, 'Proactive reconnection');
+
+          // Trigger reconnection after a brief delay
+          setTimeout(() => {
+            this.connect();
+          }, 2000); // Increased delay to 2s for stability
+        } else {
+          console.log(`[${timestamp}] [INFO] [SYSTEM] ✅ Connection stable (age: ${Math.round(connectionAge/1000)}s) - no reconnection needed`);
+        }
       }
     }, this.PROACTIVE_RECONNECT_INTERVAL);
   }

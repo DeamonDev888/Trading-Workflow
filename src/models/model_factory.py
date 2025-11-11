@@ -1,5 +1,5 @@
 """
-🌙 Deamon Dev's Model Factory
+Deamon Dev's Model Factory
 Built with love by Deamon Dev
 This module manages all available AI models and provides a unified interface.
 """
@@ -27,7 +27,7 @@ def safe_cprint(text, color):
         clean_text = (
             text.replace("✨", "")
             .replace("❌", "")
-            .replace("🌙", "")
+            .replace("", "")
             .replace("🚀", "")
             .replace("⚡", "")
             .replace("💎", "")
@@ -44,39 +44,42 @@ def safe_cprint(text, color):
 
 import random
 
-from .claude_model import ClaudeModel
-from .deepseek_model import DeepSeekModel
-from .gemini_model import GeminiModel  # Re-enabled with Gemini 2.5 models
-from .groq_model import GroqModel
-from .ollama_model import OllamaModel
-from .openai_model import OpenAIModel
-from .xai_model import XAIModel
-from .zai_model import ZAIModel  # Added Z.AI GLM-4.6 support
+# Model imports commented out - not used currently
+# from .claude_model import ClaudeModel
+# from .deepseek_model import DeepSeekModel
+# from .gemini_model import GeminiModel  # Re-enabled with Gemini 2.5 models
+# from .groq_model import GroqModel
+# from .ollama_model import OllamaModel
+# from .openai_model import OpenAIModel
+# from .xai_model import XAIModel
+# from .zai_model import ZAIModel  # Added Z.AI GLM-4.6 support
 
 
 class ModelFactory:
     """Factory for creating and managing AI models"""
 
+    # Model implementations commented out - not used currently
     MODEL_IMPLEMENTATIONS = {
-        "claude": ClaudeModel,
-        "groq": GroqModel,
-        "openai": OpenAIModel,
-        "gemini": GeminiModel,  # Re-enabled with Gemini 2.5 models
-        "deepseek": DeepSeekModel,
-        "ollama": OllamaModel,  # Add Ollama implementation
-        "xai": XAIModel,  # xAI Grok models
-        "zai": ZAIModel,  # Z.AI GLM-4.6 - Top Chinese model with Claude Sonnet 4 performance
+        # "claude": ClaudeModel,
+        # "groq": GroqModel,
+        # "openai": OpenAIModel,
+        # "gemini": GeminiModel,  # Re-enabled with Gemini 2.5 models
+        # "deepseek": DeepSeekModel,
+        # "ollama": OllamaModel,  # Add Ollama implementation
+        # "xai": XAIModel,  # xAI Grok models
+        # "zai": ZAIModel,  # Z.AI GLM-4.6 - Top Chinese model with Claude Sonnet 4 performance
     }
 
+    # Default models commented out - not used currently
     DEFAULT_MODELS = {
-        "claude": "claude-3-5-haiku-latest",  # Latest fast Claude model
-        "groq": "mixtral-8x7b-32768",  # Fast Mixtral model
-        "openai": "gpt-4o",  # Latest GPT-4 Optimized
-        "gemini": "gemini-2.5-flash",  # Fast Gemini 2.5 model
-        "deepseek": "deepseek-reasoner",  # Enhanced reasoning model
-        "ollama": "llama3.2",  # Meta's Llama 3.2 - balanced performance
-        "xai": "grok-4-fast-reasoning",  # xAI's Grok 4 Fast with reasoning (best value: 2M context, cheap!)
-        "zai": "glm-4.6",  # Z.AI GLM-4.6 - Latest model with Claude Sonnet 4 performance
+        # "claude": "claude-3-5-haiku-latest",  # Latest fast Claude model
+        # "groq": "mixtral-8x7b-32768",  # Fast Mixtral model
+        # "openai": "gpt-4o",  # Latest GPT-4 Optimized
+        # "gemini": "gemini-2.5-flash",  # Fast Gemini 2.5 model
+        # "deepseek": "deepseek-reasoner",  # Enhanced reasoning model
+        # "ollama": "llama3.2",  # Meta's Llama 3.2 - balanced performance
+        # "xai": "grok-4-fast-reasoning",  # xAI's Grok 4 Fast with reasoning (best value: 2M context, cheap!)
+        # "zai": "glm-4.6",  # Z.AI GLM-4.6 - Latest model with Claude Sonnet 4 performance
     }
 
     def __init__(self):
@@ -199,61 +202,19 @@ class ModelFactory:
             safe_cprint("Required environment variables:", "yellow")
             for model_type, key_name in self._get_api_key_mapping().items():
                 safe_cprint(f"  +- {key_name} (for {model_type})", "yellow")
-            safe_cprint("  L- Add these to your .env file 🌙", "yellow")
+            safe_cprint("  L- Add these to your .env file", "yellow")
             safe_cprint("\nFor Ollama:", "yellow")
             safe_cprint("  L- Make sure 'ollama serve' is running", "yellow")
         else:
             safe_cprint("\n🤖 Available AI Models:", "cyan")
             for model_type, model in self._models.items():
                 safe_cprint(f"  +- {model_type}: {model.model_name}", "green")
-            safe_cprint("  L- Deamon Dev's Model Factory Ready! 🌙", "green")
+            safe_cprint("  L- Deamon Dev's Model Factory Ready!", "green")
 
     def get_model(self, model_type: str, model_name: Optional[str] = None) -> Optional[BaseModel]:
-        """Get a specific model instance"""
-        safe_cprint(f"\n Requesting model: {model_type} ({model_name or 'default'})", "cyan")
-
-        if model_type not in self.MODEL_IMPLEMENTATIONS:
-            safe_cprint(f" Invalid model type: '{model_type}'", "red")
-            safe_cprint("Available types:", "yellow")
-            for available_type in self.MODEL_IMPLEMENTATIONS.keys():
-                safe_cprint(f"  +- {available_type}", "yellow")
-            return None
-
-        if model_type not in self._models:
-            key_name = self._get_api_key_mapping().get(model_type)
-            if key_name:
-                safe_cprint(
-                    f" Model type '{model_type}' not available - check {key_name} in .env",
-                    "red",
-                )
-            else:
-                safe_cprint(f" Model type '{model_type}' not available", "red")
-            return None
-
-        model = self._models[model_type]
-        if model_name and model.model_name != model_name:
-            safe_cprint(f" Reinitializing {model_type} with model {model_name}...", "cyan")
-            try:
-                if model_type == "ollama":
-                    model = self.MODEL_IMPLEMENTATIONS[model_type](model_name=model_name)
-                else:
-                    if api_key := os.getenv(self._get_api_key_mapping()[model_type]):
-                        model = self.MODEL_IMPLEMENTATIONS[model_type](
-                            api_key, model_name=model_name
-                        )
-                    else:
-                        safe_cprint(f" API key not found for {model_type}", "red")
-                        return None
-
-                self._models[model_type] = model
-                safe_cprint(f" Successfully reinitialized with new model", "green")
-            except Exception as e:
-                safe_cprint(f" Failed to initialize {model_type} with model {model_name}", "red")
-                safe_cprint(f" Error type: {type(e).__name__}", "red")
-                safe_cprint(f" Error: {str(e)}", "red")
-                return None
-
-        return model
+        """Get a specific model instance - DISABLED: Models not currently used"""
+        safe_cprint("Model factory disabled - models not currently used", "yellow")
+        return None
 
     def _get_api_key_mapping(self) -> Dict[str, str]:
         """Get mapping of model types to their API key environment variable names"""
@@ -268,38 +229,17 @@ class ModelFactory:
 
     @property
     def available_models(self) -> Dict[str, list]:
-        """Get all available models and their configurations"""
-        return {model_type: model.AVAILABLE_MODELS for model_type, model in self._models.items()}
+        """Get all available models and their configurations - DISABLED"""
+        return {}
 
     def is_model_available(self, model_type: str) -> bool:
-        """Check if a specific model type is available"""
-        return model_type in self._models and self._models[model_type].is_available()
+        """Check if a specific model type is available - DISABLED"""
+        return False
 
     def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
-        """Generate a response from the model with no caching"""
-        try:
-            nonce = f"_{random.randint(1, 1000000)}"
-
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {
-                        "role": "user",
-                        "content": f"{user_content}{nonce}",
-                    },  # Add nonce to force new response
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens if max_tokens else self.max_tokens,
-            )
-
-            return response.choices[0].message
-
-        except Exception as e:
-            if "503" in str(e):
-                raise e  # Let the retry logic handle 503s
-            safe_cprint(f" Model error: {str(e)}", "red")
-            return None
+        """Generate a response from the model with no caching - DISABLED"""
+        safe_cprint("Model generation disabled - models not currently used", "yellow")
+        return None
 
 
 model_factory = ModelFactory()

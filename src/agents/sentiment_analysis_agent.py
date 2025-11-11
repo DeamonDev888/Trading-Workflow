@@ -384,7 +384,7 @@ class SentimentAnalysisAgent:
     def call_subagent(self, prompt: str) -> str:
         """Appeler le sub-agent Claude pour l'analyse de sentiment"""
         import subprocess
-import json
+        import json
 
         full_prompt = f"""Use the Deamon-sentiment-analyzer subagent to analyze this sentiment data:
 

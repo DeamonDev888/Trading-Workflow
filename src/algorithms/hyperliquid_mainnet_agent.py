@@ -2,7 +2,7 @@
 🔥 NOVAQUOTE HyperLiquid Mainnet Agent - 100% Real Trading Visibility
 Expert-level agent for REAL trading with REAL money on HyperLiquid mainnet
 Complete logging and monitoring for professional trading operations
-Built by Moon Dev - Real Money Trading System
+Built by Deamon Dev - Real Money Trading System
 """
 
 import asyncio

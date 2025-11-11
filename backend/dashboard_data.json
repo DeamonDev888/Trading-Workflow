@@ -1,123 +1,57 @@
 {
-  "status": "running",
-  "diagnostics": {
-    "timestamp": "2025-11-10T14:28:55.476976",
-    "services": {
-      "backend": {
-        "status": "DOWN",
-        "port": 7000,
-        "error": ""
-      },
-      "frontend": {
-        "status": "RUNNING",
-        "port": 9001
-      },
-      "hyperliquid_api": {
-        "status": "LOADED",
-        "module": "hyperliquid-api.js"
+  "timestamp": "2025-11-11T11:53:56.343942",
+  "cycle_id": "2025-11-11_11:53",
+  "status": "ACTIVE",
+  "current_decision": {
+    "decision": "EXECUTER_BUY_SIGNALS",
+    "confidence": 0.8175,
+    "summary": {
+      "agents_count": 4,
+      "buy_signals": 2,
+      "sell_signals": 0,
+      "strong_signals": [
+        "BTC (GoldenCrossover)"
+      ],
+      "avg_confidence": 0.8175,
+      "decision_detail": "Exécuter 2 signaux BUY détectés",
+      "agents_status": {
+        "risk_agent": "SUCCESS",
+        "strategy_agent": "SUCCESS",
+        "funding_agent": "SUCCESS",
+        "sentiment_agent": "SUCCESS"
       }
-    },
-    "agents": {
-      "master_agent": {
-        "file": "src\\agents\\master_agent.py",
-        "exists": true,
-        "running": true,
-        "status": "RUNNING"
-      },
-      "risk_agent": {
-        "file": "src\\agents\\risk_agent.py",
-        "exists": true,
-        "running": false,
-        "status": "STOPPED"
-      },
-      "strategy_agent": {
-        "file": "src\\agents\\strategy_agent.py",
-        "exists": true,
-        "running": true,
-        "status": "RUNNING"
-      },
-      "funding_agent": {
-        "file": "src\\agents\\funding_agent.py",
-        "exists": true,
-        "running": false,
-        "status": "STOPPED"
-      },
-      "sentiment_agent": {
-        "file": "src\\agents\\sentiment_agent.py",
-        "exists": false,
-        "running": true,
-        "status": "RUNNING"
-      }
-    },
-    "ports": {
-      "7000": {
-        "status": "FREE",
-        "port": 7000
-      },
-      "9001": {
-        "status": "OCCUPIED",
-        "port": 9001
-      },
-      "7001": {
-        "status": "FREE",
-        "port": 7001
-      }
-    },
-    "files": {
-      "run_ts": {
-        "path": "run.ts",
-        "exists": true,
-        "size": 30388
-      },
-      "server_backend": {
-        "path": "backend/server-backend.ts",
-        "exists": true,
-        "size": 116127
-      },
-      "server_frontend": {
-        "path": "frontend/server-frontend.ts",
-        "exists": true,
-        "size": 7001
-      },
-      "master_agent": {
-        "path": "src/agents/master_agent.py",
-        "exists": true,
-        "size": 1586
-      },
-      "hyperliquid_api": {
-        "path": "src/hyperliquid/hyperliquid-api.js",
-        "exists": true,
-        "size": 11860
-      },
-      "hyperliquid_signature": {
-        "path": "src/hyperliquid/hyperliquid-signature.js",
-        "exists": true,
-        "size": 4174
-      }
-    },
-    "hyperliquid": {
-      "api_file": {
-        "status": "OK",
-        "path": "src/hyperliquid/hyperliquid-api.js",
-        "size": 11860
-      },
-      "signature_file": {
-        "status": "OK",
-        "path": "src/hyperliquid/hyperliquid-signature.js",
-        "size": 4174
-      },
-      "ws_file": {
-        "status": "OK",
-        "path": "src/hyperliquid/hyperliquid-websocket.js",
-        "size": 8881
-      }
-    },
-    "performance": {
-      "cpu_percent": 16.7,
-      "memory_percent": 62.8,
-      "disk_percent": 27.9,
-      "process_count": 232
     }
   },
-  "timestamp": "2025-11-10T14:28:59.303065"
+  "agents_status": {
+    "risk_agent": {
+      "status": "SUCCESS",
+      "confidence": 0.85,
+      "llm_calls": 1,
+      "last_update": "2025-11-11T11:53:55.843172"
+    },
+    "strategy_agent": {
+      "status": "SUCCESS",
+      "confidence": 0.8,
+      "llm_calls": 1,
+      "last_update": "2025-11-11T11:53:55.953551"
+    },
+    "funding_agent": {
+      "status": "SUCCESS",
+      "confidence": 0.78,
+      "llm_calls": 1,
+      "last_update": "2025-11-11T11:53:56.062767"
+    },
+    "sentiment_agent": {
+      "status": "SUCCESS",
+      "confidence": 0.84,
+      "llm_calls": 1,
+      "last_update": "2025-11-11T11:53:56.171733"
+    }
+  },
+  "metrics": {
+    "total_cycles": 5,
+    "success_rate": 1.0,
+    "average_confidence": 0.8175000000000001
+  },
+  "next_cycle": "2025-11-11T12:13:56.343942"
 }

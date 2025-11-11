@@ -71,14 +71,13 @@ class HyperLiquidVolatilityTracker:
     async def get_historical_data(self, symbol: str, periods: int = 24) -> List[float]:
         """Get historical price data for volatility calculation"""
         try:
+            import random
+            import json
 
             current_prices = await self.get_current_prices()
             current_price = current_prices.get(symbol)
             if not current_price:
                 return []
-
-            import random
-import json
 
             prices = []
             base_price = current_price

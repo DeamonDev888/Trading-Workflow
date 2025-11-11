@@ -1,7 +1,7 @@
 """
-🌙 Hyperliquid API Client
+ Hyperliquid API Client
 Complete REST API client for Hyperliquid DEX
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import json
@@ -93,12 +93,12 @@ class HyperliquidClient:
             raise
 
     async def get_meta(self) -> Dict[str, Any]:
-        """
-        Get exchange metadata (universe, asset info, etc.)
-
-        Returns:
-            Meta data dictionary
-        """
+"""
+Hyperliquid API Client
+Complete REST API client for Hyperliquid DEX
+🚀 HyperLiquid Exchange Manager
+Built by Deamon Dev for professional trading operations
+"""
         if self._meta_cache is None:
             payload = {"type": "meta"}
             self._meta_cache = await self._post_request(self.info_url, payload)

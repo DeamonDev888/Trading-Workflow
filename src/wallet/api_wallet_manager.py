@@ -1,7 +1,7 @@
 """
-🌙 Wallet Manager
+ Wallet Manager
 Manages the configured wallet for Hyperliquid trading operations
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import os

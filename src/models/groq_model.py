@@ -79,7 +79,7 @@ class GroqModel(BaseModel):
 
     def __init__(self, api_key: str, model_name: str = "qwen/qwen3-32b", **kwargs):
         try:
-            safe_cprint(f"\n🌙 Deamon Dev's Groq Model Initialization", "cyan")
+            safe_cprint(f"\n Deamon Dev's Groq Model Initialization", "cyan")
 
             if not api_key or len(api_key.strip()) == 0:
                 raise ValueError("API key is empty or None")

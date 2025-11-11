@@ -1,6 +1,6 @@
 """
-💰 Deamon Dev's Funding Agent
-Built with love by Deamon Dev 🚀
+ Deamon Dev's Funding Agent
+Built with love by Deamon Dev 
 
 Funding Agent tracks funding rate changes across different timeframes
 and executes funding arbitrage strategies using Claude Code Sub-Agents.
@@ -8,6 +8,7 @@ and executes funding arbitrage strategies using Claude Code Sub-Agents.
 Version 2.0: Utilise Claude Code Sub-Agents exclusively (no external APIs)
 """
 
+import asyncio
 import json
 import os
 import subprocess
@@ -16,11 +17,13 @@ import traceback
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
+import pandas as pd
 
 from termcolor import cprint
 
 from src.agents.base_agent import BaseAgent
 from src.agents.strategy_library import PROVEN_STRATEGIES
+from src.algorithms.real_funding_agent import get_real_funding_rates
 from src.config import (
     AI_MAX_TOKENS,
     AI_MODEL,
@@ -40,27 +43,27 @@ POSITIVE_THRESHOLD = 0.01
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 FUNDING_ANALYSIS_PROMPT = """
-You are Deamon Dev's Funding Rate Analysis Assistant
+You are Deamon Dev's Funding Rate Correlation Analysis Assistant
 
-Analyze the funding rate opportunity and provide a trading recommendation:
+Analyze the funding rate correlations and provide a correlation-based trading recommendation:
 
 Symbol: {symbol}
 Current Funding Rate: {rate}% (annualized: {annual_rate}%)
 Market Context: {context}
 
-Evaluate:
-1. Is this a profitable arbitrage opportunity?
-2. Risk/reward ratio
-3. Recommended action: BUY/SELL/NOTHING
-4. Position size suggestion
-5. Expected duration
+Evaluate correlations:
+1. Funding rate vs market volatility correlation
+2. Funding rate vs price movements correlation
+3. Current market regime (HIGH_VOL/LOW_VOL/TRENDING/RANGING)
+4. Correlation strength and sustainability
+5. Recommended action based on correlation patterns: OPTIMIZE_HOLD/CLOSE_POSITION/ADJUST_POSITION/NO_ACTION
 
 Respond in this format:
-1. First line: BUY, SELL, or NOTHING
-2. Brief reasoning (1-2 lines)
-3. Confidence: X%
-4. Position size recommendation
-5. Risk factors
+1. First line: OPTIMIZE_HOLD, CLOSE_POSITION, ADJUST_POSITION, or NO_ACTION
+2. Correlation analysis (funding-volatility and funding-price correlations)
+3. Market regime detection
+4. Confidence: X%
+5. Recommended holding time and correlation-based exit conditions
 """
 
 
@@ -145,22 +148,22 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
         if funding_strategy:
             cprint("\n" + "=" * 80, "green")
-            cprint("🏆 FUNDING ARBITRAGE STRATEGY VALIDATED", "green")
+            cprint(" FUNDING ARBITRAGE STRATEGY VALIDATED", "green")
             cprint("=" * 80, "green")
-            cprint(f"✅ Strategy: {funding_strategy['name']}", "green")
-            cprint(f"✅ Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green")
-            cprint(f"✅ Profit Factor: {funding_strategy['profit_factor']:.2f}", "green")
+            cprint(f"[OK] Strategy: {funding_strategy['name']}", "green")
+            cprint(f"[OK] Historical Win Rate: {funding_strategy['win_rate']:.1%}", "green")
+            cprint(f"[OK] Profit Factor: {funding_strategy['profit_factor']:.2f}", "green")
             cprint(
-                f"✅ Tested on: {', '.join(funding_strategy['symbols_validated'])}",
+                f"[OK] Tested on: {', '.join(funding_strategy['symbols_validated'])}",
                 "green",
             )
             cprint(
-                f"✅ Current Validation: {funding_strategy['current_validation']['valid']}",
+                f"[OK] Current Validation: {funding_strategy['current_validation']['valid']}",
                 "green",
             )
             cprint("=" * 80, "green")
         else:
-            cprint("⚠️ Funding_Arbitrage_85 strategy NOT found in library!", "yellow")
+            cprint("[WARN] Funding_Arbitrage_85 strategy NOT found in library!", "yellow")
 
     def validate_funding_opportunity_with_proof(self, symbol: str, funding_rate: float) -> Dict:
         """
@@ -212,7 +215,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
         """Get AI analysis of the opportunity using Claude Sub-Agent"""
         try:
             rate = funding_data["annual_rate"].iloc[0]
-            print(f"\n🔍 Raw funding rate for {symbol}: {rate:.2f}%")
+            print(f"\n Raw funding rate for {symbol}: {rate:.2f}%")
 
             async with HyperliquidClient() as client:
                 btc_candles = await client.get_candles(
@@ -273,7 +276,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 funding_data=funding_data.to_string(),
             )
 
-            print(f"\n🤖 Analyzing {symbol} with Claude Sub-Agent...")
+            print(f"\n Analyzing {symbol} with Claude Sub-Agent...")
 
             context_data = {
                 "symbol": symbol,
@@ -284,7 +287,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
 
             content = self.call_subagent(context, context_data)
 
-            print("\n🔍 Raw response:")
+            print("\n Raw response:")
             print(repr(content))
 
             content = content.replace("\\n", "\n")
@@ -293,12 +296,12 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             lines = [line.strip() for line in content.split("\n") if line.strip()]
 
             if not lines:
-                print("❌ Empty response from sub-agent")
+                print("[ERROR] Empty response from sub-agent")
                 return None
 
             action = lines[0].strip().upper()
-            if action not in ["BUY", "SELL", "NOTHING"]:
-                print(f"⚠️ Invalid action: {action}")
+            if action not in ["OPTIMIZE_HOLD", "CLOSE_POSITION", "ADJUST_POSITION", "NO_ACTION"]:
+                print(f"[WARN] Invalid action: {action}")
                 return None
 
             analysis = lines[1] if len(lines) > 1 else ""
@@ -312,12 +315,12 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     if matches:
                         confidence = int(matches[0])
                 except Exception:
-                    print("⚠️ Could not parse confidence, using default")
+                    print("[WARN] Could not parse confidence, using default")
 
             return {"action": action, "analysis": analysis, "confidence": confidence}
 
         except Exception as e:
-            print(f"❌ Error in AI analysis: {str(e)}")
+            print(f"[ERROR] Error in AI analysis: {str(e)}")
             traceback.print_exc()
             return None
 
@@ -391,21 +394,21 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                     messages.append(
                         f"{token_name} has negative funding at {rate:.2f}% annual. "
                         f"AI suggests {action} with {confidence}% confidence. "
-                        f"Analysis: {analysis} 🌙"
+                        f"Analysis: {analysis} "
                     )
                 elif rate > POSITIVE_THRESHOLD:
                     messages.append(
                         f"{token_name} has high funding at {rate:.2f}% annual. "
                         f"AI suggests {action} with {confidence}% confidence. "
-                        f"Analysis: {analysis} 🌙"
+                        f"Analysis: {analysis} "
                     )
 
             if messages:
-                return "ayo moon dev seven seven seven! " + " | ".join(messages) + "!"
+                return "ayo deamon dev seven seven seven! " + " | ".join(messages) + "!"
             return None
 
         except Exception as e:
-            print(f"❌ Error formatting announcement: {str(e)}")
+            print(f"[ERROR] Error formatting announcement: {str(e)}")
             return None
 
     def _announce(self, message):
@@ -414,10 +417,10 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             return
 
         try:
-            print(f"\n📢 Funding Alert: {message}")
+            print(f"\n Funding Alert: {message}")
             print("=" * 80)
         except Exception as e:
-            print(f"❌ Error in announcement: {str(e)}")
+            print(f"[ERROR] Error in announcement: {str(e)}")
 
     def load_history(self):
         """Load or initialize historical funding rate data"""
@@ -425,38 +428,48 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             self.funding_history = pd.DataFrame(
                 columns=["timestamp", "symbol", "funding_rate", "annual_rate"]
             )
-            print("📝 Initialized new funding rate history")
+            print(" Initialized new funding rate history")
 
             if self.history_file.exists():
                 backup_file = self.data_dir / "funding_history_backup.csv"
                 os.rename(self.history_file, backup_file)
-                print(f"📦 Backed up old history file")
+                print(f" Backed up old history file")
 
         except Exception as e:
-            print(f"❌ Error loading history: {str(e)}")
+            print(f"[ERROR] Error loading history: {str(e)}")
             self.funding_history = pd.DataFrame(
                 columns=["timestamp", "symbol", "funding_rate", "annual_rate"]
             )
 
     def _get_current_funding(self):
-        """Get current funding rate data"""
+        """Get current funding rate data using real_funding_agent"""
         try:
-            df = self.api.get_funding_data()
+            # Use the real funding rates function
+            funding_rates = get_real_funding_rates()
 
-            if df is not None and not df.empty:
-                current_data = df.sort_values("event_time").groupby("symbol").last().reset_index()
+            if funding_rates:
+                # Convert to DataFrame format expected by the agent
+                data = []
+                current_time = pd.Timestamp.now()
 
-                numeric_cols = ["funding_rate", "yearly_funding_rate"]
-                for col in numeric_cols:
-                    current_data[col] = pd.to_numeric(current_data[col], errors="coerce")
+                for symbol, daily_rate in funding_rates.items():
+                    annual_rate = daily_rate * 365  # Convert daily to annual
+                    data.append({
+                        "event_time": current_time,
+                        "symbol": symbol,
+                        "funding_rate": daily_rate,
+                        "annual_rate": annual_rate
+                    })
 
-                current_data = current_data.rename(columns={"yearly_funding_rate": "annual_rate"})
-
-                return current_data
-            return None
+                df = pd.DataFrame(data)
+                print(f"[INFO] Retrieved funding rates for {len(df)} symbols")
+                return df
+            else:
+                print("[WARN] No funding rates returned")
+                return None
 
         except Exception as e:
-            print(f"❌ Error getting funding data: {str(e)}")
+            print(f"[ERROR] Error getting funding data: {str(e)}")
             traceback.print_exc()
             return None
 
@@ -495,7 +508,7 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                 self.funding_history.to_csv(self.history_file, index=False)
 
         except Exception as e:
-            print(f"❌ Error saving to history: {str(e)}")
+            print(f"[ERROR] Error saving to history: {str(e)}")
             traceback.print_exc()
 
     async def run_monitoring_cycle(self):
@@ -514,22 +527,22 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
                         self._announce(message)
 
             print("\n" + "╔" + "═" * 50 + "╗")
-            print("║         🌙 Deamon Dev's Funding Party 🎉          ║")
+            print("║          Deamon Dev's Funding Party           ║")
             print("╠" + "═" * 50 + "╣")
             print("║  Symbol  │  Annual Rate  │      Status      ║")
             print("╟" + "─" * 50 + "╢")
 
             for _, row in current_data.iterrows():
                 if row["annual_rate"] > 20:
-                    status = "🔥 SUPER HOT!"
+                    status = " SUPER HOT!"
                 elif row["annual_rate"] < -5:
-                    status = "❄️ SUPER COLD"
+                    status = "[COLD] SUPER COLD"
                 elif row["annual_rate"] > 10:
-                    status = "📈 HEATING UP"
+                    status = " HEATING UP"
                 elif row["annual_rate"] < 0:
-                    status = "📉 COOLING"
+                    status = " COOLING"
                 else:
-                    status = "😴 CHILL"
+                    status = " CHILL"
 
                 symbol = row["symbol"][:4]
                 print(f"║  {symbol:<4} │  {row['annual_rate']:>8.2f}%  │  {status:<13} ║")
@@ -537,27 +550,39 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             print("╚" + "═" * 50 + "╝")
 
         except Exception as e:
-            print(f"❌ Error in monitoring cycle: {str(e)}")
+            print(f"[ERROR] Error in monitoring cycle: {str(e)}")
 
     async def run(self):
         """Run the funding rate monitor continuously - UPDATED FOR NEW MODULE"""
-        print("\n🚀 Starting funding rate monitoring...")
+        CHECK_INTERVAL_MINUTES = 5  # Check every 5 minutes
+        print("\n Starting funding rate monitoring...")
 
         while True:
             try:
                 await self.run_monitoring_cycle()
-                print(f"\n💤 Sleeping for {CHECK_INTERVAL_MINUTES} minutes...")
-                time.sleep(CHECK_INTERVAL_MINUTES * 60)
+                print(f"\n Sleeping for {CHECK_INTERVAL_MINUTES} minutes...")
+                await asyncio.sleep(CHECK_INTERVAL_MINUTES * 60)
 
             except KeyboardInterrupt:
-                print("\n👋 Fran the Funding Agent shutting down gracefully...")
+                print("\n Fran the Funding Agent shutting down gracefully...")
                 break
             except Exception as e:
-                print(f"❌ Error in main loop: {str(e)}")
-                time.sleep(60)  # Sleep for a minute before retrying
+                print(f"[ERROR] Error in main loop: {str(e)}")
+                await asyncio.sleep(60)  # Sleep for a minute before retrying
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Funding Agent - Funding Rate Arbitrage')
+    parser.add_argument('--background', action='store_true', help='Run in background mode')
+    parser.add_argument('--auto-start', action='store_true', help='Start agent in background mode')
+
+    args = parser.parse_args()
+
+    # Log startup mode
+    if args.background or args.auto_start:
+        print("[AUTO-START] Funding Agent starting in background mode")
 
     async def main():
         agent = FundingAgent()

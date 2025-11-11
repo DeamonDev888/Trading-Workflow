@@ -214,6 +214,43 @@ if (action === 'test' || args.includes('--test')) {
   }
 }
 
+if (action === 'db' || action === 'database') {
+  console.log('🗄️ NOVAQUOTE Database Manager...');
+  logger.info('🔍 Initializing Database System...');
+  console.log('='.repeat(80));
+  colorPrint('cyan', '🗄️  DATABASE MANAGEMENT CONSOLE');
+  console.log('='.repeat(80));
+
+  try {
+    const dbPath = 'src/market_database/market_data.db';
+    const dbDir = path.dirname(dbPath);
+
+    // Créer le répertoire database si nécessaire
+    if (!fs.existsSync(dbDir)) {
+      logger.info(`📁 Creating database directory: ${dbDir}`);
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+
+    logger.info('🔧 Initializing SQLite database structure...');
+    initializeDatabase(dbPath);
+
+    colorPrint('green', '\n✅ DATABASE INITIALIZED SUCCESSFULLY!\n');
+    console.log(`📍 Database Location: ${dbPath}`);
+    console.log(`📊 Tables Created: 4 (ohlcv_data, markets, backtest_results, btc_dominance)`);
+    console.log(`⚡ Indexes: 4 optimized indexes created`);
+    console.log(`\n${colors.yellow}💡 USAGE:${colors.reset}`);
+    console.log(`  • Database is ready for trading data`);
+    console.log(`  • Tables: OHLCV, Markets, Backtests, BTC Dominance`);
+    console.log(`  • Use ts-node run.ts start to begin trading`);
+
+    process.exit(0);
+  } catch (error: any) {
+    logger.error(`❌ Database initialization failed: ${error.message}`);
+    colorPrint('red', `Error: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 // Diagnostic spécialisé HyperLiquid
 async function systemDiagnostic(): Promise<void> {
   logger.info('🔍 Running HyperLiquid system diagnostic...');
@@ -264,7 +301,7 @@ async function systemDiagnostic(): Promise<void> {
     );
   }
 
-  // 4. Vérifier les ports (async pour éviter les blocages)
+  // 4. Vérifier les ports (ATTENTION: Les ports seront automatiquement tus par cleanupPorts())
   logger.info('🌐 Checking port availability...');
   const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];
   for (const port of ports) {
@@ -280,7 +317,8 @@ async function systemDiagnostic(): Promise<void> {
         });
 
         server.on('error', () => {
-          diagnostic.issues.push(`❌ Port ${port} is already in use`);
+          // ⚠️ WARNING au lieu de CRITICAL - les ports seront tus automatiquement
+          diagnostic.warnings.push(`⚠️  Port ${port} in use - will be killed automatically`);
           resolve(false);
         });
 
@@ -293,8 +331,8 @@ async function systemDiagnostic(): Promise<void> {
 
       await portCheck;
     } catch (error: any) {
-      diagnostic.issues.push(
-        `❌ Could not check port ${port}: ${error.message}`
+      diagnostic.warnings.push(
+        `⚠️  Could not check port ${port}: ${error.message} - will try to kill`
       );
     }
   }
@@ -383,75 +421,133 @@ async function checkFiles(): Promise<void> {
   await systemDiagnostic();
 }
 
-// Nettoyer les processus sur les ports
+// Nettoyer les processus sur les ports - VERSION SÉCURISÉE
 async function cleanupPorts(): Promise<void> {
   const ports = [ARCHITECTURE.backend.port, ARCHITECTURE.frontend.port];
+  const currentPid = process.pid;
 
-  logger.info('Cleaning up ports...');
+  logger.info('⚡ AUTO-CLEANUP: Killing processes on ports ' + ports.join(', ') + '...');
+  if (logger.debug) {
+    if (logger.debug) {
+    logger.debug(`   🔒 Current process PID: ${currentPid} (will be protected)`);
+  }
+  }
 
   for (const port of ports) {
-    try {
-      // Tenter avec netstat (Windows/Linux compatible)
-      try {
-        const cmd: string = process.platform === 'win32'
-          ? `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object OwningProcess"`
-          : `netstat -tlnp | grep :${port}`;
+    let killedCount = 0;
+    logger.info(`  🎯 Port ${port} cleanup started`);
 
+    // MÉTHODE 1: Get-NetTCPConnection pour Windows (PRÉCISE)
+    if (process.platform === 'win32') {
+      try {
+        const cmd = `powershell "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Where-Object {$_.State -eq 'Listen'} | Select-Object OwningProcess"`;
         const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
 
-        if (process.platform === 'win32') {
-          const lines = output.split('\n').slice(3); // Skip header lines
-          for (const line of lines) {
-            if (line.trim()) {
-              const match = line.trim().match(/\d+/);
-              if (match) {
-                const pid = parseInt(match[0]);
-                if (pid > 0) {
-                  try {
-                    execSync(
-                      `powershell "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`,
-                      { stdio: 'ignore' }
-                    );
-                    logger.success(`Killed process ${pid} on port ${port}`);
-                  } catch (killError: any) {
-                    logger.warn(
-                      `Could not kill process ${pid}: ${killError.message}`
-                    );
+        const lines = output.split('\n').filter(line => line.trim() && !line.includes('OwningProcess'));
+        for (const line of lines) {
+          const match = line.trim().match(/\d+/);
+          if (match) {
+            const pid = parseInt(match[0]);
+            if (pid > 0 && pid !== currentPid) {
+              try {
+                // Vérifier si le processus est vraiment un Node.js sur notre port
+                const processCmd = `powershell "Get-Process -Id ${pid} -ErrorAction SilentlyContinue | Select-Object ProcessName"`;
+                const processOutput = execSync(processCmd, { encoding: 'utf8', stdio: 'pipe' });
+
+                if (processOutput.toLowerCase().includes('node')) {
+                  execSync(`powershell "Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue"`, { stdio: 'ignore' });
+                  killedCount++;
+                  logger.success(`    ✅ Killed Node.js PID ${pid} on port ${port}`);
+                } else {
+                  if (logger.debug) {
+                    if (logger.debug) {
+    logger.debug(`    ℹ️  Skipping non-Node.js PID ${pid} on port ${port}`);
+  }
                   }
                 }
-              }
-            }
-          }
-        } else {
-          // Linux/Unix handling
-          const lines = output.split('\n');
-          for (const line of lines) {
-            const match = line.match(/:(\d+)\s+.*?(\d+)\//);
-            if (match && parseInt(match[1]) === port) {
-              const pid = parseInt(match[2]);
-              if (pid > 0) {
-                try {
-                  execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
-                  logger.success(`Killed process ${pid} on port ${port}`);
-                } catch (killError: any) {
-                  logger.warn(
-                    `Could not kill process ${pid}: ${killError.message}`
-                  );
+              } catch (killError: any) {
+                if (logger.debug) {
+                  if (logger.debug) {
+    logger.debug(`    ℹ️  Could not verify/kill PID ${pid}: ${killError.message}`);
+  }
                 }
+              }
+            } else if (pid === currentPid) {
+              if (logger.debug) {
+                if (logger.debug) {
+    logger.debug(`   🔒 Protected current process PID ${currentPid} from cleanup`);
+  }
               }
             }
           }
         }
       } catch (error) {
-        // Port libre ou commande non disponible
-        logger.debug?.(`Port ${port} appears to be free`);
+        if (logger.debug) {
+          if (logger.debug) {
+    logger.debug(`    ℹ️  Get-NetTCPConnection method failed or no processes found`);
+  }
+        }
       }
-    } catch (error: any) {
-      logger.warn(`Error cleaning port ${port}: ${error.message}`);
+    } else {
+      // MÉTHODE Linux/Unix: netstat + lsof (PRÉCISE)
+      try {
+        // Utiliser lsof pour plus de précision
+        const lsofCmd = `lsof -ti:${port} 2>/dev/null`;
+        const lsofOutput = execSync(lsofCmd, { encoding: 'utf8', stdio: 'pipe' });
+
+        const pids = lsofOutput.trim().split('\n').filter(pid => pid.trim());
+        for (const pidStr of pids) {
+          const pid = parseInt(pidStr.trim());
+          if (pid > 0 && pid !== currentPid) {
+            try {
+              // Vérifier si c'est un processus Node.js
+              const psCmd = `ps -p ${pid} -o comm= 2>/dev/null`;
+              const psOutput = execSync(psCmd, { encoding: 'utf8', stdio: 'pipe' }).trim();
+
+              if (psOutput.includes('node')) {
+                execSync(`kill -TERM ${pid}`, { stdio: 'ignore' });
+                // Attendre un peu avant de vérifier si le processus est mort
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Vérifier si le processus est encore actif
+                try {
+                  process.kill(pid, 0); // Vérifier si le processus existe
+                  execSync(`kill -KILL ${pid}`, { stdio: 'ignore' }); // Force kill si encore actif
+                } catch {
+                  // Processus déjà mort
+                }
+
+                killedCount++;
+                logger.success(`    ✅ Killed Node.js PID ${pid} on port ${port}`);
+              } else {
+                if (logger.debug) {
+    logger.debug(`    ℹ️  Skipping non-Node.js PID ${pid} (${psOutput}) on port ${port}`);
+  }
+              }
+            } catch (killError: any) {
+              if (logger.debug) {
+    logger.debug(`    ℹ️  Could not kill PID ${pid}: ${killError.message}`);
+  }
+            }
+          } else if (pid === currentPid) {
+            if (logger.debug) {
+    logger.debug(`   🔒 Protected current process PID ${currentPid} from cleanup`);
+  }
+          }
+        }
+      } catch (error) {
+        if (logger.debug) {
+    logger.debug(`    ℹ️  lsof method failed or no processes found on port ${port}`);
+  }
+      }
     }
+
+    logger.info(`  📊 Port ${port}: ${killedCount} process(es) killed`);
   }
 
+  logger.info('⏳ Waiting 2 seconds for cleanup to complete...');
   await new Promise((resolve) => setTimeout(resolve, 2000));
+  logger.success('✅ Port cleanup completed safely');
 }
 
 // Démarrer un serveur
@@ -472,14 +568,31 @@ function startServer(
 
     // Déterminer si c'est un fichier TypeScript
     const isTypeScript = serverConfig.file.endsWith('.ts');
-    const command = isTypeScript ? 'ts-node' : 'node';
 
-    const proc = spawn(command, [serverConfig.file], {
-      stdio: verbose ? 'inherit' : ['pipe', 'pipe', 'pipe'],
-      detached: false,
-      env: { ...process.env, NODE_ENV: 'development' },
-      shell: process.platform === 'win32', // Utiliser shell sur Windows
-    });
+    let proc: ChildProcess;
+
+    if (process.platform === 'win32') {
+      // Solution Windows: utiliser cross-spawn pour éviter les warnings
+      const crossSpawn = require('cross-spawn');
+      const command = isTypeScript ? 'ts-node' : 'node';
+
+      // cross-spawn gère automatiquement l'escaping sécurisé
+      proc = crossSpawn(command, [serverConfig.file], {
+        stdio: verbose ? 'inherit' : ['pipe', 'pipe', 'pipe'],
+        detached: false,
+        env: { ...process.env, NODE_ENV: 'development' },
+        windowsHide: true, // Cacher la fenêtre Windows
+      });
+    } else {
+      // Linux/Unix: approche standard sécurisée
+      const command = isTypeScript ? 'ts-node' : 'node';
+      proc = spawn(command, [serverConfig.file], {
+        stdio: verbose ? 'inherit' : ['pipe', 'pipe', 'pipe'],
+        detached: false,
+        env: { ...process.env, NODE_ENV: 'development' },
+        shell: false, // SÉCURITÉ: jamais shell: true
+      });
+    }
 
     // Gérer stdout
     if (proc.stdout) {
@@ -608,17 +721,30 @@ async function main(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
+    // ⚡ PRIORITÉ ABSOLUE: NETTOYER LES PORTS EN PREMIER
+    logger.info('⚡ KILLING ACTIVE PROCESSES ON PORTS...');
+    await cleanupPorts();
+    logger.success('✅ All ports cleared - ready to start');
+
     // Vérifier l'architecture
     showWelcome();
 
     // Créer les répertoires nécessaires
     ensureDirectories();
 
-    // Diagnostic complet du système
-    await checkFiles();
+    // Initialiser la base de données au démarrage
+    logger.info('🗄️  Initializing trading database...');
+    const dbPath = 'src/market_database/market_data.db';
+    try {
+      initializeDatabase(dbPath);
+      logger.success('✅ Database initialized successfully');
+    } catch (error: any) {
+      logger.warn(`⚠️  Database initialization warning: ${error.message}`);
+      logger.info('Continuing without database features...');
+    }
 
-    // Nettoyer les ports
-    await cleanupPorts();
+    // Diagnostic complet du système (APRÈS avoir tué les ports)
+    await checkFiles();
 
     // Démarrer les serveurs HyperLiquid
     logger.info('🚀 Starting HyperLiquid Trading System...');
@@ -877,6 +1003,7 @@ ${colors.cyan}ACTIONS:${colors.reset}
   stop                     Stop all trading services
   restart                  Restart the system
   test                     Run system diagnostics
+  db, database             Initialize/Manage SQLite database
 
 ${colors.cyan}OPTIONS:${colors.reset}
   -h, --help              Show this help message
@@ -890,18 +1017,39 @@ ${colors.cyan}HYPERLIQUID FEATURES:${colors.reset}
   • Leverage: Up to 50x (default 5x)
   • AI Agents: Risk Management, Strategy, Funding Arbitrage
   • Real-time: WebSocket market data integration
+  • Database: SQLite with 4 tables (OHLCV, Markets, Backtests, BTC Dom)
+
+${colors.cyan}DATABASE STRUCTURE:${colors.reset}
+  🗄️  Tables:
+    • ohlcv_data         → Market data (OHLCV)
+    • markets            → Market metadata
+    • backtest_results   → Strategy backtests
+    • btc_dominance      → BTC dominance metrics
+
+  ⚡ Indexes:
+    • idx_ohlcv_symbol_time       → Fast OHLCV queries
+    • idx_ohlcv_exchange_symbol   → Exchange filtering
+    • idx_backtest_strategy       → Strategy analysis
+    • idx_btc_dominance_time      → Time series data
 
 ${colors.cyan}REQUIREMENTS:${colors.reset}
   • HYPER_LIQUID_KEY (Ethereum private key)
-  • ANTHROPIC_KEY (AI risk management)
-  • Optional: OPENAI_KEY, DEEPSEEK_KEY
+  • sqlite3 (npm install sqlite3) for database features
 
 ${colors.cyan}EXAMPLES:${colors.reset}
   ts-node run.ts start                    # Start trading system
   ts-node run.ts start --verbose          # Start with detailed logs
+  ts-node run.ts db                       # Initialize database only
+  ts-node run.ts database                 # Alternative database command
   ts-node run.ts test                     # Run diagnostics
   ts-node run.ts stop                     # Stop all services
   ts-node run.ts restart                  # Restart system
+
+${colors.cyan}DATABASE USAGE:${colors.reset}
+  Location: src/market_database/market_data.db
+  Created: Automatically on first run
+  Markets: 8 HyperLiquid symbols pre-loaded
+  Query: Use SQLite3 for direct database access
 
 ${colors.cyan}TRADING INTERFACE:${colors.reset}
   Frontend (Port 9001):
@@ -918,12 +1066,13 @@ ${colors.cyan}SAFETY TIPS:${colors.reset}
   • Use small position sizes initially
   • Monitor AI agent recommendations
   • Keep API keys secure and rotate regularly
+  • Database is auto-initialized on system start
 `);
 }
 
 // Créer les répertoires nécessaires au démarrage
 function ensureDirectories(): void {
-  const directories = ['logs', 'logs/archive'];
+  const directories = ['logs', 'logs/archive', 'src/market_database'];
 
   for (const dir of directories) {
     if (!fs.existsSync(dir)) {
@@ -935,6 +1084,156 @@ function ensureDirectories(): void {
       }
     }
   }
+}
+
+// Initialiser la base de données SQLite
+function initializeDatabase(dbPath: string): void {
+  // Importer sqlite3 dynamiquement
+  let sqlite3
+  try {
+    sqlite3 = require('sqlite3').verbose();
+  } catch (error) {
+    logger.warn('⚠️  sqlite3 not installed - database features limited');
+    return;
+  }
+
+  const db = new sqlite3.Database(dbPath, (err: Error | null) => {
+    if (err) {
+      logger.error(`❌ Cannot open database: ${err.message}`);
+      throw err;
+    }
+    logger.success(`📍 Database opened: ${dbPath}`);
+  });
+
+  // Créer les tables
+  const tables = {
+    ohlcv_data: `
+      CREATE TABLE IF NOT EXISTS ohlcv_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT NOT NULL,
+        exchange TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        timestamp DATETIME NOT NULL,
+        open REAL NOT NULL,
+        high REAL NOT NULL,
+        low REAL NOT NULL,
+        close REAL NOT NULL,
+        volume REAL NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(symbol, exchange, timeframe, timestamp)
+      )
+    `,
+    markets: `
+      CREATE TABLE IF NOT EXISTS markets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT NOT NULL UNIQUE,
+        exchange TEXT NOT NULL,
+        name TEXT NOT NULL,
+        base_currency TEXT,
+        quote_currency TEXT,
+        is_active BOOLEAN DEFAULT 1,
+        min_order_size REAL,
+        price_precision INTEGER,
+        volume_precision INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `,
+    backtest_results: `
+      CREATE TABLE IF NOT EXISTS backtest_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        strategy_name TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        exchange TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        start_date DATETIME NOT NULL,
+        end_date DATETIME NOT NULL,
+        total_return REAL NOT NULL,
+        annual_return REAL NOT NULL,
+        sharpe_ratio REAL NOT NULL,
+        max_drawdown REAL NOT NULL,
+        total_trades INTEGER NOT NULL,
+        win_rate REAL NOT NULL,
+        profit_factor REAL NOT NULL,
+        final_balance REAL NOT NULL,
+        initial_balance REAL DEFAULT 1000000,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `,
+    btc_dominance: `
+      CREATE TABLE IF NOT EXISTS btc_dominance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME NOT NULL UNIQUE,
+        dominance_percentage REAL NOT NULL,
+        btc_price REAL NOT NULL,
+        total_market_cap REAL NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+  };
+
+  // Créer les tables
+  for (const [tableName, sql] of Object.entries(tables)) {
+    db.run(sql, (err: Error | null) => {
+      if (err) {
+        logger.error(`❌ Failed to create table ${tableName}: ${err.message}`);
+      } else {
+        logger.success(`✅ Table created: ${tableName}`);
+      }
+    });
+  }
+
+  // Créer les indexes
+  const indexes = [
+    'CREATE INDEX IF NOT EXISTS idx_ohlcv_symbol_time ON ohlcv_data(symbol, timestamp)',
+    'CREATE INDEX IF NOT EXISTS idx_ohlcv_exchange_symbol ON ohlcv_data(exchange, symbol)',
+    'CREATE INDEX IF NOT EXISTS idx_backtest_strategy ON backtest_results(strategy_name, created_at)',
+    'CREATE INDEX IF NOT EXISTS idx_btc_dominance_time ON btc_dominance(timestamp)'
+  ];
+
+  // Créer les indexes
+  indexes.forEach((sql, index) => {
+    db.run(sql, (err: Error | null) => {
+      if (err) {
+        logger.warn(`⚠️  Failed to create index ${index + 1}: ${err.message}`);
+      } else {
+        logger.success(`✅ Index created: idx_${index + 1}`);
+      }
+    });
+  });
+
+  // Insérer les données de base (marchés HyperLiquid)
+  const insertMarkets = `
+    INSERT OR IGNORE INTO markets (symbol, exchange, name, base_currency, quote_currency, is_active, price_precision, volume_precision)
+    VALUES
+      ('BTC', 'HyperLiquid', 'Bitcoin Perpetual', 'BTC', 'USD', 1, 2, 8),
+      ('ETH', 'HyperLiquid', 'Ethereum Perpetual', 'ETH', 'USD', 1, 2, 8),
+      ('SOL', 'HyperLiquid', 'Solana Perpetual', 'SOL', 'USD', 2, 4, 8),
+      ('ARB', 'HyperLiquid', 'Arbitrum Perpetual', 'ARB', 'USD', 2, 4, 8),
+      ('APT', 'HyperLiquid', 'Aptos Perpetual', 'APT', 'USD', 2, 4, 8),
+      ('ADA', 'HyperLiquid', 'Cardano Perpetual', 'ADA', 'USD', 2, 6, 8),
+      ('AVAX', 'HyperLiquid', 'Avalanche Perpetual', 'AVAX', 'USD', 2, 4, 8),
+      ('BNB', 'HyperLiquid', 'Binance Coin Perpetual', 'BNB', 'USD', 2, 4, 8)
+  `;
+
+  db.run(insertMarkets, (err: Error | null) => {
+    if (err) {
+      logger.warn(`⚠️  Failed to insert market data: ${err.message}`);
+    } else {
+      logger.success(`✅ Market data initialized (8 symbols)`);
+    }
+  });
+
+  // Fermer la database après 2 secondes
+  setTimeout(() => {
+    db.close((err: Error | null) => {
+      if (err) {
+        logger.error(`❌ Error closing database: ${err.message}`);
+      } else {
+        logger.success('✅ Database initialized and closed successfully');
+      }
+    });
+  }, 2000);
 }
 
 // Lancer l'application

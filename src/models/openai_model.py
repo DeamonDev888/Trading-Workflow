@@ -120,7 +120,7 @@ class OpenAIModel(BaseModel):
 
         if self._supports_reasoning_effort():
             safe_cprint(
-                "🚀 Deamon Dev's O3 model powering up with reasoning capabilities! 🌙",
+                "🚀 Deamon Dev's O3 model powering up with reasoning capabilities! ",
                 "cyan",
             )
             model_kwargs["reasoning_effort"] = self.reasoning_effort

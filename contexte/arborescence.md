@@ -42,15 +42,13 @@ projet trading/
 |   |   |   └── novaquote.css
 |   |   ├── backtest.html
 |   |   ├── config.html
-|   |   ├── dashboard_ascii.html
 |   |   ├── data/
 |   |   |   └── production_backtests/
 |   |   |       └── BTCDominance_FINAL_results_improved.json
 |   |   ├── index.html
 |   |   ├── portfolio-manager.js
 |   |   ├── test_agents.html
-|   |   ├── test_claude_agents.html
-|   |   └── validate_config.html
+|   |   └── test_claude_agents.html
 |   └── server-frontend.ts
 ├── package-lock.json
 ├── package.json

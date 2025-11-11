@@ -107,14 +107,12 @@ def call_subagent(self, prompt: str, context_data: dict = None) -> str:
 - claude-funding-advisor - Funding rates
 - claude-sentiment-advisor - Sentiment analyse
 
-## Frontend (7 pages)
+## Frontend (5 pages)
 - `backtest.html`
 - `config.html`
-- `dashboard_ascii.html`
 - `index.html`
 - `test_agents.html`
 - `test_claude_agents.html`
-- `validate_config.html`
 
 ## Winston Loggers (7)
 apiLogger, wsLogger, agentsLogger, backtestsLogger, tradingLogger, walletsLogger, systemLogger

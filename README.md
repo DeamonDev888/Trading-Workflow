@@ -1,4 +1,9 @@
-# 🚀 NOVAQUOTE Trading System
+# NOVAQUOTE - HyperLiquid Trading System
+
+## 🚀 Description
+
+**NOVAQUOTE** est un système de trading avancé pour HyperLiquid utilisant des agents IA spécialisés.
+
 
 **Expert System de Trading IA avec 4 agents spécialisés et 10+ algorithmes performants**
 
@@ -80,13 +85,12 @@ projet trading/
 │       └── structured-logger.ts   # Logger TypeScript
 │
 ├── 🌐 frontend/
-│   └── public/                     # 6 pages HTML
+│   └── public/                     # 5 pages HTML
 │       ├── index.html             # Dashboard principal
 │       ├── backtest.html          # Interface backtest
 │       ├── config.html            # Configuration système
 │       ├── test_agents.html       # Test agents
-│       ├── dashboard_ascii.html   # Dashboard ASCII
-│       └── validate_config.html   # Validation config
+│       └── test_claude_agents.html # Test Claude agents
 │
 ├── 🔧 backend/                     # Backend Node.js
 │   ├── server-backend.ts         # Serveur principal (Port 7000)
@@ -189,8 +193,7 @@ Scripts Python purs sans IA pour le trading automatisé :
 2. **`backtest.html`** - Interface de backtesting
 3. **`config.html`** - Configuration système
 4. **`test_agents.html`** - Interface test agents
-5. **`dashboard_ascii.html`** - Dashboard ASCII terminal
-6. **`validate_config.html`** - Validation configuration
+5. **`test_claude_agents.html`** - Test Claude agents
 
 ### Technologies
 
@@ -543,3 +546,48 @@ npm run test:all
 ---
 
 > 🎯 **NOVAQUOTE** : Expert trading system avec intelligence artificielle pour performance optimale et gestion risque professionnelle
+
+
+## 🛠️ Démarrage Rapide
+
+### Prérequis
+- Node.js 18+
+- Python 3.8+
+- Compte HyperLiquid
+
+### Installation
+```bash
+# Cloner le repository
+git clone <repository-url>
+cd projet-trading
+
+# Installer les dépendances
+npm install
+pip install -r requirements.txt
+
+# Configuration
+cp .env.example .env
+# Éditer .env avec vos clés API
+```
+
+### Lancement
+```bash
+# Démarrer le système
+npm run dev
+
+# Ou utiliser les agents directement
+python scripts/claude_code_agent_runner.py --mode complete
+```
+
+
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour les guidelines.
+
+## 📄 License
+
+Ce projet est sous license MIT.
+
+---
+*Maintenu par l'Agent Documentation NOVAQUOTE*

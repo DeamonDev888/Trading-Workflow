@@ -1,7 +1,7 @@
 """
-🌙 Hyperliquid API Types
+ Hyperliquid API Types
 Type definitions for Hyperliquid API responses and requests
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 from dataclasses import dataclass

@@ -1,11 +1,13 @@
 """
-🌙 Hyperliquid WebSocket Client
+ Hyperliquid WebSocket Client
 Real-time data streaming for Hyperliquid DEX
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import asyncio
 import json
+import random
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 import websockets
@@ -26,7 +28,7 @@ class HyperliquidWebSocket:
         base_url: str = "wss://api.hyperliquid.xyz/ws",
         testnet: bool = False,
         reconnect_delay: float = 5.0,
-        max_reconnects: int = 10,
+        max_reconnects: int = 50,
     ):
         """Initialize the WebSocket client"""
         self.name = "Hyperliquid WebSocket"
@@ -42,6 +44,11 @@ class HyperliquidWebSocket:
         self.websocket: Optional[Any] = None
         self.connected = False
         self.reconnect_count = 0
+
+        # Connection stability tracking
+        self.last_disconnect_time = 0
+        self.rapid_disconnect_threshold = 10  # seconds
+        self.connection_stable_time = 30  # seconds
 
         self.subscriptions: Dict[str, Dict[str, Any]] = {}
         self.callbacks: Dict[str, List[Callable]] = {
@@ -122,7 +129,7 @@ class HyperliquidWebSocket:
 
             self.websocket = await websockets.connect(
                 self.base_url,
-                extra_headers={"User-Agent": "MoonDev-Hyperliquid-WS/1.0"},
+                extra_headers={"User-Agent": "DeamonDev-Hyperliquid-WS/1.0"},
             )
 
             self.connected = True
@@ -160,18 +167,42 @@ class HyperliquidWebSocket:
         await self._emit("disconnected")
 
     async def _handle_reconnect(self):
-        """Handle reconnection logic"""
+        """Handle reconnection logic with stability detection"""
         if self.reconnect_count >= self.max_reconnects:
             cprint(f"[ERROR] Max reconnect attempts ({self.max_reconnects}) reached", "red")
             return
 
         self.reconnect_count += 1
+
+        # Check for rapid disconnect pattern
+        current_time = time.time()
+        time_since_last_disconnect = current_time - self.last_disconnect_time
+
+        if time_since_last_disconnect < self.rapid_disconnect_threshold:
+            # Rapid disconnect detected - add extra delay
+            stability_delay = self.connection_stable_time
+            cprint(f"[WARNING] Rapid disconnect pattern detected - adding {stability_delay}s stability delay", "yellow")
+            final_delay = stability_delay
+        else:
+            # Normal exponential backoff
+            base_delay = 2.0  # Increased from 1.0 to be less aggressive
+            exponential_backoff = min(base_delay * (1.5 ** self.reconnect_count), 120)  # Gentler exponent
+            jitter = random.uniform(0, 2000)  # Increased jitter
+            final_delay = exponential_backoff + (jitter / 1000)
+
+        # Update last disconnect time
+        self.last_disconnect_time = current_time
+
         cprint(
-            f"[INFO] Reconnecting in {self.reconnect_delay}s (attempt {self.reconnect_count})",
+            f"[INFO] 🔄 Reconnection attempt {self.reconnect_count}/{self.max_reconnects}",
             "yellow",
         )
+        cprint(
+            f"[INFO] ⏱️  Retry in {final_delay:.2f}s (backoff: {exponential_backoff:.2f}s + jitter: {jitter:.0f}ms)",
+            "cyan",
+        )
 
-        await asyncio.sleep(self.reconnect_delay)
+        await asyncio.sleep(final_delay)
 
         if not self._reconnect_task or self._reconnect_task.done():
             self._reconnect_task = asyncio.create_task(self.connect())
@@ -203,20 +234,28 @@ class HyperliquidWebSocket:
             await self._handle_reconnect()
 
     async def _heartbeat_loop(self):
-        """Send periodic heartbeat messages"""
+        """Send periodic heartbeat messages - Optimized for HyperLiquid"""
         try:
+            heartbeat_count = 0
+
             while self.connected:
-                await asyncio.sleep(30)  # Send heartbeat every 30 seconds
+                # Increase heartbeat interval to reduce connection stress
+                await asyncio.sleep(30)  # Send heartbeat every 30 seconds instead of 15
 
                 if self.websocket and self.connected:
                     try:
                         await self.websocket.ping()
+                        heartbeat_count += 1
+                        cprint(f"[HEARTBEAT] Ping sent successfully #{heartbeat_count}", "cyan", attrs=["dark"])
                     except Exception as e:
                         cprint(f"[ERROR] Heartbeat failed: {str(e)}", "red")
                         break
+                else:
+                    cprint("[WARNING] WebSocket not available for heartbeat", "yellow")
+                    break
 
         except asyncio.CancelledError:
-            pass
+            cprint("[HEARTBEAT] Heartbeat loop cancelled", "yellow")
 
     async def _handle_message(self, message: str):
         """
@@ -273,7 +312,7 @@ class HyperliquidWebSocket:
     async def _handle_l2_book(self, data: Dict[str, Any]):
         """Handle L2 order book updates"""
         try:
-        l2_book = L2Book.from_dict(data)
+            l2_book = L2Book.from_dict(data)
             await self._emit("l2Book", l2_book)
 
         except Exception as e:
@@ -282,7 +321,7 @@ class HyperliquidWebSocket:
     async def _handle_order_updates(self, data: Dict[str, Any]):
         """Handle order updates"""
         try:
-        await self._emit("orderUpdates", data)
+            await self._emit("orderUpdates", data)
 
         except Exception as e:
             cprint(f"❌ Error handling order updates: {str(e)}", "red")
@@ -290,7 +329,7 @@ class HyperliquidWebSocket:
     async def _handle_user_updates(self, data: Dict[str, Any]):
         """Handle user-specific updates"""
         try:
-        await self._emit("user", data)
+            await self._emit("user", data)
 
         except Exception as e:
             cprint(f"❌ Error handling user updates: {str(e)}", "red")
@@ -354,12 +393,11 @@ class HyperliquidWebSocket:
             True if successful
         """
         if not self.connected or not self.websocket:
-        cprint("❌ WebSocket not connected", "red")
+            cprint("❌ WebSocket not connected", "red")
             return False
 
         try:
-
-        message = {"method": "subscribe", "subscription": subscription}
+            message = {"method": "subscribe", "subscription": subscription}
 
             await self.websocket.send(json.dumps(message))
 
@@ -387,16 +425,15 @@ class HyperliquidWebSocket:
             True if successful
         """
         if not self.connected or not self.websocket:
-        cprint("❌ WebSocket not connected", "red")
+            cprint("❌ WebSocket not connected", "red")
             return False
 
         try:
-
-        message = {"method": "unsubscribe", "subscription": subscription}
+            message = {"method": "unsubscribe", "subscription": subscription}
 
             await self.websocket.send(json.dumps(message))
 
-         sub_key = f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
+            sub_key = f"{subscription['type']}_{subscription.get('coin', subscription.get('user', ''))}"
             self.subscriptions.pop(sub_key, None)
 
             cprint(f"✅ Unsubscribed from {subscription['type']}", "green")
@@ -407,8 +444,7 @@ class HyperliquidWebSocket:
             return False
 
     def get_subscriptions(self) -> List[Dict[str, Any]]:
-
-    """
+        """
         Get current subscriptions
 
         Returns:

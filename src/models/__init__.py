@@ -1,5 +1,5 @@
 """
-🌙 Deamon Dev's Model System
+ Deamon Dev's Model System
 Built with love by Deamon Dev 🚀
 """
 

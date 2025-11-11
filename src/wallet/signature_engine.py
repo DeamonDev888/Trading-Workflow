@@ -1,7 +1,7 @@
 """
-🌙 Signature Engine
+ Signature Engine
 Secure transaction signing for Hyperliquid API operations
-Built with love by Moon Dev 🚀
+Built with love by Deamon Dev 🚀
 """
 
 import json

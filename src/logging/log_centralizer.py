@@ -1,7 +1,7 @@
 """
 🚀 NOVAQUOTE Log Centralizer - 100% Visibility Monitoring System
 Real-time log aggregation and monitoring for all NOVAQUOTE agents
-Built by Moon Dev - Professional Trading Operations Dashboard
+Built by Deamon Dev - Professional Trading Operations Dashboard
 """
 
 import argparse

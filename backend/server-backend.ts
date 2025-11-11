@@ -354,9 +354,9 @@ try {
   HyperliquidAPI = require('../src/hyperliquid/hyperliquid-api');
   HyperliquidWebSocket = require('../src/hyperliquid/hyperliquid-websocket');
   log.success('HyperLiquid modules loaded successfully');
-} catch (error: any) {
-  log.error(`Failed to load HyperLiquid modules: ${error.message}`);
-}
+      } catch (error: any) {
+        log.error(`Failed to load HyperLiquid modules: ${error?.message || error}`);
+      }
 
 // HyperLiquid API instance
 let hlAPI: any = null;
@@ -370,9 +370,9 @@ async function initializeHyperLiquid(): Promise<void> {
       // L'API HyperLiquid n'a pas de méthode initialize(), elle est prête à l'emploi
       log.success('HyperLiquid API initialized');
     }
-  } catch (error: any) {
-    log.error(`Failed to initialize HyperLiquid API: ${error.message}`);
-  }
+      } catch (error: any) {
+        log.error(`Failed to initialize HyperLiquid API: ${error?.message || error}`);
+      }
 }
 
 // Initialize HyperLiquid WebSocket
@@ -383,9 +383,9 @@ function initializeHyperLiquidWS(): void {
       hlWS.connect();
       log.success('HyperLiquid WebSocket connected');
     }
-  } catch (error: any) {
-    log.error(`Failed to initialize HyperLiquid WebSocket: ${error.message}`);
-  }
+      } catch (error: any) {
+        log.error(`Failed to initialize HyperLiquid WebSocket: ${error?.message || error}`);
+      }
 }
 
 // ============================================================================
@@ -1104,7 +1104,7 @@ app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
     log.error(`Liquidity assets error: ${error.message}`, 'LIQUIDITY-ERROR');
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1214,7 +1214,7 @@ app.get('/api/liquidity/safe-assets', async (req: Request, res: Response) => {
     log.error(`Safe assets error: ${error.message}`, 'SAFE-ASSETS-ERROR');
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1334,7 +1334,7 @@ app.get('/api/liquidity/check/:symbol', async (req: Request, res: Response) => {
     );
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1801,7 +1801,7 @@ function getMasterAgentStatus(): any {
     return {
       success: false,
       status: 'ERROR',
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString()
     };
   }
@@ -2101,7 +2101,7 @@ app.get('/api/dashboard/real-time', async (req: Request, res: Response) => {
     log.error(`Dashboard fetch error: ${error.message}`, 'DASHBOARD-ERROR');
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString(),
     });
   }
@@ -2938,7 +2938,11 @@ app.get('/api/backtests', async (req: Request, res: Response) => {
       '../src/data/production_backtests'
     );
 
-    const backtestData = {
+    const backtestData: {
+      backtests: any[];
+      total_count: number;
+      source: string;
+    } = {
       backtests: [],
       total_count: 0,
       source: 'production_data',
@@ -3452,7 +3456,7 @@ app.post('/api/wallet/balances', async (req: Request, res: Response) => {
           }
         }
       } catch (spotError) {
-        log.warn('Spot balances not available:', spotError);
+        log.warn('Spot balances not available:', (spotError as Error).message);
       }
 
       log.success(
@@ -3795,7 +3799,7 @@ app.post('/api/agents/master/stop', async (req: Request, res: Response) => {
       log.success('Agent Master stopped successfully', 'AGENT-MASTER');
     } catch (killError) {
       log.warn(
-        `Could not stop Agent Master: ${killError.message}`,
+        `Could not stop Agent Master: ${(killError as Error).message}`,
         'AGENT-MASTER-WARNING'
       );
     }
@@ -3828,7 +3832,7 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
     const { execSync } = require('child_process');
 
     let isRunning = false;
-    let pid = null;
+    let pid: number | null = null;
 
     try {
       if (process.platform === 'win32') {
@@ -4092,7 +4096,7 @@ app.post(
         body: JSON.stringify({ type: 'allMids' }),
       })
         .then((res) => res.json())
-        .then((prices) => parseFloat(prices[symbol] || 0))
+        .then((prices: any) => parseFloat(prices[symbol] || 0))
         .catch(() => 100000); // Fallback price
 
       const portfolioValue = 10000; // $10,000 portfolio
