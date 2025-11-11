@@ -194,28 +194,28 @@ const colors: Colors = {
 const log: Logger = {
   // 🎯 General Logs
   info: (msg: string, category: string = 'SYSTEM'): void => {
-    const timestamp = getTimestamp();: any;
+    const timestamp = getTimestamp();
     console.log(
       `[${timestamp}] [${colors.cyan}INFO${colors.reset}] [${colors.blue}${category}${colors.reset}] ℹ️  ${msg}`
     );
   },
 
   success: (msg: string, category: string = 'SYSTEM'): void => {
-    const timestamp = getTimestamp();: any;
+    const timestamp = getTimestamp();
     console.log(
       `[${timestamp}] [${colors.green}SUCCESS${colors.reset}] [${colors.blue}${category}${colors.reset}] ✅ ${msg}`
     );
   },
 
   error: (msg: string, category: string = 'ERROR'): void => {
-    const timestamp = getTimestamp();: any;
+    const timestamp = getTimestamp();
     console.log(
       `[${timestamp}] [${colors.red}ERROR${colors.reset}] [${colors.magenta}${category}${colors.reset}] ❌ ${msg}`
     );
   },
 
   warn: (msg: string, category: string = 'WARNING'): void => {
-    const timestamp = getTimestamp();: any;
+    const timestamp = getTimestamp();
     console.log(
       `[${timestamp}] [${colors.yellow}WARN${colors.reset}] [${colors.blue}${category}${colors.reset}] ⚠️  ${msg}`
     );
@@ -407,7 +407,7 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (data: any) => {
     try {
-      const message = JSON.parse(data.toString());: any;
+      const message = JSON.parse(data.toString());
       log.info(`WebSocket message received: ${message.type}`, 'WEBSOCKET');
 
       // Handle different message types
@@ -472,10 +472,10 @@ function handleSubscription(ws: any, message: any): void {
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   log.api.request(req.method, req.path);
-  const start = Date.now();: any;
+  const start = Date.now();
 
   res.on('finish', () => {
-    const duration = Date.now() - start;: any;
+    const duration = Date.now() - start;
     log.api.response(req.path, res.statusCode);
     log.perf.log(`${req.method} ${req.path}`, duration);
   });
@@ -521,14 +521,14 @@ interface RealTimePrices {
 const activePositions: Map<string, Position> = new Map();
 
 // Cache interne pour réduire les appels HyperLiquid
-const internalCache = {: any;
+const internalCache = {
   prices: { data: null as any, timestamp: 0 },
   positions: { data: null as any, timestamp: 0 },
 };
-const CACHE_TTL = 10000; // 10 secondes: any;
+const CACHE_TTL = 10000; // 10 secondes
 
 function getFromCache(type: 'prices' | 'positions') {
-  const cache = internalCache[type];: any;
+  const cache = internalCache[type];
   if (cache.data && Date.now() - cache.timestamp < CACHE_TTL) {
     return cache.data;
   }
@@ -557,7 +557,7 @@ function isSideAllowed(requestedSide: string): boolean {
     return true; // Mode mixte autorisé
   }
 
-  const normalizedSide = requestedSide.toLowerCase();: any;
+  const normalizedSide = requestedSide.toLowerCase();
 
   if (TRADING_CONFIG.ALLOWED_SIDE === 'both') {
     return true;
@@ -573,11 +573,11 @@ function hasOppositePosition(
   symbol: string,
   requestedSide: string
 ): Position | null {
-  const normalizedSide = requestedSide.toLowerCase();: any;
+  const normalizedSide = requestedSide.toLowerCase();
 
   for (const [key, position] of activePositions.entries()) {
     if (position.symbol === symbol) {
-      const positionSide = position.side.toLowerCase();: any;
+      const positionSide = position.side.toLowerCase();
 
       // Vérifier si c'est une position opposée
       if (
@@ -604,7 +604,7 @@ function validateUnidirectionalPosition(
   existingPosition: Position | null;
   action: 'REJECTED' | 'ACCEPTED';
 } {
-  const oppositePosition = hasOppositePosition(symbol, requestedSide);: any;
+  const oppositePosition = hasOppositePosition(symbol, requestedSide);
 
   if (oppositePosition) {
     return {
@@ -637,7 +637,7 @@ function validateUnidirectionalPosition(
  * 💾 Enregistrer une nouvelle position
  */
 function addPosition(position: Position): void {
-  const key = `${position.symbol}`;: any;
+  const key = `${position.symbol}`;
   activePositions.set(key, position);
 
   log.trading.success(
@@ -650,9 +650,9 @@ function addPosition(position: Position): void {
  * 🗑️ Supprimer une position
  */
 function removePosition(symbol: string): boolean {
-  const key = `${symbol}`;: any;
+  const key = `${symbol}`;
   if (activePositions.has(key)) {
-    const position = activePositions.get(key);: any;
+    const position = activePositions.get(key);
     activePositions.delete(key);
 
     log.trading.success(
@@ -681,9 +681,9 @@ function getPositionsStats(): {
   mode: string;
   allowedSide: string;
 } {
-  const positions = getActivePositions();: any;
-  const long = positions.filter((p) => p.side === 'LONG').length;: any;
-  const short = positions.filter((p) => p.side === 'SHORT').length;: any;
+  const positions = getActivePositions();
+  const long = positions.filter((p) => p.side === 'LONG').length;
+  const short = positions.filter((p) => p.side === 'SHORT').length;
 
   return {
     total: positions.length,
@@ -700,7 +700,7 @@ function getPositionsStats(): {
 async function getRealTimePrices(): Promise<RealTimePrices> {
   try {
     // Vérifier le cache en premier
-    const cached = getFromCache('prices');: any;
+    const cached = getFromCache('prices');
     if (cached) {
       log.info('💰 Using cached real-time prices', 'PRICES-CACHE');
       return cached;
@@ -713,15 +713,15 @@ async function getRealTimePrices(): Promise<RealTimePrices> {
 
     log.info('💰 Fetching fresh prices from HyperLiquid', 'PRICES');
 
-    const mids = await hlAPI.getAllMids();: any;
+    const mids = await hlAPI.getAllMids();
     const prices: RealTimePrices = {};
 
     // Traiter la réponse selon son format
     if (Array.isArray(mids)) {
       // Format: [symbol1, price1, symbol2, price2, ...]
       for (let i = 0; i < mids.length; i += 2) {
-        const symbol = mids[i];: any;
-        const price = mids[i + 1];: any;
+        const symbol = mids[i];
+        const price = mids[i + 1];
         if (symbol && price) {
           prices[symbol] = price;
         }
@@ -763,8 +763,8 @@ function calculatePositionMetrics(
 } {
   const { side, size, entryPrice } = position;
 
-  let pnl = 0;: any;
-  let unrealizedPnl = 0;: any;
+  let pnl = 0;
+  let unrealizedPnl = 0;
 
   if (side === 'LONG') {
     // LONG: P&L = (Prix actuel - Prix d'entrée) * Taille
@@ -777,7 +777,7 @@ function calculatePositionMetrics(
   }
 
   // ROE = P&L / (Prix d'entrée * Taille) * 100
-  const investedAmount = entryPrice * size;: any;
+  const investedAmount = entryPrice * size;
   const roe = investedAmount > 0 ? (pnl / investedAmount) * 100 : 0;
 
   return {
@@ -793,18 +793,18 @@ function calculatePositionMetrics(
  */
 async function getActivePositionsWithMetrics(): Promise<Position[]> {
   try {
-    const positions = getActivePositions();: any;
-    const realTimePrices = await getRealTimePrices();: any;
+    const positions = getActivePositions();
+    const realTimePrices = await getRealTimePrices();
 
-    const positionsWithMetrics = positions.map((position) => {: any;
-      const symbol = position.symbol.toUpperCase();: any;
+    const positionsWithMetrics = positions.map((position) => {
+      const symbol = position.symbol.toUpperCase();
 
       // Récupérer le prix mark de HyperLiquid
-      const markPrice =: any;
+      const markPrice =
         realTimePrices[symbol] || realTimePrices[`${symbol}-PERP`] || 0;
 
       if (markPrice > 0) {
-        const metrics = calculatePositionMetrics(position, markPrice);: any;
+        const metrics = calculatePositionMetrics(position, markPrice);
 
         return {
           ...position,
@@ -855,7 +855,7 @@ app.get('/api/hyperliquid/tokens', async (req: Request, res: Response) => {
       return res.status(503).json({ error: 'HyperLiquid API not available' });
     }
 
-    const tokens = await hlAPI.getAllTokens();: any;
+    const tokens = await hlAPI.getAllTokens();
     log.hyperliquid.tokens(tokens.length);
     res.json({ tokens });
   } catch (error: any) {
@@ -874,7 +874,7 @@ app.get(
         return res.status(503).json({ error: 'HyperLiquid API not available' });
       }
 
-      const price = await hlAPI.getTokenPrice(symbol);: any;
+      const price = await hlAPI.getTokenPrice(symbol);
       log.hyperliquid.price(symbol, price);
       res.json({ symbol, price });
     } catch (error: any) {
@@ -897,7 +897,7 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
 
     // 🚨 VÉRIFICATION MODE UNIDIRECTIONNEL
     if (isUnidirectionalMode()) {
-      const validation = validateUnidirectionalPosition(symbol, side);: any;
+      const validation = validateUnidirectionalPosition(symbol, side);
 
       if (!validation.success) {
         log.trading.error(validation.reason, 'UNIDIRECTIONAL-VIOLATION');
@@ -921,7 +921,7 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
     }
 
     // Execute order logic here
-    const result = await hlAPI.placeOrder({: any;
+    const result = await hlAPI.placeOrder({
       symbol,
       side,
       size,
@@ -967,8 +967,8 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
 app.get('/api/positions', async (req: Request, res: Response) => {
   try {
     // Récupérer les positions avec P&L et ROE en temps réel
-    const positions = await getActivePositionsWithMetrics();: any;
-    const stats = getPositionsStats();: any;
+    const positions = await getActivePositionsWithMetrics();
+    const stats = getPositionsStats();
 
     res.json({
       success: true,
@@ -1009,7 +1009,7 @@ app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
     const { min_liquidity = '0.4', max_count = '20' } = req.query;
 
     // Execute Python liquidity tracker
-    const result = await executePythonScript(: any;
+    const result = await executePythonScript(
       'src/agents/liquidity_tracker.py',
       [
         '--min-liquidity',
@@ -1021,13 +1021,13 @@ app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
 
     if (result.success && result.output) {
       // Parse the output to extract liquid assets
-      const outputLines = result.output.split('\n');: any;
-      const assetsLine = outputLines.find((line) =>: any;
+      const outputLines = result.output.split('\n');
+      const assetsLine = outputLines.find((line) =>
         line.includes('[LIQUID ASSETS]')
       );
 
       if (assetsLine) {
-        const assets = assetsLine: any;
+        const assets = assetsLine
           .replace('[LIQUID ASSETS]', '')
           .trim()
           .split(',')
@@ -1046,7 +1046,7 @@ app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
         });
       } else {
         // Fallback to blue chip assets
-        const blueChipAssets = [: any;
+        const blueChipAssets = [
           'BTC',
           'ETH',
           'SOL',
@@ -1074,7 +1074,7 @@ app.get('/api/liquidity/assets', async (req: Request, res: Response) => {
       }
     } else {
       // Return safe blue chip assets on error
-      const blueChipAssets = [: any;
+      const blueChipAssets = [
         'BTC',
         'ETH',
         'SOL',
@@ -1124,7 +1124,7 @@ app.get('/api/liquidity/safe-assets', async (req: Request, res: Response) => {
     } = req.query;
 
     // Execute Python strategy agent with zero-risk mode
-    const result = await executePythonScript('src/agents/strategy_agent.py', [: any;
+    const result = await executePythonScript('src/agents/strategy_agent.py', [
       '--zero-risk',
       '--min-volatility',
       min_volatility.toString(),
@@ -1136,15 +1136,15 @@ app.get('/api/liquidity/safe-assets', async (req: Request, res: Response) => {
 
     if (result.success && result.output) {
       // Parse output for safe assets
-      const outputLines = result.output.split('\n');: any;
-      const safeAssetsLine = outputLines.find((line) =>: any;
+      const outputLines = result.output.split('\n');
+      const safeAssetsLine = outputLines.find((line) =>
         line.includes('[SAFE TRADING ASSETS')
       );
 
       if (safeAssetsLine) {
         // Extract asset symbols from the output
-        const assetMatches = safeAssetsLine.match(/(\b[A-Z]{2,6}\b)/g) || [];: any;
-        const safeAssets = [...new Set(assetMatches)]; // Remove duplicates: any;
+        const assetMatches = safeAssetsLine.match(/(\b[A-Z]{2,6}\b)/g) || [];
+        const safeAssets = [...new Set(assetMatches)]; // Remove duplicates
 
         res.json({
           success: true,
@@ -1181,7 +1181,7 @@ app.get('/api/liquidity/safe-assets', async (req: Request, res: Response) => {
       }
     } else {
       // Return blue chip assets on error
-      const blueChipAssets = [: any;
+      const blueChipAssets = [
         'BTC',
         'ETH',
         'SOL',
@@ -1231,7 +1231,7 @@ app.get('/api/liquidity/check/:symbol', async (req: Request, res: Response) => {
     const { min_volatility = '0.03', min_liquidity = '0.4' } = req.query;
 
     // Check if it's a blue chip asset (immediate approval)
-    const blueChipAssets = new Set([: any;
+    const blueChipAssets = new Set([
       'BTC',
       'ETH',
       'SOL',
@@ -1272,14 +1272,14 @@ app.get('/api/liquidity/check/:symbol', async (req: Request, res: Response) => {
     }
 
     // For non-blue-chip assets, check with liquidity tracker
-    const result = await executePythonScript(: any;
+    const result = await executePythonScript(
       'src/agents/liquidity_tracker.py',
       ['--check-asset', symbol.toUpperCase()]
     );
 
     if (result.success && result.output) {
-      const output = result.output;: any;
-      const isLiquid =: any;
+      const output = result.output;
+      const isLiquid =
         output.includes('LIQUID') ||
         output.includes('EXCELLENT') ||
         output.includes('VERY_GOOD');
@@ -1354,7 +1354,7 @@ app.post('/api/positions/close', (req: Request, res: Response) => {
       });
     }
 
-    const removed = removePosition(symbol);: any;
+    const removed = removePosition(symbol);
 
     if (!removed) {
       return res.status(404).json({
@@ -1383,7 +1383,7 @@ app.post('/api/positions/close', (req: Request, res: Response) => {
  */
 app.get('/api/prices/realtime', async (req: Request, res: Response) => {
   try {
-    const realTimePrices = await getRealTimePrices();: any;
+    const realTimePrices = await getRealTimePrices();
 
     res.json({
       success: true,
@@ -1504,7 +1504,7 @@ app.post('/api/trading/config', (req: Request, res: Response) => {
 
 // Agent management endpoints
 app.get('/api/agents', (req: Request, res: Response) => {
-  const agents = [: any;
+  const agents = [
     { id: 'risk', name: 'Risk Agent', status: 'active' },
     { id: 'strategy', name: 'Strategy Agent', status: 'active' },
     { id: 'funding', name: 'Funding Agent', status: 'inactive' },
@@ -1527,7 +1527,7 @@ app.post('/api/agents/:agentId/stop', (req: Request, res: Response) => {
 
 // Get overall agents status
 app.get('/api/agents/status', (req: Request, res: Response) => {
-  const agents = [: any;
+  const agents = [
     {
       id: 'risk',
       name: 'Risk Agent',
@@ -1592,7 +1592,7 @@ app.get('/api/agents/:agentId/inferences', (req: Request, res: Response) => {
 
   // Return empty list - real inferences will be added when agents are running
   const agentInferences: any[] = [];
-  const limitedInferences = agentInferences.slice(0, Number(limit));: any;
+  const limitedInferences = agentInferences.slice(0, Number(limit));
 
   res.json({
     agent: agentId,
@@ -1621,7 +1621,7 @@ app.get('/api/data/backtest', async (req: Request, res: Response) => {
     const { symbol, strategy } = req.query;
 
     // Mock backtest data
-    const backtestData = {: any;
+    const backtestData = {
       symbol,
       strategy,
       results: {
@@ -1652,13 +1652,13 @@ function executePythonScript(
   args: string[] = []
 ): Promise<any> {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python', [scriptPath, ...args], {: any;
+    const pythonProcess = spawn('python', [scriptPath, ...args], {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd(),
     });
 
-    let stdout = '';: any;
-    let stderr = '';: any;
+    let stdout = '';
+    let stderr = '';
 
     pythonProcess.stdout?.on('data', (data: Buffer) => {
       stdout += data.toString();
@@ -1671,7 +1671,7 @@ function executePythonScript(
     pythonProcess.on('close', (code: number | null) => {
       if (code === 0) {
         try {
-          const result = JSON.parse(stdout);: any;
+          const result = JSON.parse(stdout);
           resolve(result);
         } catch (e) {
           resolve({ output: stdout });
@@ -1696,7 +1696,7 @@ app.post('/api/python/execute', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Script path is required' });
     }
 
-    const result = await executePythonScript(script, args);: any;
+    const result = await executePythonScript(script, args);
     res.json({ success: true, result });
   } catch (error: any) {
     log.error(`Python execution error: ${error.message}`);
@@ -1716,7 +1716,7 @@ app.get('/api/dashboard/real-time', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/dashboard/real-time');
 
     // Récupérer les vraies données des agents Python
-    const realData = await getRealTimeDataFromPythonAgents();: any;
+    const realData = await getRealTimeDataFromPythonAgents();
 
     log.success('📊 Real data sent from Python agents', 'DASHBOARD');
 
@@ -1742,22 +1742,22 @@ app.get('/api/dashboard/real-time', async (req: Request, res: Response) => {
 async function getRealTimeDataFromPythonAgents() {
   try {
     const { spawn } = require('child_process');
-    const path = require('path');: any;
+    const path = require('path');
 
     // Récupérer les données de l'agent HyperLiquid
-    const hyperliquidData = await getHyperLiquidRealData();: any;
+    const hyperliquidData = await getHyperLiquidRealData();
 
     // Récupérer les données de l'agent de risque
-    const riskData = await getRiskAgentRealData();: any;
+    const riskData = await getRiskAgentRealData();
 
     // Récupérer les données de l'agent de funding
-    const fundingData = await getFundingAgentRealData();: any;
+    const fundingData = await getFundingAgentRealData();
 
-    const now = new Date();: any;
+    const now = new Date();
     const currentCycle = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}:${Math.floor(now.getMinutes() / 5) * 5}`;
 
     // Combiner toutes les données RÉELLES
-    const realData = {: any;
+    const realData = {
       timestamp: new Date().toISOString(),
       current_cycle: currentCycle,
       next_cycle: new Date(now.getTime() + 5 * 60 * 1000)
@@ -1886,12 +1886,12 @@ async function getRealTimeDataFromPythonAgents() {
 async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
   return new Promise((resolve) => {
     // Utiliser notre agent avec vraies données de marché
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/real_market_agent.py'
     );
 
-    const pythonProcess = spawn(: any;
+    const pythonProcess = spawn(
       'python',
       [pythonScript, '--get-dashboard-data'],
       {
@@ -1901,7 +1901,7 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
       }
     );
 
-    let output = '';: any;
+    let output = '';
     pythonProcess.stdout.on('data', (data) => {
       output += data.toString();
     });
@@ -1916,7 +1916,7 @@ async function getHyperLiquidRealData(): Promise<HyperLiquidData> {
     pythonProcess.on('close', (code) => {
       try {
         if (output.trim()) {
-          const data = JSON.parse(output) as HyperLiquidData;: any;
+          const data = JSON.parse(output) as HyperLiquidData;
           resolve(data);
         } else {
           resolve({
@@ -2049,12 +2049,12 @@ function getDefaultFundingData(): FundingData {
  */
 async function getRiskAgentRealData(): Promise<RiskData> {
   return new Promise((resolve) => {
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/real_risk_agent.py'
     );
 
-    const pythonProcess = spawn(: any;
+    const pythonProcess = spawn(
       'python',
       [pythonScript, '--get-dashboard-metrics'],
       {
@@ -2064,7 +2064,7 @@ async function getRiskAgentRealData(): Promise<RiskData> {
       }
     );
 
-    let output = '';: any;
+    let output = '';
     pythonProcess.stdout.on('data', (data) => {
       output += data.toString();
     });
@@ -2072,7 +2072,7 @@ async function getRiskAgentRealData(): Promise<RiskData> {
     pythonProcess.on('close', (code) => {
       try {
         if (output.trim()) {
-          const data = JSON.parse(output);: any;
+          const data = JSON.parse(output);
           resolve(data);
         } else {
           resolve(getDefaultRiskData());
@@ -2094,12 +2094,12 @@ async function getRiskAgentRealData(): Promise<RiskData> {
  */
 async function getFundingAgentRealData(): Promise<FundingData> {
   return new Promise((resolve) => {
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/real_funding_agent.py'
     );
 
-    const pythonProcess = spawn(: any;
+    const pythonProcess = spawn(
       'python',
       [pythonScript, '--get-dashboard-summary'],
       {
@@ -2109,7 +2109,7 @@ async function getFundingAgentRealData(): Promise<FundingData> {
       }
     );
 
-    let output = '';: any;
+    let output = '';
     pythonProcess.stdout.on('data', (data) => {
       output += data.toString();
     });
@@ -2117,7 +2117,7 @@ async function getFundingAgentRealData(): Promise<FundingData> {
     pythonProcess.on('close', (code) => {
       try {
         if (output.trim()) {
-          const data = JSON.parse(output);: any;
+          const data = JSON.parse(output);
           resolve(data);
         } else {
           resolve(getDefaultFundingData());
@@ -2146,7 +2146,7 @@ app.get('/api/dashboard', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/dashboard');
 
     // Same data as real-time endpoint
-    const realData = await getRealTimeDataFromPythonAgents();: any;
+    const realData = await getRealTimeDataFromPythonAgents();
 
     res.json({
       success: true,
@@ -2172,7 +2172,7 @@ app.get('/api/bots', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/bots');
 
     // Récupérer le vrai status des agents
-    const botStatus = await getBotStatusFromAgents();: any;
+    const botStatus = await getBotStatusFromAgents();
 
     res.json({
       success: true,
@@ -2194,9 +2194,9 @@ app.get('/api/bots', async (req: Request, res: Response) => {
  */
 async function getBotStatusFromAgents() {
   try {
-    const hyperliquidData = await getHyperLiquidRealData();: any;
-    const riskData = await getRiskAgentRealData();: any;
-    const fundingData = await getFundingAgentRealData();: any;
+    const hyperliquidData = await getHyperLiquidRealData();
+    const riskData = await getRiskAgentRealData();
+    const fundingData = await getFundingAgentRealData();
 
     return {
       total_bots: 4,
@@ -2294,7 +2294,7 @@ app.get('/api/status', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/status');
 
-    const systemStatus = await getSystemStatus();: any;
+    const systemStatus = await getSystemStatus();
 
     res.json({
       success: true,
@@ -2316,9 +2316,9 @@ app.get('/api/status', async (req: Request, res: Response) => {
  */
 async function getSystemStatus() {
   try {
-    const hyperliquidData = await getHyperLiquidRealData();: any;
-    const riskData = await getRiskAgentRealData();: any;
-    const fundingData = await getFundingAgentRealData();: any;
+    const hyperliquidData = await getHyperLiquidRealData();
+    const riskData = await getRiskAgentRealData();
+    const fundingData = await getFundingAgentRealData();
 
     return {
       system: {
@@ -2385,7 +2385,7 @@ app.get('/api/tokens', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/tokens');
 
-    const tokensData = await getTokensData();: any;
+    const tokensData = await getTokensData();
 
     res.json({
       success: true,
@@ -2408,19 +2408,19 @@ app.get('/api/tokens', async (req: Request, res: Response) => {
 async function getTokensData() {
   try {
     // Appeler notre agent avec vraies données de marché
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/real_market_agent.py'
     );
 
-    const tokensData = await new Promise((resolve) => {: any;
-      const pythonProcess = spawn('python', [pythonScript, '--get-tokens'], {: any;
+    const tokensData = await new Promise((resolve) => {
+      const pythonProcess = spawn('python', [pythonScript, '--get-tokens'], {
         cwd: path.join(__dirname, '..'),
         stdio: 'pipe',
         env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
       });
 
-      let output = '';: any;
+      let output = '';
       pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
       });
@@ -2428,7 +2428,7 @@ async function getTokensData() {
       pythonProcess.on('close', (code) => {
         try {
           if (output.trim()) {
-            const data = JSON.parse(output);: any;
+            const data = JSON.parse(output);
             resolve(data);
           } else {
             resolve({
@@ -2483,9 +2483,9 @@ app.get('/api/stats', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/stats');
 
-    const realData = await getRealTimeDataFromPythonAgents();: any;
+    const realData = await getRealTimeDataFromPythonAgents();
 
-    const stats = {: any;
+    const stats = {
       total_balance_usd:
         (realData as any).portfolio_metrics?.total_balance_usd || 0,
       unrealized_pnl: (realData as any).portfolio_metrics?.unrealized_pnl || 0,
@@ -2524,9 +2524,9 @@ app.get('/api/balances', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/balances');
 
-    const realData = await getRealTimeDataFromPythonAgents();: any;
+    const realData = await getRealTimeDataFromPythonAgents();
 
-    const balances = {: any;
+    const balances = {
       total_balance_usd:
         (realData.portfolio_metrics as any)?.total_balance_usd || 0,
       available_balance:
@@ -2562,12 +2562,12 @@ app.get('/api/backtests', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/backtests');
 
     // Read production backtest results from JSON files
-    const productionBacktestsPath = path.join(: any;
+    const productionBacktestsPath = path.join(
       __dirname,
       '../src/data/production_backtests'
     );
 
-    const backtestData = {: any;
+    const backtestData = {
       backtests: [],
       total_count: 0,
       source: 'production_data',
@@ -2575,17 +2575,17 @@ app.get('/api/backtests', async (req: Request, res: Response) => {
 
     try {
       if (fs.existsSync(productionBacktestsPath)) {
-        const files = fs.readdirSync(productionBacktestsPath);: any;
+        const files = fs.readdirSync(productionBacktestsPath);
 
         for (const file of files) {
           if (file.endsWith('.json')) {
             try {
-              const filePath = path.join(productionBacktestsPath, file);: any;
-              const fileContent = fs.readFileSync(filePath, 'utf8');: any;
-              const backtestResult = JSON.parse(fileContent);: any;
+              const filePath = path.join(productionBacktestsPath, file);
+              const fileContent = fs.readFileSync(filePath, 'utf8');
+              const backtestResult = JSON.parse(fileContent);
 
               // Transform to match expected format
-              const formattedBacktest = {: any;
+              const formattedBacktest = {
                 id: backtestResult.strategy || file.replace('.json', ''),
                 strategy: backtestResult.strategy || 'Unknown',
                 symbol: backtestResult.symbols_tested?.[0] || 'BTC/USDT',
@@ -2887,13 +2887,13 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
     log.api.request('GET', '/api/hyperliquid/info');
 
     // Get real HyperLiquid info from our market agent
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/real_market_agent.py'
     );
 
-    const infoData = await new Promise((resolve) => {: any;
-      const pythonProcess = spawn(: any;
+    const infoData = await new Promise((resolve) => {
+      const pythonProcess = spawn(
         'python',
         [pythonScript, '--get-exchange-info'],
         {
@@ -2903,7 +2903,7 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
         }
       );
 
-      let output = '';: any;
+      let output = '';
       pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
       });
@@ -2911,7 +2911,7 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
       pythonProcess.on('close', (code) => {
         try {
           if (output.trim()) {
-            const data = JSON.parse(output);: any;
+            const data = JSON.parse(output);
             resolve(data);
           } else {
             resolve({
@@ -3046,8 +3046,8 @@ app.post('/api/wallet/balances', async (req: Request, res: Response) => {
       // Extract balances from user state
       if (userState && (userState as any).assetPositions) {
         for (const position of (userState as any).assetPositions) {
-          const coin = position.coin;: any;
-          const balance = parseFloat(position.position?.coin || '0');: any;
+          const coin = position.coin;
+          const balance = parseFloat(position.position?.coin || '0');
           if (balance > 0) {
             balances.push({ token: coin, balance });
           }
@@ -3067,11 +3067,11 @@ app.post('/api/wallet/balances', async (req: Request, res: Response) => {
 
         if (spotState && (spotState as any).balances) {
           for (const bal of (spotState as any).balances) {
-            const coin = bal.coin;: any;
-            const balance = parseFloat(bal.hold || bal.total || '0');: any;
+            const coin = bal.coin;
+            const balance = parseFloat(bal.hold || bal.total || '0');
             if (balance > 0) {
               // Update or add balance
-              const existing = balances.find((b) => b.token === coin);: any;
+              const existing = balances.find((b) => b.token === coin);
               if (existing) {
                 existing.balance += balance;
               } else {
@@ -3127,7 +3127,7 @@ app.get(
       log.api.request('GET', '/api/wallet/permission/mainnet');
 
       // Check wallet permissions from config
-      const hasPermission =: any;
+      const hasPermission =
         process.env['HYPERLIQUID_MAINNET_ENABLED'] === 'true';
 
       res.json({
@@ -3166,7 +3166,7 @@ app.get(
       log.api.request('GET', '/api/wallet/permission/testnet');
 
       // Check wallet permissions from config
-      const hasPermission =: any;
+      const hasPermission =
         process.env['HYPERLIQUID_TESTNET_ENABLED'] !== 'false';
 
       res.json({
@@ -3206,24 +3206,24 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
     const { mode = 'simulation', wallet_address = null } = req.body;
 
     // Use our portfolio manager to get data
-    const pythonScript = path.join(: any;
+    const pythonScript = path.join(
       __dirname,
       '../src/algorithms/portfolio_manager.py'
     );
 
-    const portfolioData = await new Promise((resolve) => {: any;
-      const args = ['--get-portfolio', '--mode=' + mode];: any;
+    const portfolioData = await new Promise((resolve) => {
+      const args = ['--get-portfolio', '--mode=' + mode];
       if (wallet_address && mode === 'mainnet') {
         args.push('--wallet=' + wallet_address);
       }
 
-      const pythonProcess = spawn('python', [pythonScript, ...args], {: any;
+      const pythonProcess = spawn('python', [pythonScript, ...args], {
         cwd: path.join(__dirname, '..'),
         stdio: 'pipe',
         env: { ...process.env, PYTHONPATH: path.join(__dirname, '..') },
       });
 
-      let output = '';: any;
+      let output = '';
       pythonProcess.stdout.on('data', (data) => {
         output += data.toString();
       });
@@ -3231,7 +3231,7 @@ app.post('/api/portfolio/data', async (req: Request, res: Response) => {
       pythonProcess.on('close', (code) => {
         try {
           if (output.trim()) {
-            const data = JSON.parse(output);: any;
+            const data = JSON.parse(output);
             resolve(data);
           } else {
             // Fallback data if agent fails
@@ -3294,7 +3294,7 @@ app.post('/api/trading/close-position', async (req: Request, res: Response) => {
     const { symbol, mode = 'simulation', wallet_address = null } = req.body;
 
     // Simulate position closing
-    const result = {: any;
+    const result = {
       success: true,
       symbol: symbol,
       mode: mode,
@@ -3333,20 +3333,20 @@ app.post('/api/agents/master/start', async (req: Request, res: Response) => {
     log.api.request('POST', '/api/agents/master/start');
     log.agent.start('MASTER_AGENT');
 
-    const masterAgentScript = path.join(: any;
+    const masterAgentScript = path.join(
       __dirname,
       '../src/agents/master_agent.py'
     );
     const env = { ...process.env, PYTHONPATH: path.join(__dirname, '..') };
 
     // Start the master agent in background
-    const masterProcess = spawn('python', [masterAgentScript], {: any;
+    const masterProcess = spawn('python', [masterAgentScript], {
       detached: false,
       stdio: 'pipe',
       env: env,
     });
 
-    let outputBuffer = '';: any;
+    let outputBuffer = '';
     masterProcess.stdout?.on('data', (data: Buffer) => {
       outputBuffer += data.toString();
       // Log agent output
@@ -3456,12 +3456,12 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
 
     const { execSync } = require('child_process');
 
-    let isRunning = false;: any;
-    let pid = null;: any;
+    let isRunning = false;
+    let pid = null;
 
     try {
       if (process.platform === 'win32') {
-        const result = execSync(: any;
+        const result = execSync(
           "powershell \"Get-Process | Where-Object {$_.ProcessName -like '*python*' -and $_.CommandLine -like '*master_agent*'} | Select-Object -First 1 -ExpandProperty Id\"",
           {
             encoding: 'utf8',
@@ -3473,7 +3473,7 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
           pid = parseInt(result.trim());
         }
       } else {
-        const result = execSync('pgrep -f master_agent.py', {: any;
+        const result = execSync('pgrep -f master_agent.py', {
           encoding: 'utf8',
           stdio: ['pipe', 'pipe', 'pipe'],
         });
@@ -3488,15 +3488,15 @@ app.get('/api/agents/master/status', async (req: Request, res: Response) => {
     }
 
     // Check if dashboard data exists
-    const dashboardFile = path.join(: any;
+    const dashboardFile = path.join(
       __dirname,
       '../backend/dashboard_data.json'
     );
-    const hasDashboardData = fs.existsSync(dashboardFile);: any;
+    const hasDashboardData = fs.existsSync(dashboardFile);
 
     if (hasDashboardData) {
-      const dashboardData = JSON.parse(fs.readFileSync(dashboardFile, 'utf8'));: any;
-      const lastUpdate = dashboardData.timestamp || null;: any;
+      const dashboardData = JSON.parse(fs.readFileSync(dashboardFile, 'utf8'));
+      const lastUpdate = dashboardData.timestamp || null;
 
       res.json({
         success: true,
@@ -3540,20 +3540,20 @@ app.get('/api/backtests/validate', async (req: Request, res: Response) => {
     log.perf.start('BACKTEST_VALIDATION');
 
     // Execute real-time backtester
-    const backtesterScript = path.join(: any;
+    const backtesterScript = path.join(
       __dirname,
       '../src/data/realtime_backtester.py'
     );
     const env = { ...process.env, PYTHONPATH: path.join(__dirname, '..') };
 
-    const backtesterProcess = spawn('python', [backtesterScript], {: any;
+    const backtesterProcess = spawn('python', [backtesterScript], {
       cwd: path.join(__dirname, '..'),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: env,
     });
 
-    let output = '';: any;
-    let error = '';: any;
+    let output = '';
+    let error = '';
 
     backtesterProcess.stdout?.on('data', (data: Buffer) => {
       output += data.toString();
@@ -3724,9 +3724,9 @@ app.post(
         .then((prices) => parseFloat(prices[symbol] || 0))
         .catch(() => 100000); // Fallback price
 
-      const portfolioValue = 10000; // $10,000 portfolio: any;
+      const portfolioValue = 10000; // $10,000 portfolio
       const positionSize = portfolioValue * (aggressiveMode ? 1.0 : 0.3); // 100% or 30%
-      const maintenanceMargin = 0.005;: any;
+      const maintenanceMargin = 0.005;
 
       // Calculate liquidation price
       let liquidationPrice;
@@ -3738,44 +3738,44 @@ app.post(
           currentPrice * (1 - 1 / leverage + maintenanceMargin);
       }
 
-      const distanceToLiquidation =: any;
+      const distanceToLiquidation =
         (Math.abs(currentPrice - liquidationPrice) / currentPrice) * 100;
 
       // Risk assessment
-      const leverageRisk = Math.min(1.0, leverage / 50);: any;
-      const positionRisk = Math.min(1.0, positionSize / portfolioValue);: any;
-      const liquidationRisk =: any;
+      const leverageRisk = Math.min(1.0, leverage / 50);
+      const positionRisk = Math.min(1.0, positionSize / portfolioValue);
+      const liquidationRisk =
         distanceToLiquidation < 5
           ? 1.0
           : distanceToLiquidation < 10
             ? 0.7
             : 0.3;
-      const overallRiskScore =: any;
+      const overallRiskScore =
         leverageRisk * 0.3 + positionRisk * 0.4 + liquidationRisk * 0.3;
 
       // Asset-specific limits
-      const assetLimits = {: any;
+      const assetLimits = {
         BTC: { maxLeverage: 50, minConfidence: 0.85 },
         ETH: { maxLeverage: 40, minConfidence: 0.8 },
         SOL: { maxLeverage: 30, minConfidence: 0.75 },
         default: { maxLeverage: 25, minConfidence: 0.7 },
       };
 
-      const limits = assetLimits[symbol] || assetLimits.default;: any;
+      const limits = assetLimits[symbol] || assetLimits.default;
 
       // Decision logic
-      const meetsLeverageLimit = leverage <= limits.maxLeverage;: any;
-      const meetsConfidenceThreshold = confidence >= limits.minConfidence;: any;
-      const meetsRiskThreshold = overallRiskScore < 0.8;: any;
-      const meetsDistanceThreshold = distanceToLiquidation > 5;: any;
+      const meetsLeverageLimit = leverage <= limits.maxLeverage;
+      const meetsConfidenceThreshold = confidence >= limits.minConfidence;
+      const meetsRiskThreshold = overallRiskScore < 0.8;
+      const meetsDistanceThreshold = distanceToLiquidation > 5;
 
-      const approved =: any;
+      const approved =
         meetsLeverageLimit &&
         meetsConfidenceThreshold &&
         meetsRiskThreshold &&
         meetsDistanceThreshold;
 
-      const riskLevel =: any;
+      const riskLevel =
         overallRiskScore > 0.8
           ? 'EXTREME'
           : overallRiskScore > 0.6
@@ -3784,7 +3784,7 @@ app.post(
               ? 'MEDIUM'
               : 'LOW';
 
-      const result = {: any;
+      const result = {
         approved,
         symbol,
         side: side.toUpperCase(),
@@ -3847,7 +3847,7 @@ app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
   try {
     const { scenario } = req.body;
 
-    const scenarios = {: any;
+    const scenarios = {
       btc_short_25x: {
         symbol: 'BTC',
         side: 'SHORT',
@@ -3871,7 +3871,7 @@ app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
       },
     };
 
-    const selectedScenario = scenarios[scenario];: any;
+    const selectedScenario = scenarios[scenario];
     if (!selectedScenario) {
       return res.status(400).json({
         success: false,
@@ -3883,7 +3883,7 @@ app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
     console.log(`[RISK] Quick validation: ${scenario}`);
 
     // Get assessment result
-    const response = await fetch(: any;
+    const response = await fetch(
       'http://localhost:7000/api/risk/advanced-assessment',
       {
         method: 'POST',
@@ -3892,7 +3892,7 @@ app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
       }
     );
 
-    const result = (await response.json()) as any;: any;
+    const result = (await response.json()) as any;
 
     res.json({
       success: true,
@@ -3912,7 +3912,7 @@ app.post('/api/risk/quick-validate', async (req: Request, res: Response) => {
 // Risk agent configuration endpoint
 app.get('/api/risk/config', (req: Request, res: Response) => {
   try {
-    const config = {: any;
+    const config = {
       aggressive_mode: true,
       max_leverage: 50,
       default_leverage: 25,
