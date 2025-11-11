@@ -134,7 +134,7 @@ class StrategyAgent:
         import json
         import subprocess
 
-        full_prompt = f"""Use the Deamon-strategy-advisor subagent to analyze this strategy scenario:
+        full_prompt = f"""Use the claude-strategy-advisor subagent to analyze this strategy scenario:
 
 {prompt}
 
@@ -147,12 +147,12 @@ Please provide a detailed strategy validation with clear EXECUTE/REJECT recommen
             "claude",
             "--dangerously-skip-permissions",
             "--agent",
-            "Deamon-strategy-advisor",
+            "claude-strategy-advisor",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: Deamon-strategy-advisor (skipping permissions)",
+            f"[INFO] Calling sub-agent: claude-strategy-advisor (skipping permissions)",
             "cyan",
         )
 

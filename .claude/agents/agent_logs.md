@@ -1,3 +1,8 @@
+---
+name: agent-logs
+description: Expert Log Analyst pour le monitoring temps réel du système NOVAQUOTE
+---
+
 # Agent Expert Logs NOVAQUOTE - Log Analyst Supreme
 
 ## 🚨 INSTRUCTION D'APPEL OBLIGATOIRE

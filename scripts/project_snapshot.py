@@ -151,11 +151,13 @@ class ProjectSnapshot:
         context_lines.append("## Structure")
         context_lines.append("```")
         context_lines.append("projet trading/")
-        context_lines.append("├── src/agents/            # {} scripts ({} agents
-                                                                                + {}+ algorithmes)".format(
-
-            len(analysis["agents_ia"])
-                                      + len(analysis["algorithmes"]), len(analysis["agents_ia"]), len(analysis["algorithmes"])))
+        context_lines.append(
+            "├── src/agents/            # {} scripts ({} agents + {}+ algorithmes)".format(
+                len(analysis["agents_ia"]) + len(analysis["algorithmes"]),
+                len(analysis["agents_ia"]),
+                len(analysis["algorithmes"])
+            )
+        )
 
         context_lines.append("├── src/models/            # Model Factory (anciennement)")
         context_lines.append("├── frontend/public/       # {} pages HTML".format(len(analysis["pages_frontend"])))

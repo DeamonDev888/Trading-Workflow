@@ -1,6 +1,6 @@
 ---
-name: novaquote-linter
-description: Agent de diagnostic et analyse sécure pour le projet NovaQuote Trading
+name: agent-fix-linter
+description: Expert diagnostic et analyse sécurisée pour le projet NOVAQUOTE Trading
 ---
 
 # NovaQuote Linter Agent - Mode Sécurisé
@@ -22,7 +22,7 @@ Agent de diagnostic et analyse de code pour le projet NovaQuote Trading. **Rôle
 
 ## Contexte d'utilisation
 
-**Invocation explicite** : `Utilise novaquote-linter`
+**Invocation explicite** : `Utilise agent-fix-linter`
 
 ## Principes de Sécurité
 
@@ -189,14 +189,14 @@ sed -i 's/bad/good/g' file
 ### Appel Standard
 
 ```
-Utilise novaquote-linter pour analyser run.ts
+Utilise agent-fix-linter pour analyser run.ts
 ```
 
 ### Paramètres de Sécurité
 
 ```
-Utilise novaquote-linter --read-only --diagnostic-only
-Utilise novaquote-linter --target=run.ts --safe-mode
+Utilise agent-fix-linter --read-only --diagnostic-only
+Utilise agent-fix-linter --target=run.ts --safe-mode
 ```
 
 ## Intégration Sécurisée

@@ -2155,10 +2155,16 @@
           ).length;
           const totalCount = Object.keys(agentStates).length;
 
+          console.log('[MASTER PANEL] agentStates:', agentStates);
+          console.log('[MASTER PANEL] Active count:', activeCount, 'Total count:', totalCount);
+
           // Update active agents count
           const activeCountEl = document.getElementById('active-agents-count');
           if (activeCountEl) {
             activeCountEl.textContent = `${activeCount}/${totalCount}`;
+            console.log('[MASTER PANEL] Updated active-agents-count to:', `${activeCount}/${totalCount}`);
+          } else {
+            console.warn('[MASTER PANEL] active-agents-count element not found');
           }
 
           // Update total LLM calls
@@ -2172,16 +2178,20 @@
           // Update system status
           const systemStatusEl = document.getElementById('system-status');
           if (systemStatusEl) {
+            let status = 'OFFLINE';
+            let color = '#e17055';
             if (activeCount === totalCount) {
-              systemStatusEl.textContent = 'OPERATIONAL';
-              systemStatusEl.style.color = '#00d4aa';
+              status = 'OPERATIONAL';
+              color = '#00d4aa';
             } else if (activeCount > 0) {
-              systemStatusEl.textContent = 'PARTIAL';
-              systemStatusEl.style.color = '#fdcb6e';
-            } else {
-              systemStatusEl.textContent = 'OFFLINE';
-              systemStatusEl.style.color = '#e17055';
+              status = 'PARTIAL';
+              color = '#fdcb6e';
             }
+            systemStatusEl.textContent = status;
+            systemStatusEl.style.color = color;
+            console.log('[MASTER PANEL] Updated system-status to:', status);
+          } else {
+            console.warn('[MASTER PANEL] system-status element not found');
           }
 
           // Update agents summary stat box
@@ -2192,7 +2202,12 @@
             );
             if (activeStatBox) {
               activeStatBox.textContent = `${activeCount}/${totalCount}`;
+              console.log('[MASTER PANEL] Updated agentsSummary stat box to:', `${activeCount}/${totalCount}`);
+            } else {
+              console.warn('[MASTER PANEL] agentsSummary stat box not found');
             }
+          } else {
+            console.warn('[MASTER PANEL] agentsSummary element not found');
           }
         } catch (error) {
           console.error(
@@ -3642,6 +3657,56 @@
           '🚀 NOVAQUOTE Dashboard initialized with wallet, positions & agent control + inference monitoring'
         );
       });
+
+      // Also ensure updateMasterControlPanel is called on window load
+      window.addEventListener('load', function() {
+        console.log('[MASTER PANEL] Window loaded, calling updateMasterControlPanel');
+        updateMasterControlPanel();
+      });
+
+      // Force page refresh to clear any cached issues
+      if (performance.navigation.type === 1) {
+        console.log('[PAGE] Page loaded from cache, forcing refresh to clear cache');
+        setTimeout(() => {
+          window.location.reload(true);
+        }, 100);
+      }
+
+      // Global test function - can be called from browser console
+      window.testMasterPanel = function() {
+        console.log('=== MASTER PANEL TEST ===');
+        console.log('window.agentStates:', window.agentStates);
+        const activeCount = Object.values(window.agentStates || {}).filter(agent => agent.active).length;
+        const totalCount = Object.keys(window.agentStates || {}).length;
+        console.log('Active:', activeCount, 'Total:', totalCount);
+
+        const activeCountEl = document.getElementById('active-agents-count');
+        console.log('active-agents-count element:', activeCountEl);
+        if (activeCountEl) {
+          console.log('Current value:', activeCountEl.textContent);
+        }
+
+        const systemStatusEl = document.getElementById('system-status');
+        console.log('system-status element:', systemStatusEl);
+        if (systemStatusEl) {
+          console.log('Current value:', systemStatusEl.textContent);
+        }
+
+        console.log('Calling updateMasterControlPanel()...');
+        updateMasterControlPanel();
+
+        setTimeout(() => {
+          console.log('After update:');
+          if (activeCountEl) console.log('active-agents-count:', activeCountEl.textContent);
+          if (systemStatusEl) console.log('system-status:', systemStatusEl.textContent);
+        }, 100);
+        console.log('=== END TEST ===');
+      };
+
+      // Auto-run test after page loads
+      setTimeout(() => {
+        console.log('%c[NOVAQUOTE] Page loaded! Type testMasterPanel() in console to test.', 'color: #00d4aa; font-size: 14px; font-weight: bold');
+      }, 1000);
     </script>
 
     <!-- Notification Panel -->

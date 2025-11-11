@@ -71,7 +71,7 @@ class FundingAgent(BaseAgent):
         """Initialize Deamon Dev's Funding Agent"""
         super().__init__("funding", enable_postgres=True)
 
-        self.subagent_name = "Deamon-funding-advisor"
+        self.subagent_name = "claude-funding-advisor"
 
         self.data_dir = PROJECT_ROOT / "src" / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -101,7 +101,7 @@ class FundingAgent(BaseAgent):
         Raises:
             RuntimeError: Si l'appel au sub-agent échoue
         """
-        full_prompt = f"""Use the Deamon-funding-advisor subagent to analyze this funding opportunity:
+        full_prompt = f"""Use the claude-funding-advisor subagent to analyze this funding opportunity:
 
 {prompt}
 
@@ -114,12 +114,12 @@ Please provide a detailed funding analysis with clear BUY/SELL/NOTHING recommend
             "claude",
             "--dangerously-skip-permissions",
             "--agent",
-            "Deamon-funding-advisor",
+            "claude-funding-advisor",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: Deamon-funding-advisor (skipping permissions)",
+            f"[INFO] Calling sub-agent: claude-funding-advisor (skipping permissions)",
             "cyan",
         )
 

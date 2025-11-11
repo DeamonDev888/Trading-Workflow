@@ -48,7 +48,7 @@ class RiskAgent(BaseAgent):
             "risk_agent", enable_postgres=True
         )  # Initialize base agent with PostgreSQL support
 
-        self.subagent_name = "Deamon-risk-advisor"
+        self.subagent_name = "claude-risk-advisor"
 
         self.start_balance = self.get_portfolio_value()
         print(f"[BANK] Initial Portfolio Balance: ${self.start_balance:.2f}")
@@ -77,7 +77,7 @@ class RiskAgent(BaseAgent):
         Raises:
             RuntimeError: Si l'appel au sub-agent échoue
         """
-        full_prompt = f"""Use the Deamon-risk-advisor subagent to analyze this risk scenario:
+        full_prompt = f"""Use the claude-risk-advisor subagent to analyze this risk scenario:
 
 {prompt}
 

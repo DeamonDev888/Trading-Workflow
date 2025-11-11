@@ -1,6 +1,6 @@
 """
 Script amélioré de linting et formatting pour NovaQuote Trading
-Basé sur les corrections identifiées par le novaquote-linter
+Basé sur les corrections identifiées par le agent-fix-linter
 V2.0 - Mode Persistant avec Sauvegarde d'état
 """
 
@@ -170,7 +170,7 @@ def check_console_statements():
         print(f"[WARN] Could not check for print statements: {e}")
 
 def fix_common_issues():
-    """Fix common issues identified by novaquote-linter"""
+    """Fix common issues identified by agent-fix-linter"""
     print("\n[INFO] Fixing common issues (F401, F541, etc.)...")
 
     fix_unused_imports()
@@ -603,7 +603,7 @@ def manual_format_python():
     return formatted_count > 0
 
 def apply_fixes():
-    """Apply enhanced automatic fixes based on novaquote-linter findings"""
+    """Apply enhanced automatic fixes based on agent-fix-linter findings"""
     print("[INFO] Applying enhanced automatic fixes...")
     print(f"{'='*60}")
 

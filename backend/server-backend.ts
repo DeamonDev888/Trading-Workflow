@@ -1605,9 +1605,9 @@ app.get('/api/agents/master/status', (req: Request, res: Response) => {
 app.get('/api/agents/master/logs', (req: Request, res: Response) => {
   const fs = require('fs');
   const path = require('path');
-  const category = req.query.category as string;
-  const limit = parseInt(req.query.limit as string) || 100;
-  const hours = parseInt(req.query.hours as string) || 24;
+  const category = req.query['category'] as string;
+  const limit = parseInt(req.query['limit'] as string) || 100;
+  const hours = parseInt(req.query['hours'] as string) || 24;
 
   const logs = getMasterAgentLogs(category, limit, hours);
 
@@ -1686,8 +1686,8 @@ app.get('/api/agents/master/decisions', (req: Request, res: Response) => {
 // Export Master Agent logs
 app.get('/api/agents/master/export', (req: Request, res: Response) => {
   const fs = require('fs');
-  const category = req.query.category as string;
-  const hours = parseInt(req.query.hours as string) || 24;
+  const category = req.query['category'] as string;
+  const hours = parseInt(req.query['hours'] as string) || 24;
 
   const exportData = exportMasterAgentLogs(category, hours);
 

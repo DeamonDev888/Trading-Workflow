@@ -122,7 +122,7 @@ $ claude --agents @claude-agents.json
                 </div>
                 Ou directement :
                 <div class="output" style="background: #f8f9fa; color: #333;">
-$ claude --agents .claude/agents/novaquote-linter.md --print --dangerously-skip-permissions "Test du linter"
+$ claude --agents .claude/agents/agent-fix-linter.md --print --dangerously-skip-permissions "Test du linter"
                 </div>
             </div>
         </div>
@@ -132,7 +132,7 @@ $ claude --agents .claude/agents/novaquote-linter.md --print --dangerously-skip-
             <div class="info test-result">
                 <strong>Agents Claude Code disponibles:</strong>
                 <ul>
-                    <li><code>novaquote-linter</code> - Agent de linting et correction</li>
+                    <li><code>agent-fix-linter</code> - Agent de linting et correction</li>
                     <li><code>claude-funding-advisor</code> - Conseiller funding</li>
                     <li><code>claude-risk-advisor</code> - Conseiller risque</li>
                     <li><code>claude-sentiment-analyzer</code> - Analyseur sentiment</li>
@@ -146,9 +146,9 @@ $ claude --agents .claude/agents/novaquote-linter.md --print --dangerously-skip-
         // Liste des agents Claude définis
         const claudeAgents = [
             {
-                name: "novaquote-linter",
+                name: "agent-fix-linter",
                 description: "Agent de linting et correction automatique pour le projet NovaQuote Trading",
-                file: ".claude/agents/novaquote-linter.md",
+                file: ".claude/agents/agent-fix-linter.md",
                 type: "markdown"
             },
             {
@@ -230,7 +230,7 @@ $ claude --agents .claude/agents/novaquote-linter.md --print --dangerously-skip-
 
         function showCommand(agentName) {
             const commands = {
-                'novaquote-linter': `claude --agents .claude/agents/novaquote-linter.md --print --dangerously-skip-permissions "Lint et corrige le code"`,
+                'agent-fix-linter': `claude --agents .claude/agents/agent-fix-linter.md --print --dangerously-skip-permissions "Lint et corrige le code"`,
                 'claude-funding-advisor': `claude --agents .claude/agents/claude-funding-advisor.json --print --dangerously-skip-permissions "Analyse les taux de funding"`,
                 'claude-risk-advisor': `claude --agents .claude/agents/claude-risk-advisor.json --print --dangerously-skip-permissions "Évalue les risques"`,
                 'claude-sentiment-analyzer': `claude --agents .claude/agents/claude-sentiment-analyzer.json --print --dangerously-skip-permissions "Analyse le sentiment"`,

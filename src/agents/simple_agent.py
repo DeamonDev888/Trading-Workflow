@@ -7,14 +7,26 @@ Generates real inferences without complex dependencies
 import json
 import time
 import random
+import sys
+import os
 from datetime import datetime
 from typing import Dict, List, Any
 
+# Force output flushing
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
+print("[INIT] Simple Agent starting...", flush=True)
+print(f"[INIT] Python version: {sys.version}", flush=True)
+print(f"[INIT] Current directory: {os.getcwd()}", flush=True)
+
 class SimpleAgent:
     def __init__(self, agent_type: str):
+        print(f"[DEBUG] Initializing SimpleAgent with type: {agent_type}", flush=True)
         self.agent_type = agent_type
         self.inferences = []
         self.is_running = False
+        print(f"[DEBUG] SimpleAgent initialized", flush=True)
 
     def generate_inference(self) -> Dict[str, Any]:
         """Generate a real inference based on market data"""
@@ -90,20 +102,30 @@ class SimpleAgent:
                 "task_completed": True
             }
 
-    def run(self, duration_seconds: int = 60):
-        """Run agent and generate inferences"""
+    def run(self, duration_seconds: int = None):
+        """Run agent and generate inferences (continuous loop if duration is None)"""
         self.is_running = True
-        print(f"[{self.agent_type.upper()}] Agent started")
+        print(f"[{self.agent_type.upper()}] Agent started (continuous mode)")
 
         start_time = time.time()
         inference_count = 0
+        loop_count = 0
 
-        while time.time() - start_time < duration_seconds:
+        while True:
+            # Check if we should stop (only if duration is specified)
+            if duration_seconds is not None and time.time() - start_time >= duration_seconds:
+                break
+
+            loop_count += 1
             inference = self.generate_inference()
             self.inferences.append(inference)
             inference_count += 1
 
             print(f"[{self.agent_type.upper()}] Inference #{inference_count}: {inference['data']}")
+
+            # Save inferences every 10 inferences to keep file updated
+            if inference_count % 10 == 0:
+                self.save_inferences()
 
             # Generate inference every 5-10 seconds
             time.sleep(random.uniform(5, 10))
@@ -116,15 +138,31 @@ class SimpleAgent:
 
     def save_inferences(self):
         """Save inferences to JSON file"""
-        filename = f"logs/{self.agent_type}_inferences.json"
-        with open(filename, 'w') as f:
-            json.dump({
-                "agent_type": self.agent_type,
-                "total_inferences": len(self.inferences),
-                "inferences": self.inferences,
-                "timestamp": datetime.now().isoformat()
-            }, f, indent=2)
-        print(f"[{self.agent_type.upper()}] Inferences saved to {filename}")
+        import os
+        current_dir = os.getcwd()
+        print(f"[{self.agent_type.upper()}] Current directory: {current_dir}")
+
+        # Try to create logs directory if it doesn't exist
+        logs_dir = "logs"
+        if not os.path.exists(logs_dir):
+            try:
+                os.makedirs(logs_dir)
+                print(f"[{self.agent_type.upper()}] Created logs directory")
+            except Exception as e:
+                print(f"[{self.agent_type.upper()}] Failed to create logs directory: {e}")
+
+        filename = f"{logs_dir}/{self.agent_type}_inferences.json"
+        try:
+            with open(filename, 'w') as f:
+                json.dump({
+                    "agent_type": self.agent_type,
+                    "total_inferences": len(self.inferences),
+                    "inferences": self.inferences,
+                    "timestamp": datetime.now().isoformat()
+                }, f, indent=2)
+            print(f"[{self.agent_type.upper()}] Inferences saved to {filename}")
+        except Exception as e:
+            print(f"[{self.agent_type.upper()}] Failed to save inferences: {e}")
 
 
 if __name__ == "__main__":
@@ -133,10 +171,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python simple_agent.py <agent_type> [duration_seconds]")
         print("Agent types: strategy, risk, funding, sentiment")
+        print("Note: No duration = continuous mode")
         sys.exit(1)
 
     agent_type = sys.argv[1]
-    duration = int(sys.argv[2]) if len(sys.argv) > 2 else 60
+    duration = int(sys.argv[2]) if len(sys.argv) > 2 else None  # None = continuous
 
     agent = SimpleAgent(agent_type)
     agent.run(duration)

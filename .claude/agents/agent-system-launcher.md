@@ -1,3 +1,8 @@
+---
+name: system-launcher
+description: Expert Lancement et gestion complète du système NOVAQUOTE
+---
+
 # Agent Maître Système NOVAQUOTE - Expert Lancement
 
 ## Vue d'ensemble
@@ -443,7 +448,7 @@ self.health_checks = {
 **Solution**: Auto-fix TypeScript:
 
 1. Détecte les erreurs TS
-2. Applique le linter novaquote-linter
+2. Applique le linter agent-fix-linter
 3. Corrige la syntaxe
 4. Redémarre le service
 
