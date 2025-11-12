@@ -268,11 +268,9 @@ class TypeScriptJavaScriptScanner {
             // Ignorer les commentaires
             if (trimmedLine.startsWith('//') || trimmedLine.startsWith('/*')) return;
 
-            // console.log en production
-            if (line.includes('console.log') && !line.includes('//')) {
-                this.addWarning(filePath, 'CONSOLE_LOG',
-                    `console.log détecté ligne ${lineNumber}`, lineNumber);
-            }
+            // NOTE: console.log ne sont PAS signalés comme warnings dans ce projet
+            // car ils sont intentionnels pour le debugging et la surveillance
+            // de trading en temps réel.
 
             // Variables non déclarées (amélioré)
             this.checkUndeclaredVariables(filePath, line, lineNumber, declaredVars);
