@@ -215,7 +215,7 @@ class BacktestValidator {
   getValidationReport() {
     const results = this.validateSystem();
 
-    const report = {;
+    const report = {
       summary: {
         status: results.system_integrity ? 'VALID' : 'INVALID',
         total_strategies: results.total_files,

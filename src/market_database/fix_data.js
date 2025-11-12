@@ -20,7 +20,7 @@ class DataFixer {
       console.info('🔧 Fixing OHLCV data insertion...');
 
       // Test with a small sample of real data
-      const testData = {;
+      const testData = {
         symbol: 'BTC/USDT',
         exchange: 'binance',
         timeframe: '1h',
@@ -72,8 +72,8 @@ class DataFixer {
     const symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
     const timeframes = ['1h', '4h'];
 
-    for (const symbol of symbols) {;
-      for (const timeframe of timeframes) {;
+    for (const symbol of symbols) {
+      for (const timeframe of timeframes) {
         await this.generateSymbolData(symbol, timeframe);
       }
     }
@@ -93,7 +93,7 @@ class DataFixer {
         ? 2200
         : 100;
 
-    for (let i = 0; i < periods; i++) {;
+    for (let i = 0; i < periods; i++) {
       const timestamp = new Date(now.getTime() - (periods - i) * intervalMs);
 
       // Add realistic price movement

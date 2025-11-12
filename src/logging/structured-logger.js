@@ -31,7 +31,7 @@ class StructuredLogger {
       winston.format.errors({ stack: true }),
       winston.format.json(),
       winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        const logEntry = {;
+        const logEntry = {
           timestamp,
           level,
           message,
@@ -335,7 +335,7 @@ class StructuredLogger {
 const logger = StructuredLogger.getInstance();
 
 // Export des middlewares
-const requestLogger = (req, res, next) => {;
+const requestLogger = (req, res, next) => {
   const startTime = Date.now();
   const requestId =;
     req.headers['x-request-id'] ||
@@ -386,7 +386,7 @@ const requestLogger = (req, res, next) => {;
   next();
 };
 
-const errorLogger = (error, req, res, next) => {;
+const errorLogger = (error, req, res, next) => {
   logger.error(`Request error: ${req.method} ${req.url}`, error, {
     method: req.method,
     url: req.url,

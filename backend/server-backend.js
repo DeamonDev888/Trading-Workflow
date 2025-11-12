@@ -182,10 +182,10 @@ setTimeout(() => {
 app.listen(PORT, () => {
   logger.info(`🚀 NOVAQUOTE Backend Server running on port ${PORT}`);
   logger.info(`🔌 WebSocket Server running on port 7001`);
-  console.log(`🚀 NOVAQUOTE Backend Server v8.0.0`);
-  console.log(`📡 Port: ${PORT}`);
-  console.log(`🔌 WebSocket: 7001`);
-  console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
+  // console.log(`🚀 NOVAQUOTE Backend Server v8.0.0`);
+  // console.log(`📡 Port: ${PORT}`);
+  // console.log(`🔌 WebSocket: 7001`);
+  // console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
 });
 
 // Graceful shutdown

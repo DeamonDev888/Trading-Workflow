@@ -19,60 +19,60 @@ class PortfolioManager {
   safeQuerySelector(selector, fallback = null) {
     const element = document.querySelector(selector);
     if (!element) {
-      console.warn(`[PORTFOLIO] Element not found: ${selector}`);
+      // console.warn(`[PORTFOLIO] Element not found: ${selector}`);
     }
     return element || fallback;
   }
 
   init() {
-    console.info('[PORTFOLIO] Initializing Portfolio Manager...');
+    // console.info('[PORTFOLIO] Initializing Portfolio Manager...');
     this.setupEventListeners();
     this.updateUI();
     this.loadPortfolioData();
 
     // Auto-refresh portfolio every 5 seconds
     setInterval(() => this.loadPortfolioData(), 5000);
-    console.info('[PORTFOLIO] Portfolio Manager initialized');
+    // console.info('[PORTFOLIO] Portfolio Manager initialized');
   }
 
   setupEventListeners() {
-    console.info('[PORTFOLIO] Setting up event listeners...');
+    // console.info('[PORTFOLIO] Setting up event listeners...');
 
     // Mode selector
     const modeSelector = this.safeQuerySelector('#portfolio-mode-selector');
     if (modeSelector) {
       modeSelector.addEventListener('change', (e) => {
-        console.info('[PORTFOLIO] Mode changed to:', e.target.value);
+        // console.info('[PORTFOLIO] Mode changed to:', e.target.value);
         this.switchMode(e.target.value);
       });
-      console.info('[PORTFOLIO] Mode selector event listener attached');
+      // console.info('[PORTFOLIO] Mode selector event listener attached');
     } else {
-      console.warn('[PORTFOLIO] Mode selector not found - mode switching disabled');
+      // console.warn('[PORTFOLIO] Mode selector not found - mode switching disabled');
     }
 
     // Connect wallet button
     const connectBtn = this.safeQuerySelector('#connect-wallet-btn');
     if (connectBtn) {
       connectBtn.addEventListener('click', () => {
-        console.info('[PORTFOLIO] Connect wallet button clicked');
+        // console.info('[PORTFOLIO] Connect wallet button clicked');
         this.connectMetaMask();
       });
-      console.info('[PORTFOLIO] Connect wallet event listener attached');
+      // console.info('[PORTFOLIO] Connect wallet event listener attached');
     } else {
-      console.warn('[PORTFOLIO] Connect wallet button not found');
+      // console.warn('[PORTFOLIO] Connect wallet button not found');
     }
 
     // Check if MetaMask is available
     this.checkMetaMaskAvailability();
-    console.info('[PORTFOLIO] Event listeners setup complete');
+    // console.info('[PORTFOLIO] Event listeners setup complete');
   }
 
   checkMetaMaskAvailability() {
     if (typeof window.ethereum !== 'undefined') {
-      console.info('MetaMask is available');
+      // console.info('MetaMask is available');
       this.walletConnected = true;
     } else {
-      console.info('MetaMask is not available');
+      // console.info('MetaMask is not available');
       // Show notification to install MetaMask
       this.showNotification(
         'MetaMask non détecté. Veuillez installer MetaMask pour le mode Mainnet.',
@@ -89,7 +89,7 @@ class PortfolioManager {
 
     try {
       // Request account access
-      const accounts = await window.ethereum.request({;
+      const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       });
 
@@ -109,7 +109,7 @@ class PortfolioManager {
         );
       }
     } catch (error) {
-      console.error('MetaMask connection error:', error);
+      // console.error('MetaMask connection error:', error);
       this.showNotification(
         'Erreur de connexion MetaMask: ' + error.message,
         'error'
@@ -138,9 +138,9 @@ class PortfolioManager {
 
   async loadPortfolioData() {
     try {
-      console.info('[PORTFOLIO] Loading portfolio data...', { mode: this.mode });
+      // console.info('[PORTFOLIO] Loading portfolio data...', { mode: this.mode });
 
-      const response = await fetch('/api/portfolio/data', {;
+      const response = await fetch('/api/portfolio/data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,25 +153,25 @@ class PortfolioManager {
 
       if (response.ok) {
         const data = await response.json();
-        console.info('[PORTFOLIO] Portfolio data loaded successfully', data);
+        // console.info('[PORTFOLIO] Portfolio data loaded successfully', data);
         this.portfolioData = data.data || data;
         this.updatePortfolioDisplay();
       } else {
-        console.error(`Failed to load portfolio data: HTTP ${response.status}`);
+        // console.error(`Failed to load portfolio data: HTTP ${response.status}`);
         this.useFallbackData();
       }
     } catch (error) {
-      console.error('Error loading portfolio data:', error);
+      // console.error('Error loading portfolio data:', error);
       this.showNotification('Erreur chargement portfolio: ' + error.message, 'error');
       this.useFallbackData();
     }
   }
 
   useFallbackData() {
-    console.warn('[PORTFOLIO] Using fallback data - API unavailable');
+    // console.warn('[PORTFOLIO] Using fallback data - API unavailable');
 
     // Fallback portfolio data based on mode
-    const fallbackData = {;
+    const fallbackData = {
       mode: this.mode,
       connected: this.mode === 'simulation' ? true : this.walletConnected,
       wallet_address: this.walletAddress,
@@ -235,12 +235,12 @@ class PortfolioManager {
 
   updatePortfolioDisplay() {
     if (!this.portfolioData) {
-      console.warn('[PORTFOLIO] No portfolio data to display');
+      // console.warn('[PORTFOLIO] No portfolio data to display');
       return;
     }
 
     try {
-      console.info('[PORTFOLIO] Updating portfolio display...');
+      // console.info('[PORTFOLIO] Updating portfolio display...');
 
       // Update portfolio metrics
       const totalBalanceEl = document.querySelector('[data-total-balance]');
@@ -292,9 +292,9 @@ class PortfolioManager {
       // Update positions table
       this.updatePositionsTable();
 
-      console.info('[PORTFOLIO] Portfolio display updated successfully');
+      // console.info('[PORTFOLIO] Portfolio display updated successfully');
     } catch (error) {
-      console.error('Error updating portfolio display:', error);
+      // console.error('Error updating portfolio display:', error);
       this.showNotification('Erreur affichage portfolio: ' + error.message, 'error');
     }
   }
@@ -359,12 +359,12 @@ class PortfolioManager {
     }
 
     try {
-      console.info(`[PORTFOLIO] Closing position: ${symbol}`, {
+      // console.info(`[PORTFOLIO] Closing position: ${symbol}`, {
         mode: this.mode,
         wallet_address: this.walletAddress
       });
 
-      const response = await fetch('/api/trading/close-position', {;
+      const response = await fetch('/api/trading/close-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -378,21 +378,21 @@ class PortfolioManager {
 
       if (response.ok) {
         const result = await response.json();
-        console.info('[PORTFOLIO] Position closed successfully:', result);
+        // console.info('[PORTFOLIO] Position closed successfully:', result);
         this.showNotification(
           `Position ${symbol} fermée avec succès`,
           'success'
         );
         this.loadPortfolioData();
       } else {
-        console.error(`Failed to close position: HTTP ${response.status}`);
+        // console.error(`Failed to close position: HTTP ${response.status}`);
         this.showNotification(
           'Erreur lors de la fermeture de la position',
           'error'
         );
       }
     } catch (error) {
-      console.error('Error closing position:', error);
+      // console.error('Error closing position:', error);
       this.showNotification('Erreur de connexion: ' + error.message, 'error');
     }
   }
@@ -419,7 +419,7 @@ class PortfolioManager {
         `;
 
     // Set background color based on type
-    const colors = {;
+    const colors = {
       success: '#28a745',
       error: '#dc3545',
       warning: '#ffc107',

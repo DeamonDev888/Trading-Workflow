@@ -34,7 +34,7 @@ class HyperliquidWebSocket {
       this.websocket = new WebSocket(this.wsUrl);
 
       // Connection timeout
-      const connectionTimeout = setTimeout(() => {;
+      const connectionTimeout = setTimeout(() => {
         if (this.websocket && this.websocket.readyState !== WebSocket.OPEN) {
           this.handleConnectionError(new Error('Connection timeout'));
         }
@@ -162,7 +162,7 @@ class HyperliquidWebSocket {
 
     // Calculate exponential backoff with jitter
     const baseDelay = this.baseReconnectDelay;
-    const exponentialDelay = Math.min(;
+    const exponentialDelay = Math.min(
       baseDelay * Math.pow(this.backoffMultiplier, this.reconnectAttempts - 1),
       this.maxReconnectDelay
     );
@@ -185,7 +185,7 @@ class HyperliquidWebSocket {
 
         try {
           // Send JSON ping message in HyperLiquid format instead of low-level ping()
-          const pingMessage = JSON.stringify({;
+          const pingMessage = JSON.stringify({
             type: 'ping',
             timestamp: Date.now()
           });
@@ -304,7 +304,7 @@ class HyperliquidWebSocket {
       }
 
       // Subscribe to allMids channel (mid prices for all symbols)
-      const subscriptionMessage = JSON.stringify({;
+      const subscriptionMessage = JSON.stringify({
         type: 'subscribe',
         channels: ['allMids']
       });
@@ -321,7 +321,7 @@ class HyperliquidWebSocket {
 
   // Get connection statistics
   getStats() {
-    const uptime = this.connectionStartTime;
+    const uptime = this.connectionStartTime
       ? Date.now() - this.connectionStartTime.getTime()
       : 0;
 

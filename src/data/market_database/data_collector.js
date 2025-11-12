@@ -53,7 +53,7 @@ class MarketDataCollector {
       const klines = response.data;
       const ohlcvData = [];
 
-      for (const kline of klines) {;
+      for (const kline of klines) {
         const [;
           timestamp,
           open,
@@ -129,7 +129,7 @@ class MarketDataCollector {
 
       const data = response.data.data;
 
-      const btcDominanceData = {;
+      const btcDominanceData = {
         timestamp: new Date().toISOString(),
         dominance_percentage: data.market_cap_percentage.btc,
         btc_price: null, // Will be filled from BTC price
@@ -171,7 +171,7 @@ class MarketDataCollector {
    * Insert OHLCV data into database
    */
   async insertOHLCVData(dataArray) {
-    for (const data of dataArray) {;
+    for (const data of dataArray) {
       await this.db.runQuery(
         `INSERT OR REPLACE INTO ohlcv_data
                  (symbol, exchange, timeframe, timestamp, open, high, low, close, volume)
@@ -241,8 +241,8 @@ class MarketDataCollector {
       const intervals = ['1h', '4h', '1d'];
 
       // Collect OHLCV data
-      for (const symbol of symbols) {;
-        for (const interval of intervals) {;
+      for (const symbol of symbols) {
+        for (const interval of intervals) {
           await this.collectBinanceOHLCV(symbol, interval, 500);
           // Small delay to respect API limits
           await new Promise((resolve) => setTimeout(resolve, 100));

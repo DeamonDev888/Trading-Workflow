@@ -104,7 +104,7 @@ class MarketDatabase {
       'CREATE INDEX IF NOT EXISTS idx_btc_dominance_time ON btc_dominance(timestamp)',
     ];
 
-    for (const sql of tables) {;
+    for (const sql of tables) {
       await this.runQuery(sql);
     }
 
@@ -164,7 +164,7 @@ class MarketDatabase {
       ],
     ];
 
-    for (const market of markets) {;
+    for (const market of markets) {
       await this.runQuery(
         `INSERT OR REPLACE INTO markets
                  (symbol, exchange, name, base_currency, quote_currency, min_order_size, price_precision, volume_precision)

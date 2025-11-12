@@ -9,12 +9,12 @@ Analyse la structure SQL, optimise les requêtes, maintient l'intégrité.
 
 import sqlite3
 import os
-// import json
+# import json
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
-// import hashlib
+# import hashlib
 
 # Configuration
 PROJECT_ROOT = Path(__file__).parent.parent

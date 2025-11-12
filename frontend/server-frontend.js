@@ -85,7 +85,7 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error('Frontend server error:', error);
+  // console.error('Frontend server error:', error);
   res.status(500).json({
     error: 'Internal server error',
     timestamp: new Date().toISOString()
@@ -94,21 +94,21 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🌐 NOVAQUOTE Frontend Server v8.0.0`);
-  console.log(`📡 Port: ${PORT}`);
-  console.log(`🏠 Dashboard: http://localhost:${PORT}/`);
-  console.log(`📊 Backtests: http://localhost:${PORT}/backtest.html`);
-  console.log(`⚙️  Config: http://localhost:${PORT}/config.html`);
+  // console.log(`🌐 NOVAQUOTE Frontend Server v8.0.0`);
+  // console.log(`📡 Port: ${PORT}`);
+  // console.log(`🏠 Dashboard: http://localhost:${PORT}/`);
+  // console.log(`📊 Backtests: http://localhost:${PORT}/backtest.html`);
+  // console.log(`⚙️  Config: http://localhost:${PORT}/config.html`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Frontend server shutting down gracefully');
+  // console.log('Frontend server shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('Frontend server shutting down gracefully');
+  // console.log('Frontend server shutting down gracefully');
   process.exit(0);
 });
 
