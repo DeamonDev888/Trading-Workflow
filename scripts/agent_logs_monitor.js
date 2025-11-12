@@ -14,7 +14,8 @@ const ws = require('ws');
 const NOVAQUOTE_LOGS_DIR = path.join(__dirname, '..', 'logs');
 const NOVAQUOTE_BACKEND_PORT = 7000;
 const NOVAQUOTE_WEBSOCKET_PORT = 7001;
-const AGENT_LOGS_PORT = 9004;
+const AGENT_LOGS_WS_PORT = 9002;
+const AGENT_LOGS_HTTP_PORT = 9003;
 
 // Ajouter Winston pour le monitoring
 const winston = require('winston');
@@ -44,54 +45,57 @@ const monitorLogger = winston.createLogger({
   ]
 });
 
-// Patterns NOVAQUOTE à surveiller
+// Patterns NOVAQUOTE Winston JSON à surveiller
 const NOVAQUOTE_PATTERNS = {
   SUCCESS: [
-    /\[SUCCESS\] \[SYSTEM\] ✅ HyperLiquid modules loaded successfully/,
-    /\[RESPONSE\] \[API\] \/api\/health → 200/,
-    /✅.*Agent.*started/,
-    /🚀.*system.*ready/
+    /"message": "NOVAQUOTE WINSTON LOGGERS SYSTEM - 7 Expert Loggers Initialized"/,
+    /"message": "Server listening on http:\/\/localhost:7000"/,
+    /"message": "WebSocket connection established"/,
+    /"message": "Agent initialized"/
   ],
   ERRORS: [
-    /\[ERROR\] \[.*\] ❌/,
-    /failed.*to.*load/,
-    /connection.*timeout/,
-    /unable.*to.*connect/
+    /"level": "ERROR"/,
+    /"message": ".*failed.*/i,
+    /"message": ".*timeout.*/i,
+    /"message": ".*connection.*lost.*/i,
+    /"message": ".*unable.*to.*connect.*/i
   ],
   WARNINGS: [
-    /\[WARN\] \[.*\] ⚠️/,
-    /deprecated/,
-    /retry.*attempt/
+    /"level": "WARN"/,
+    /"message": ".*deprecated.*/i,
+    /"message": ".*retry.*attempt.*/i,
+    /"message": "Unknown route"/
   ],
   PERFORMANCE: [
-    /performance.*ms/,
-    /response.*time/,
-    /duration.*ms/
+    /"duration": *[0-9]+/,
+    /"message": ".*performance.*/i,
+    /"message": ".*response.*time.*/i
   ],
   TRADING: [
-    /trading.*order/,
-    /buy.*signal/,
-    /sell.*signal/,
-    /position.*opened/,
-    /position.*closed/
+    /"component": "TRADING"/,
+    /"message": ".*trade.*/i,
+    /"message": ".*position.*/i,
+    /"symbol": "(BTC|ETH|SOL|ARB|APT|ADA|AVAX|BNB)"/
   ],
   AGENTS: [
-    /agent.*started/,
-    /agent.*stopped/,
-    /risk.*analysis/,
-    /strategy.*execution/,
-    /funding.*arbitrage/
+    /"component": "AGENTS"/,
+    /"message": ".*agent.*/i,
+    /"agentId": ".*_agent"/,
+    /"message": ".*cycle.*/i
   ],
   WEBSOCKET: [
-    /websocket.*connected/,
-    /websocket.*disconnected/,
-    /client.*connected/,
-    /subscription.*received/
+    /"component": "WS"/,
+    /"message": "WebSocket.*/i,
+    /"event": "(connect|disconnect|message)"/,
+    /"clientId": "ws_*/
   ]
 };
 
 class NovaQuoteLogsMonitor {
   constructor() {
+    // Suivi des positions dans les fichiers pour éviter les relectures complètes
+    this.filePositions = new Map();
+
     this.logsData = {
       total: 0,
       success: 0,
@@ -124,13 +128,24 @@ class NovaQuoteLogsMonitor {
       activeConnections: 0
     };
 
+    // Nouveau: Suivi des 7 loggers Winston spécialisés
+    this.winstonLoggers = {
+      API: { count: 0, errors: 0, lastActivity: null },
+      WS: { count: 0, errors: 0, lastActivity: null },
+      AGENTS: { count: 0, errors: 0, lastActivity: null },
+      BACKTESTS: { count: 0, errors: 0, lastActivity: null },
+      TRADING: { count: 0, errors: 0, lastActivity: null, trades: [] },
+      WALLETS: { count: 0, errors: 0, lastActivity: null },
+      SYSTEM: { count: 0, errors: 0, lastActivity: null }
+    };
+
     this.startMonitoring();
   }
 
   async startMonitoring() {
-    console.log('\n🚀 ===============================================');
-    console.log('📊 NOVAQUOTE AGENT EXPERT LOGS - MONITORING');
-    console.log('==============================================\n');
+    console.info('\n🚀 ===============================================');
+    console.info('📊 NOVAQUOTE AGENT EXPERT LOGS - MONITORING');
+    console.info('==============================================\n');
 
     // Démarrer le monitoring des logs
     this.monitorLogs();
@@ -181,14 +196,9 @@ class NovaQuoteLogsMonitor {
         const filePath = path.join(NOVAQUOTE_LOGS_DIR, file);
         const stats = fs.statSync(filePath);
 
-        // Lire les dernières lignes du fichier
-        const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n').filter(line => line.trim());
-
-        // Analyser les logs JSON structurés
-        lines.forEach(line => {
-          this.analyzeLogLine(line, file, stats);
-        });
+        // Lire seulement les nouvelles lignes depuis la dernière position
+        const newPosition = this.readNewLogLines(filePath, file, stats);
+        this.filePositions.set(file, newPosition);
       });
 
       // Mettre à jour le statut du système
@@ -218,12 +228,83 @@ class NovaQuoteLogsMonitor {
     }
   }
 
+  readNewLogLines(filePath, fileName, stats) {
+    try {
+      const currentPosition = this.filePositions.get(fileName) || 0;
+
+      // Si le fichier a été tourné (log rotation), réinitialiser la position
+      if (stats.size < currentPosition) {
+        this.filePositions.set(fileName, 0);
+        return this.readNewLogLines(filePath, fileName, stats);
+      }
+
+      // Lire seulement les nouvelles données
+      if (stats.size > currentPosition) {
+        const buffer = Buffer.alloc(stats.size - currentPosition);
+        const fd = fs.openSync(filePath, 'r');
+        fs.readSync(fd, buffer, 0, buffer.length, currentPosition);
+        fs.closeSync(fd);
+
+        const newContent = buffer.toString('utf8');
+        const lines = newContent.split('\n').filter(line => line.trim());
+
+        // Analyser les nouvelles lignes
+        lines.forEach(line => {
+          this.analyzeLogLine(line, fileName, stats);
+        });
+
+        return stats.size;
+      }
+
+      return currentPosition;
+    } catch (error) {
+      monitorLogger.error('❌ Erreur lecture fichier logs', {
+        error: error.message,
+        file: fileName
+      });
+      return 0;
+    }
+  }
+
   processNovaQuoteLog(logEntry, fileName, stats) {
     try {
       this.logsData.total++;
+      const component = logEntry.component?.toUpperCase() || 'SYSTEM';
+      const level = logEntry.level?.toUpperCase() || 'INFO';
+
+      // Suivi des 7 loggers Winston spécialisés
+      if (this.winstonLoggers[component]) {
+        this.winstonLoggers[component].count++;
+        this.winstonLoggers[component].lastActivity = logEntry.timestamp || new Date().toISOString();
+
+        if (level === 'ERROR') {
+          this.winstonLoggers[component].errors++;
+        }
+      }
+
+      // Traitement spécial pour les logs de trading
+      if (component === 'TRADING') {
+        this.logsData.trading++;
+
+        // Extraire les informations de trading si disponibles
+        if (logEntry.symbol || logEntry.action || logEntry.tradeId) {
+          const tradeInfo = {
+            timestamp: logEntry.timestamp,
+            symbol: logEntry.symbol,
+            action: logEntry.action,
+            tradeId: logEntry.tradeId,
+            message: logEntry.message
+          };
+
+          this.winstonLoggers.TRADING.trades.unshift(tradeInfo);
+          if (this.winstonLoggers.TRADING.trades.length > 10) {
+            this.winstonLoggers.TRADING.trades = this.winstonLoggers.TRADING.trades.slice(0, 10);
+          }
+        }
+      }
 
       // Catégoriser par niveau de log
-      switch (logEntry.level?.toUpperCase()) {
+      switch (level) {
         case 'SUCCESS':
         case 'SUCCESSFUL':
         case 'OK':
@@ -233,7 +314,9 @@ class NovaQuoteLogsMonitor {
         case 'FATAL':
         case 'CRITICAL':
           this.logsData.errors++;
+          this.addNovaQuoteAlert('ERROR', component, logEntry);
           monitorLogger.error('🚨 Erreur critique détectée', {
+            component,
             logEntry,
             fileName,
             timestamp: logEntry.timestamp
@@ -242,26 +325,27 @@ class NovaQuoteLogsMonitor {
         case 'WARNING':
         case 'WARN':
           this.logsData.warnings++;
+          this.addNovaQuoteAlert('WARNING', component, logEntry);
           break;
-        case 'TRADE':
-        case 'RISK':
-          this.logsData.trading++;
-          break;
-        case 'AGENT':
-        case 'MASTER_AGENT':
-        case 'RISK_AGENT':
-        case 'STRATEGY_AGENT':
-        case 'FUNDING_AGENT':
-          this.logsData.agents++;
-          break;
-        case 'WEBSOCKET':
-          this.logsData.websocket++;
-          break;
-        case 'PERFORMANCE':
-          this.logsData.performance++;
+        case 'INFO':
+          // Catégoriser selon le composant
+          switch (component) {
+            case 'AGENTS':
+              this.logsData.agents++;
+              break;
+            case 'WS':
+            case 'WEBSOCKET':
+              this.logsData.websocket++;
+              break;
+            case 'BACKTESTS':
+            case 'TRADING':
+            case 'WALLETS':
+              // Déjà comptés ci-dessus
+              break;
+          }
           break;
         default:
-          // Logs INFO ne nécessitent pas de comptage spécial
+          // Logs DEBUG ne nécessitent pas de comptage spécial
           break;
       }
 
@@ -271,12 +355,25 @@ class NovaQuoteLogsMonitor {
       }
 
       // Log des événements système importants
-      if (logEntry.event) {
+      if (logEntry.event || logEntry.action) {
         monitorLogger.info('🔄 Événement système', {
-          event: logEntry.event,
-          agent: logEntry.logger_name,
+          component,
+          event: logEntry.event || logEntry.action,
           timestamp: logEntry.timestamp
         });
+      }
+
+      // Ajouter aux logs récents pour le dashboard
+      this.recentLogs.unshift({
+        timestamp: logEntry.timestamp,
+        level,
+        component,
+        message: logEntry.message,
+        file: fileName
+      });
+
+      if (this.recentLogs.length > 100) {
+        this.recentLogs = this.recentLogs.slice(0, 100);
       }
 
     } catch (error) {
@@ -284,6 +381,23 @@ class NovaQuoteLogsMonitor {
         logEntry,
         error: error.message
       });
+    }
+  }
+
+  addNovaQuoteAlert(type, component, logEntry) {
+    const alert = {
+      type,
+      component,
+      message: logEntry.message || `Alerte ${type} dans ${component}`,
+      timestamp: logEntry.timestamp || new Date().toISOString(),
+      severity: type === 'ERROR' ? 'HIGH' : 'MEDIUM'
+    };
+
+    this.alerts.unshift(alert);
+
+    // Limiter le nombre d'alerts
+    if (this.alerts.length > 50) {
+      this.alerts = this.alerts.slice(0, 50);
     }
   }
 
@@ -398,7 +512,7 @@ class NovaQuoteLogsMonitor {
   }
 
   async startServicesMonitoring() {
-    console.log('🔍 Démarrage monitoring des services NOVAQUOTE...');
+    console.info('🔍 Démarrage monitoring des services NOVAQUOTE...');
 
     setInterval(async () => {
       await this.checkBackendHealth();
@@ -560,12 +674,12 @@ class NovaQuoteLogsMonitor {
   }
 
   startWebSocketServer() {
-    console.log(`🌐 Démarrage WebSocket Server sur port ${AGENT_LOGS_PORT}...`);
+    console.info(`🌐 Démarrage WebSocket Server sur port ${AGENT_LOGS_WS_PORT}...`);
 
-    this.wss = new ws.Server({ port: AGENT_LOGS_PORT });
+    this.wss = new ws.Server({ port: AGENT_LOGS_WS_PORT });
 
     this.wss.on('connection', (ws) => {
-      console.log('📊 Client dashboard connecté');
+      console.info('📊 Client dashboard connecté');
 
       // Envoyer l'état actuel
       this.sendDashboardUpdate(ws);
@@ -576,7 +690,7 @@ class NovaQuoteLogsMonitor {
       }, 1000);
 
       ws.on('close', () => {
-        console.log('📊 Client dashboard déconnecté');
+        console.info('📊 Client dashboard déconnecté');
         clearInterval(interval);
       });
 
@@ -585,7 +699,7 @@ class NovaQuoteLogsMonitor {
       });
     });
 
-    console.log(`✅ WebSocket Server démarré sur ws://localhost:${AGENT_LOGS_PORT}`);
+    console.info(`✅ WebSocket Server démarré sur ws://localhost:${AGENT_LOGS_WS_PORT}`);
   }
 
   sendDashboardUpdate(ws) {
@@ -597,7 +711,9 @@ class NovaQuoteLogsMonitor {
         system: this.systemStatus,
         metrics: this.metrics,
         recentLogs: this.recentLogs.slice(0, 20),
-        alerts: this.alerts.slice(0, 10)
+        alerts: this.alerts.slice(0, 10),
+        winstonLoggers: this.winstonLoggers,
+        recentTrades: this.winstonLoggers.TRADING.trades.slice(0, 5)
       }
     };
 
@@ -607,7 +723,7 @@ class NovaQuoteLogsMonitor {
   }
 
   startHTTPServer() {
-    console.log(`🌐 Démarrage HTTP Server pour dashboard sur port ${AGENT_LOGS_PORT + 1}...`);
+    console.info(`🌐 Démarrage HTTP Server pour dashboard sur port ${AGENT_LOGS_HTTP_PORT}...`);
 
     const server = http.createServer((req, res) => {
       if (req.url === '/') {
@@ -628,8 +744,8 @@ class NovaQuoteLogsMonitor {
       }
     });
 
-    server.listen(AGENT_LOGS_PORT + 1, () => {
-      console.log(`✅ Dashboard HTTP disponible sur http://localhost:${AGENT_LOGS_PORT + 1}`);
+    server.listen(AGENT_LOGS_HTTP_PORT, () => {
+      console.info(`✅ Dashboard HTTP disponible sur http://localhost:${AGENT_LOGS_HTTP_PORT}`);
     });
   }
 
@@ -741,6 +857,30 @@ class NovaQuoteLogsMonitor {
         </div>
 
         <div class="card">
+            <h3>📊 Loggers Winston NovaQuote</h3>
+            <div class="metric">
+                <span class="label">API Logger:</span>
+                <span class="value" id="winston-api">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">WebSocket Logger:</span>
+                <span class="value" id="winston-ws">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">Agents Logger:</span>
+                <span class="value" id="winston-agents">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">Trading Logger:</span>
+                <span class="value" id="winston-trading">0</span>
+            </div>
+            <div class="metric">
+                <span class="label">System Logger:</span>
+                <span class="value" id="winston-system">0</span>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>⚡ Activité Trading</h3>
             <div class="metric">
                 <span class="label">Logs Trading:</span>
@@ -757,6 +897,15 @@ class NovaQuoteLogsMonitor {
             <div class="metric">
                 <span class="label">Performance Logs:</span>
                 <span class="value" id="logs-performance">0</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>💰 Trades Récents</h3>
+            <div id="trades-container">
+                <div class="metric">
+                    <span class="label">Aucun trade détecté</span>
+                </div>
             </div>
         </div>
 
@@ -780,7 +929,7 @@ class NovaQuoteLogsMonitor {
     </div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:${AGENT_LOGS_PORT}');
+        const ws = new WebSocket('ws://localhost:${AGENT_LOGS_WS_PORT}');
 
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
@@ -799,6 +948,15 @@ class NovaQuoteLogsMonitor {
             document.getElementById('logs-agents').textContent = data.logs.agents;
             document.getElementById('logs-websocket').textContent = data.logs.websocket;
             document.getElementById('logs-performance').textContent = data.logs.performance;
+
+            // Mettre à jour les loggers Winston NovaQuote
+            if (data.winstonLoggers) {
+                document.getElementById('winston-api').textContent = data.winstonLoggers.API?.count || 0;
+                document.getElementById('winston-ws').textContent = data.winstonLoggers.WS?.count || 0;
+                document.getElementById('winston-agents').textContent = data.winstonLoggers.AGENTS?.count || 0;
+                document.getElementById('winston-trading').textContent = data.winstonLoggers.TRADING?.count || 0;
+                document.getElementById('winston-system').textContent = data.winstonLoggers.SYSTEM?.count || 0;
+            }
 
             // Mettre à jour le système
             document.getElementById('backend-status').innerHTML =
@@ -829,12 +987,27 @@ class NovaQuoteLogsMonitor {
                 '<span class="' + (data.system.agents.strategy ? 'status-healthy' : 'status-unhealthy') + '">' +
                 (data.system.agents.strategy ? '✅ ACTIF' : '❌ INACTIF') + '</span>';
 
+            // Mettre à jour les trades récents
+            const tradesContainer = document.getElementById('trades-container');
+            if (data.recentTrades && data.recentTrades.length > 0) {
+                tradesContainer.innerHTML = data.recentTrades.map(trade =>
+                    '<div class="metric" style="background: #1a5a3a;">' +
+                    '<strong>' + (trade.symbol || 'Unknown') + '</strong>: ' + (trade.action || 'No action') +
+                    '<br><small>' + (trade.message || 'No message') + '</small>' +
+                    '<br><small style="color: #888;">' + new Date(trade.timestamp).toLocaleString() + '</small>' +
+                    '</div>'
+                ).join('');
+            } else {
+                tradesContainer.innerHTML = '<div class="metric"><span class="label">Aucun trade détecté</span></div>';
+            }
+
             // Mettre à jour les alerts
             const alertsContainer = document.getElementById('alerts-container');
             if (data.alerts.length > 0) {
                 alertsContainer.innerHTML = data.alerts.slice(0, 5).map(alert =>
                     '<div class="alert alert-' + alert.type.toLowerCase() + '">' +
                     '<strong>' + alert.type + '</strong>: ' + alert.message +
+                    (alert.component ? '<br><small>Component: ' + alert.component + '</small>' : '') +
                     '<br><small>' + new Date(alert.timestamp).toLocaleString() + '</small>' +
                     '</div>'
                 ).join('');
@@ -874,23 +1047,23 @@ class NovaQuoteLogsMonitor {
   }
 
   printInitialStatus() {
-    console.log('\n📊 ===============================================');
-    console.log('🎯 STATUT INITIAL SYSTÈME NOVAQUOTE');
-    console.log('==============================================\n');
+    console.info('\n📊 ===============================================');
+    console.info('🎯 STATUT INITIAL SYSTÈME NOVAQUOTE');
+    console.info('==============================================\n');
 
-    console.log('🔍 Services Configuration:');
-    console.log(`   • Backend API: http://localhost:${NOVAQUOTE_BACKEND_PORT}`);
-    console.log(`   • WebSocket: ws://localhost:${NOVAQUOTE_WEBSOCKET_PORT}`);
-    console.log(`   • Agent Logs: ws://localhost:${AGENT_LOGS_PORT}`);
-    console.log(`   • Dashboard: http://localhost:${AGENT_LOGS_PORT + 1}`);
+    console.info('🔍 Services Configuration:');
+    console.info(`   • Backend API: http://localhost:${NOVAQUOTE_BACKEND_PORT}`);
+    console.info(`   • WebSocket: ws://localhost:${NOVAQUOTE_WEBSOCKET_PORT}`);
+    console.info(`   • Agent Logs: ws://localhost:${AGENT_LOGS_WS_PORT}`);
+    console.info(`   • Dashboard: http://localhost:${AGENT_LOGS_HTTP_PORT}`);
 
-    console.log('\n📁 Logs Directory:', NOVAQUOTE_LOGS_DIR);
-    console.log('📋 Monitoring Patterns:', Object.keys(NOVAQUOTE_PATTERNS).length, 'catégories');
+    console.info('\n📁 Logs Directory:', NOVAQUOTE_LOGS_DIR);
+    console.info('📋 Monitoring Patterns:', Object.keys(NOVAQUOTE_PATTERNS).length, 'catégories');
 
-    console.log('\n🚀 Dashboard Monitoring démarré!');
-    console.log('   • Accès dashboard: http://localhost:' + (AGENT_LOGS_PORT + 1));
-    console.log('   • WebSocket temps réel: ws://localhost:' + AGENT_LOGS_PORT);
-    console.log('   • Monitoring 24/7 des logs NOVAQUOTE actif\n');
+    console.info('\n🚀 Dashboard Monitoring démarré!');
+    console.info('   • Accès dashboard: http://localhost:' + AGENT_LOGS_HTTP_PORT);
+    console.info('   • WebSocket temps réel: ws://localhost:' + AGENT_LOGS_WS_PORT);
+    console.info('   • Monitoring 24/7 des logs NOVAQUOTE actif\n');
   }
 }
 

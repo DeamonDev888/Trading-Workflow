@@ -1232,38 +1232,38 @@
         </div>
       </div>
 
-      <!-- System Status Card -->
-      <div class="card system-status-card">
-        <h2 class="card-title">
-          <i class="fas fa-server"></i> État du Système
+      <!-- System Status Card - COMPACT VERSION -->
+      <div class="card system-status-card" style="padding: 16px !important; margin-bottom: 20px;">
+        <h2 class="card-title" style="font-size: 1.1em; margin-bottom: 12px; gap: 8px;">
+          <i class="fas fa-server" style="font-size: 1em;"></i> État du Système
         </h2>
-        <div class="status-grid">
-          <div class="status-item">
-            <div class="status-indicator online"></div>
-            <div class="status-info">
-              <div class="status-label">Serveur Principal</div>
-              <div class="status-value online">Opérationnel</div>
+        <div class="status-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div class="status-item" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div class="status-indicator online" style="width: 8px; height: 8px; flex-shrink: 0;"></div>
+            <div class="status-info" style="flex: 1;">
+              <div class="status-label" style="font-size: 0.75em; color: #888; margin-bottom: 2px;">Serveur</div>
+              <div class="status-value online" style="font-size: 0.85em; font-weight: 600;">✅ Opérationnel</div>
             </div>
           </div>
-          <div class="status-item">
-            <div class="status-indicator online"></div>
-            <div class="status-info">
-              <div class="status-label">API Trading</div>
-              <div class="status-value online">Connectée</div>
+          <div class="status-item" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div class="status-indicator online" style="width: 8px; height: 8px; flex-shrink: 0;"></div>
+            <div class="status-info" style="flex: 1;">
+              <div class="status-label" style="font-size: 0.75em; color: #888; margin-bottom: 2px;">API Trading</div>
+              <div class="status-value online" style="font-size: 0.85em; font-weight: 600;">✅ Connectée</div>
             </div>
           </div>
-          <div class="status-item">
-            <div class="status-indicator online"></div>
-            <div class="status-info">
-              <div class="status-label">Agents IA</div>
-              <div class="status-value online">4/4 Actifs</div>
+          <div class="status-item" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div class="status-indicator online" style="width: 8px; height: 8px; flex-shrink: 0;"></div>
+            <div class="status-info" style="flex: 1;">
+              <div class="status-label" style="font-size: 0.75em; color: #888; margin-bottom: 2px;">Agents IA</div>
+              <div class="status-value online" style="font-size: 0.85em; font-weight: 600;">✅ 4/4 Actifs</div>
             </div>
           </div>
-          <div class="status-item">
-            <div class="status-indicator limited"></div>
-            <div class="status-info">
-              <div class="status-label">Environnement</div>
-              <div class="status-value limited">Simulé</div>
+          <div class="status-item" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div class="status-indicator limited" style="width: 8px; height: 8px; flex-shrink: 0;"></div>
+            <div class="status-info" style="flex: 1;">
+              <div class="status-label" style="font-size: 0.75em; color: #888; margin-bottom: 2px;">Environnement</div>
+              <div class="status-value limited" style="font-size: 0.85em; font-weight: 600;">⚠️ Simulé</div>
             </div>
           </div>
         </div>
@@ -1330,6 +1330,34 @@
               <span>🔄</span> Refresh Status
             </button>
           </div>
+
+          <!-- Auto Trading Controls -->
+          <div class="auto-trading-section">
+            <h4>🚀 Auto Trading Control</h4>
+            <div class="auto-trading-controls">
+              <button
+                class="control-button start-auto"
+                id="start-auto-btn"
+                onclick="startAutoTrading()"
+                title="Start automatic trading"
+              >
+                <span>🚀</span> Start Auto Trading
+              </button>
+              <button
+                class="control-button stop-auto"
+                id="stop-auto-btn"
+                onclick="stopAutoTrading()"
+                title="Stop automatic trading"
+                disabled
+              >
+                <span>🛑</span> Stop Auto Trading
+              </button>
+            </div>
+            <div class="auto-trading-status" id="auto-trading-status">
+              Status: <span id="auto-trading-text">Inactive</span>
+            </div>
+          </div>
+
           <div class="master-status" id="master-status">
             System Status: <span id="system-status-text">Checking...</span>
           </div>
@@ -2108,6 +2136,112 @@
         }
       }
 
+      // 🚀 Auto Trading Functions
+      async function startAutoTrading() {
+        console.log('[AUTO-TRADING] Starting automatic trading...');
+        showNotification('Starting auto trading...', 'info');
+
+        try {
+          const response = await fetch('http://localhost:7000/api/trading/auto/start', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('[AUTO-TRADING] ✅ Started successfully:', result);
+            showNotification('Auto trading started successfully!', 'success');
+
+            // Update UI
+            const startBtn = document.getElementById('start-auto-trading-btn');
+            const stopBtn = document.getElementById('stop-auto-trading-btn');
+            const statusText = document.getElementById('auto-trading-text');
+
+            if (startBtn) startBtn.disabled = true;
+            if (stopBtn) stopBtn.disabled = false;
+            if (statusText) statusText.textContent = 'Active';
+
+            // Refresh status display
+            loadAutoTradingStatus();
+          } else {
+            throw new Error(result.error || 'Failed to start auto trading');
+          }
+        } catch (error) {
+          console.error('[AUTO-TRADING] ❌ Error:', error);
+          showNotification(`Failed to start auto trading: ${error.message}`, 'error');
+        }
+      }
+
+      async function stopAutoTrading() {
+        console.log('[AUTO-TRADING] Stopping automatic trading...');
+        showNotification('Stopping auto trading...', 'info');
+
+        try {
+          const response = await fetch('http://localhost:7000/api/trading/auto/stop', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('[AUTO-TRADING] ✅ Stopped successfully:', result);
+            showNotification('Auto trading stopped successfully', 'success');
+
+            // Update UI
+            const startBtn = document.getElementById('start-auto-trading-btn');
+            const stopBtn = document.getElementById('stop-auto-trading-btn');
+            const statusText = document.getElementById('auto-trading-text');
+
+            if (startBtn) startBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+            if (statusText) statusText.textContent = 'Inactive';
+
+            // Refresh status display
+            loadAutoTradingStatus();
+          } else {
+            throw new Error(result.error || 'Failed to stop auto trading');
+          }
+        } catch (error) {
+          console.error('[AUTO-TRADING] ❌ Error:', error);
+          showNotification(`Failed to stop auto trading: ${error.message}`, 'error');
+        }
+      }
+
+      async function loadAutoTradingStatus() {
+        try {
+          const response = await fetch('http://localhost:7000/api/trading/auto/status');
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('[AUTO-TRADING] Status loaded:', result);
+
+            const statusText = document.getElementById('auto-trading-text');
+            const startBtn = document.getElementById('start-auto-trading-btn');
+            const stopBtn = document.getElementById('stop-auto-trading-btn');
+
+            if (statusText) {
+              statusText.textContent = result.status.active ? 'Active' : 'Inactive';
+            }
+
+            if (startBtn) {
+              startBtn.disabled = result.status.active;
+            }
+
+            if (stopBtn) {
+              stopBtn.disabled = !result.status.active;
+            }
+          }
+        } catch (error) {
+          console.error('[AUTO-TRADING] Failed to load status:', error);
+        }
+      }
+
       // Update agent metrics from backend response
       function updateAgentMetrics(agentType, data) {
         try {
@@ -2119,24 +2253,38 @@
             `${agentType}-agent-response`
           );
 
-          // Vérifier que data existe et que les valeurs sont valides
-          if (data && data.confidence && typeof data.confidence === 'number' && !isNaN(data.confidence) && confidenceEl) {
+          // Update confidence (from API: data.confidence)
+          if (data && typeof data.confidence === 'number' && !isNaN(data.confidence) && confidenceEl) {
             confidenceEl.textContent = `${data.confidence}%`;
           } else if (confidenceEl) {
             confidenceEl.textContent = '--';
           }
 
-          if (data && data.llm_calls && typeof data.llm_calls === 'number' && !isNaN(data.llm_calls) && callsEl) {
+          // Update LLM calls (from API: data.llmCalls - camelCase)
+          if (data && typeof data.llmCalls === 'number' && !isNaN(data.llmCalls) && callsEl) {
+            callsEl.textContent = data.llmCalls;
+          } else if (data && typeof data.llm_calls === 'number' && !isNaN(data.llm_calls) && callsEl) {
+            // Fallback for snake_case
             callsEl.textContent = data.llm_calls;
           } else if (callsEl) {
             callsEl.textContent = '--';
           }
 
-          if (data && data.response_time && typeof data.response_time === 'number' && !isNaN(data.response_time) && responseEl) {
+          // Update response time (from API: data.responseTime - camelCase)
+          if (data && typeof data.responseTime === 'number' && !isNaN(data.responseTime) && responseEl) {
+            responseEl.textContent = `${data.responseTime}ms`;
+          } else if (data && typeof data.response_time === 'number' && !isNaN(data.response_time) && responseEl) {
+            // Fallback for snake_case
             responseEl.textContent = `${data.response_time}ms`;
           } else if (responseEl) {
             responseEl.textContent = '--';
           }
+
+          console.log(`[METRICS] ✅ Updated ${agentType} metrics:`, {
+            confidence: data?.confidence,
+            llmCalls: data?.llmCalls || data?.llm_calls,
+            responseTime: data?.responseTime || data?.response_time
+          });
         } catch (error) {
           console.error(
             `[METRICS] Error updating ${agentType} metrics:`,
@@ -2153,10 +2301,16 @@
           const activeCount = Object.values(agentStates).filter(
             (agent) => agent.active
           ).length;
+          const inactiveCount = Object.values(agentStates).filter(
+            (agent) => !agent.active
+          ).length;
+          const pendingCount = Object.values(agentStates).filter(
+            (agent) => agent.pending
+          ).length;
           const totalCount = Object.keys(agentStates).length;
 
           console.log('[MASTER PANEL] agentStates:', agentStates);
-          console.log('[MASTER PANEL] Active count:', activeCount, 'Total count:', totalCount);
+          console.log('[MASTER PANEL] Counts - Active:', activeCount, 'Inactive:', inactiveCount, 'Pending:', pendingCount, 'Total:', totalCount);
 
           // Update active agents count
           const activeCountEl = document.getElementById('active-agents-count');
@@ -2167,28 +2321,73 @@
             console.warn('[MASTER PANEL] active-agents-count element not found');
           }
 
+          // Update online/offline/pending counters
+          const onlineCountEl = document.getElementById('online-count');
+          const offlineCountEl = document.getElementById('offline-count');
+          const pendingCountEl = document.getElementById('pending-count');
+
+          if (onlineCountEl) {
+            onlineCountEl.textContent = activeCount;
+            console.log('[MASTER PANEL] Updated online-count to:', activeCount);
+          } else {
+            console.warn('[MASTER PANEL] online-count element not found');
+          }
+
+          if (offlineCountEl) {
+            offlineCountEl.textContent = inactiveCount;
+            console.log('[MASTER PANEL] Updated offline-count to:', inactiveCount);
+          } else {
+            console.warn('[MASTER PANEL] offline-count element not found');
+          }
+
+          if (pendingCountEl) {
+            pendingCountEl.textContent = pendingCount;
+            console.log('[MASTER PANEL] Updated pending-count to:', pendingCount);
+          } else {
+            console.warn('[MASTER PANEL] pending-count element not found');
+          }
+
           // Update total LLM calls
           const totalCallsEl = document.getElementById('total-llm-calls');
           if (totalCallsEl) {
+            // Calculate sum of all agents' LLM calls from agentStates
             let totalCalls = 0;
-            // This would be updated from real API responses
+            Object.keys(agentStates).forEach(agentType => {
+              // Try to get cached metrics from the UI elements
+              const callsEl = document.getElementById(`${agentType}-agent-calls`);
+              if (callsEl && callsEl.textContent && callsEl.textContent !== '--') {
+                totalCalls += parseInt(callsEl.textContent) || 0;
+              }
+            });
             totalCallsEl.textContent = totalCalls;
+            console.log('[MASTER PANEL] Updated total-llm-calls to:', totalCalls);
           }
 
           // Update system status
           const systemStatusEl = document.getElementById('system-status');
-          if (systemStatusEl) {
+          const systemStatusTextEl = document.getElementById('system-status-text');
+
+          if (systemStatusEl || systemStatusTextEl) {
             let status = 'OFFLINE';
             let color = '#e17055';
-            if (activeCount === totalCount) {
+            if (activeCount === totalCount && totalCount > 0) {
               status = 'OPERATIONAL';
               color = '#00d4aa';
             } else if (activeCount > 0) {
               status = 'PARTIAL';
               color = '#fdcb6e';
+            } else {
+              status = 'OFFLINE';
+              color = '#e17055';
             }
-            systemStatusEl.textContent = status;
-            systemStatusEl.style.color = color;
+
+            if (systemStatusEl) {
+              systemStatusEl.textContent = status;
+              systemStatusEl.style.color = color;
+            }
+            if (systemStatusTextEl) {
+              systemStatusTextEl.textContent = status;
+            }
             console.log('[MASTER PANEL] Updated system-status to:', status);
           } else {
             console.warn('[MASTER PANEL] system-status element not found');
@@ -2337,8 +2536,12 @@
                             </div>
                         </div>
                         <div class="inference-details">
-                            <span class="inference-time">${timeAgo}</span>
-                            <span class="inference-duration">${inference.processing_time_ms && !isNaN(inference.processing_time_ms) ? Math.round(inference.processing_time_ms) + 'ms' : '--'}</span>
+                            <span class="inference-duration" title="Processing time">
+                                ⏱️ ${inference.processing_time_ms && !isNaN(inference.processing_time_ms) ? Math.round(inference.processing_time_ms) + 'ms' : '--'}
+                            </span>
+                            <span class="inference-time" title="When inference was made">
+                                📅 ${timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                             <span class="inference-status">${inference.status === 'completed' ? 'Success' : inference.status || 'Processing'}</span>
                         </div>
                         ${
@@ -2377,6 +2580,12 @@
       let inferenceRefreshInterval;
 
       function startInferenceAutoRefresh() {
+        // Vérifier si un interval existe déjà et le清除
+        if (inferenceRefreshInterval) {
+          clearInterval(inferenceRefreshInterval);
+          inferenceRefreshInterval = null;
+          console.log('[INFERENCE] Cleared previous interval');
+        }
         // Initial load for all agents
         ['risk', 'strategy', 'funding', 'sentiment'].forEach((agentType) => {
           refreshAgentInferences(agentType);
@@ -2594,10 +2803,10 @@
                             <td><strong>${pos.symbol}</strong></td>
                             <td><span class="${sideClass}">${pos.side}</span></td>
                             <td>${pos.size}</td>
-                            <td>$${pos.entryPrice.toFixed(2)}</td>
-                            <td>$${pos.markPrice.toFixed(2)}</td>
-                            <td><span class="${pnlClass}">${pnlSymbol}$${Math.abs(pos.pnl).toFixed(2)}</span></td>
-                            <td><span class="${pnlClass}">${pnlSymbol}${pos.roe.toFixed(2)}%</span></td>
+                            <td>$${Number(pos.entryPrice).toFixed(2)}</td>
+                            <td>$${Number(pos.markPrice).toFixed(2)}</td>
+                            <td><span class="${pnlClass}">${pnlSymbol}$${Math.abs(Number(pos.pnl)).toFixed(2)}</span></td>
+                            <td><span class="${pnlClass}">${pnlSymbol}${Number(pos.roe).toFixed(2)}%</span></td>
                             <td><span class="position-status ${pos.status}">${pos.status.toUpperCase()}</span></td>
                         </tr>
                     `;
@@ -3120,25 +3329,42 @@
       let refreshInterval = 60000; // 60 secondes (optimisé)
       let isRefreshing = false;
       let lastUpdate = null;
+      let autoRefreshIntervalId = null; // Stockage de l'ID du setInterval
 
-      function startAutoRefresh() {
+      async function startAutoRefresh() {
+        // Vérifier si un interval existe déjà et le清除
+        if (autoRefreshIntervalId) {
+          clearInterval(autoRefreshIntervalId);
+          autoRefreshIntervalId = null;
+          console.log('[AUTO-REFRESH] Cleared previous interval');
+        }
         // Load data immediately with loading indicator
         showLoadingState();
-        loadWalletData();
-        loadPositions();
-        loadActivityTimeline();
+        await loadWalletData();
+        await loadPositions();
+        await loadActivityTimeline();
         hideLoadingState();
 
-        // Refresh every 60 seconds (optimisé)
-        setInterval(() => {
-          if (!isRefreshing) {
-            console.log('[AUTO-REFRESH] Updating data (60s interval)');
-            isRefreshing = true;
-            loadWalletData();
-            loadPositions();
-            loadActivityTimeline();
-            isRefreshing = false;
+        // Refresh every 60 seconds (optimisé) - FIX: Attendre la fin des appels
+        autoRefreshIntervalId = setInterval(async () => {
+          if (isRefreshing) {
+            console.log('[AUTO-REFRESH] Skipping - already refreshing');
+            return;
+          }
+
+          console.log('[AUTO-REFRESH] Updating data (60s interval)');
+          isRefreshing = true;
+
+          try {
+            await loadWalletData();
+            await loadPositions();
+            await loadActivityTimeline();
             lastUpdate = new Date();
+            console.log('[AUTO-REFRESH] ✅ Update completed successfully');
+          } catch (error) {
+            console.error('[AUTO-REFRESH] ❌ Update failed:', error);
+          } finally {
+            isRefreshing = false;
           }
         }, refreshInterval);
 
@@ -3675,12 +3901,17 @@
         syncWalletStatus(); // Check for connected wallet from config page
         updateQuickConnectButton(); // Show/hide quick connect button
         startAutoRefresh(); // Load wallet & positions from backend
+        loadAutoTradingStatus(); // Load auto-trading status on page load
 
         // Initialize agent control system
         updateMasterControlPanel();
 
         // Start periodic agent status check
-        setInterval(checkAgentStatus, 10000); // Check every 10 seconds
+        // Vérifier si un interval existe déjà et le清除
+        if (window.agentStatusIntervalId) {
+          clearInterval(window.agentStatusIntervalId);
+        }
+        window.agentStatusIntervalId = setInterval(checkAgentStatus, 10000); // Check every 10 seconds
 
         // Initial agent status check
         checkAgentStatus();

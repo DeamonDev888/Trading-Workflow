@@ -50,7 +50,9 @@ class PermissionController:
                     "update_margin",
                 ],
                 "max_leverage": int(os.environ.get("MAX_LEVERAGE", "10")),
-                "max_position_size": float(os.environ.get("MAX_POSITION_SIZE_USD", "1000")),
+                "max_position_size": float(
+                    os.environ.get("MAX_POSITION_SIZE_USD", "1000")
+                ),
                 "risk_level": "medium",
             },
             "full_access": {
@@ -65,7 +67,9 @@ class PermissionController:
                     "manage_permissions",
                 ],
                 "max_leverage": int(os.environ.get("MAX_LEVERAGE", "50")),
-                "max_position_size": float(os.environ.get("MAX_POSITION_SIZE_USD", "10000")),
+                "max_position_size": float(
+                    os.environ.get("MAX_POSITION_SIZE_USD", "10000")
+                ),
                 "risk_level": "high",
             },
         }
@@ -73,8 +77,12 @@ class PermissionController:
         self.global_risk_limits = {
             "max_total_exposure": float(os.environ.get("MAX_TOTAL_EXPOSURE", "50000")),
             "max_daily_loss": float(os.environ.get("MAX_DAILY_LOSS", "1000")),
-            "max_concurrent_positions": int(os.environ.get("MAX_CONCURRENT_POSITIONS", "10")),
-            "require_ai_confirmation": os.environ.get("REQUIRE_AI_CONFIRMATION", "true").lower()
+            "max_concurrent_positions": int(
+                os.environ.get("MAX_CONCURRENT_POSITIONS", "10")
+            ),
+            "require_ai_confirmation": os.environ.get(
+                "REQUIRE_AI_CONFIRMATION", "true"
+            ).lower()
             == "true",
         }
 
@@ -158,7 +166,9 @@ class PermissionController:
                 "risk_level": "blocked",
             }
 
-    def _check_permissions(self, action: str, wallet_permissions: List[str]) -> Dict[str, Any]:
+    def _check_permissions(
+        self, action: str, wallet_permissions: List[str]
+    ) -> Dict[str, Any]:
         """Check if action is allowed by wallet permissions"""
         allowed_actions = set()
 
@@ -260,7 +270,9 @@ class PermissionController:
         else:
             return "low"
 
-    def _get_action_limits(self, action: str, wallet_permissions: List[str]) -> Dict[str, Any]:
+    def _get_action_limits(
+        self, action: str, wallet_permissions: List[str]
+    ) -> Dict[str, Any]:
         """Get limits for an action based on permissions"""
         limits = {}
 
@@ -313,7 +325,9 @@ class PermissionController:
         if len(self.action_log) > 1000:
             self.action_log = self.action_log[-1000:]
 
-    def _update_daily_stats(self, action: str, params: Dict[str, Any], result: Dict[str, Any]):
+    def _update_daily_stats(
+        self, action: str, params: Dict[str, Any], result: Dict[str, Any]
+    ):
         """Update daily statistics"""
         today = datetime.now().date().isoformat()
 
@@ -368,7 +382,9 @@ class PermissionController:
 
         if wallet_address:
             log_entries = [
-                entry for entry in log_entries if entry["wallet_address"] == wallet_address
+                entry
+                for entry in log_entries
+                if entry["wallet_address"] == wallet_address
             ]
 
         return log_entries[-limit:]
@@ -389,7 +405,9 @@ class PermissionController:
         """
         recent_actions = self.get_audit_log(wallet_address, limit=50)
 
-        high_risk_actions = len([a for a in recent_actions if a.get("risk_level") == "high"])
+        high_risk_actions = len(
+            [a for a in recent_actions if a.get("risk_level") == "high"]
+        )
         failed_actions = len(
             [a for a in recent_actions if not a.get("result", {}).get("success", True)]
         )
@@ -399,10 +417,14 @@ class PermissionController:
             "recent_high_risk_actions": high_risk_actions,
             "recent_failed_actions": failed_actions,
             "daily_stats": self.daily_stats,
-            "risk_alerts": self._generate_risk_alerts(high_risk_actions, failed_actions),
+            "risk_alerts": self._generate_risk_alerts(
+                high_risk_actions, failed_actions
+            ),
         }
 
-    def _generate_risk_alerts(self, high_risk_count: int, failed_count: int) -> List[str]:
+    def _generate_risk_alerts(
+        self, high_risk_count: int, failed_count: int
+    ) -> List[str]:
         """Generate risk alerts based on activity"""
         alerts = []
 

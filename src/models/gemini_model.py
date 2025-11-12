@@ -3,6 +3,7 @@
 Built with love by Deamon Dev
 """
 
+import google.generativeai as genai
 from termcolor import cprint
 
 from .base_model import BaseModel, ModelResponse, safe_cprint
@@ -63,7 +64,9 @@ class GeminiModel(BaseModel):
                 blocked_categories = []
 
                 if hasattr(response, "prompt_feedback"):
-                    block_reason_value = getattr(response.prompt_feedback, "block_reason", 0)
+                    block_reason_value = getattr(
+                        response.prompt_feedback, "block_reason", 0
+                    )
                     block_reason_map = {
                         0: "UNSPECIFIED",
                         1: "SAFETY",
@@ -80,11 +83,15 @@ class GeminiModel(BaseModel):
                         for rating in response.prompt_feedback.safety_ratings:
                             prob = getattr(rating, "probability", None)
                             if prob and str(prob) in ["MEDIUM", "HIGH", "2", "3"]:
-                                blocked_categories.append(f"{rating.category.name}:{prob}")
+                                blocked_categories.append(
+                                    f"{rating.category.name}:{prob}"
+                                )
 
                 finish_reason = None
                 if response.candidates and len(response.candidates) > 0:
-                    finish_reason = getattr(response.candidates[0], "finish_reason", None)
+                    finish_reason = getattr(
+                        response.candidates[0], "finish_reason", None
+                    )
 
                 error_msg = f"Empty response - block_reason={block_reason}"
                 if blocked_categories:

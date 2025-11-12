@@ -5,13 +5,13 @@
 
 const WebSocket = require('ws');
 
-console.log('🔌 Connexion au WebSocket NOVAQUOTE...');
+console.info('🔌 Connexion au WebSocket NOVAQUOTE...');
 
 const ws = new WebSocket('ws://localhost:7001');
 
 ws.on('open', () => {
-  console.log('✅ WebSocket connecté !');
-  console.log('📡 Client actif pour NOVAQUOTE');
+  console.info('✅ WebSocket connecté !');
+  console.info('📡 Client actif pour NOVAQUOTE');
 
   // Envoyer un message ping
   ws.send(JSON.stringify({
@@ -21,7 +21,7 @@ ws.on('open', () => {
 });
 
 ws.on('message', (data) => {
-  console.log('📨 Message reçu:', data.toString());
+  console.info('📨 Message reçu:', data.toString());
 });
 
 ws.on('error', (error) => {
@@ -29,7 +29,7 @@ ws.on('error', (error) => {
 });
 
 ws.on('close', () => {
-  console.log('🔌 WebSocket déconnecté');
+  console.info('🔌 WebSocket déconnecté');
 });
 
 // Garder la connexion alive

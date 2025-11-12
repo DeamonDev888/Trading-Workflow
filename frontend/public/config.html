@@ -315,6 +315,124 @@
           <!-- Additional info will be loaded here -->
         </div>
       </div>
+
+      <!-- Auto Trading Configuration -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="fas fa-robot"></i> 🚀 Auto Trading Configuration
+        </h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+          Configurez les paramètres de trading automatique pour un comportement agressif
+        </p>
+
+        <div style="display: grid; gap: 1.5rem;">
+          <!-- Auto Trading Enabled -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div>
+              <div style="color: var(--text-primary); font-weight: 600;">Auto Trading Activé</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">Permet l'exécution automatique des trades</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 60px; height: 32px;">
+              <input type="checkbox" id="auto-trading-enabled" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #00d4aa; border-radius: 16px; transition: all 0.3s;">
+                <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 5px; bottom: 5px; background-color: white; border-radius: 50%; transition: all 0.3s;"></span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Trading Interval -->
+          <div>
+            <label style="display: block; color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">
+              <i class="fas fa-clock"></i> Intervalle de Trading (secondes)
+            </label>
+            <input
+              type="number"
+              id="trading-interval"
+              value="120"
+              min="30"
+              max="600"
+              style="width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;"
+            />
+            <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">
+              Fréquence d'exécution des trades (défaut: 120s = 2 minutes)
+            </div>
+          </div>
+
+          <!-- Signal Strength -->
+          <div>
+            <label style="display: block; color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">
+              <i class="fas fa-signal"></i> Force Minimale des Signaux
+            </label>
+            <input
+              type="number"
+              id="min-signal-strength"
+              value="0.6"
+              min="0.1"
+              max="1.0"
+              step="0.1"
+              style="width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;"
+            />
+            <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">
+              Minimum 0.1, Maximum 1.0 (défaut: 0.6)
+            </div>
+          </div>
+
+          <!-- Position Size -->
+          <div>
+            <label style="display: block; color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">
+              <i class="fas fa-wallet"></i> Taille Max par Position (USD)
+            </label>
+            <input
+              type="number"
+              id="max-position-size"
+              value="1000"
+              min="100"
+              max="10000"
+              style="width: 100%; padding: 0.75rem; background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;"
+            />
+            <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">
+              Montant maximum par trade (défaut: $1000)
+            </div>
+          </div>
+
+          <!-- Paper Trading -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div>
+              <div style="color: var(--text-primary); font-weight: 600;">Mode Paper Trading</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">Simulation sans argent réel</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 60px; height: 32px;">
+              <input type="checkbox" id="paper-trading" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #00d4aa; border-radius: 16px; transition: all 0.3s;">
+                <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 5px; bottom: 5px; background-color: white; border-radius: 50%; transition: all 0.3s;"></span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Aggressive Mode -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
+            <div>
+              <div style="color: var(--text-primary); font-weight: 600;">Mode Agressif</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">Signaux plus fréquents et moins restrictifs</div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 60px; height: 32px;">
+              <input type="checkbox" id="aggressive-mode" checked style="opacity: 0; width: 0; height: 0;">
+              <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #00d4aa; border-radius: 16px; transition: all 0.3s;">
+                <span style="position: absolute; content: ''; height: 22px; width: 22px; left: 5px; bottom: 5px; background-color: white; border-radius: 50%; transition: all 0.3s;"></span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Save Button -->
+          <button
+            id="save-auto-trading-config"
+            class="control-btn primary"
+            style="font-size: 1.1rem; padding: 1rem 2rem; margin-top: 1rem;"
+          >
+            <i class="fas fa-save"></i> Sauvegarder la Configuration
+          </button>
+        </div>
+      </div>
     </div>
 
     <style>
@@ -935,14 +1053,65 @@
           }
       }
 
+      // 🚀 AUTO TRADING CONFIGURATION FUNCTIONS
+      async function loadAutoTradingConfig() {
+          try {
+              const response = await fetch('http://localhost:7000/api/trading/auto/status');
+              const data = await response.json();
+
+              if (data.success && data.config) {
+                  document.getElementById('auto-trading-enabled').checked = data.config.AUTO_TRADING_ENABLED;
+                  document.getElementById('trading-interval').value = data.config.TRADING_INTERVAL_MS / 1000; // Convert to seconds
+                  document.getElementById('min-signal-strength').value = data.config.MIN_SIGNAL_STRENGTH;
+                  document.getElementById('max-position-size').value = data.config.MAX_POSITION_SIZE_USD;
+                  document.getElementById('paper-trading').checked = data.config.PAPER_TRADING;
+                  document.getElementById('aggressive-mode').checked = data.config.AGGRESSIVE_MODE;
+              }
+          } catch (error) {
+              console.error('Failed to load auto-trading config:', error);
+          }
+      }
+
+      async function saveAutoTradingConfig() {
+          try {
+              const config = {
+                  AUTO_TRADING_ENABLED: document.getElementById('auto-trading-enabled').checked,
+                  TRADING_INTERVAL_MS: parseInt(document.getElementById('trading-interval').value) * 1000,
+                  MIN_SIGNAL_STRENGTH: parseFloat(document.getElementById('min-signal-strength').value),
+                  MAX_POSITION_SIZE_USD: parseInt(document.getElementById('max-position-size').value),
+                  PAPER_TRADING: document.getElementById('paper-trading').checked,
+                  AGGRESSIVE_MODE: document.getElementById('aggressive-mode').checked,
+              };
+
+              const response = await fetch('http://localhost:7000/api/trading/config', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(config),
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                  showNotification('Configuration auto-trading sauvegardée!', 'success');
+              } else {
+                  throw new Error(data.error || 'Failed to save config');
+              }
+          } catch (error) {
+              console.error('Failed to save auto-trading config:', error);
+              showNotification(`Erreur: ${error.message}`, 'error');
+          }
+      }
+
       // Initialize the page
       document.addEventListener('DOMContentLoaded', function() {
           console.log('Config page initialized - Simple Wallet Connection');
 
           loadWalletFromStorage();
+          loadAutoTradingConfig();
 
           document.getElementById('connect-metamask-btn').addEventListener('click', connectWallet);
           document.getElementById('disconnect-wallet-btn').addEventListener('click', disconnectWallet);
+          document.getElementById('save-auto-trading-config').addEventListener('click', saveAutoTradingConfig);
 
           if (isWalletAvailable()) {
               window.ethereum.on('accountsChanged', (accounts) => {

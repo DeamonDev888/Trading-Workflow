@@ -18,6 +18,7 @@ class HyperliquidAPI {
 
     this.client = axios.create({
       baseURL: this.baseUrl,
+      timeout: 30000, // 30 secondes timeout
       headers: {
         'Content-Type': 'application/json',
       },
@@ -36,7 +37,7 @@ class HyperliquidAPI {
 
   async getAllMids() {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'allMids',
       });
       return response.data;
@@ -46,9 +47,68 @@ class HyperliquidAPI {
     }
   }
 
+  async getAllTokens() {
+    try {
+      const response = await this.client.post('/info', {;
+        type: 'allMids',
+      });
+      // Retourne les mids sous forme de liste de tokens
+      const mids = response.data;
+      if (Array.isArray(mids)) {
+        // Format: [symbol1, price1, symbol2, price2, ...]
+        const tokens = [];
+        for (let i = 0; i < mids.length; i += 2) {;
+          if (mids[i] && mids[i + 1]) {
+            tokens.push({
+              symbol: mids[i],
+              price: mids[i + 1]
+            });
+          }
+        }
+        return tokens;
+      } else if (typeof mids === 'object') {
+        // Format: {symbol1: price1, symbol2: price2, ...}
+        return Object.entries(mids).map(([symbol, price]) => ({
+          symbol,
+          price
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Erreur getAllTokens:', error);
+      throw error;
+    }
+  }
+
+  async getTokenPrice(symbol) {
+    try {
+      const response = await this.client.post('/info', {;
+        type: 'allMids',
+      });
+      const mids = response.data;
+
+      if (Array.isArray(mids)) {
+        // Format: [symbol1, price1, symbol2, price2, ...]
+        for (let i = 0; i < mids.length; i += 2) {;
+          if (mids[i] === symbol) {
+            return mids[i + 1];
+          }
+        }
+      } else if (typeof mids === 'object') {
+        // Format: {symbol1: price1, symbol2: price2, ...}
+        return mids[symbol];
+      }
+
+      throw new Error(`Symbol ${symbol} not found`);
+    } catch (error) {
+      console.error(`Erreur getTokenPrice pour ${symbol}:`, error);
+      throw error;
+    }
+  }
+
   async getMeta() {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'meta',
       });
       return response.data;
@@ -60,7 +120,7 @@ class HyperliquidAPI {
 
   async getMetaAndAssetCtxs() {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'metaAndAssetCtxs',
       });
       return response.data;
@@ -72,7 +132,7 @@ class HyperliquidAPI {
 
   async getUserState(address) {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'userState',
         user: address,
       });
@@ -85,7 +145,7 @@ class HyperliquidAPI {
 
   async getOpenOrders(address) {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'openOrders',
         user: address,
       });
@@ -103,7 +163,7 @@ class HyperliquidAPI {
         throw new Error(`Symbol ${symbol} not supported`);
       }
 
-      const orderData = {
+      const orderData = {;
         a: coinIndex,
         b: isBuy,
         p: price.toString(),
@@ -116,7 +176,7 @@ class HyperliquidAPI {
         },
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'order',
         order: orderData,
         signature: '',
@@ -131,13 +191,13 @@ class HyperliquidAPI {
 
   async cancelOrder(address, orderId) {
     try {
-      const cancelData = {
+      const cancelData = {;
         asset: 0,
         isBuy: false,
         id: orderId,
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'cancel',
         cancelByCloid: cancelData,
         signature: '',
@@ -158,20 +218,20 @@ class HyperliquidAPI {
         return { status: 'No orders to cancel' };
       }
 
-      const cancels = openOrders.orders.map((order) => ({
+      const cancels = openOrders.orders.map((order) => ({;
         asset: order.asset,
         isBuy: order.isBuy,
         id: order.id,
       }));
 
-      const cancelData = {
+      const cancelData = {;
         asset: 0,
         isBuy: false,
         id: 0,
         cancels: cancels,
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'cancelByCloid',
         cancelByCloid: cancelData,
         signature: '',
@@ -186,13 +246,13 @@ class HyperliquidAPI {
 
   async modifyOrder(address, orderId, price, size) {
     try {
-      const modifyData = {
+      const modifyData = {;
         id: orderId,
         limitPx: price,
         sz: size,
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'modify',
         modify: modifyData,
         signature: '',
@@ -207,13 +267,13 @@ class HyperliquidAPI {
 
   async setLeverage(address, asset, leverage) {
     try {
-      const leverageData = {
+      const leverageData = {;
         asset: asset,
         isBuy: true,
         leverage: leverage,
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'leverage',
         leverage: leverageData,
         signature: '',
@@ -228,13 +288,13 @@ class HyperliquidAPI {
 
   async transfer(address, destination, asset, amount) {
     try {
-      const transferData = {
+      const transferData = {;
         destination: destination,
         asset: asset,
         amount: amount,
       };
 
-      const response = await this.client.post('/exchange', {
+      const response = await this.client.post('/exchange', {;
         type: 'transfer',
         transfer: transferData,
         signature: '',
@@ -249,7 +309,7 @@ class HyperliquidAPI {
 
   async getCandleSnapshot(symbol, interval = '1m') {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'candleSnapshot',
         coin: symbol,
         interval: interval,
@@ -263,7 +323,7 @@ class HyperliquidAPI {
 
   async getCandles(symbol, startTime, endTime) {
     try {
-      const response = await this.client.post('/info', {
+      const response = await this.client.post('/info', {;
         type: 'candle',
         coin: symbol,
         startTime: startTime,
@@ -281,7 +341,7 @@ class HyperliquidAPI {
     try {
       const volumes = {};
 
-      for (const symbol of symbols) {
+      for (const symbol of symbols) {;
         try {
           const coinIndex = this.assetMapping[symbol];
           if (coinIndex !== undefined) {

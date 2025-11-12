@@ -36,7 +36,10 @@ class SignatureEngine:
                 "❌ HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
             )
 
-        if self.private_key == "your_eth_private_key_here" or len(self.private_key.strip()) < 64:
+        if (
+            self.private_key == "your_eth_private_key_here"
+            or len(self.private_key.strip()) < 64
+        ):
             raise ValueError(
                 "❌ HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
             )
@@ -58,7 +61,9 @@ class SignatureEngine:
         cprint(f"🔐 {self.name} v{self.version} initialized", "cyan")
         cprint(f"   Address: {self.address[:8]}...{self.address[-6:]}", "cyan")
 
-    def sign_l1_action(self, action: Dict[str, Any], nonce: Optional[int] = None) -> Dict[str, Any]:
+    def sign_l1_action(
+        self, action: Dict[str, Any], nonce: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Sign an L1 action (exchange endpoint actions)
 
@@ -293,7 +298,9 @@ class SignatureEngine:
         self.current_nonce = max(self.current_nonce, nonce + 1)
         cprint(f"🔄 Nonce reset to: {self.current_nonce}", "yellow")
 
-    def create_order_signature(self, action: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    def create_order_signature(
+        self, action: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], int]:
         """
         Create a complete signed order action
 
@@ -307,7 +314,9 @@ class SignatureEngine:
         signature = self.sign_l1_action(action, nonce)
         return signature, nonce
 
-    def create_transfer_signature(self, action: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
+    def create_transfer_signature(
+        self, action: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], int]:
         """
         Create a complete signed transfer action
 

@@ -4,6 +4,7 @@ Built with love by Deamon Dev
 """
 
 import time
+import traceback
 
 from groq import Groq
 from termcolor import cprint
@@ -190,8 +191,6 @@ class GroqModel(BaseModel):
                 safe_cprint(f"  └─ Response body: {e.response.text}", "red")
 
             if hasattr(e, "__traceback__"):
-                import traceback
-
                 safe_cprint(f"\n📋 Full traceback:", "red")
                 safe_cprint(traceback.format_exc(), "red")
 

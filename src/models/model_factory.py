@@ -6,6 +6,7 @@ This module manages all available AI models and provides a unified interface.
 
 import os
 import sys
+import traceback
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="ignore")
@@ -42,45 +43,12 @@ def safe_cprint(text, color):
         cprint(clean_text, color)
 
 
-import random
-
-# Model imports commented out - not used currently
-# from .claude_model import ClaudeModel
-# from .deepseek_model import DeepSeekModel
-# from .gemini_model import GeminiModel  # Re-enabled with Gemini 2.5 models
-# from .groq_model import GroqModel
-# from .ollama_model import OllamaModel
-# from .openai_model import OpenAIModel
-# from .xai_model import XAIModel
-# from .zai_model import ZAIModel  # Added Z.AI GLM-4.6 support
-
-
 class ModelFactory:
     """Factory for creating and managing AI models"""
 
-    # Model implementations commented out - not used currently
-    MODEL_IMPLEMENTATIONS = {
-        # "claude": ClaudeModel,
-        # "groq": GroqModel,
-        # "openai": OpenAIModel,
-        # "gemini": GeminiModel,  # Re-enabled with Gemini 2.5 models
-        # "deepseek": DeepSeekModel,
-        # "ollama": OllamaModel,  # Add Ollama implementation
-        # "xai": XAIModel,  # xAI Grok models
-        # "zai": ZAIModel,  # Z.AI GLM-4.6 - Top Chinese model with Claude Sonnet 4 performance
-    }
+    MODEL_IMPLEMENTATIONS = {}
 
-    # Default models commented out - not used currently
-    DEFAULT_MODELS = {
-        # "claude": "claude-3-5-haiku-latest",  # Latest fast Claude model
-        # "groq": "mixtral-8x7b-32768",  # Fast Mixtral model
-        # "openai": "gpt-4o",  # Latest GPT-4 Optimized
-        # "gemini": "gemini-2.5-flash",  # Fast Gemini 2.5 model
-        # "deepseek": "deepseek-reasoner",  # Enhanced reasoning model
-        # "ollama": "llama3.2",  # Meta's Llama 3.2 - balanced performance
-        # "xai": "grok-4-fast-reasoning",  # xAI's Grok 4 Fast with reasoning (best value: 2M context, cheap!)
-        # "zai": "glm-4.6",  # Z.AI GLM-4.6 - Latest model with Claude Sonnet 4 performance
-    }
+    DEFAULT_MODELS = {}
 
     def __init__(self):
         safe_cprint("\nCreating new ModelFactory instance...", "cyan")
@@ -174,8 +142,6 @@ class ModelFactory:
                         )
                         safe_cprint(f"  +- Error message: {str(instance_error)}", "yellow")
                         if hasattr(instance_error, "__traceback__"):
-                            import traceback
-
                             safe_cprint(f"    Traceback:\n{traceback.format_exc()}", "yellow")
 
                 except Exception as e:
@@ -183,8 +149,6 @@ class ModelFactory:
                     safe_cprint(f"  +- Error type: {type(e).__name__}", "yellow")
                     safe_cprint(f"  +- Error message: {str(e)}", "yellow")
                     if hasattr(e, "__traceback__"):
-                        import traceback
-
                         safe_cprint(f"    Traceback:\n{traceback.format_exc()}", "yellow")
             else:
                 safe_cprint(f"  - {key_name} not found", "blue")

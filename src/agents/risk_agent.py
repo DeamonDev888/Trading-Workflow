@@ -8,7 +8,7 @@ Garde la même logique que V1 mais délègue l'analyse IA au sub-agent claude-ri
 
 import json
 import os
-import pandas as pd
+// import pandas as pd
 import subprocess
 import time
 import traceback

@@ -13,34 +13,58 @@ class PortfolioManager {
     this.init();
   }
 
+  /**
+   * Helper function to safely query elements with fallback
+   */
+  safeQuerySelector(selector, fallback = null) {
+    const element = document.querySelector(selector);
+    if (!element) {
+      console.warn(`[PORTFOLIO] Element not found: ${selector}`);
+    }
+    return element || fallback;
+  }
+
   init() {
+    console.info('[PORTFOLIO] Initializing Portfolio Manager...');
     this.setupEventListeners();
     this.updateUI();
     this.loadPortfolioData();
 
     // Auto-refresh portfolio every 5 seconds
     setInterval(() => this.loadPortfolioData(), 5000);
+    console.info('[PORTFOLIO] Portfolio Manager initialized');
   }
 
   setupEventListeners() {
+    console.info('[PORTFOLIO] Setting up event listeners...');
+
     // Mode selector
-    const modeSelector = document.getElementById('portfolio-mode-selector');
+    const modeSelector = this.safeQuerySelector('#portfolio-mode-selector');
     if (modeSelector) {
       modeSelector.addEventListener('change', (e) => {
+        console.info('[PORTFOLIO] Mode changed to:', e.target.value);
         this.switchMode(e.target.value);
       });
+      console.info('[PORTFOLIO] Mode selector event listener attached');
+    } else {
+      console.warn('[PORTFOLIO] Mode selector not found - mode switching disabled');
     }
 
     // Connect wallet button
-    const connectBtn = document.getElementById('connect-wallet-btn');
+    const connectBtn = this.safeQuerySelector('#connect-wallet-btn');
     if (connectBtn) {
       connectBtn.addEventListener('click', () => {
+        console.info('[PORTFOLIO] Connect wallet button clicked');
         this.connectMetaMask();
       });
+      console.info('[PORTFOLIO] Connect wallet event listener attached');
+    } else {
+      console.warn('[PORTFOLIO] Connect wallet button not found');
     }
 
     // Check if MetaMask is available
     this.checkMetaMaskAvailability();
+    console.info('[PORTFOLIO] Event listeners setup complete');
   }
 
   checkMetaMaskAvailability() {
@@ -114,6 +138,8 @@ class PortfolioManager {
 
   async loadPortfolioData() {
     try {
+      console.info('[PORTFOLIO] Loading portfolio data...', { mode: this.mode });
+
       const response = await fetch('/api/portfolio/data', {;
         method: 'POST',
         headers: {
@@ -126,47 +152,37 @@ class PortfolioManager {
       });
 
       if (response.ok) {
-        this.portfolioData = await response.json();
+        const data = await response.json();
+        console.info('[PORTFOLIO] Portfolio data loaded successfully', data);
+        this.portfolioData = data.data || data;
         this.updatePortfolioDisplay();
       } else {
-        console.error('Failed to load portfolio data');
+        console.error(`Failed to load portfolio data: HTTP ${response.status}`);
         this.useFallbackData();
       }
     } catch (error) {
       console.error('Error loading portfolio data:', error);
+      this.showNotification('Erreur chargement portfolio: ' + error.message, 'error');
       this.useFallbackData();
     }
   }
 
   useFallbackData() {
+    console.warn('[PORTFOLIO] Using fallback data - API unavailable');
+
     // Fallback portfolio data based on mode
     const fallbackData = {;
       mode: this.mode,
       connected: this.mode === 'simulation' ? true : this.walletConnected,
       wallet_address: this.walletAddress,
-      total_balance: this.mode === 'simulation' ? 25000 : 0,
-      available_balance: this.mode === 'simulation' ? 17500 : 0,
-      margin_used: this.mode === 'simulation' ? 7500 : 0,
-      unrealized_pnl: this.mode === 'simulation' ? 1250 : 0,
-      daily_pnl: this.mode === 'simulation' ? 125 : 0,
-      positions_count: this.mode === 'simulation' ? 4 : 0,
-      positions:
-        this.mode === 'simulation'
-          ? [
-              {
-                symbol: 'BTC',
-                side: 'long',
-                size: 0.1,
-                entry_price: 102000,
-                current_price: 103500,
-                pnl: 150,
-                pnl_percentage: 1.47,
-                leverage: 2,
-                value: 10350,
-              },
-            ]
-          : [],
-      leverage_used: this.mode === 'simulation' ? 2 : 1,
+      total_balance: this.mode === 'simulation' ? 10000 : 0,
+      available_balance: this.mode === 'simulation' ? 7500 : 0,
+      margin_used: this.mode === 'simulation' ? 2500 : 0,
+      unrealized_pnl: this.mode === 'simulation' ? 245.50 : 0,
+      daily_pnl: this.mode === 'simulation' ? 245.50 : 0,
+      positions_count: this.mode === 'simulation' ? 0 : 0,
+      positions: this.mode === 'simulation' ? [] : [],
+      leverage_used: this.mode === 'simulation' ? 1 : 1,
       risk_score: this.mode === 'simulation' ? 0.3 : 0.1,
       last_update: new Date().toISOString(),
       data_source: 'fallback',
@@ -174,6 +190,11 @@ class PortfolioManager {
 
     this.portfolioData = fallbackData;
     this.updatePortfolioDisplay();
+
+    this.showNotification(
+      'Mode dégradé: Utilisation des données de fallback',
+      'warning'
+    );
   }
 
   updateUI() {
@@ -213,57 +234,69 @@ class PortfolioManager {
   }
 
   updatePortfolioDisplay() {
-    if (!this.portfolioData) return;
-
-    // Update portfolio metrics
-    const totalBalanceEl = document.querySelector('[data-total-balance]');
-    if (totalBalanceEl) {
-      totalBalanceEl.textContent = `$${this.portfolioData.total_balance.toLocaleString()} USD`;
+    if (!this.portfolioData) {
+      console.warn('[PORTFOLIO] No portfolio data to display');
+      return;
     }
 
-    const unrealizedPnlEl = document.querySelector('[data-unrealized-pnl]');
-    if (unrealizedPnlEl) {
-      const pnl = this.portfolioData.unrealized_pnl;
-      const pnlText =;
-        pnl >= 0
-          ? `+$${pnl.toLocaleString()}`
-          : `-$${Math.abs(pnl).toLocaleString()}`;
-      const pnlColor = pnl >= 0 ? '#28a745' : '#dc3545';
-      unrealizedPnlEl.textContent = pnlText;
-      unrealizedPnlEl.style.color = pnlColor;
-    }
+    try {
+      console.info('[PORTFOLIO] Updating portfolio display...');
 
-    const availableBalanceEl = document.querySelector(;
-      '[data-available-balance]'
-    );
-    if (availableBalanceEl) {
-      availableBalanceEl.textContent = `$${this.portfolioData.available_balance.toLocaleString()} USD`;
-    }
+      // Update portfolio metrics
+      const totalBalanceEl = document.querySelector('[data-total-balance]');
+      if (totalBalanceEl && this.portfolioData.total_balance !== undefined) {
+        totalBalanceEl.textContent = `$${this.portfolioData.total_balance.toLocaleString()} USD`;
+      }
 
-    const positionsCountEl = document.querySelector('[data-positions-count]');
-    if (positionsCountEl) {
-      positionsCountEl.textContent = `${this.portfolioData.positions_count} POS`;
-    }
+      const unrealizedPnlEl = document.querySelector('[data-unrealized-pnl]');
+      if (unrealizedPnlEl && this.portfolioData.unrealized_pnl !== undefined) {
+        const pnl = this.portfolioData.unrealized_pnl;
+        const pnlText =;
+          pnl >= 0
+            ? `+$${pnl.toLocaleString()}`
+            : `-$${Math.abs(pnl).toLocaleString()}`;
+        const pnlColor = pnl >= 0 ? '#28a745' : '#dc3545';
+        unrealizedPnlEl.textContent = pnlText;
+        unrealizedPnlEl.style.color = pnlColor;
+      }
 
-    // Update mode indicator
-    const modeIndicator = document.querySelector('[data-mode-indicator]');
-    if (modeIndicator) {
-      modeIndicator.textContent =
-        this.mode === 'mainnet' ? '🔗 MAINNET' : '📊 SIMULATION';
-      modeIndicator.style.color =
-        this.mode === 'mainnet' ? '#ffc107' : '#28a745';
-    }
+      const availableBalanceEl = document.querySelector(;
+        '[data-available-balance]'
+      );
+      if (availableBalanceEl && this.portfolioData.available_balance !== undefined) {
+        availableBalanceEl.textContent = `$${this.portfolioData.available_balance.toLocaleString()} USD`;
+      }
 
-    // Update connection status
-    const connectionStatus = document.querySelector('[data-connection-status]');
-    if (connectionStatus) {
-      connectionStatus.textContent = this.portfolioData.connected
-        ? 'Connecté'
-        : 'Non connecté';
-    }
+      const positionsCountEl = document.querySelector('[data-positions-count]');
+      if (positionsCountEl && this.portfolioData.positions_count !== undefined) {
+        positionsCountEl.textContent = `${this.portfolioData.positions_count} POS`;
+      }
 
-    // Update positions table
-    this.updatePositionsTable();
+      // Update mode indicator
+      const modeIndicator = document.querySelector('[data-mode-indicator]');
+      if (modeIndicator) {
+        modeIndicator.textContent =
+          this.mode === 'mainnet' ? '🔗 MAINNET' : '📊 SIMULATION';
+        modeIndicator.style.color =
+          this.mode === 'mainnet' ? '#ffc107' : '#28a745';
+      }
+
+      // Update connection status
+      const connectionStatus = document.querySelector('[data-connection-status]');
+      if (connectionStatus) {
+        connectionStatus.textContent = this.portfolioData.connected
+          ? 'Connecté'
+          : 'Non connecté';
+      }
+
+      // Update positions table
+      this.updatePositionsTable();
+
+      console.info('[PORTFOLIO] Portfolio display updated successfully');
+    } catch (error) {
+      console.error('Error updating portfolio display:', error);
+      this.showNotification('Erreur affichage portfolio: ' + error.message, 'error');
+    }
   }
 
   updatePositionsTable() {
@@ -326,6 +359,11 @@ class PortfolioManager {
     }
 
     try {
+      console.info(`[PORTFOLIO] Closing position: ${symbol}`, {
+        mode: this.mode,
+        wallet_address: this.walletAddress
+      });
+
       const response = await fetch('/api/trading/close-position', {;
         method: 'POST',
         headers: {
@@ -339,12 +377,15 @@ class PortfolioManager {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.info('[PORTFOLIO] Position closed successfully:', result);
         this.showNotification(
           `Position ${symbol} fermée avec succès`,
           'success'
         );
         this.loadPortfolioData();
       } else {
+        console.error(`Failed to close position: HTTP ${response.status}`);
         this.showNotification(
           'Erreur lors de la fermeture de la position',
           'error'
@@ -352,7 +393,7 @@ class PortfolioManager {
       }
     } catch (error) {
       console.error('Error closing position:', error);
-      this.showNotification('Erreur de connexion', 'error');
+      this.showNotification('Erreur de connexion: ' + error.message, 'error');
     }
   }
 

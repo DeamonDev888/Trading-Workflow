@@ -21,7 +21,7 @@ class BacktestValidator {
    * Calculate SHA256 hash of data
    */
   calculateHash(data) {
-    const dataString = JSON.stringify(;
+    const dataString = JSON.stringify(
       data,
       Object.keys(data).sort(),
       (key, value) => {
@@ -44,27 +44,27 @@ class BacktestValidator {
       const data = JSON.parse(content);
 
       // Validate required fields
-      const requiredFields = [;
+      const requiredFields = [
         'strategy_id',
         'strategy_name',
         'metrics',
         'metadata',
         'data_hash',
       ];
-      for (const field of requiredFields) {;
+      for (const field of requiredFields) {
         if (!data[field]) {
           throw new Error(`Missing required field: ${field}`);
         }
       }
 
       // Validate metrics
-      const requiredMetrics = [;
+      const requiredMetrics = [
         'total_return',
         'sharpe_ratio',
         'win_rate',
         'total_trades',
       ];
-      for (const metric of requiredMetrics) {;
+      for (const metric of requiredMetrics) {
         if (
           data.metrics[metric] === undefined ||
           data.metrics[metric] === null
@@ -124,7 +124,7 @@ class BacktestValidator {
    * Validate entire backtest system
    */
   validateSystem() {
-    const results = {;
+    const results = {
       total_files: 0,
       valid_files: 0,
       invalid_files: 0,
@@ -152,7 +152,7 @@ class BacktestValidator {
       results.total_files = files.length;
 
       // Validate each file
-      for (const file of files) {;
+      for (const file of files) {
         const filepath = path.join(this.productionPath, file);
         const validation = this.validateBacktestFile(filepath);
 
@@ -178,7 +178,7 @@ class BacktestValidator {
         results.valid_files === this.requiredStrategies;
 
       // Validate system metadata if it exists
-      const metadataPath = path.join(;
+      const metadataPath = path.join(
         this.productionPath,
         'system_metadata.json'
       );

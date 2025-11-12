@@ -34,7 +34,7 @@ class HyperliquidWebSocket {
       this.websocket = new WebSocket(this.wsUrl);
 
       // Connection timeout
-      const connectionTimeout = setTimeout(() => {
+      const connectionTimeout = setTimeout(() => {;
         if (this.websocket && this.websocket.readyState !== WebSocket.OPEN) {
           this.handleConnectionError(new Error('Connection timeout'));
         }
@@ -75,8 +75,8 @@ class HyperliquidWebSocket {
 
     // Log with NOVAQUOTE pattern
     const timestamp = this.getTimestamp();
-    console.log(`[${timestamp}] [SUCCESS] [SYSTEM] ✅ HyperLiquid WebSocket connected`);
-    console.log(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  Connection #${this.totalReconnections} established`);
+    console.info(`[${timestamp}] [SUCCESS] [SYSTEM] ✅ HyperLiquid WebSocket connected`);
+    console.info(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  Connection #${this.totalReconnections} established`);
 
     // Subscribe to channels to maintain active connection (prevents "Inactive" disconnects)
     this.subscribeToChannels();
@@ -114,7 +114,7 @@ class HyperliquidWebSocket {
       // Log received message with NOVAQUOTE pattern (throttled to 0.1%)
       if (Math.random() < 0.001) { // Log only 0.1% to avoid spam
         const timestamp = this.getTimestamp();
-        console.log(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  💰 WebSocket message: ${message.type || 'unknown'}`);
+        console.info(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  💰 WebSocket message: ${message.type || 'unknown'}`);
       }
     } catch (error) {
       // Non-JSON messages (like pings) are normal
@@ -127,8 +127,8 @@ class HyperliquidWebSocket {
     this.stopProactiveReconnection();
 
     const timestamp = this.getTimestamp();
-    console.log(`[${timestamp}] [INFO] [SYSTEM] ❌ HyperLiquid WebSocket disconnected`);
-    console.log(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  Code: ${code} - Reason: ${reason || 'N/A'}`);
+    console.info(`[${timestamp}] [INFO] [SYSTEM] ❌ HyperLiquid WebSocket disconnected`);
+    console.info(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  Code: ${code} - Reason: ${reason || 'N/A'}`);
 
     // Auto-reconnect unless intentional close (but not for proactive reconnection)
     if (code !== 1000 || reason !== 'Proactive reconnection') {
@@ -162,16 +162,16 @@ class HyperliquidWebSocket {
 
     // Calculate exponential backoff with jitter
     const baseDelay = this.baseReconnectDelay;
-    const exponentialDelay = Math.min(
+    const exponentialDelay = Math.min(;
       baseDelay * Math.pow(this.backoffMultiplier, this.reconnectAttempts - 1),
       this.maxReconnectDelay
     );
-    const jitter = Math.random() * 1000; // Random 0-1s
+    const jitter = Math.random() * 1000; // Random 0-1s;
     const delay = Math.floor(exponentialDelay + jitter);
 
     const timestamp = this.getTimestamp();
-    console.log(`[${timestamp}] [INFO] [SYSTEM] 🔄 Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-    console.log(`[${timestamp}] [INFO] [SYSTEM] ⏱️  Retry in ${delay}ms (backoff: ${Math.floor(exponentialDelay)}ms + jitter: ${Math.floor(jitter)}ms)`);
+    console.info(`[${timestamp}] [INFO] [SYSTEM] 🔄 Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+    console.info(`[${timestamp}] [INFO] [SYSTEM] ⏱️  Retry in ${delay}ms (backoff: ${Math.floor(exponentialDelay)}ms + jitter: ${Math.floor(jitter)}ms)`);
 
     setTimeout(() => this.connect(), delay);
   }
@@ -185,7 +185,7 @@ class HyperliquidWebSocket {
 
         try {
           // Send JSON ping message in HyperLiquid format instead of low-level ping()
-          const pingMessage = JSON.stringify({
+          const pingMessage = JSON.stringify({;
             type: 'ping',
             timestamp: Date.now()
           });
@@ -222,7 +222,7 @@ class HyperliquidWebSocket {
   startProactiveReconnection() {
     this.stopProactiveReconnection();
 
-    console.log(`[${this.getTimestamp()} [INFO] [SYSTEM] 🔄 Starting proactive reconnection check (interval: ${this.PROACTIVE_RECONNECT_INTERVAL/1000}s)`);
+    console.info(`[${this.getTimestamp()} [INFO] [SYSTEM] 🔄 Starting proactive reconnection check (interval: ${this.PROACTIVE_RECONNECT_INTERVAL/1000}s)`);
 
     this.proactiveReconnectTimer = setInterval(() => {
       if (this.connected && this.websocket) {
@@ -231,7 +231,7 @@ class HyperliquidWebSocket {
 
         // Only reconnect if connection is old (avoid disrupting stable connections)
         if (connectionAge > this.PROACTIVE_RECONNECT_INTERVAL * 0.8) {
-          console.log(`[${timestamp}] [INFO] [SYSTEM] 🔄 Proactive reconnection (connection age: ${Math.round(connectionAge/1000)}s)`);
+          console.info(`[${timestamp}] [INFO] [SYSTEM] 🔄 Proactive reconnection (connection age: ${Math.round(connectionAge/1000)}s)`);
 
           this.websocket.close(1000, 'Proactive reconnection');
           this.handleClose(1000, 'Proactive reconnection');
@@ -241,7 +241,7 @@ class HyperliquidWebSocket {
             this.connect();
           }, 2000); // Increased delay to 2s for stability
         } else {
-          console.log(`[${timestamp}] [INFO] [SYSTEM] ✅ Connection stable (age: ${Math.round(connectionAge/1000)}s) - no reconnection needed`);
+          console.info(`[${timestamp}] [INFO] [SYSTEM] ✅ Connection stable (age: ${Math.round(connectionAge/1000)}s) - no reconnection needed`);
         }
       }
     }, this.PROACTIVE_RECONNECT_INTERVAL);
@@ -264,7 +264,7 @@ class HyperliquidWebSocket {
     }
 
     const timestamp = this.getTimestamp();
-    console.log(`[${timestamp}] [INFO] [SYSTEM] ℹ️  WebSocket disconnected by client`);
+    console.info(`[${timestamp}] [INFO] [SYSTEM] ℹ️  WebSocket disconnected by client`);
   }
 
   isConnected() {
@@ -304,7 +304,7 @@ class HyperliquidWebSocket {
       }
 
       // Subscribe to allMids channel (mid prices for all symbols)
-      const subscriptionMessage = JSON.stringify({
+      const subscriptionMessage = JSON.stringify({;
         type: 'subscribe',
         channels: ['allMids']
       });
@@ -312,7 +312,7 @@ class HyperliquidWebSocket {
       this.websocket.send(subscriptionMessage);
 
       const timestamp = this.getTimestamp();
-      console.log(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  📡 Subscribed to 'allMids' channel`);
+      console.info(`[${timestamp}] [INFO] [WEBSOCKET] ℹ️  📡 Subscribed to 'allMids' channel`);
     } catch (error) {
       const timestamp = this.getTimestamp();
       console.error(`[${timestamp}] [ERROR] [WEBSOCKET] ❌ Failed to subscribe to channels: ${error.message}`);
@@ -321,7 +321,7 @@ class HyperliquidWebSocket {
 
   // Get connection statistics
   getStats() {
-    const uptime = this.connectionStartTime
+    const uptime = this.connectionStartTime;
       ? Date.now() - this.connectionStartTime.getTime()
       : 0;
 

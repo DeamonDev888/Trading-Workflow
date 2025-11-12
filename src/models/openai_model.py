@@ -4,6 +4,7 @@ Built with love by Deamon Dev
 """
 
 import json
+import re
 
 import requests
 from openai import OpenAI

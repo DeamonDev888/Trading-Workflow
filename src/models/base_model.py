@@ -65,7 +65,9 @@ class BaseModel(ABC):
         """Initialize the model's client"""
 
     @abstractmethod
-    def generate_response(self, system_prompt, user_content, temperature=0.7, max_tokens=None):
+    def generate_response(
+        self, system_prompt, user_content, temperature=0.7, max_tokens=None
+    ):
         """Generate a response from the model with no caching"""
         pass
 

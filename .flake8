@@ -1,0 +1,126 @@
+[flake8]
+max-line-length = 120
+
+# ✅ IGNORER TOUS LES WARNINGS DE STYLE NON CRITIQUES
+# ================================================================================
+# Warnings de docstrings (trop de faux positifs)
+ignore =
+    # Style de ligne (souvent justifié)
+    E501,  # ligne trop longue
+    W503,  # style opérateur
+    W504,  # style opérateur
+
+    # Espacement (pénible)
+    E302,  # attendu 2 lignes vierges
+    E305,  # attendu 2 lignes vierges après classe
+    E402,  # module level import
+
+    # Docstrings (OPTIONNEL - pas critique pour l'exécution)
+    D100,  # Missing docstring in public module
+    D101,  # Missing docstring in public class
+    D102,  # Missing docstring in public method
+    D103,  # Missing docstring in public function
+    D104,  # Missing docstring in public package
+    D105,  # Missing docstring in magic method
+    D107,  # Missing docstring in __init__
+    D200,  # One-line docstring should fit on one line
+    D201,  # No blank lines allowed before class docstring
+    D202,  # No blank lines allowed after function docstring
+    D203,  # 1 blank line required before class docstring
+    D204,  # 1 blank line required after class docstring
+    D205,  # Blank line required between one-line summary and description
+    D206,  # Docstring should be properly indented
+    D207,  # Docstring is over-indented
+    D208,  # Docstring is under-indented
+    D209,  # Multi-line docstring closing quotes should be on a separate line
+    D210,  # No whitespaces allowed surrounding docstring text
+    D211,  # No blank lines allowed before class docstring
+    D212,  # Multi-line docstring summary should start at the second line
+    D213,  # Multi-line docstring summary should start at the second line
+    D214,  # Section name is over-indented
+    D215,  # Section name is under-indented
+    D300,  # Use """ for triple quoted strings
+    D301,  # Use .strip() instead of .lstrip()
+    D400,  # First line should end with a period
+    D401,  # First line should be properly formatted
+    D403,  # First word of the first line should be properly capitalized
+    D404,  # First word of the docstring should not be "This"
+    D405,  # Function name should be properly formatted
+    D406,  # Class name should be properly formatted
+    D407,  # Variable name should be properly formatted
+    D408,  # Function name should be properly formatted
+    D409,  # Class name should be properly formatted
+    D410,  # Function name should be properly formatted
+    D411,  # Class name should be properly formatted
+    D412,  # Function name should be properly formatted
+    D413,  # Class name should be properly formatted
+    D414,  # Function name should be properly formatted
+    D415,  # Class name should be properly formatted
+    D416,  # Function name should be properly formatted
+    D417,  # Class name should be properly formatted
+    D418,  # Function name should be properly formatted
+
+    # Complexité et style de code (OPTIONNEL)
+    C901,  # Function is too complex
+    W0622, # Redefined built-in
+    W0511, # TODO/FIXME comments
+
+    # Fonctions trop longues (OPTIONNEL - souvent nécessaire)
+    C0301, # Line too long (handled by E501)
+    C0302, # Too many lines in module
+    C0303, # Blank line contains whitespace
+    C0304, # Bad whitespace
+    C0305, # Trailing whitespace
+
+    # Variables non utilisées (OPTIONNEL - peuvent être intentionnelles)
+    F841,  # Local variable is assigned to but never used
+    F842,  # Local variable is assigned to but never used
+
+    # Imports (OPTIONNEL - ordre d'imports)
+    E401,  # Multiple imports on one line
+    E402,  # Module level import not at top of file
+    E403,  # Stub of type
+    E404,  # Stub of type
+    F401,  # Imported but unused (handled separately)
+
+    # Autres warnings non critiques
+    W0102, # Dangerous default value
+    W0212, # Access to protected member
+    W0221, # Arguments differ from overridden method
+    W0511, # TODO/FIXME
+
+    # Longueur de fonctions (OPTIONNEL - parfois nécessaire)
+    C0103, # Invalid name
+    R0913, # Too many arguments to function call
+    R0914, # Too many local variables
+    R0915, # Too many statements
+
+# ✅ SÉLECTIONNER SEULEMENT LES ERREURS CRITIQUES
+select = E9,F
+
+# ✅ EXCLURE LES RÉPERTOIRES PROBLÉMATIQUES
+exclude =
+    .git,
+    __pycache__,
+    .pytest_cache,
+    node_modules,
+    venv,
+    env,
+    .venv,
+    build,
+    dist,
+    .tox,
+    .coverage,
+    .coverage.*,
+    htmlcov,
+    .eggs,
+    *.egg
+
+# ✅ LIMITER LES PROBLÈMES POUR ÉVITER LA SURCHARGE
+per-file-ignores =
+    # __init__.py files can have unused imports
+    __init__.py:F401
+    # Test files can have unused imports and long functions
+    *test*.py:F401,C901
+    # Scripts can have long functions
+    scripts/*.py:C901

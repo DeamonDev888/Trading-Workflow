@@ -5,8 +5,9 @@ Built with love by Deamon Dev
 This module provides integration with locally running Ollama models.
 """
 
-import re
 import json
+import re
+
 import requests
 from termcolor import cprint
 
