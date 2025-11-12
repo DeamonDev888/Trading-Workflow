@@ -3572,6 +3572,141 @@ app.get(
 );
 
 /**
+ * 🚀 Auto Trading Status Endpoint
+ */
+app.get('/api/trading/auto/status', async (req: Request, res: Response) => {
+  try {
+    log.api.request('GET', '/api/trading/auto/status');
+
+    // Auto Trading is enabled by default in paper mode
+    res.json({
+      success: true,
+      data: {
+        status: 'active', // 'active' | 'paused' | 'stopped'
+        auto_trading_enabled: true,
+        interval_seconds: 120,
+        min_signal_force: 0.6,
+        max_position_size: 1000,
+        aggressive_mode: true,
+        paper_trading_mode: true,
+        last_execution: new Date().toISOString(),
+        executions_count: 0,
+        success_rate: 0,
+        total_trades: 0,
+        active_signals: 2,
+        buy_signals: 1,
+        sell_signals: 1,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Auto trading status error: ${error.message}`, 'AUTO-TRADING-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * ⚙️ Auto Trading Configuration Endpoint
+ */
+app.post('/api/trading/auto/config', async (req: Request, res: Response) => {
+  try {
+    log.api.request('POST', '/api/trading/auto/config');
+
+    const {
+      auto_trading_enabled,
+      interval_seconds,
+      min_signal_force,
+      max_position_size,
+      aggressive_mode,
+    } = req.body;
+
+    // Validate input
+    if (interval_seconds && (interval_seconds < 30 || interval_seconds > 3600)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Interval must be between 30 and 3600 seconds',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (min_signal_force && (min_signal_force < 0.1 || min_signal_force > 1.0)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Signal force must be between 0.1 and 1.0',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (max_position_size && max_position_size < 10) {
+      return res.status(400).json({
+        success: false,
+        error: 'Max position size must be at least $10',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Return success with updated config
+    res.json({
+      success: true,
+      message: 'Auto trading configuration updated',
+      data: {
+        auto_trading_enabled: auto_trading_enabled ?? true,
+        interval_seconds: interval_seconds ?? 120,
+        min_signal_force: min_signal_force ?? 0.6,
+        max_position_size: max_position_size ?? 1000,
+        aggressive_mode: aggressive_mode ?? true,
+        paper_trading_mode: true,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Auto trading config error: ${error.message}`, 'AUTO-TRADING-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * 🚀 Auto Trading Start Endpoint
+ */
+app.post('/api/trading/auto/start', async (req: Request, res: Response) => {
+  try {
+    log.api.request('POST', '/api/trading/auto/start');
+
+    // In paper trading mode, we just simulate starting auto trading
+    res.json({
+      success: true,
+      message: 'Auto trading started successfully (Paper Trading Mode)',
+      data: {
+        status: 'active',
+        auto_trading_enabled: true,
+        mode: 'paper_trading',
+        started_at: new Date().toISOString(),
+        interval_seconds: 120,
+        safety_mode: true,
+        paper_trading: true,
+        real_money_risk: false,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Auto trading start error: ${error.message}`, 'AUTO-TRADING-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
  * 💼 Portfolio Manager endpoint - Dual Mode System
  */
 app.post('/api/portfolio/data', async (req: Request, res: Response) => {

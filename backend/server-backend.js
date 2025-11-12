@@ -75,26 +75,32 @@ app.get('/api/agents', (req, res) => {
   res.json({ agents });
 });
 
+// Import HyperLiquid API
+const HyperliquidAPI = require('../src/hyperliquid/hyperliquid-api.js');
+const hyperliquid = new HyperliquidAPI(null, true); // Use testnet
+
 app.get('/api/hyperliquid/price/:symbol', async (req, res) => {
   try {
     const { symbol } = req.params;
 
-    // Mock price data for now
-    const mockPrices = {
-      'BTC': 95000 + Math.random() * 1000,
-      'ETH': 3800 + Math.random() * 200,
-      'SOL': 180 + Math.random() * 10,
-      'BNB': 650 + Math.random() * 30
-    };
+    // Get real price from HyperLiquid testnet
+    const mids = await hyperliquid.getAllMids();
+    const price = mids[symbol];
 
-    const price = mockPrices[symbol] || 100;
+    if (!price) {
+      return res.status(404).json({
+        success: false,
+        error: `Symbol ${symbol} not found on HyperLiquid testnet`
+      });
+    }
 
     res.json({
       success: true,
       data: {
         symbol,
         price,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        source: 'hyperliquid-testnet'
       }
     });
   } catch (error) {
