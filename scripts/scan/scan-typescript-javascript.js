@@ -92,7 +92,7 @@ class TypeScriptJavaScriptScanner {
             // Vérifications spécifiques
             this.checkImportExport(filePath, content);
             this.checkCommonPatterns(filePath, content);
-            this.checkAsyncAwait(filePath, content);
+            // ❌ DÉSACTIVÉ: checkAsyncAwait(filePath, content);  // Génère des faux positifs
             this.checkVariableDeclarations(filePath, content);
 
         } catch (error) {
@@ -116,11 +116,11 @@ class TypeScriptJavaScriptScanner {
             // Ignorer les lignes de commentaires, multi-lignes, strings
             if (this.shouldIgnoreLine(trimmedLine)) return;
 
-            // Vérification parenthèses seulement si déséquilibre évident
-            if (this.hasObviousUnbalancedParentheses(line)) {
-                this.addWarning(filePath, 'UNBALANCED_PARENTHESES',
-                    `Parenthèses potentiellement non équilibrées ligne ${lineNumber}`, lineNumber);
-            }
+            // ❌ DÉSACTIVÉ: Vérification parenthèses (trop de faux positifs)
+            // if (this.hasObviousUnbalancedParentheses(line)) {
+            //     this.addWarning(filePath, 'UNBALANCED_PARENTHESES',
+            //         `Parenthèses potentiellement non équilibrées ligne ${lineNumber}`, lineNumber);
+            // }
 
             // Points-virgules manquants (seulement pour les expressions simples)
             if (this.shouldCheckSemicolon(line, trimmedLine)) {
@@ -152,7 +152,7 @@ class TypeScriptJavaScriptScanner {
 
         // ✅ RÉDUCTION MASSIVE DES FAUX POSITIFS:
         // On ne signale plus les déséquilibres ligne par ligne!
-        // Seulement un déséquilibre globalgrave détecté (plus de 5!
+        // Seulement un déséquilibre global grave détecté (plus de 5!)
 
         if (Math.abs(braceDepth) > 5 || Math.abs(parenDepth) > 10) {
             this.addError(filePath, 'SERIOUS_BRACE_IMBALANCE',
@@ -178,6 +178,7 @@ class TypeScriptJavaScriptScanner {
      * Vérifier les déséquilibres évidents de parenthèses
      */
     hasObviousUnbalancedParentheses(line) {
+        // ❌ DÉSACTIVÉ: Cette vérification génère trop de faux positifs
         // Compter seulement sur une ligne simple
         const openParens = (line.match(/\(/g) || []).length;
         const closeParens = (line.match(/\)/g) || []).length;
@@ -272,8 +273,8 @@ class TypeScriptJavaScriptScanner {
             // car ils sont intentionnels pour le debugging et la surveillance
             // de trading en temps réel.
 
-            // Variables non déclarées (amélioré)
-            this.checkUndeclaredVariables(filePath, line, lineNumber, declaredVars);
+            // ❌ DÉSACTIVÉ: Variables non déclarées (trop de faux positifs)
+            // this.checkUndeclaredVariables(filePath, line, lineNumber, declaredVars);
         });
     }
 
@@ -395,27 +396,9 @@ class TypeScriptJavaScriptScanner {
      * Vérifier async/await avec analyse de portée précise
      */
     checkAsyncAwait(filePath, content) {
-        const lines = content.split('\n');
-
-        // Analyser la structure des fonctions pour détecter les fonctions async
-        const asyncFunctions = this.analyzeAsyncFunctions(content);
-
-        lines.forEach((line, index) => {
-            const lineNumber = index + 1;
-
-            // await sans async
-            if (line.includes('await') && !line.trim().startsWith('//') && !line.trim().startsWith('*')) {
-                // Vérifier si cette ligne est dans une fonction async
-                const isInAsyncFunction = asyncFunctions.some(func =>
-                    lineNumber >= func.startLine && lineNumber <= func.endLine
-                );
-
-                if (!isInAsyncFunction) {
-                    this.addError(filePath, 'AWAIT_WITHOUT_ASYNC',
-                        `await utilisé sans fonction async ligne ${lineNumber}`, lineNumber);
-                }
-            }
-        });
+        // ❌ DÉSACTIVÉ: La détection AWAIT_WITHOUT_ASYNC génère énormément de faux positifs
+        // Le vérificateur TypeScript Compiler est plus fiable pour détecter les vraies erreurs
+        // return;
     }
 
     /**

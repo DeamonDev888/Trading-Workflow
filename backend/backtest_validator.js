@@ -143,7 +143,7 @@ class BacktestValidator {
       }
 
       // Get all JSON files except system metadata
-      const files = fs;
+      const files = fs
         .readdirSync(this.productionPath)
         .filter(
           (file) => file.endsWith('.json') && file !== 'system_metadata.json'

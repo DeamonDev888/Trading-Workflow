@@ -29,8 +29,10 @@
     "format-py-check": "black --check src/ --line-length=88 && isort --check-only src/ --profile=black"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/joi": "^17.2.2",
     "axios": "^1.13.1",
+    "better-sqlite3": "^12.4.1",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.6",

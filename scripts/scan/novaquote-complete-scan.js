@@ -896,21 +896,6 @@ Usage: node novaquote-complete-scan.js [options] [directory]
         `);
 }
 
-/**
- * Scanner selon la configuration
- */
-async function scanAccordingToConfig(config) {
-    if (config.scanType === 'typescript') {
-        return await this.scanTypeScriptOnly(config);
-    } else if (config.scanType === 'python') {
-        return await this.scanPythonOnly(config);
-    } else if (config.scanType === 'targeted') {
-        return await this.scanTargeted(config);
-    } else {
-        return await this.scanCompleteProject(config.rootDir || process.cwd(), config);
-    }
-}
-
 // Exporter pour utilisation dans d'autres scripts
 module.exports = NovaQuoteCompleteScanner;
 

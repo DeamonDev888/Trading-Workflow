@@ -1195,7 +1195,7 @@
                 </span>
               </div>
               <div class="wallet-value" id="activeWallet">
-                📝 Paper Trading - $10,000
+                📝 Paper Trading - $1,000
               </div>
             </div>
           </div>
@@ -1206,7 +1206,7 @@
               onchange="switchWallet()"
             >
               <option value="paper" selected>
-                📝 Paper Trading - Simulated $10,000
+                📝 Paper Trading - Simulated $1,000
               </option>
               <option value="testnet">
                 🧪 Testnet - Hyperliquid (Play Money)
@@ -1289,7 +1289,7 @@
           </div>
           <div class="stat-box">
             <div class="stat-label">Paper Trading</div>
-            <div class="stat-value">$10,000</div>
+            <div class="stat-value" id="simulationBalance">$1,000</div>
             <div class="stat-label">Simulation Balance</div>
           </div>
           <div class="stat-box">
@@ -2007,7 +2007,7 @@
 
       // Toggle all agents
       async function toggleAllAgents(start) {
-        const agentTypes = Object.keys(agentStates);
+        const agentTypes = Object.keys(window.agentStates);
 
         // Update all agents to pending state first
         agentTypes.forEach((agentType) => {
@@ -2461,8 +2461,13 @@
             `[INFERENCE] Error fetching inferences for ${agentType}:`,
             error
           );
-          inferenceContainer.innerHTML =
-            '<div class="error-message">Failed to load inferences</div>';
+          const inferenceContainer = document.getElementById(
+            `${agentType}-agent-inferences`
+          );
+          if (inferenceContainer) {
+            inferenceContainer.innerHTML =
+              '<div class="error-message">Failed to load inferences</div>';
+          }
         }
       }
 
@@ -2739,10 +2744,22 @@
         const pnlEl = document.getElementById('dailyPnL');
         const totalPnlEl = document.getElementById('totalPnL');
         const activePosEl = document.getElementById('activePositions');
+        const activeWalletEl = document.getElementById('activeWallet');
+        const simulationBalanceEl = document.getElementById('simulationBalance');
 
         // Updated field names to match API response
         if (balanceEl)
           balanceEl.textContent = `$${data.balance ? data.balance.toFixed(2) : '0.00'}`;
+
+        // Update active wallet display
+        if (activeWalletEl) {
+          activeWalletEl.textContent = `📝 Paper Trading - $${data.balance ? data.balance.toFixed(0) : '0'}`;
+        }
+
+        // Update simulation balance display
+        if (simulationBalanceEl) {
+          simulationBalanceEl.textContent = `$${data.balance ? data.balance.toFixed(0) : '0'}`;
+        }
         if (pnlEl) {
           const dailyPnl = data.pnl_24h || 0;
           const dailyPnlPercent = data.pnl_percent_24h || 0;
@@ -2909,7 +2926,7 @@
             {
               timestamp: new Date(Date.now() - 300000).toLocaleString('fr-FR'),
               title: '📊 Portfolio Balance Updated',
-              description: 'Paper trading balance: $10,000.00'
+              description: 'Paper trading balance: $1,000.00'
             },
             {
               timestamp: new Date(Date.now() - 600000).toLocaleString('fr-FR'),
@@ -2940,14 +2957,14 @@
       const walletConfigs = {
         paper: {
           name: '📝 Paper Trading',
-          balance: '$10,000',
+          balance: '$1,000',
           type: 'Simulated',
           description: 'Risk-free trading with virtual money on Hyperliquid',
           risk: 'None',
         },
         testnet: {
           name: '🧪 Testnet',
-          balance: '$10,000',
+          balance: '$1,000',
           type: 'Play Money',
           description: 'Hyperliquid testnet for practice and strategy testing',
           risk: 'Low - Test Funds',
@@ -3902,6 +3919,103 @@
         }, duration);
       }
 
+      // WebSocket connection for real-time price updates
+      function initWebSocket() {
+        try {
+          // Connect to WebSocket server on port 7001
+          window.wsConnection = new WebSocket('ws://localhost:7001');
+
+          window.wsConnection.onopen = function(event) {
+            console.log('[WEBSOCKET] Connected to real-time price feed');
+            showNotification('WebSocket connecté', 'success');
+          };
+
+          window.wsConnection.onmessage = function(event) {
+            try {
+              const data = JSON.parse(event.data);
+
+              // Handle different message types
+              if (data.type === 'price_update') {
+                updatePriceDisplay(data.symbol, data.price, data.change24h);
+              } else if (data.type === 'trade_signal') {
+                handleTradeSignal(data);
+              } else if (data.type === 'agent_status') {
+                updateAgentStatusFromWS(data);
+              }
+            } catch (error) {
+              console.error('[WEBSOCKET] Error parsing message:', error);
+            }
+          };
+
+          window.wsConnection.onclose = function(event) {
+            console.log('[WEBSOCKET] Connection closed:', event.code, event.reason);
+            showNotification('WebSocket déconnecté', 'warning');
+
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+              console.log('[WEBSOCKET] Attempting to reconnect...');
+              initWebSocket();
+            }, 5000);
+          };
+
+          window.wsConnection.onerror = function(error) {
+            console.error('[WEBSOCKET] Connection error:', error);
+            showNotification('Erreur WebSocket', 'error');
+          };
+
+        } catch (error) {
+          console.error('[WEBSOCKET] Failed to initialize WebSocket:', error);
+          showNotification('WebSocket non disponible', 'warning');
+        }
+      }
+
+      // Update price display in UI
+      function updatePriceDisplay(symbol, price, change24h = null) {
+        const priceElement = document.getElementById(`price-${symbol}`);
+        const changeElement = document.getElementById(`change-${symbol}`);
+
+        if (priceElement) {
+          priceElement.textContent = `$${parseFloat(price).toFixed(2)}`;
+        }
+
+        if (changeElement && change24h !== null) {
+          const changeValue = parseFloat(change24h);
+          changeElement.textContent = `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(2)}%`;
+          changeElement.className = changeValue >= 0 ? 'text-success' : 'text-danger';
+        }
+      }
+
+      // Handle trade signals from WebSocket
+      function handleTradeSignal(signal) {
+        console.log('[WEBSOCKET] Trade signal received:', signal);
+        showNotification(`Signal: ${signal.action} ${signal.symbol}`, 'info');
+
+        // Update trading signals panel if it exists
+        const signalsPanel = document.getElementById('trading-signals-panel');
+        if (signalsPanel) {
+          const signalHtml = `
+            <div class="signal-item ${signal.action}">
+              <span class="signal-symbol">${signal.symbol}</span>
+              <span class="signal-action">${signal.action}</span>
+              <span class="signal-price">$${parseFloat(signal.price).toFixed(2)}</span>
+            </div>
+          `;
+          signalsPanel.insertAdjacentHTML('afterbegin', signalHtml);
+        }
+      }
+
+      // Update agent status from WebSocket
+      function updateAgentStatusFromWS(agentData) {
+        if (window.agentStates) {
+          window.agentStates[agentData.name] = {
+            ...window.agentStates[agentData.name],
+            ...agentData,
+            lastUpdate: new Date().toISOString()
+          };
+          updateMasterControlPanel();
+        }
+      }
+
       // Initialize page
       document.addEventListener('DOMContentLoaded', function () {
         updateSystemStatus();
@@ -3956,6 +4070,9 @@
         console.log(
           '🚀 NOVAQUOTE Dashboard initialized with wallet, positions & agent control + inference monitoring'
         );
+
+        // Initialize WebSocket connection for real-time price updates
+        initWebSocket();
       });
 
       // Also ensure updateMasterControlPanel is called on window load

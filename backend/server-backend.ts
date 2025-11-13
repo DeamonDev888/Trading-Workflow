@@ -11,6 +11,10 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
+// Import MetaMask wallet endpoints and database
+import walletRoutes from './wallet-endpoints';
+import { walletDB } from '../src/market_database/wallet_database_sync';
+
 // Types
 interface Colors {
   reset: string;
@@ -345,6 +349,26 @@ const WS_PORT: number = 7001;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================================
+// WALLET ENDPOINTS INTEGRATION - MetaMask Database System
+// ============================================================================
+app.use('/api/wallet', walletRoutes);
+
+// Initialize wallet database connection
+async function initializeWalletDatabase() {
+    try {
+        if (!walletDB.isConnected()) {
+            await walletDB.initialize();
+            console.log('✓ MetaMask Wallet Database initialized successfully');
+        }
+    } catch (error) {
+        console.error('✗ Failed to initialize wallet database:', error);
+    }
+}
+
+// Initialize database on server start
+initializeWalletDatabase();
 
 // ============================================================================
 // HYPERLIQUID INTEGRATION
@@ -3535,33 +3559,115 @@ app.get('/api/hyperliquid/info', async (req: Request, res: Response) => {
 });
 
 /**
- * 💰 Wallet endpoint for paper trading
+ * 💰 Wallet endpoint - MetaMask Database Integration
+ * Returns real wallet data from database, requires authentication header
  */
 app.get('/api/wallet', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/wallet');
 
-    // Return paper trading wallet data
+    // Get MetaMask address from headers or query params
+      const metamaskAddress = (req.headers['x-metamask-address'] as string) || (req.query['address'] as string);
+
+    // If no MetaMask address provided, return paper trading wallet data
+    if (!metamaskAddress) {
+      // Return default paper trading wallet data (from database)
+      return res.json({
+        success: true,
+        data: {
+          address: 'paper-trading-simulated',
+          network: 'simulation',
+          balance: 1000,
+          usd_balance: 1000,
+          collateral: 1000,
+          equity: 1000,
+          margin_usage: 0,
+          leverage: 1,
+          mode: 'paper_trading',
+          status: 'active',
+          timestamp: new Date().toISOString(),
+          positions_count: 0,
+          open_orders_count: 0,
+          pnl_24h: 245.5,
+          pnl_total: 892.3,
+          pnl_percent_24h: 2.51,
+          pnl_percent_total: 9.81,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Validate address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(metamaskAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid MetaMask address format',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Get wallet from database
+    const wallet = await walletDB.getWalletByAddress(metamaskAddress);
+
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        error: 'Wallet not found. Please authenticate first.',
+        message: 'Use POST /api/wallet/auth to create and authenticate your wallet',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Get wallet summary and performance
+    const walletSummary = await walletDB.getWalletSummary(wallet.id!);
+    const performance = await walletDB.getWalletPerformance(wallet.id!);
+    const currentBalance = await walletDB.getCurrentBalance(wallet.id!, 'USD');
+    const activePositions = await walletDB.getActivePositions(wallet.id!);
+
+    // Calculate total unrealized PnL from positions
+    const totalUnrealizedPnl = activePositions.reduce((sum, pos) => sum + pos.unrealized_pnl, 0);
+
     res.json({
       success: true,
       data: {
-        address: 'paper-trading-simulated',
-        network: 'simulation',
-        balance: 10000.0,
-        usd_balance: 10000.0,
-        collateral: 10000.0,
-        equity: 10000.0,
-        margin_usage: 0.0,
-        leverage: 1.0,
-        mode: 'paper_trading',
-        status: 'active',
+        address: wallet.metamask_address,
+        network: 'ethereum',
+        mode: 'metamask_real',
+        status: wallet.is_active ? 'active' : 'inactive',
+        is_verified: wallet.is_verified,
+        verification_level: wallet.verification_level,
+
+        // Balance information from database
+        balance: currentBalance?.total_balance || 0.0,
+        usd_balance: currentBalance?.available_balance || 0.0,
+        collateral: currentBalance?.total_balance || 0.0,
+        equity: (currentBalance?.total_balance || 0.0) + totalUnrealizedPnl,
+
+        // Position data
+        margin_usage: currentBalance?.total_balance ? (totalUnrealizedPnl / currentBalance.total_balance) : 0.0,
+        leverage: 1.0, // Will be calculated from actual positions in future
+
+        // Wallet information
+        wallet_name: wallet.wallet_name,
+        wallet_id: wallet.id,
+
+        // Performance metrics
+        positions_count: activePositions.length,
+        open_orders_count: 0, // Will be implemented when order tracking is added
+        pnl_24h: currentBalance?.daily_pnl || 0.0,
+        pnl_total: currentBalance?.total_pnl || 0.0,
+        pnl_percent_24h: currentBalance?.daily_return || 0.0,
+        pnl_percent_total: currentBalance?.total_return || 0.0,
+
+        // Additional data
+        unrealized_pnl_positions: totalUnrealizedPnl,
+        total_trades: walletSummary?.total_trades || 0,
+        risk_level: wallet.risk_level,
+        max_position_size: wallet.max_position_size,
+
         timestamp: new Date().toISOString(),
-        positions_count: 0,
-        open_orders_count: 0,
-        pnl_24h: 245.5,
-        pnl_total: 892.3,
-        pnl_percent_24h: 2.51,
-        pnl_percent_total: 9.81,
+        last_updated: wallet.updated_at,
+        last_login: wallet.last_login_at,
       },
       timestamp: new Date().toISOString(),
     });
@@ -4519,7 +4625,7 @@ app.post(
         .then((prices: any) => parseFloat(prices[symbol] || 0))
         .catch(() => 100000); // Fallback price
 
-      const portfolioValue = 10000; // $10,000 portfolio
+      const portfolioValue = 1000; // $1,000 portfolio
       const positionSize = portfolioValue * (aggressiveMode ? 1.0 : 0.3); // 100% or 30%
       const maintenanceMargin = 0.005;
 

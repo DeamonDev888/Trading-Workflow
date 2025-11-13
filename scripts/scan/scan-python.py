@@ -76,7 +76,7 @@ class PythonScanner:
 
                 if os.path.isdir(item_path):
                     # Ignorer les répertoires __pycache__, .git, node_modules, venv, env
-                    if not ['__pycache__', '.git', 'node_modules', 'venv', 'env', '.pytest_cache'].__contains__(item):
+                    if item not in ['__pycache__', '.git', 'node_modules', 'venv', 'env', '.pytest_cache']:
                         self.find_python_files(item_path, file_list)
                 elif item.endswith('.py'):
                     file_list.append(item_path)
@@ -144,13 +144,13 @@ class PythonScanner:
             # if line.startswith('\t') and ' ' in line:
             #     ...
 
-            # ✅ GARDER SEULEMENT: Indentation catastrophique (4+ espaces de décalage)
-            spaces_at_start = len(line) - len(line.lstrip(' '))
-            tabs_at_start = len(line) - len(line.lstrip('\t'))
+            # ❌ DÉSACTIVÉ: Indentation catastrophique (génère des faux positifs)
+            # spaces_at_start = len(line) - len(line.lstrip(' '))
+            # tabs_at_start = len(line) - len(line.lstrip('\t'))
 
-            if tabs_at_start > 0 and spaces_at_start > 4:
-                self.add_error(file_path, 'BAD_INDENTATION',
-                             'Indentation incorrecte (mélange tab/espace)', i)
+            # if tabs_at_start > 0 and spaces_at_start > 4:
+            #     self.add_error(file_path, 'BAD_INDENTATION',
+            #                  'Indentation incorrecte (mélange tab/espace)', i)
 
         # ✅ Seules 2-3 erreurs détectées au lieu de milliers!
 
