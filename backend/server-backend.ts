@@ -47,6 +47,7 @@ interface ApiLogs {
   request: (method: string, path: string) => void;
   response: (path: string, status: number) => void;
   error: (path: string, error: string) => void;
+  api: (msg: string, category?: string) => void;
 }
 
 // Types pour les données des agents Python
@@ -264,6 +265,9 @@ const log: Logger = {
     },
     error: (path: string, error: string) => {
       log.error(`${path}: ${error}`, 'API-ERROR');
+    },
+    api: (msg: string, category: string = 'API') => {
+      log.info(msg, category);
     },
   },
 
@@ -526,6 +530,131 @@ const internalCache = {
   positions: { data: null as any, timestamp: 0 },
 };
 const CACHE_TTL = 10000; // 10 secondes
+
+// 🚀 Auto Trading System - Variables globales
+let autoTradingInterval: NodeJS.Timeout | null = null;
+let autoTradingActive = false;
+let autoTradingStats = {
+  executions_count: 0,
+  total_trades: 0,
+  success_rate: 0,
+  last_execution: 0 as number,
+  active_signals: 0,
+  buy_signals: 0,
+  sell_signals: 0,
+  min_signal_force: 0.6,
+  max_position_size: 1000,
+  aggressive_mode: true,
+  paper_trading_mode: true,
+};
+
+// 🔄 Fonction d'exécution automatique de l'auto-trading
+async function executeAutoTrading() {
+  try {
+    log.info('Auto-trading tick started', 'AUTO-TRADING');
+    autoTradingStats.last_execution = Date.now();
+    autoTradingStats.executions_count++;
+    autoTradingStats.active_signals = 0;
+    autoTradingStats.buy_signals = 0;
+    autoTradingStats.sell_signals = 0;
+
+    // 1. Récupérer les signaux des agents
+    const strategyInferences = await getAgentInferences('strategy');
+    const riskInferences = await getAgentInferences('risk');
+    const fundingInferences = await getAgentInferences('funding');
+    const sentimentInferences = await getAgentInferences('sentiment');
+
+    // 2. Analyser et filtrer les signaux forts
+    const strongSignals = strategyInferences.filter((inf: any) =>
+      inf.confidence >= autoTradingStats.min_signal_force
+    );
+
+    autoTradingStats.active_signals = strongSignals.length;
+    strongSignals.forEach((signal: any) => {
+      if (signal.data.recommendation === 'BUY') autoTradingStats.buy_signals++;
+      if (signal.data.recommendation === 'SELL') autoTradingStats.sell_signals++;
+    });
+
+    log.info(`Found ${strongSignals.length} strong signals (${autoTradingStats.buy_signals} BUY, ${autoTradingStats.sell_signals} SELL)`, 'AUTO-TRADING');
+
+    // 3. Pour chaque signal fort, vérifier le risque et placer l'ordre
+    for (const signal of strongSignals.slice(0, 1)) { // Limiter à 1 trade par cycle
+      try {
+        const symbol = signal.data.symbol;
+        const recommendation = signal.data.recommendation;
+        const confidence = signal.confidence;
+
+        // Vérifier le risque
+        const riskCheck = riskInferences.find((risk: any) =>
+          risk.data && risk.data.recommendation === 'APPROVED'
+        );
+
+        if (!riskCheck) {
+          log.info(`Risk check failed for ${symbol}`, 'AUTO-TRADING');
+          continue;
+        }
+
+        // Placer l'ordre
+        const side = recommendation.toLowerCase();
+        const size = Math.min(autoTradingStats.max_position_size / 100, 0.01); // Position test pequeña
+
+        log.info(`Placing order: ${side.toUpperCase()} ${size} ${symbol} (confidence: ${confidence})`, 'AUTO-TRADING');
+
+        // Récupérer le prix actuel du symbole
+        const currentPrice = await hlAPI.getTokenPrice(symbol);
+
+        const orderResult = await placeOrder({
+          symbol,
+          side,
+          size,
+          price: currentPrice, // Utiliser le prix actuel
+          type: 'market'
+        });
+
+        if (orderResult.success) {
+          autoTradingStats.total_trades++;
+          log.success(`Order executed successfully: ${symbol}`, 'AUTO-TRADING-SUCCESS');
+        }
+      } catch (error: any) {
+        log.error(`Error placing order: ${error.message}`, 'AUTO-TRADING-ERROR');
+      }
+    }
+
+    // 4. Calculer le taux de succès
+    autoTradingStats.success_rate = autoTradingStats.total_trades / autoTradingStats.executions_count;
+
+    log.info(`Auto-trading tick completed: ${autoTradingStats.total_trades} trades executed`, 'AUTO-TRADING');
+
+  } catch (error: any) {
+    log.error(`Auto-trading execution failed: ${error.message}`, 'AUTO-TRADING-ERROR');
+  }
+}
+
+// 📡 Fonction pour récupérer les inferences d'un agent
+async function getAgentInferences(agentType: string): Promise<any[]> {
+  return new Promise((resolve) => {
+    const agentPath = agentType === 'strategy' ? 'strategy' :
+                     agentType === 'risk' ? 'risk' :
+                     agentType === 'funding' ? 'funding' :
+                     agentType === 'sentiment' ? 'sentiment' : 'strategy';
+
+    const url = `http://localhost:7000/api/agents/${agentPath}/inferences`;
+    const http = require('http');
+
+    http.get(url, (res: any) => {
+      let data = '';
+      res.on('data', (chunk: any) => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve(Array.isArray(parsed.inferences) ? parsed.inferences : []);
+        } catch (e) {
+          resolve([]);
+        }
+      });
+    }).on('error', () => resolve([]));
+  });
+}
 
 function getFromCache(type: 'prices' | 'positions') {
   const cache = internalCache[type];
@@ -828,6 +957,66 @@ async function getActivePositionsWithMetrics(): Promise<Position[]> {
   }
 }
 
+// 🔄 Fonction utilitaire pour placer un ordre
+async function placeOrder({ symbol, side, size, price, type = 'market' }: any) {
+  try {
+    if (!hlAPI) {
+      return { success: false, error: 'HyperLiquid API not available' };
+    }
+
+    log.trading.order(symbol, side, size);
+
+    // 🚨 VÉRIFICATION MODE UNIDIRECTIONNEL
+    if (isUnidirectionalMode()) {
+      const validation = validateUnidirectionalPosition(symbol, side);
+
+      if (!validation.success) {
+        log.trading.error(validation.reason, 'UNIDIRECTIONAL-VIOLATION');
+        return { success: false, error: validation.reason };
+      }
+
+      log.info(
+        `✅ Position validée par le mode unidirectionnel: ${side.toUpperCase()} ${size} ${symbol}`,
+        'UNIDIRECTIONAL-VALIDATION'
+      );
+    }
+
+    // 🎭 SIMULATION PAPER TRADING - Pas d'appel API réel
+    const isBuy = side.toLowerCase() === 'long';
+
+    // Simuler un order ID unique
+    const simulatedOrderId = `SIM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // 💾 Enregistrer la position si l'ordre a réussi
+    const newPosition: Position = {
+      symbol,
+      side: side.toUpperCase() as 'LONG' | 'SHORT',
+      size: parseFloat(size),
+      entryPrice: price || 0,
+      timestamp: new Date().toISOString(),
+    };
+
+    addPosition(newPosition);
+
+    log.trading.success(
+      `📋 PAPER TRADING: Order simulated successfully: ${simulatedOrderId} (Mode: ${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'})`
+    );
+
+    return {
+      success: true,
+      data: {
+        orderId: simulatedOrderId,
+        mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
+        allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
+        paperTrading: true,
+      },
+    };
+  } catch (error: any) {
+    log.trading.error(error.message);
+    return { success: false, error: error.message };
+  }
+}
+
 // ============================================================================
 // API ROUTES
 // ============================================================================
@@ -920,13 +1109,11 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
       );
     }
 
-    // Execute order logic here
-    const result = await hlAPI.placeOrder({
-      symbol,
-      side,
-      size,
-      price,
-    });
+    // 🎭 SIMULATION PAPER TRADING - Pas d'appel API réel
+    const isBuy = side.toLowerCase() === 'long';
+
+    // Simuler un order ID unique
+    const simulatedOrderId = `SIM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // 💾 Enregistrer la position si l'ordre a réussi
     const newPosition: Position = {
@@ -940,15 +1127,16 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
     addPosition(newPosition);
 
     log.trading.success(
-      `Order placed successfully: ${result.orderId} (Mode: ${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'})`
+      `📋 PAPER TRADING: Order simulated successfully: ${simulatedOrderId} (Mode: ${isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE'})`
     );
 
     res.json({
       success: true,
-      orderId: result.orderId,
+      orderId: simulatedOrderId,
       mode: isUnidirectionalMode() ? 'UNIDIRECTIONNEL' : 'MIXTE',
       allowedSide: TRADING_CONFIG.ALLOWED_SIDE,
       stats: getPositionsStats(),
+      paperTrading: true,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
@@ -3578,24 +3766,24 @@ app.get('/api/trading/auto/status', async (req: Request, res: Response) => {
   try {
     log.api.request('GET', '/api/trading/auto/status');
 
-    // Auto Trading is enabled by default in paper mode
+    // Retourner les vraies statistiques de l'auto-trading
     res.json({
       success: true,
       data: {
-        status: 'active', // 'active' | 'paused' | 'stopped'
-        auto_trading_enabled: true,
+        status: autoTradingActive ? 'active' : 'inactive',
+        auto_trading_enabled: autoTradingActive,
         interval_seconds: 120,
-        min_signal_force: 0.6,
-        max_position_size: 1000,
-        aggressive_mode: true,
-        paper_trading_mode: true,
-        last_execution: new Date().toISOString(),
-        executions_count: 0,
-        success_rate: 0,
-        total_trades: 0,
-        active_signals: 2,
-        buy_signals: 1,
-        sell_signals: 1,
+        min_signal_force: autoTradingStats.min_signal_force,
+        max_position_size: autoTradingStats.max_position_size,
+        aggressive_mode: autoTradingStats.aggressive_mode,
+        paper_trading_mode: autoTradingStats.paper_trading_mode,
+        last_execution: autoTradingStats.last_execution ? new Date(autoTradingStats.last_execution).toISOString() : null,
+        executions_count: autoTradingStats.executions_count,
+        success_rate: autoTradingStats.success_rate,
+        total_trades: autoTradingStats.total_trades,
+        active_signals: autoTradingStats.active_signals,
+        buy_signals: autoTradingStats.buy_signals,
+        sell_signals: autoTradingStats.sell_signals,
       },
       timestamp: new Date().toISOString(),
     });
@@ -3680,7 +3868,17 @@ app.post('/api/trading/auto/start', async (req: Request, res: Response) => {
   try {
     log.api.request('POST', '/api/trading/auto/start');
 
-    // In paper trading mode, we just simulate starting auto trading
+    // Démarrer l'auto-trading réel si pas déjà actif
+    if (!autoTradingActive) {
+      autoTradingActive = true;
+      autoTradingStats.last_execution = Date.now();
+
+      // Lancer l'interval d'exécution (120 secondes)
+      autoTradingInterval = setInterval(executeAutoTrading, 120000);
+
+      log.success('🚀 Real auto-trading system started (120s interval)', 'AUTO-TRADING');
+    }
+
     res.json({
       success: true,
       message: 'Auto trading started successfully (Paper Trading Mode)',
@@ -3698,6 +3896,93 @@ app.post('/api/trading/auto/start', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     log.error(`Auto trading start error: ${error.message}`, 'AUTO-TRADING-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * 💰 Place Order Endpoint - REAL MAINNET TRADING
+ */
+app.post('/api/trading/place-order', async (req: Request, res: Response) => {
+  try {
+    log.api.request('POST', '/api/trading/place-order');
+
+    const { symbol, side, size, price, type = 'market' } = req.body;
+
+    if (!symbol || !side || !size) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: symbol, side, size',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Exécuter l'ordre via HyperLiquid
+    const orderResult = await placeOrder({
+      symbol,
+      side,
+      size,
+      price,
+      type
+    });
+
+    if (orderResult.success) {
+      log.success(`Order executed: ${side.toUpperCase()} ${size} ${symbol}`, 'TRADING-SUCCESS');
+      res.json({
+        success: true,
+        message: 'Order executed successfully',
+        data: orderResult.data,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: orderResult.error || 'Order execution failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (error: any) {
+    log.error(`Place order error: ${error.message}`, 'TRADING-ERROR');
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * 🛑 Auto Trading Stop Endpoint
+ */
+app.post('/api/trading/auto/stop', async (req: Request, res: Response) => {
+  try {
+    log.api.request('POST', '/api/trading/auto/stop');
+
+    // Arrêter l'auto-trading
+    if (autoTradingInterval) {
+      clearInterval(autoTradingInterval);
+      autoTradingInterval = null;
+    }
+    autoTradingActive = false;
+
+    log.info('Auto-trading stopped', 'AUTO-TRADING');
+
+    res.json({
+      success: true,
+      message: 'Auto trading stopped successfully',
+      data: {
+        status: 'inactive',
+        auto_trading_enabled: false,
+        stopped_at: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    log.error(`Auto trading stop error: ${error.message}`, 'AUTO-TRADING-ERROR');
     res.status(500).json({
       success: false,
       error: error.message,

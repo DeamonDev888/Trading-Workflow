@@ -392,23 +392,96 @@ class TypeScriptJavaScriptScanner {
     }
 
     /**
-     * Vérifier async/await
+     * Vérifier async/await avec analyse de portée précise
      */
     checkAsyncAwait(filePath, content) {
         const lines = content.split('\n');
+
+        // Analyser la structure des fonctions pour détecter les fonctions async
+        const asyncFunctions = this.analyzeAsyncFunctions(content);
 
         lines.forEach((line, index) => {
             const lineNumber = index + 1;
 
             // await sans async
-            if (line.includes('await')) {
-                const functionMatch = content.substring(0, index * line.length).match(/async\s+\w+/);
-                if (!functionMatch && !content.substring(0, index * line.length).includes('async ()')) {
+            if (line.includes('await') && !line.trim().startsWith('//') && !line.trim().startsWith('*')) {
+                // Vérifier si cette ligne est dans une fonction async
+                const isInAsyncFunction = asyncFunctions.some(func =>
+                    lineNumber >= func.startLine && lineNumber <= func.endLine
+                );
+
+                if (!isInAsyncFunction) {
                     this.addError(filePath, 'AWAIT_WITHOUT_ASYNC',
                         `await utilisé sans fonction async ligne ${lineNumber}`, lineNumber);
                 }
             }
         });
+    }
+
+    /**
+     * Analyser les fonctions async dans le fichier
+     */
+    analyzeAsyncFunctions(content) {
+        const asyncFunctions = [];
+        const lines = content.split('\n');
+
+        let braceDepth = 0;
+        let inAsyncFunction = false;
+        let currentFunction = null;
+
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+            const trimmedLine = line.trim();
+
+            // Détecter le début d'une fonction async
+            const asyncFunctionRegex = /(?:^|\s)async\s+(?:function\s+\w+|[\w$]+\s*\([^)]*\)\s*=>|\([\w$,\s]*\)\s*=>|\w+\s*\([^)]*\)\s*{)/;
+            const isAsyncFunctionStart = asyncFunctionRegex.test(trimmedLine) ||
+                                       (trimmedLine.includes('async') && trimmedLine.includes('(') && trimmedLine.includes('{'));
+
+            if (isAsyncFunctionStart && !inAsyncFunction) {
+                inAsyncFunction = true;
+                currentFunction = {
+                    startLine: lineNumber,
+                    endLine: null,
+                    braceDepth: braceDepth
+                };
+            }
+
+            // Compter les accolades pour détecter la fin de fonction
+            for (let char of line) {
+                if (char === '{') {
+                    braceDepth++;
+                } else if (char === '}') {
+                    braceDepth--;
+
+                    // Fin de fonction détectée
+                    if (inAsyncFunction && braceDepth === currentFunction.braceDepth) {
+                        currentFunction.endLine = lineNumber;
+                        asyncFunctions.push(currentFunction);
+                        inAsyncFunction = false;
+                        currentFunction = null;
+                    }
+                }
+            }
+
+            // Détection alternative: fin de fonction fléchée sans accolades explicites
+            if (inAsyncFunction && !trimmedLine.includes('{') && !trimmedLine.includes('}') &&
+                (trimmedLine.includes('=>') || trimmedLine.endsWith(';')) &&
+                !trimmedLine.includes('return') && !trimmedLine.includes(',')) {
+                currentFunction.endLine = lineNumber;
+                asyncFunctions.push(currentFunction);
+                inAsyncFunction = false;
+                currentFunction = null;
+            }
+        });
+
+        // Fermer les fonctions non fermées (pour les fichiers incomplets)
+        if (inAsyncFunction && currentFunction) {
+            currentFunction.endLine = lines.length;
+            asyncFunctions.push(currentFunction);
+        }
+
+        return asyncFunctions;
     }
 
     /**

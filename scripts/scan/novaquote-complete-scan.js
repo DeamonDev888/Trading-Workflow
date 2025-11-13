@@ -328,7 +328,7 @@ class NovaQuoteCompleteScanner {
     generateGlobalSummary() {
         const summary = this.getGlobalSummary();
 
-        return `## 📈 Résumé Global
+        let section = `## 📈 Résumé Global
 
 | Métrique | TypeScript/JS | Python | Total |
 |----------|---------------|--------|-------|
@@ -345,12 +345,14 @@ class NovaQuoteCompleteScanner {
         if (qualityScore < 50) qualityEmoji = '🔴';
         else if (qualityScore < 80) qualityEmoji = '🟡';
 
-        return `${previousSection}
+        section += `
 ### 🎯 Score de Qualité du Code
 
 ${qualityEmoji} **${qualityScore.toFixed(1)}%** - ${this.getQualityMessage(qualityScore)}
 
 `;
+
+        return section;
     }
 
     /**
@@ -697,6 +699,21 @@ ${qualityEmoji} **${qualityScore.toFixed(1)}%** - ${this.getQualityMessage(quali
         console.log(`⚠️  Avertissements: ${summary.total.warnings}`);
         console.log(`🎯 Score de qualité: ${this.calculateQualityScore()}%`);
         console.log('='.repeat(60));
+    }
+
+    /**
+     * Scanner selon la configuration
+     */
+    async scanAccordingToConfig(config) {
+        if (config.scanType === 'typescript') {
+            return await this.scanTypeScriptOnly(config);
+        } else if (config.scanType === 'python') {
+            return await this.scanPythonOnly(config);
+        } else if (config.scanType === 'targeted') {
+            return await this.scanTargeted(config);
+        } else {
+            return await this.scanCompleteProject(config.rootDir || process.cwd(), config);
+        }
     }
 }
 
