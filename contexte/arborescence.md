@@ -1,40 +1,35 @@
 projet trading/
 ├── .gitignore
+├── agent-retro-ingenierie.md
 ├── backend/
+|   ├── agent_auto_recovery.ts
+|   ├── agent_health_monitor.ts
+|   ├── agent_launcher.ts
 |   ├── backtest_validator.js
 |   ├── dashboard_data.json
+|   ├── database_config.ts
 |   ├── server-backend.js
-|   └── server-backend.ts
+|   ├── server-backend.ts
+|   ├── server-backend.ts.backup
+|   └── wallet-endpoints.ts
 ├── contexte/
 |   ├── arborescence.md
 |   └── context_app.md
+├── data/
+|   └── aggregator/
+|       └── aggregation_agg_1763005934_20251112_225214.json
 ├── docs/
-|   ├── AGENT_QUICK_START.md
-|   ├── agents_crypto/
-|   |   ├── funding-agent.md
-|   |   ├── index.md
-|   |   ├── README.md
-|   |   ├── risk-agent.md
-|   |   ├── sentiment-agent.md
-|   |   └── strategy-agent.md
-|   ├── AGENTS_GRAPH_VISUALIZATION.md
-|   ├── AGENTS_USAGE.md
-|   ├── ARCHITECTURE_DIAGRAMS.md
-|   ├── CIRCULAR_SYSTEM_GUIDE.md
-|   ├── CLAUDE_CODE_ARCHITECTURE.md
-|   ├── CLAUDE_CODE_INTEGRATION_GUIDE.md
-|   ├── CLAUDE_CODE_INTEGRATION_README.md
+|   ├── agents/
+|   ├── AGENTS_ARCHITECTURE_DIAGRAM.md
+|   ├── api/
+|   ├── architecture/
 |   ├── COMMANDS_AGENTS.md
 |   ├── COMMANDS_AGENTS_GUIDE.md
-|   ├── DATA_RECOVERY_AND_RELIABILITY_GUIDE.md
-|   ├── EMOJIS_FALLBACKS.md
-|   ├── FINAL_AGENT_GUIDE.md
-|   ├── GUIDE_FINAL_AGENTS.md
-|   ├── HYBRID_ROTATION_SYSTEM.md
+|   ├── guides/
 |   ├── HYPERLIQUID_API_DOCUMENTATION.md
-|   ├── LOG_SYSTEM_DOCUMENTATION.md
-|   ├── RESUMÉ_AGENTS.md
-|   └── SOLUTION_AGENTS.md
+|   ├── other/
+|   |   └── NOVAQUOTE_DIAGNOSTIC_REPORT.txt
+|   └── WALLET_INTEGRATION_GUIDE.md
 ├── eslint.config.js
 ├── frontend/
 |   ├── public/
@@ -45,52 +40,61 @@ projet trading/
 |   |   ├── data/
 |   |   |   └── production_backtests/
 |   |   |       └── BTCDominance_FINAL_results_improved.json
+|   |   ├── favicon.ico
 |   |   ├── index.html
 |   |   ├── portfolio-manager.js
 |   |   ├── test_agents.html
 |   |   └── test_claude_agents.html
+|   ├── server-frontend.js
 |   └── server-frontend.ts
 ├── package-lock.json
 ├── package.json
 ├── PROMPT_SYSTEME_NOVAQUOTE.md
 ├── README.md
+├── reports/
+|   ├── database/
+|   |   ├── database_performance_20251111_093712.md
+|   |   └── database_performance_20251111_094056.md
+|   ├── database-validation-report-2025-11-13.md
+|   ├── diagnostic-connexion-9001-2025-11-12.md
+|   ├── documentation/
+|   |   ├── documentation_status_20251111_092539.md
+|   |   ├── documentation_status_20251111_092925.md
+|   |   ├── documentation_status_20251111_093013.md
+|   |   └── documentation_status_20251111_093304.md
+|   ├── logging-system-validation-report-2025-11-13.md
+|   ├── scan-report-2025-11-13_01-32-40.md
+|   ├── scan-report-2025-11-13_01-34-02.md
+|   ├── scan-report-2025-11-13_01-37-39.md
+|   ├── scan-report-2025-11-13_01-49-14.md
+|   ├── scan-report-2025-11-13_01-51-56.md
+|   ├── scan-report-2025-11-13_01-52-25.md
+|   ├── scan-report-2025-11-13_02-00-50.md
+|   └── scan-report-2025-11-13_02-03-44.md
 ├── run.ts
 ├── scripts/
 |   ├── agent_logs_monitor.js
 |   ├── answer_user_question.py
-|   ├── auto_bug_fixer_cli.py
-|   ├── CLAUDE_AUTO_LINTER.py
 |   ├── claude_code_agent_runner.py
-|   ├── claude_code_agents.ps1
-|   ├── claude_code_integration_demo.py
-|   ├── claude_code_reliability_demo.py
-|   ├── CLAUDE_CODE_SUBAGENT.py
-|   ├── DEMO_SUBAGENT.py
-|   ├── fix_emojis.py
-|   ├── fix_syntax.js
+|   ├── database_manager.py
+|   ├── database_startup_optimization.js
+|   ├── database_validation.py
+|   ├── db_validation_simple.py
+|   ├── documentation_manager.py
+|   ├── fix_database_constraints.py
 |   ├── generate_context.py
-|   ├── lint-format-py.py
-|   ├── novaquote_agent_corrector.py
-|   ├── novaquote_bug_fixer_task.py
-|   ├── novaquote_detect_all_project_errors.py
-|   ├── novaquote_detect_auto_errors.py
-|   ├── novaquote_detect_clear_errors.py
-|   ├── novaquote_detect_critical_errors.py
-|   ├── novaquote_detect_fix_critical_errors.py
-|   ├── novaquote_detect_fix_python_errors.py
-|   ├── novaquote_detect_intelligent_errors.py
-|   ├── novaquote_detect_python_format_errors.py
-|   ├── novaquote_detect_typescript_errors.py
-|   ├── novaquote_perfect_zero_error.py
-|   ├── novaquote_scan_all_errors.py
-|   ├── novaquote_scan_and_fix_complete.py
-|   ├── novaquote_scan_novaquote_project.py
-|   ├── novaquote_ultimate_corrector.py
-|   ├── optimize_all_strategies.py
 |   ├── project_snapshot.py
+|   ├── remove-console-logs.js
+|   ├── scan/
+|   |   ├── novaquote-complete-scan.js
+|   |   ├── README.md
+|   |   ├── scan-python.py
+|   |   └── scan-typescript-javascript.js
 |   ├── start_inference_monitoring.py
 |   ├── start_persistent_agents.py
 |   ├── test_claude_code_integration.py
+|   ├── test_wallet_integration.ts
+|   ├── test_wallet_simple.js
 |   └── test_websocket_client.js
 ├── src/
 |   ├── __init__.py
@@ -145,12 +149,18 @@ projet trading/
 |   |   ├── retry-manager.ts
 |   |   └── websocket-manager.ts
 |   ├── data/
+|   |   ├── cycles/
+|   |   |   ├── 2025-11-11_10
+|   |   |   └── 2025-11-11_11
 |   |   ├── funding/
+|   |   ├── funding_history.csv
+|   |   ├── funding_history_backup.csv
 |   |   ├── market_database/
 |   |   |   ├── data_collector.js
 |   |   |   ├── market_data.db
 |   |   |   └── setup_database.js
 |   |   ├── metrics_collector.py
+|   |   ├── portfolio_balance.csv
 |   |   ├── production_backtests/
 |   |   |   ├── BB_Squeeze_62_PRO_FINAL_results.json
 |   |   |   ├── BTCDominance_FINAL.py
@@ -171,6 +181,7 @@ projet trading/
 |   |   ├── sentiment/
 |   |   ├── sentiment_history.csv
 |   |   └── test/
+|   ├── exchange_manager.py
 |   ├── health/
 |   |   ├── health-checker.ts
 |   |   └── inference_api.py
@@ -187,13 +198,19 @@ projet trading/
 |   ├── logging/
 |   |   ├── __init__.py
 |   |   ├── log_centralizer.py
+|   |   ├── novaquote-winston-loggers.ts
 |   |   ├── structured-logger.js
 |   |   └── structured-logger.ts
 |   ├── market_database/
+|   |   ├── create_wallet_tables.sql
 |   |   ├── fix_data.js
 |   |   ├── market_data.db
+|   |   ├── market_data.db-shm
+|   |   ├── market_data.db-wal
 |   |   ├── real_backtest_executor.js
-|   |   └── setup_database.js
+|   |   ├── setup_database.js
+|   |   ├── wallet_database.ts
+|   |   └── wallet_database_sync.ts
 |   ├── metrics/
 |   |   └── prometheus.ts
 |   ├── models/
@@ -212,6 +229,10 @@ projet trading/
 |   ├── security/
 |   |   ├── rate-limiter.ts
 |   |   └── security-headers.ts
+|   ├── trading_engine.py
+|   ├── user_identity.py
+|   ├── utils/
+|   |   └── unicode_support.py
 |   ├── validation/
 |   |   └── schemas.ts
 |   └── wallet/
@@ -235,9 +256,13 @@ ignore:
   - src\agents\__pycache__/
   - src\algorithms\__pycache__/
   - src\cache/
+  - src\core\__pycache__/
   - src\data\__pycache__/
+  - src\data\production_backtests\__pycache__/
   - src\health\__pycache__/
   - src\hyperliquid\__pycache__/
+  - src\logging\__pycache__/
   - src\models\__pycache__/
+  - src\utils\__pycache__/
   - src\wallet\__pycache__/
   - tests\logs/

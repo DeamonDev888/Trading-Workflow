@@ -1,0 +1,52 @@
+# Agents IA - Fonctionnement Réel
+
+## Vue d'ensemble (13 agents)
+
+```mermaid
+graph TD
+    A[Déclencheur] --> B{Risk Agent}
+    A --> C{Strategy Agent}
+    A --> D{Funding Agent}
+    A --> E{Sentiment Agent}
+
+    B --> B1[Appel: claude-risk-advisor]
+    C --> C1[Appel: claude-strategy-advisor]
+    D --> D1[Appel: claude-funding-advisor]
+    E --> E1[Appel: claude-sentiment-advisor]
+
+    B1 --> F[HyperLiquid API]
+    C1 --> F
+    D1 --> F
+    E1 --> F
+
+    F --> G[Position Management]
+    G --> H[Winston Logging]
+```
+
+## Pattern Technique
+```python
+def call_subagent(self, prompt, context_data=None):
+    cmd = ["claude", "--dangerously-skip-permissions", "--agent", self.subagent_name, prompt]
+    return subprocess.run(cmd, timeout=120).stdout
+```
+
+## Architecture
+Market Data → Claude Sub-Agents → Strategy Library → Order Execution
+
+## Métriques
+- **advanced_risk_agent.py**: Sub-agent claude-advanced_risk-advisor
+- **agent_manager.py**: Sub-agent claude-agent_manager.py-advisor
+- **claude_code_integration.py**: Sub-agent claude-claude_code_integration.py-advisor
+- **claude_code_orchestrator.py**: Sub-agent claude-claude_code_orchestrator.py-advisor
+- **data_aggregator.py**: Sub-agent claude-data_aggregator.py-advisor
+- **funding_agent.py**: Sub-agent claude-funding-advisor
+- **iterative_subagent_manager.py**: Sub-agent claude-iterative_subagent_manager.py-advisor
+- **persistent_agent_orchestrator.py**: Sub-agent claude-persistent_agent_orchestrator.py-advisor
+- **reliability_monitor.py**: Sub-agent claude-reliability_monitor.py-advisor
+- **risk_agent.py**: Sub-agent claude-risk-advisor
+- **risk_agent_enhanced.py**: Sub-agent claude-risk_agent_enhanced.py-advisor
+- **sentiment_analysis_agent.py**: Sub-agent claude-sentiment_analysis-advisor
+- **strategy_agent.py**: Sub-agent claude-strategy-advisor
+
+---
+*Claude Code sub-agents exclusivement*

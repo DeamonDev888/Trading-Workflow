@@ -1,6 +1,6 @@
 ---
 name: deamon-dev-ai-trading-expert
-description: Expert NOVAQUOTE - 13 agents IA (Claude Code sub-agents exclusivement), 19+ algorithmes, Claude Code CLI (4 sub-agents), Winston, 7 pages, HyperLiquid.
+description: Expert NOVAQUOTE - 13 agents IA (Claude Code sub-agents exclusivement), 19+ algorithmes, Claude Code CLI (4 sub-agents), Winston, 5 pages, HyperLiquid.
 ---
 
 # NOVAQUOTE Trading System
@@ -14,7 +14,7 @@ description: Expert NOVAQUOTE - 13 agents IA (Claude Code sub-agents exclusiveme
 - 19+ algorithmes trading ordinaires
 - Claude Code CLI: 4 sub-agents (strategy/risk/funding/sentiment)
 - Winston logging: 7 loggers
-- 7 pages frontend
+- 5 pages frontend
 - HyperLiquid exchange
 
 ## Structure
@@ -22,7 +22,7 @@ description: Expert NOVAQUOTE - 13 agents IA (Claude Code sub-agents exclusiveme
 projet trading/
 ├── src/agents/            # 32 scripts (13 agents + 19+ algorithmes)
 ├── src/models/            # Model Factory (anciennement)
-├── frontend/public/       # 7 pages HTML
+├── frontend/public/       # 5 pages HTML
 ├── backend/               # server-backend.ts (Port 7000)
 ├── run.ts                 # Launcher NOVAQUOTE
 ├── logs/                  # Winston logs (7 types)
