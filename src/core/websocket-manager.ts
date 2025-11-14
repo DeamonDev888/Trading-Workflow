@@ -27,6 +27,7 @@ export class ResilientWebSocket extends EventEmitter {
   private ws?: WebSocket;
   private retryTimer?: NodeJS.Timeout;
   private heartbeatTimer?: NodeJS.Timeout;
+  private heartbeatTimeoutId?: NodeJS.Timeout;
   private reconnectAttempts = 0;
   private connectionStartTime?: Date;
   private lastPingTime?: Date;
@@ -226,9 +227,14 @@ export class ResilientWebSocket extends EventEmitter {
         this.lastPingTime = new Date();
         this.send('ping');
 
-        // Vérifier si le PONG a été reçu
-        setTimeout(() => {
+        // Vérifier si le PONG a été reçu - éviter l'accumulation de timeouts
+        if (this.heartbeatTimeoutId) {
+          clearTimeout(this.heartbeatTimeoutId);
+        }
+
+        this.heartbeatTimeoutId = setTimeout(() => {
           if (
+            this.isReady() &&
             this.lastPingTime &&
             Date.now() - this.lastPingTime.getTime() > 25000
           ) {
@@ -249,6 +255,11 @@ export class ResilientWebSocket extends EventEmitter {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = undefined;
+    }
+
+    if (this.heartbeatTimeoutId) {
+      clearTimeout(this.heartbeatTimeoutId);
+      this.heartbeatTimeoutId = undefined;
     }
   }
 }

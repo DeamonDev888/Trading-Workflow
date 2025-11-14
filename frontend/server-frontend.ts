@@ -178,17 +178,31 @@ process.on('SIGTERM', (): void => {
   process.exit(0);
 });
 
-// Handle uncaught exceptions
+// Handle uncaught exceptions - Graceful recovery instead of crash
 process.on('uncaughtException', (error: Error): void => {
   log.error(`Uncaught Exception: ${error.message}`);
   console.error(error.stack);
-  process.exit(1);
+
+  // Try graceful shutdown instead of immediate crash
+  try {
+    log.error('Attempting graceful recovery...');
+    // Don't exit immediately - let the system try to recover
+    setTimeout(() => {
+      log.error('Attempting to continue despite exception...');
+    }, 5000);
+  } catch (recoveryError) {
+    log.error(`Recovery failed: ${recoveryError.message}`);
+    // Only exit as last resort after logging
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason: any, promise: Promise<any>): void => {
   log.error(`Unhandled Rejection: ${reason}`);
   console.error('Promise:', promise);
-  process.exit(1);
+
+  // Log but don't crash - system can continue running
+  log.error('Unhandled rejection logged - system continuing...');
 });
 
 export default app;

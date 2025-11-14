@@ -1,0 +1,127 @@
+{
+  "aggregation_id": "agg_1763005934",
+  "timestamp": "2025-11-12T22:52:14.889622",
+  "agents_data": [
+    {
+      "agent_name": "claude-strategy-advisor",
+      "timestamp": "2025-11-12T22:52:14.889622",
+      "raw_response": "{'decision': 'BUY', 'reasoning': 'Strong signal'}",
+      "parsed_data": {
+        "decision": "BUY",
+        "reasoning": "Strong signal"
+      },
+      "confidence": 0.85,
+      "convergence": true,
+      "iterations": 3,
+      "execution_time": 45.2,
+      "success": true,
+      "error": null,
+      "validation_status": "VALID",
+      "reliability_score": 0.8835000000000001,
+      "quality_metrics": {
+        "confidence": 0.85,
+        "convergence": 1.0,
+        "execution_speed": 0.6233333333333333,
+        "stability": 1.0
+      }
+    },
+    {
+      "agent_name": "claude-risk-advisor",
+      "timestamp": "2025-11-12T22:52:14.889622",
+      "raw_response": "{'decision': 'BUY', 'risk_level': 'LOW'}",
+      "parsed_data": {
+        "decision": "BUY",
+        "risk_level": "LOW"
+      },
+      "confidence": 0.78,
+      "convergence": true,
+      "iterations": 2,
+      "execution_time": 38.7,
+      "success": true,
+      "error": null,
+      "validation_status": "VALID",
+      "reliability_score": 0.813625,
+      "quality_metrics": {
+        "confidence": 0.78,
+        "convergence": 1.0,
+        "execution_speed": 0.6775,
+        "stability": 0.6666666666666666
+      }
+    },
+    {
+      "agent_name": "claude-funding-advisor",
+      "timestamp": "2025-11-12T22:52:14.889622",
+      "raw_response": "{'decision': 'HOLD', 'funding_rate': 0.0001}",
+      "parsed_data": {
+        "decision": "HOLD",
+        "funding_rate": 0.0001
+      },
+      "confidence": 0.82,
+      "convergence": true,
+      "iterations": 3,
+      "execution_time": 42.1,
+      "success": true,
+      "error": null,
+      "validation_status": "VALID",
+      "reliability_score": 0.875375,
+      "quality_metrics": {
+        "confidence": 0.82,
+        "convergence": 1.0,
+        "execution_speed": 0.6491666666666667,
+        "stability": 1.0
+      }
+    }
+  ],
+  "consensus": {
+    "decision": "BUY",
+    "confidence": 0.6587410443042487,
+    "agreements": [
+      {
+        "agent": "claude-strategy-advisor",
+        "decision": "BUY",
+        "matches_final": true,
+        "confidence": 0.85,
+        "reliability": 0.8835000000000001
+      },
+      {
+        "agent": "claude-risk-advisor",
+        "decision": "BUY",
+        "matches_final": true,
+        "confidence": 0.78,
+        "reliability": 0.813625
+      },
+      {
+        "agent": "claude-funding-advisor",
+        "decision": "HOLD",
+        "matches_final": false,
+        "confidence": 0.82,
+        "reliability": 0.875375
+      }
+    ],
+    "total_weighted_votes": 2.1034100000000002,
+    "decision_breakdown": {
+      "BUY": 1.3856025,
+      "HOLD": 0.7178074999999999
+    }
+  },
+  "final_decision": "HOLD",
+  "confidence_score": 0.8176520894071915,
+  "reliability_score": 0.8575,
+  "validation_results": {
+    "overall_status": "VALID",
+    "checks": [],
+    "warnings": [],
+    "critical_issues": []
+  },
+  "warnings": [],
+  "errors": [],
+  "metadata": {
+    "context_data": {
+      "symbol": "BTC-USD",
+      "price": 50000
+    },
+    "num_agents": 3,
+    "successful_agents": 3,
+    "avg_execution_time": 42.0
+  }
+}

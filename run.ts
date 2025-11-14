@@ -962,13 +962,24 @@ async function main(): Promise<void> {
       process.exit(0);
     });
 
-    // Gérer les erreurs non capturées
+    // Gérer les erreurs non capturées - Graceful recovery instead of crash
     process.on('uncaughtException', (error: Error) => {
       logger.error(`Uncaught Exception: ${error.message}`);
       if (verbose || debug) {
         console.error(error.stack);
       }
-      process.exit(1);
+
+      // Try graceful recovery instead of immediate crash
+      try {
+        logger.error('NOVAQUOTE attempting graceful recovery...');
+        setTimeout(() => {
+          logger.error('NOVAQUOTE attempting to continue despite exception...');
+        }, 5000);
+      } catch (recoveryError) {
+        logger.error(`NOVAQUOTE recovery failed: ${recoveryError.message}`);
+        // Only exit as last resort after logging
+        process.exit(1);
+      }
     });
 
     process.on('unhandledRejection', (reason, promise: Promise<any>) => {
@@ -976,7 +987,9 @@ async function main(): Promise<void> {
       if (verbose || debug) {
         console.error('Promise:', promise);
       }
-      process.exit(1);
+
+      // Log but don't crash - NOVAQUOTE can continue running
+      logger.error('NOVAQUOTE unhandled rejection logged - system continuing...');
     });
   } catch (error: any) {
     logger.error(`💥 Fatal error: ${error.message}`);

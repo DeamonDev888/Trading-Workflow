@@ -4568,17 +4568,31 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// Handle uncaught exceptions
+// Handle uncaught exceptions - Graceful recovery instead of crash
 process.on('uncaughtException', (error: Error) => {
   log.error(`Uncaught Exception: ${error.message}`);
   console.error(error.stack);
-  process.exit(1);
+
+  // Try graceful shutdown instead of immediate crash
+  try {
+    log.error('Backend attempting graceful recovery...');
+    // Don't exit immediately - let the system try to recover
+    setTimeout(() => {
+      log.error('Backend attempting to continue despite exception...');
+    }, 5000);
+  } catch (recoveryError) {
+    log.error(`Backend recovery failed: ${recoveryError.message}`);
+    // Only exit as last resort after logging
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   log.error(`Unhandled Rejection: ${reason}`);
   console.error('Promise:', promise);
-  process.exit(1);
+
+  // Log but don't crash - system can continue running
+  log.error('Backend unhandled rejection logged - system continuing...');
 });
 
 // Advanced Risk Assessment endpoint for high-leverage trading

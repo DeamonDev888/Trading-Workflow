@@ -591,3 +591,21 @@ Ce projet est sous license MIT.
 
 ---
 *Maintenu par l'Agent Documentation NOVAQUOTE*
+
+
+
+
+> suprime de la roadmap   - Docker + CI/CD
+    - Security hardening
+
+      PHASE 4 - MULTI-EXCHANGE (2-3 mois)
+  - Binance, Bybit integration
+  - Reinforcement learning
+  - Cross-exchange arbitrage
+  PHASE 3 - LIVE TRADING (1-2 mois)
+  - Passage paper → live ($1000 → $5000)
+
+    - KPI: >10% mensuel, <15% drawdown
+
+      - Institutional features
+  - White-label solutions

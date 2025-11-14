@@ -96,6 +96,13 @@ class NovaQuoteLogsMonitor {
     // Suivi des positions dans les fichiers pour éviter les relectures complètes
     this.filePositions = new Map();
 
+    // Suivi des timers pour prévenir les memory leaks
+    this.timers = {
+      scanInterval: null,
+      healthCheckInterval: null,
+      monitoringInterval: null
+    };
+
     this.logsData = {
       total: 0,
       success: 0,
@@ -172,8 +179,8 @@ class NovaQuoteLogsMonitor {
     // Scanner les logs existants
     this.scanExistingLogs();
 
-    // Surveillance continue des fichiers de logs
-    setInterval(() => {
+    // Surveillance continue des fichiers de logs - avec suivi du timer
+    this.timers.scanInterval = setInterval(() => {
       this.scanExistingLogs();
     }, 5000); // Scan toutes les 5 secondes
   }

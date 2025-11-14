@@ -120,12 +120,12 @@ Devenir le système de trading automatisé le plus performant sur HyperLiquid av
 **Objectif**: Préparer le déploiement en production live
 
 #### Semaine 3-4: Production Architecture
-**Infrastructure Cloud Ready**
-- [ ] **Docker containerisation** tous services
-- [ ] **Kubernetes orchestration** setup
-- [ ] **CI/CD pipeline** avec GitLab Actions
-- [ ] **Environment separation** (dev/staging/prod)
-- **Monitoring production** avec Prometheus + Grafana
+**Infrastructure Optimisée**
+- [ ] **Performance tuning** serveur existant
+- [ ] **Load balancing** configuration
+- [ ] **Monitoring avancé** métriques temps réel
+- [ ] **Backup automatique** données critiques
+- **Environment separation** dev/staging
 
 **Live Trading Preparation**
 - [ ] **Risk management avancé** (stop-loss automatique)
@@ -138,35 +138,30 @@ Devenir le système de trading automatisé le plus performant sur HyperLiquid av
 **Testing Extrême**
 - [ ] **Stress tests** 48h continous
 - [ ] **Fuzz testing** inputs invalides
-- [ ] **Penetration testing** sécurité
 - [ ] **Performance benchmarks**
-- **Disaster recovery** tests
+- [ ] **Disaster recovery** tests
+- **Monitoring intensif** production ready
 
 ---
 
-### 🚀 PHASE 3 - LIVE TRADING LAUNCH (1-2 mois)
-**Objectif**: Déploiement progressif en production avec monitoring intensif
+### 🚀 PHASE 3 - EVOLUTION SCALABLE (2-3 mois)
+**Objectif**: Optimisation et évolution contrôlée du système
 
-#### Mois 1: Progressive Rollout
-**Phase 1: Pilot Live Trading**
-- [ ] **Capital limité**: $1000 initial
-- [ ] **Conservative strategies** uniquement
-- [ ] **24/7 monitoring** humain + IA
-- [ ] **Daily audits** performance
-- **KPI**: > 2% mensuel, < 5% drawdown
-
-**Phase 2: Scale Up**
-- [ ] **Capital increase**: $5000
-- [ ] **Additional strategies** activées
-- [ ] **Advanced risk management**
-- [ ] **Automated reporting**
-- **KPI**: > 5% mensuel, < 8% drawdown
-
-#### Mois 2: Full Production
-**Complete Live System**
-- [ ] **Full capital deployment**
-- [ ] **All strategies actives**
+#### Mois 1-2: Performance Avancée
+**Algorithmes Optimisés**
+- [ ] **Advanced strategies** activées
 - [ ] **ML optimization** continu
+- [ ] **Risk management** amélioré
+- [ ] **Backtesting avancé**
+- **KPI**: > 8% mensuel, < 10% drawdown
+
+#### Mois 2-3: Multi-Exchange Limité
+**Extension Contrôlée**
+- [ ] **Exchange additionnel** (1 max)
+- [ ] **Cross-exchange monitoring**
+- [ ] **Arbitrage simple** entre exchanges
+- [ ] **Unified dashboard**
+- **KPI**: Diversification risque
 - [ ] **Real-time monitoring** dashboard
 - **KPI**: > 10% mensuel target
 
@@ -193,7 +188,7 @@ Devenir le système de trading automatisé le plus performant sur HyperLiquid av
 
 ---
 
-### 🏢 PHASE 5 - ENTERPRISE PLATFORM (3-6 mois)
+### 📈 PHASE 4 - OPTIMISATION CONTINUE (3-6 mois)
 **Objectif**: Transformation en platform multi-utilisateurs
 
 #### Mois 7-9: Multi-User Architecture

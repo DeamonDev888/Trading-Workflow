@@ -84,8 +84,9 @@ class HyperliquidWebSocket {
     // Start heartbeat (as backup)
     this.startHeartbeat();
 
-    // Start proactive reconnection before HyperLiquid's 60s timeout
-    this.startProactiveReconnection();
+    // Proactive reconnection disabled to prevent socket storms
+    // Only use if connection stability issues occur
+    // this.startProactiveReconnection();
   }
 
   handleMessage(data) {
@@ -178,6 +179,7 @@ class HyperliquidWebSocket {
 
   startHeartbeat() {
     this.stopHeartbeat();
+    this.heartbeatTimeoutId = null;
 
     this.heartbeatTimer = setInterval(() => {
       if (this.connected && this.websocket) {
@@ -192,8 +194,14 @@ class HyperliquidWebSocket {
           this.websocket.send(pingMessage);
 
           // Check for heartbeat timeout (35s to allow for network latency)
-          setTimeout(() => {
-            if (this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 35000) {
+          // Clear previous timeout to prevent accumulation
+          if (this.heartbeatTimeoutId) {
+            clearTimeout(this.heartbeatTimeoutId);
+          }
+
+          this.heartbeatTimeoutId = setTimeout(() => {
+            if (this.connected && this.websocket &&
+                this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 35000) {
               const timestamp = this.getTimestamp();
               console.warn(`[${timestamp}] [WARNING] [WEBSOCKET] ⚠️  Heartbeat timeout - forcing reconnection`);
               this.websocket.terminate();
@@ -213,6 +221,10 @@ class HyperliquidWebSocket {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
+    if (this.heartbeatTimeoutId) {
+      clearTimeout(this.heartbeatTimeoutId);
+      this.heartbeatTimeoutId = null;
+    }
   }
 
   /**
@@ -222,7 +234,7 @@ class HyperliquidWebSocket {
   startProactiveReconnection() {
     this.stopProactiveReconnection();
 
-    console.info(`[${this.getTimestamp()} [INFO] [SYSTEM] 🔄 Starting proactive reconnection check (interval: ${this.PROACTIVE_RECONNECT_INTERVAL/1000}s)`);
+    console.info(`[${this.getTimestamp()}] [INFO] [SYSTEM] 🔄 Starting proactive reconnection check (interval: ${this.PROACTIVE_RECONNECT_INTERVAL/1000}s)`);
 
     this.proactiveReconnectTimer = setInterval(() => {
       if (this.connected && this.websocket) {
