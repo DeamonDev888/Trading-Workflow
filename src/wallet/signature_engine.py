@@ -1,7 +1,7 @@
 """
  Signature Engine
 Secure transaction signing for Hyperliquid API operations
-Built with love by Deamon Dev 🚀
+Built with love by Deamon Dev [START]
 """
 
 import json
@@ -33,7 +33,7 @@ class SignatureEngine:
 
         if not self.private_key:
             raise ValueError(
-                "❌ HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
+                "[ERROR] HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
             )
 
         if (
@@ -41,19 +41,19 @@ class SignatureEngine:
             or len(self.private_key.strip()) < 64
         ):
             raise ValueError(
-                "❌ HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
+                "[ERROR] HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
             )
 
         try:
             self.account = Account.from_key(self.private_key)
             self.address = self.account.address
             cprint(
-                f"✅ Real signature wallet loaded: {self.address[:8]}...{self.address[-6:]}",
+                f"[OK] Real signature wallet loaded: {self.address[:8]}...{self.address[-6:]}",
                 "green",
             )
         except Exception as e:
             raise ValueError(
-                f"❌ Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
+                f"[ERROR] Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
             )
 
         self.current_nonce = int(time.time() * 1000)  # Start with timestamp
@@ -89,11 +89,11 @@ class SignatureEngine:
                 "v": signed_message.v,
             }
 
-            cprint(f"✅ Signed L1 action: {action.get('type', 'unknown')}", "green")
+            cprint(f"[OK] Signed L1 action: {action.get('type', 'unknown')}", "green")
             return signature
 
         except Exception as e:
-            cprint(f"❌ Failed to sign L1 action: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to sign L1 action: {str(e)}", "red")
             raise
 
     def sign_user_action(
@@ -124,11 +124,11 @@ class SignatureEngine:
                 "v": signed_message.v,
             }
 
-            cprint(f"✅ Signed user action: {action.get('type', 'unknown')}", "green")
+            cprint(f"[OK] Signed user action: {action.get('type', 'unknown')}", "green")
             return signature
 
         except Exception as e:
-            cprint(f"❌ Failed to sign user action: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to sign user action: {str(e)}", "red")
             raise
 
     def _create_l1_message(self, action: Dict[str, Any], nonce: int) -> str:
@@ -279,7 +279,7 @@ class SignatureEngine:
             return recovered_address.lower() == self.address.lower()
 
         except Exception as e:
-            cprint(f"❌ Signature verification failed: {str(e)}", "red")
+            cprint(f"[ERROR] Signature verification failed: {str(e)}", "red")
             return False
 
     def get_next_nonce(self) -> int:
@@ -296,7 +296,7 @@ class SignatureEngine:
             nonce: New nonce value
         """
         self.current_nonce = max(self.current_nonce, nonce + 1)
-        cprint(f"🔄 Nonce reset to: {self.current_nonce}", "yellow")
+        cprint(f"[REFRESH] Nonce reset to: {self.current_nonce}", "yellow")
 
     def create_order_signature(
         self, action: Dict[str, Any]

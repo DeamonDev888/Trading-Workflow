@@ -75,6 +75,10 @@ projet trading/
 - Erreurs TypeScript → Auto-fix
 - Syntax errors WebSocket (indentation) → Correction automatique
 - Optimisation performance système + diagnostics réseau
+- **Memory Leaks** → Timer cleanup, setTimeout imbriqués corrigés
+- **Socket Storms** → Reconnexion proactive désactivée, gestion timers améliorée
+- **Crash système** → Exceptions handling avec récupération gracieuse
+- **Épuisement ressources** → Méthodes cleanup() ajoutées, gestion mémoire optimisée
 
 ### 3. 🔧 NovaQuote Linter (agent-fix-linter.md)
 **Expertise**: Qualité code et corrections automatiques

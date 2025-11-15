@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 try:
     from .manager import AgentManager as NovaQuoteAgentManager
 except ImportError:
-    print("⚠️  agent_manager.py non trouvé. Utilisation du CLI direct.")
+    print("[WARNING]  agent_manager.py non trouvé. Utilisation du CLI direct.")
     NovaQuoteAgentManager = None
 
 
@@ -23,7 +23,7 @@ class EnhancedRiskAgent:
             self.use_manager = True
         else:
             self.use_manager = False
-            print("⚠️  Mode CLI direct - fonctionnalités limitées")
+            print("[WARNING]  Mode CLI direct - fonctionnalités limitées")
 
     def comprehensive_analysis(self):
         """
@@ -32,7 +32,7 @@ class EnhancedRiskAgent:
         Returns:
             dict: Résultats complets de l'analyse
         """
-        print("🚀 Lancement analyse complète du Risk Agent...")
+        print("[START] Lancement analyse complète du Risk Agent...")
 
         results = {}
 
@@ -51,7 +51,7 @@ class EnhancedRiskAgent:
             )
             results["security"] = security_result
 
-            print("⚡ Étape 3: Optimisation performance")
+            print("[FAST] Étape 3: Optimisation performance")
             perf_result = self.manager.run_agent(
                 "perf-optimizer",
                 "Optimiser les performances des calculs de risque dans risk_agent.py : algorithmes, boucles, utilisation mémoire",
@@ -72,7 +72,7 @@ class EnhancedRiskAgent:
             )
             results["documentation"] = docs_result
         else:
-            print("⚠️  Mode CLI direct - exécution séquentielle...")
+            print("[WARNING]  Mode CLI direct - exécution séquentielle...")
             import subprocess
 
             agents = [
@@ -93,7 +93,7 @@ class EnhancedRiskAgent:
             ]
 
             for agent_name, task in agents:
-                print(f"🔄 Exécution de {agent_name}...")
+                print(f"[REFRESH] Exécution de {agent_name}...")
                 cmd = [
                     "claude",
                     "--agents",
@@ -126,11 +126,11 @@ class EnhancedRiskAgent:
     def _print_summary(self, results):
         """Affiche un résumé des résultats"""
         print("\n" + "=" * 50)
-        print("📊 RÉSUMÉ DE L'ANALYSE RISK_AGENT.PY")
+        print("[METRICS] RÉSUMÉ DE L'ANALYSE RISK_AGENT.PY")
         print("=" * 50)
 
         for agent, result in results.items():
-            status_icon = "✅" if result.get("status") == "success" else "❌"
+            status_icon = "[OK]" if result.get("status") == "success" else "[ERROR]"
             agent_name = agent.replace("_", " ").title()
             print(f"{status_icon} {agent_name}: {result.get('status', 'unknown')}")
 
@@ -138,7 +138,7 @@ class EnhancedRiskAgent:
                 print(f"   📄 {result['stdout'][:100]}...")
 
         print("=" * 50)
-        print("🎯 Analyse terminée ! Consultez les rapports dans /reports/")
+        print("[TARGET] Analyse terminée ! Consultez les rapports dans /reports/")
 
     def quick_fix(self, issue_description):
         """Correction rapide d'un problème spécifique"""

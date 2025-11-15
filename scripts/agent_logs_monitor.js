@@ -1072,6 +1072,34 @@ class NovaQuoteLogsMonitor {
     console.info('   • WebSocket temps réel: ws://localhost:' + AGENT_LOGS_WS_PORT);
     console.info('   • Monitoring 24/7 des logs NOVAQUOTE actif\n');
   }
+
+  // Nettoyer les ressources pour prévenir les memory leaks
+  cleanup() {
+    console.info('🧹 Nettoyage des ressources du monitoring...');
+
+    // Arrêter tous les timers
+    if (this.timers.scanInterval) {
+      clearInterval(this.timers.scanInterval);
+      this.timers.scanInterval = null;
+    }
+
+    if (this.timers.healthCheckInterval) {
+      clearInterval(this.timers.healthCheckInterval);
+      this.timers.healthCheckInterval = null;
+    }
+
+    if (this.timers.monitoringInterval) {
+      clearInterval(this.timers.monitoringInterval);
+      this.timers.monitoringInterval = null;
+    }
+
+    // Vider les collections pour libérer la mémoire
+    this.filePositions.clear();
+    this.recentLogs = [];
+    this.alerts = [];
+
+    console.info('✅ Nettoyage des ressources terminé');
+  }
 }
 
 // Démarrer l'Agent Expert Logs NOVAQUOTE

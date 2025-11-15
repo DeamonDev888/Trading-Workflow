@@ -5,6 +5,37 @@
  */
 
 import Database from 'better-sqlite3';
+
+// Interface personnalisée pour better-sqlite3 avec toutes les méthodes nécessaires
+interface SQLiteDatabase {
+    prepare(source: string): Statement;
+    exec(source: string): this;
+    close(): void;
+    pragma(source: string): any;
+    transaction<T>(fn: (...args: any[]) => T): (...args: any[]) => T;
+    defaultSafeIntegers(): this;
+    open(): this;
+    // Méthodes de raccourci pour les requêtes
+    run(source: string, ...params: any[]): RunResult;
+    get(source: string, ...params: any[]): any;
+    all(source: string, ...params: any[]): any[];
+}
+
+interface Statement {
+    bind(...values: any[]): Statement;
+    run(...values: any[]): RunResult;
+    get(...values: any[]): any;
+    all(...values: any[]): any[];
+    each(...values: any[]): any;
+    readonly database: SQLiteDatabase;
+    readonly source: string;
+    readonly readonly: boolean;
+}
+
+interface RunResult {
+    changes: number;
+    lastInsertRowid: number;
+}
 import path from 'path';
 import crypto from 'crypto';
 
@@ -115,12 +146,12 @@ export interface WalletSummary {
 }
 
 class WalletDatabase {
-    private db: Database.Database | null = null;
+    private db: SQLiteDatabase | null = null;
 
     // Initialize database connection
     initialize(): void {
         try {
-            this.db = new Database(DB_PATH);
+            this.db = new Database(DB_PATH) as unknown as SQLiteDatabase;
 
             // Enable foreign keys
             this.db.pragma('foreign_keys = ON');
@@ -158,15 +189,15 @@ class WalletDatabase {
     // ================================
 
     // Create new wallet
-    async createWallet(metamaskAddress: string, walletName: string, description?: string): Promise<number> {
-        if (!this.db) await this.initialize();
+    createWallet(metamaskAddress: string, walletName: string, description?: string): number {
+        if (!this.db) this.initialize();
         if (!this.isValidEthereumAddress(metamaskAddress)) {
             throw new Error('Invalid MetaMask address format');
         }
 
         const addressHash = this.hashAddress(metamaskAddress);
 
-        const result = await this.db!.run(`
+        const result = this.db!.run(`
             INSERT INTO wallets (
                 metamask_address,
                 metamask_address_hash,
@@ -175,14 +206,14 @@ class WalletDatabase {
             ) VALUES (?, ?, ?, ?)
         `, [metamaskAddress, addressHash, walletName, description]);
 
-        return result.lastID!;
+        return result.lastInsertRowid;
     }
 
     // Get wallet by MetaMask address
-    async getWalletByAddress(metamaskAddress: string): Promise<Wallet | null> {
-        if (!this.db) await this.initialize();
+    getWalletByAddress(metamaskAddress: string): Wallet | null {
+        if (!this.db) this.initialize();
 
-        const row = await this.db!.get(`
+        const row = this.db!.get(`
             SELECT * FROM wallets WHERE metamask_address = ?
         `, [metamaskAddress]);
 
@@ -190,10 +221,10 @@ class WalletDatabase {
     }
 
     // Get wallet by ID
-    async getWalletById(walletId: number): Promise<Wallet | null> {
-        if (!this.db) await this.initialize();
+    getWalletById(walletId: number): Wallet | null {
+        if (!this.db) this.initialize();
 
-        const row = await this.db!.get(`
+        const row = this.db!.get(`
             SELECT * FROM wallets WHERE id = ?
         `, [walletId]);
 
@@ -201,10 +232,10 @@ class WalletDatabase {
     }
 
     // Update wallet verification status
-    async updateWalletVerification(walletId: number, isVerified: boolean, level: string): Promise<void> {
-        if (!this.db) await this.initialize();
+    updateWalletVerification(walletId: number, isVerified: boolean, level: string): void {
+        if (!this.db) this.initialize();
 
-        await this.db!.run(`
+        this.db!.run(`
             UPDATE wallets
             SET is_verified = ?, verification_level = ?
             WHERE id = ?
@@ -212,10 +243,10 @@ class WalletDatabase {
     }
 
     // Update last login timestamp
-    async updateLastLogin(walletId: number): Promise<void> {
-        if (!this.db) await this.initialize();
+    updateLastLogin(walletId: number): void {
+        if (!this.db) this.initialize();
 
-        await this.db!.run(`
+        this.db!.run(`
             UPDATE wallets SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?
         `, [walletId]);
     }
@@ -225,10 +256,10 @@ class WalletDatabase {
     // ================================
 
     // Get current balance for wallet
-    async getCurrentBalance(walletId: number, currency: string = 'USD'): Promise<WalletBalance | null> {
-        if (!this.db) await this.initialize();
+    getCurrentBalance(walletId: number, currency: string = 'USD'): WalletBalance | null {
+        if (!this.db) this.initialize();
 
-        const row = await this.db!.get(`
+        const row = this.db!.get(`
             SELECT * FROM wallet_balances
             WHERE wallet_id = ? AND currency = ?
             ORDER BY balance_timestamp DESC
@@ -245,9 +276,9 @@ class WalletDatabase {
         totalBalance: number,
         currency: string = 'USD'
     ): Promise<void> {
-        if (!this.db) await this.initialize();
+        if (!this.db) this.initialize();
 
-        await this.db!.run(`
+        this.db!.run(`
             INSERT INTO wallet_balances (
                 wallet_id, currency, available_balance, total_balance
             ) VALUES (?, ?, ?, ?)
@@ -255,10 +286,10 @@ class WalletDatabase {
     }
 
     // Get balance history
-    async getBalanceHistory(walletId: number, days: number = 30): Promise<WalletBalance[]> {
-        if (!this.db) await this.initialize();
+    getBalanceHistory(walletId: number, days: number = 30): WalletBalance[] {
+        if (!this.db) this.initialize();
 
-        const rows = await this.db!.all(`
+        const rows = this.db!.all(`
             SELECT * FROM wallet_balances
             WHERE wallet_id = ? AND balance_timestamp >= datetime('now', '-${days} days')
             ORDER BY balance_timestamp DESC
@@ -272,10 +303,10 @@ class WalletDatabase {
     // ================================
 
     // Create new trade
-    async createTrade(trade: Omit<Trade, 'id' | 'created_at' | 'updated_at'>): Promise<number> {
-        if (!this.db) await this.initialize();
+    createTrade(trade: Omit<Trade, 'id' | 'created_at' | 'updated_at'>): number {
+        if (!this.db) this.initialize();
 
-        const result = await this.db!.run(`
+        const result = this.db!.run(`
             INSERT INTO trades (
                 wallet_id, trade_id, order_id, symbol, exchange, side, order_type,
                 quantity, price, executed_quantity, executed_price, quote_quantity,
@@ -290,14 +321,14 @@ class WalletDatabase {
             trade.order_timestamp, trade.executed_timestamp
         ]);
 
-        return result.lastID!;
+        return result.lastInsertRowid;
     }
 
     // Get trades for wallet
-    async getTrades(walletId: number, limit: number = 50, offset: number = 0): Promise<Trade[]> {
-        if (!this.db) await this.initialize();
+    getTrades(walletId: number, limit: number = 50, offset: number = 0): Trade[] {
+        if (!this.db) this.initialize();
 
-        const rows = await this.db!.all(`
+        const rows = this.db!.all(`
             SELECT * FROM trades
             WHERE wallet_id = ?
             ORDER BY executed_timestamp DESC, created_at DESC
@@ -308,10 +339,10 @@ class WalletDatabase {
     }
 
     // Get trade statistics
-    async getTradeStats(walletId: number, days: number = 30): Promise<any> {
-        if (!this.db) await this.initialize();
+    getTradeStats(walletId: number, days: number = 30): any {
+        if (!this.db) this.initialize();
 
-        const stats = await this.db!.get(`
+        const stats = this.db!.get(`
             SELECT
                 COUNT(*) as total_trades,
                 SUM(CASE WHEN status = 'filled' THEN 1 ELSE 0 END) as filled_trades,
@@ -331,18 +362,18 @@ class WalletDatabase {
     // ================================
 
     // Create or update position
-    async upsertPosition(position: Omit<Position, 'id' | 'opened_at' | 'last_updated_at'>): Promise<number> {
-        if (!this.db) await this.initialize();
+    upsertPosition(position: Omit<Position, 'id' | 'opened_at' | 'last_updated_at'>): number {
+        if (!this.db) this.initialize();
 
         // Check if position exists
-        const existing = await this.db!.get(`
+        const existing = this.db!.get(`
             SELECT id FROM positions
             WHERE wallet_id = ? AND symbol = ? AND exchange = ? AND status = 'open'
         `, [position.wallet_id, position.symbol, position.exchange]);
 
         if (existing) {
             // Update existing position
-            await this.db!.run(`
+            this.db!.run(`
                 UPDATE positions SET
                     position_size = ?, entry_price = ?, current_price = ?,
                     unrealized_pnl = ?, realized_pnl = ?, total_pnl = ?, pnl_percentage = ?,
@@ -360,7 +391,7 @@ class WalletDatabase {
             return existing.id;
         } else {
             // Insert new position
-            const result = await this.db!.run(`
+            const result = this.db!.run(`
                 INSERT INTO positions (
                     wallet_id, symbol, exchange, side, position_size, entry_price, current_price,
                     unrealized_pnl, realized_pnl, total_pnl, pnl_percentage, margin_used,
@@ -374,15 +405,15 @@ class WalletDatabase {
                 position.stop_loss, position.take_profit, position.max_loss, position.status
             ]);
 
-            return result.lastID!;
+            return result.lastInsertRowid;
         }
     }
 
     // Get active positions for wallet
-    async getActivePositions(walletId: number): Promise<Position[]> {
-        if (!this.db) await this.initialize();
+    getActivePositions(walletId: number): Position[] {
+        if (!this.db) this.initialize();
 
-        const rows = await this.db!.all(`
+        const rows = this.db!.all(`
             SELECT * FROM positions
             WHERE wallet_id = ? AND status = 'open'
             ORDER BY opened_at DESC
@@ -392,10 +423,10 @@ class WalletDatabase {
     }
 
     // Close position
-    async closePosition(positionId: number, closePrice: number, finalPnl: number): Promise<void> {
-        if (!this.db) await this.initialize();
+    closePosition(positionId: number, closePrice: number, finalPnl: number): void {
+        if (!this.db) this.initialize();
 
-        await this.db!.run(`
+        this.db!.run(`
             UPDATE positions SET
                 status = 'closed',
                 current_price = ?,
@@ -412,10 +443,10 @@ class WalletDatabase {
     // ================================
 
     // Get complete wallet summary
-    async getWalletSummary(walletId: number): Promise<WalletSummary | null> {
-        if (!this.db) await this.initialize();
+    getWalletSummary(walletId: number): WalletSummary | null {
+        if (!this.db) this.initialize();
 
-        const row = await this.db!.get(`
+        const row = this.db!.get(`
             SELECT * FROM wallet_summary WHERE id = ?
         `, [walletId]);
 
@@ -423,10 +454,10 @@ class WalletDatabase {
     }
 
     // Get wallet performance metrics
-    async getWalletPerformance(walletId: number, days: number = 30): Promise<any> {
-        if (!this.db) await this.initialize();
+    getWalletPerformance(walletId: number, days: number = 30): any {
+        if (!this.db) this.initialize();
 
-        const performance = await this.db!.get(`
+        const performance = this.db!.get(`
             SELECT
                 wb.total_balance,
                 wb.daily_pnl,
@@ -450,11 +481,11 @@ class WalletDatabase {
     // ================================
 
     // Execute custom query
-    async executeQuery(query: string, params: any[] = []): Promise<any> {
-        if (!this.db) await this.initialize();
+    executeQuery(query: string, params: any[] = []): any {
+        if (!this.db) this.initialize();
 
         try {
-            const result = await this.db!.all(query, params);
+            const result = this.db!.all(query, params);
             return result;
         } catch (error) {
             console.error('Database query error:', error);

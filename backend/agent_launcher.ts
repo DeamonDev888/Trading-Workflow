@@ -283,8 +283,8 @@ export class AgentLauncher extends EventEmitter {
 
       // Préparer les variables d'environnement
       const env = { ...process.env, ...agentProcess.config.environment };
-      env.AGENT_NAME = agentName;
-      env.AGENT_START_TIME = Date.now().toString();
+      env['AGENT_NAME'] = agentName;
+      env['AGENT_START_TIME'] = Date.now().toString();
 
       // Démarrer le processus
       const child = spawn('python', [agentProcess.config.script], {

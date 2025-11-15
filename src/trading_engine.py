@@ -1,5 +1,5 @@
 """
-🚀 NOVAQUOTE Trading Engine
+[START] NOVAQUOTE Trading Engine
 Built with love by Deamon Dev
 Active trading signal execution and position management
 """
@@ -99,7 +99,7 @@ class NOVAQUOTETradingEngine:
         self.min_signal_strength = 0.6
         self.signal_timeout = 300  # 5 minutes
 
-        cprint(f"🚀 {self.name} v{self.version} initialized", "cyan")
+        cprint(f"[START] {self.name} v{self.version} initialized", "cyan")
         cprint(f"   Mode: {'PAPER TRADING' if paper_trading else 'LIVE TRADING'}", "yellow" if paper_trading else "red")
         cprint(f"   Testnet: {self.testnet}", "cyan")
 
@@ -125,10 +125,10 @@ class NOVAQUOTETradingEngine:
             if not await self.exchange_manager.health_check():
                 raise Exception("Exchange manager health check failed")
 
-            cprint("✅ Trading engine initialized successfully!", "green")
+            cprint("[OK] Trading engine initialized successfully!", "green")
 
         except Exception as e:
-            cprint(f"❌ Failed to initialize trading engine: {e}", "red")
+            cprint(f"[ERROR] Failed to initialize trading engine: {e}", "red")
             raise
 
     async def generate_trading_signals(self) -> List[TradingSignal]:
@@ -142,23 +142,23 @@ class NOVAQUOTETradingEngine:
             signals = []
 
             # Get strategy signals
-            cprint("📊 Generating strategy signals...", "blue")
+            cprint("[METRICS] Generating strategy signals...", "blue")
             strategy_signals = await self._get_strategy_signals()
             signals.extend(strategy_signals)
 
             # Get funding arbitrage signals
-            cprint("💰 Generating funding arbitrage signals...", "blue")
+            cprint("[MONEY] Generating funding arbitrage signals...", "blue")
             funding_signals = await self._get_funding_signals()
             signals.extend(funding_signals)
 
             # Filter and validate signals
             valid_signals = await self._validate_signals(signals)
 
-            cprint(f"🎯 Generated {len(valid_signals)} valid signals", "green")
+            cprint(f"[TARGET] Generated {len(valid_signals)} valid signals", "green")
             return valid_signals
 
         except Exception as e:
-            cprint(f"❌ Error generating signals: {e}", "red")
+            cprint(f"[ERROR] Error generating signals: {e}", "red")
             return []
 
     async def _get_strategy_signals(self) -> List[TradingSignal]:
@@ -186,7 +186,7 @@ class NOVAQUOTETradingEngine:
             return signals
 
         except Exception as e:
-            cprint(f"⚠️ Error getting strategy signals: {e}", "yellow")
+            cprint(f"[WARNING] Error getting strategy signals: {e}", "yellow")
             return []
 
     async def _get_funding_signals(self) -> List[TradingSignal]:
@@ -231,7 +231,7 @@ class NOVAQUOTETradingEngine:
             return signals
 
         except Exception as e:
-            cprint(f"⚠️ Error getting funding signals: {e}", "yellow")
+            cprint(f"[WARNING] Error getting funding signals: {e}", "yellow")
             return []
 
     async def _validate_signals(self, signals: List[TradingSignal]) -> List[TradingSignal]:
@@ -241,12 +241,12 @@ class NOVAQUOTETradingEngine:
         for signal in signals:
             # Check signal strength
             if signal.strength < self.min_signal_strength:
-                cprint(f"❌ Weak signal for {signal.symbol}: {signal.strength:.2f} < {self.min_signal_strength}", "red")
+                cprint(f"[ERROR] Weak signal for {signal.symbol}: {signal.strength:.2f} < {self.min_signal_strength}", "red")
                 continue
 
             # Check risk limits
             if not await self._check_risk_limits(signal):
-                cprint(f"❌ Risk limits exceeded for {signal.symbol}", "red")
+                cprint(f"[ERROR] Risk limits exceeded for {signal.symbol}", "red")
                 continue
 
             # Check if we already have position
@@ -254,17 +254,17 @@ class NOVAQUOTETradingEngine:
                 # Only allow signals that would reduce or close existing position
                 existing_pos = self.active_positions[signal.symbol]
                 if not self._is_closing_signal(signal, existing_pos):
-                    cprint(f"⚠️ Position already exists for {signal.symbol}", "yellow")
+                    cprint(f"[WARNING] Position already exists for {signal.symbol}", "yellow")
                     continue
 
             # Calculate position size
             signal.size = await self._calculate_position_size(signal)
             if signal.size <= 0:
-                cprint(f"❌ Invalid position size for {signal.symbol}", "red")
+                cprint(f"[ERROR] Invalid position size for {signal.symbol}", "red")
                 continue
 
             valid_signals.append(signal)
-            cprint(f"✅ Valid signal: {signal.symbol} {signal.signal_type.value} @ strength {signal.strength:.2f}", "green")
+            cprint(f"[OK] Valid signal: {signal.symbol} {signal.signal_type.value} @ strength {signal.strength:.2f}", "green")
 
         return valid_signals
 
@@ -273,24 +273,24 @@ class NOVAQUOTETradingEngine:
         try:
             # Check daily loss limit
             if self.daily_pnl < -self.max_daily_loss:
-                cprint(f"❌ Daily loss limit exceeded: ${self.daily_pnl:.2f}", "red")
+                cprint(f"[ERROR] Daily loss limit exceeded: ${self.daily_pnl:.2f}", "red")
                 return False
 
             # Check position count
             if len(self.active_positions) >= self.max_positions:
-                cprint(f"❌ Max positions reached: {len(self.active_positions)}", "red")
+                cprint(f"[ERROR] Max positions reached: {len(self.active_positions)}", "red")
                 return False
 
             # Get portfolio value from risk agent
             portfolio_value = self.risk_agent.get_portfolio_value()
             if portfolio_value < 100:  # Minimum portfolio value
-                cprint(f"❌ Portfolio value too low: ${portfolio_value:.2f}", "red")
+                cprint(f"[ERROR] Portfolio value too low: ${portfolio_value:.2f}", "red")
                 return False
 
             return True
 
         except Exception as e:
-            cprint(f"⚠️ Error checking risk limits: {e}", "yellow")
+            cprint(f"[WARNING] Error checking risk limits: {e}", "yellow")
             return False
 
     def _is_closing_signal(self, signal: TradingSignal, position: Dict[str, Any]) -> bool:
@@ -334,7 +334,7 @@ class NOVAQUOTETradingEngine:
             return max(position_size, 0.001)  # Minimum size
 
         except Exception as e:
-            cprint(f"⚠️ Error calculating position size: {e}", "yellow")
+            cprint(f"[WARNING] Error calculating position size: {e}", "yellow")
             return 0
 
     async def execute_signals(self, signals: List[TradingSignal]) -> List[Dict[str, Any]]:
@@ -369,7 +369,7 @@ class NOVAQUOTETradingEngine:
                 self.executed_signals.append(signal)
 
             except Exception as e:
-                cprint(f"❌ Error executing signal for {signal.symbol}: {e}", "red")
+                cprint(f"[ERROR] Error executing signal for {signal.symbol}: {e}", "red")
                 results.append({
                     'symbol': signal.symbol,
                     'success': False,
@@ -382,7 +382,7 @@ class NOVAQUOTETradingEngine:
     async def _execute_single_signal(self, signal: TradingSignal) -> Dict[str, Any]:
         """Execute a single trading signal"""
         try:
-            cprint(f"🎯 Executing {signal.signal_type.value} signal for {signal.symbol}", "blue")
+            cprint(f"[TARGET] Executing {signal.signal_type.value} signal for {signal.symbol}", "blue")
 
             if self.paper_trading:
                 # Simulate execution
@@ -434,7 +434,7 @@ class NOVAQUOTETradingEngine:
                 )
 
                 if result:
-                    cprint(f"✅ Order executed: {result.get('order_id', 'unknown')}", "green")
+                    cprint(f"[OK] Order executed: {result.get('order_id', 'unknown')}", "green")
                     return {
                         'symbol': signal.symbol,
                         'success': True,
@@ -447,7 +447,7 @@ class NOVAQUOTETradingEngine:
                     raise Exception("Order execution failed")
 
         except Exception as e:
-            cprint(f"❌ Execution failed for {signal.symbol}: {e}", "red")
+            cprint(f"[ERROR] Execution failed for {signal.symbol}: {e}", "red")
             return {
                 'symbol': signal.symbol,
                 'success': False,
@@ -461,7 +461,7 @@ class NOVAQUOTETradingEngine:
             if not self.active_positions:
                 return
 
-            cprint(f"📊 Managing {len(self.active_positions)} active positions...", "blue")
+            cprint(f"[METRICS] Managing {len(self.active_positions)} active positions...", "blue")
 
             for symbol, position in list(self.active_positions.items()):
                 try:
@@ -530,18 +530,18 @@ class NOVAQUOTETradingEngine:
                             # Remove from active positions
                             del self.active_positions[symbol]
 
-                            cprint(f"✅ Exited {symbol} position successfully", "green")
+                            cprint(f"[OK] Exited {symbol} position successfully", "green")
 
                 except Exception as e:
-                    cprint(f"❌ Error managing {symbol} position: {e}", "red")
+                    cprint(f"[ERROR] Error managing {symbol} position: {e}", "red")
 
         except Exception as e:
-            cprint(f"❌ Error in position management: {e}", "red")
+            cprint(f"[ERROR] Error in position management: {e}", "red")
 
     async def run_trading_cycle(self):
         """Run one complete trading cycle"""
         try:
-            cprint("🚀 Starting trading cycle...", "blue")
+            cprint("[START] Starting trading cycle...", "blue")
 
             # Reset daily P&L if new day
             if datetime.now().date() > self.last_reset_date:
@@ -555,15 +555,15 @@ class NOVAQUOTETradingEngine:
 
             # Step 2: Execute signals
             if signals:
-                cprint(f"⚡ Executing {len(signals)} signals...", "yellow")
+                cprint(f"[FAST] Executing {len(signals)} signals...", "yellow")
                 results = await self.execute_signals(signals)
 
                 # Log results
                 for result in results:
                     if result.get('success'):
-                        cprint(f"✅ {result['symbol']}: Order executed", "green")
+                        cprint(f"[OK] {result['symbol']}: Order executed", "green")
                     else:
-                        cprint(f"❌ {result['symbol']}: {result.get('error', 'Unknown error')}", "red")
+                        cprint(f"[ERROR] {result['symbol']}: {result.get('error', 'Unknown error')}", "red")
 
             # Step 3: Manage positions
             await self.manage_positions()
@@ -571,15 +571,15 @@ class NOVAQUOTETradingEngine:
             # Step 4: Update statistics
             await self._update_statistics()
 
-            cprint("✅ Trading cycle completed", "green")
+            cprint("[OK] Trading cycle completed", "green")
 
         except Exception as e:
-            cprint(f"❌ Trading cycle failed: {e}", "red")
+            cprint(f"[ERROR] Trading cycle failed: {e}", "red")
 
     async def run_continuous(self, cycle_interval: int = 60):
         """Run trading engine continuously"""
         try:
-            cprint(f"🔄 Starting continuous trading (interval: {cycle_interval}s)...", "blue")
+            cprint(f"[REFRESH] Starting continuous trading (interval: {cycle_interval}s)...", "blue")
 
             while True:
                 try:
@@ -591,12 +591,12 @@ class NOVAQUOTETradingEngine:
                     cprint("\n🛑 Trading engine stopped by user", "yellow")
                     break
                 except Exception as e:
-                    cprint(f"❌ Error in trading cycle: {e}", "red")
+                    cprint(f"[ERROR] Error in trading cycle: {e}", "red")
                     cprint("⏳ Waiting 30s before retry...", "yellow")
                     await asyncio.sleep(30)
 
         except Exception as e:
-            cprint(f"❌ Fatal error in continuous trading: {e}", "red")
+            cprint(f"[ERROR] Fatal error in continuous trading: {e}", "red")
 
     async def _update_statistics(self):
         """Update trading statistics"""
@@ -616,10 +616,10 @@ class NOVAQUOTETradingEngine:
             if len(self.signal_history) > 1000:
                 self.signal_history = self.signal_history[-1000:]
 
-            cprint(f"📊 Stats: {len(self.active_positions)} positions, P&L: ${self.daily_pnl:.2f}", "blue")
+            cprint(f"[METRICS] Stats: {len(self.active_positions)} positions, P&L: ${self.daily_pnl:.2f}", "blue")
 
         except Exception as e:
-            cprint(f"⚠️ Error updating statistics: {e}", "yellow")
+            cprint(f"[WARNING] Error updating statistics: {e}", "yellow")
 
     def get_status(self) -> Dict[str, Any]:
         """Get current engine status"""
@@ -644,17 +644,17 @@ class NOVAQUOTETradingEngine:
 
             # Close all positions if not paper trading
             if not self.paper_trading and self.active_positions:
-                cprint("⚠️ Emergency position closing!", "red")
+                cprint("[WARNING] Emergency position closing!", "red")
                 # Implementation for emergency closing
 
             # Close exchange manager
             if self.exchange_manager:
                 await self.exchange_manager.close()
 
-            cprint("✅ Trading engine shutdown complete", "green")
+            cprint("[OK] Trading engine shutdown complete", "green")
 
         except Exception as e:
-            cprint(f"❌ Error during shutdown: {e}", "red")
+            cprint(f"[ERROR] Error during shutdown: {e}", "red")
 
 
 # Factory function

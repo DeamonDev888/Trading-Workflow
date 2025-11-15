@@ -39,7 +39,7 @@ class NovaQuoteAgentManager:
         ]
 
         try:
-            print(f"🚀 Exécution de l'agent {agent_name}...")
+            print(f"[START] Exécution de l'agent {agent_name}...")
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_path)
 
             response = {
@@ -148,7 +148,7 @@ class NovaQuoteAgentManager:
         print("🔒 Étape 2: Code Reviewer...")
         results["code_reviewer"] = self.security_audit()
 
-        print("⚡ Étape 3: Performance Optimizer...")
+        print("[FAST] Étape 3: Performance Optimizer...")
         results["performance"] = self.optimize_performance()
 
         print("🧪 Étape 4: Test Enhancer...")
@@ -157,11 +157,11 @@ class NovaQuoteAgentManager:
         print("📚 Étape 5: Documentation Generator...")
         results["documentation"] = self.generate_docs()
 
-        print("✅ Analyse complète terminée !")
+        print("[OK] Analyse complète terminée !")
 
-        print("\n📊 Résumé des résultats:")
+        print("\n[METRICS] Résumé des résultats:")
         for agent, result in results.items():
-            status_icon = "✅" if result["status"] == "success" else "❌"
+            status_icon = "[OK]" if result["status"] == "success" else "[ERROR]"
             print(f"{status_icon} {agent}: {result['status']}")
 
         return results
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     manager = NovaQuoteAgentManager(project_path)
 
-    print("🚀 NOVAQUOTE Agent Manager")
+    print("[START] NOVAQUOTE Agent Manager")
     print("=" * 40)
 
     if len(sys.argv) > 1:

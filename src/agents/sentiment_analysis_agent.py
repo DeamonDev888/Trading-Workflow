@@ -568,12 +568,12 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             "VERY_BEARISH": "magenta",
         }.get(sentiment, "white")
 
-        cprint(f"🎯 SENTIMENT: {sentiment}", color)
+        cprint(f"[TARGET] SENTIMENT: {sentiment}", color)
         cprint(f"💪 STRENGTH: {result.get('strength', 0):.0f}%", color)
-        cprint(f"📊 ACTION: {result.get('action', 'HOLD')}", color)
+        cprint(f"[METRICS] ACTION: {result.get('action', 'HOLD')}", color)
         cprint(f"🎲 CONFIDENCE: {result.get('confidence', 0):.0f}%", "blue")
 
-        print(f"\n📈 Sources Summary:")
+        print(f"\n[UP] Sources Summary:")
         for platform, count in result.get("sources_summary", {}).items():
             print(f"   • {platform.title()}: {count} items")
 
@@ -585,7 +585,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                 print(f"   • {factor}")
 
         if result.get("risk_assessment"):
-            print(f"\n⚠️ Risk Assessment: {result['risk_assessment']}")
+            print(f"\n[WARNING] Risk Assessment: {result['risk_assessment']}")
 
         print(f"{'='*80}\n")
 
@@ -642,12 +642,12 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
 
             avg_confidence = total_confidence / valid_results
 
-            print(f"📊 Sentiment Distribution:")
+            print(f"[METRICS] Sentiment Distribution:")
             for sentiment, count in sorted(sentiment_counts.items()):
                 percentage = (count / valid_results) * 100
                 print(f"   • {sentiment}: {count} tokens ({percentage:.1f}%)")
 
-            print(f"\n📈 Average Confidence: {avg_confidence:.1f}%")
+            print(f"\n[UP] Average Confidence: {avg_confidence:.1f}%")
             print(f"🔢 Tokens Analyzed: {valid_results}")
 
             if sentiment_counts:
@@ -660,8 +660,8 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
                     "VERY_BEARISH": "magenta",
                 }.get(dominant_sentiment, "white")
 
-                cprint(f"\n🎯 OVERALL MARKET SENTIMENT: {dominant_sentiment}", color)
-                cprint(f"📊 Market Confidence: {avg_confidence:.1f}%", "blue")
+                cprint(f"\n[TARGET] OVERALL MARKET SENTIMENT: {dominant_sentiment}", color)
+                cprint(f"[METRICS] Market Confidence: {avg_confidence:.1f}%", "blue")
 
             print(f"{'='*80}\n")
 

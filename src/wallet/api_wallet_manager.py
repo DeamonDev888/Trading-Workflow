@@ -1,7 +1,7 @@
 """
  Wallet Manager
 Manages the configured wallet for Hyperliquid trading operations
-Built with love by Deamon Dev 🚀
+Built with love by Deamon Dev [START]
 """
 
 import os
@@ -39,7 +39,7 @@ class WalletManager:
 
         if not self.private_key:
             raise ValueError(
-                "❌ HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
+                "[ERROR] HYPER_LIQUID_KEY not found in environment variables. Please set your real Ethereum private key in the .env file."
             )
 
         if (
@@ -47,19 +47,19 @@ class WalletManager:
             or len(self.private_key.strip()) < 64
         ):
             raise ValueError(
-                "❌ HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
+                "[ERROR] HYPER_LIQUID_KEY is set to placeholder or invalid value. Please set your real 64-character hex Ethereum private key."
             )
 
         try:
             self.account = Account.from_key(self.private_key)
             self.address = self.account.address
             cprint(
-                f"✅ Real wallet loaded: {self.address[:8]}...{self.address[-6:]}",
+                f"[OK] Real wallet loaded: {self.address[:8]}...{self.address[-6:]}",
                 "green",
             )
         except Exception as e:
             raise ValueError(
-                f"❌ Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
+                f"[ERROR] Invalid HYPER_LIQUID_KEY format: {str(e)}. Please check your private key."
             )
 
         self.permissions = self._load_wallet_permissions()
@@ -123,7 +123,7 @@ class WalletManager:
         self.wallet_info["permissions"] = self.permissions
         self.wallet_info["last_updated"] = datetime.now().isoformat()
 
-        cprint(f"✅ Updated wallet permissions: {', '.join(self.permissions)}", "green")
+        cprint(f"[OK] Updated wallet permissions: {', '.join(self.permissions)}", "green")
 
     def get_active_wallets(self) -> List[Dict[str, Any]]:
         """Get active wallets (returns configured wallet)"""

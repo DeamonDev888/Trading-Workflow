@@ -9,7 +9,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface AgentHealthStatus {
+export interface AgentHealthStatus {
   name: string;
   status: 'healthy' | 'warning' | 'error' | 'offline';
   lastPing: number;
@@ -37,6 +37,8 @@ interface AgentProcess {
   scriptPath: string;
   process?: any;
   restartCount: number;
+  memoryUsage?: NodeJS.MemoryUsage;
+  cwd?: string;
 }
 
 export class AgentHealthMonitor extends EventEmitter {
@@ -110,14 +112,14 @@ export class AgentHealthMonitor extends EventEmitter {
     ];
 
     agentConfigs.forEach(config => {
-      const process: AgentProcess = {
+      const agentProcess: AgentProcess = {
         name: config.name,
         startTime: Date.now(),
         scriptPath: config.script,
         restartCount: 0
       };
 
-      this.processes.set(config.name, process);
+      this.processes.set(config.name, agentProcess);
 
       // Initialiser l'état de santé
       const health: AgentHealthStatus = {
@@ -173,9 +175,9 @@ export class AgentHealthMonitor extends EventEmitter {
   private async checkAgentHealth(agentName: string): Promise<void> {
     const startTime = Date.now();
     const health = this.agents.get(agentName);
-    const process = this.processes.get(agentName);
+    const agentProcess = this.processes.get(agentName);
 
-    if (!health || !process) return;
+    if (!health || !agentProcess) return;
 
     try {
       // Ping de l'agent via HTTP/WebSocket
@@ -187,7 +189,7 @@ export class AgentHealthMonitor extends EventEmitter {
 
       if (isResponding) {
         health.status = 'healthy';
-        health.uptime = Date.now() - process.startTime;
+        health.uptime = Date.now() - agentProcess.startTime;
 
         // Récupérer les métriques de l'agent
         await this.updateAgentMetrics(agentName);
@@ -249,15 +251,14 @@ export class AgentHealthMonitor extends EventEmitter {
    */
   private async checkPythonProcess(agentName: string): Promise<boolean> {
     try {
-      const { spawn } = require('child_process');
-      const process = this.processes.get(agentName);
+      const agentProcess = this.processes.get(agentName);
 
-      if (process?.process && !process.process.killed) {
+      if (agentProcess?.process && !agentProcess.process.killed) {
         return true;
       }
 
       // Tenter de lancer l'agent s'il n'est pas actif
-      if (!process?.process) {
+      if (!agentProcess?.process) {
         await this.startAgent(agentName);
         return true;
       }
@@ -272,35 +273,35 @@ export class AgentHealthMonitor extends EventEmitter {
    * Démarre un agent
    */
   private async startAgent(agentName: string): Promise<void> {
-    const process = this.processes.get(agentName);
-    if (!process) return;
+    const agentProcess = this.processes.get(agentName);
+    if (!agentProcess) return;
 
     try {
       const { spawn } = require('child_process');
 
       this.log(`🚀 Starting agent: ${agentName}`);
 
-      const agentProcess = spawn('python', [process.scriptPath], {
+      const spawnedProcess = spawn('python', [agentProcess.scriptPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: process.cwd()
+        cwd: agentProcess.cwd || process.cwd()
       });
 
-      process.pid = agentProcess.pid;
-      process.process = agentProcess;
-      process.startTime = Date.now();
+      agentProcess.pid = spawnedProcess.pid;
+      agentProcess.process = spawnedProcess;
+      agentProcess.startTime = Date.now();
 
       // Logging des sorties de l'agent
-      agentProcess.stdout.on('data', (data: Buffer) => {
+      spawnedProcess.stdout.on('data', (data: Buffer) => {
         this.log(`📤 ${agentName}: ${data.toString().trim()}`);
         this.updateAgentActivity(agentName);
       });
 
-      agentProcess.stderr.on('data', (data: Buffer) => {
+      spawnedProcess.stderr.on('data', (data: Buffer) => {
         this.log(`❌ ${agentName} Error: ${data.toString().trim()}`);
         this.incrementAgentError(agentName);
       });
 
-      agentProcess.on('close', (code: number) => {
+      spawnedProcess.on('close', (code: number) => {
         this.log(`🔴 Agent ${agentName} exited with code ${code}`);
         this.markAgentOffline(agentName);
       });

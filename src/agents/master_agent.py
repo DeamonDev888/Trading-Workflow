@@ -728,7 +728,7 @@ class MasterAgent:
         cprint(f"{'='*80}\n", "cyan")
 
     async def update_dashboard(self, cycle_metrics: CycleMetrics):
-        """📱 Met à jour le dashboard frontend"""
+        """Met à jour le dashboard frontend"""
         dashboard_data = {
             "timestamp": datetime.now().isoformat(),
             "cycle_id": cycle_metrics.cycle_id,

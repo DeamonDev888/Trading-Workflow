@@ -2225,18 +2225,21 @@
             const startBtn = document.getElementById('start-auto-trading-btn');
             const stopBtn = document.getElementById('stop-auto-trading-btn');
 
-            const status = result.data?.status || result.status;
+            const data = result.data || result;
+            const status = data.status || 'inactive';
+            const isActive = status === 'active' || data.auto_trading_enabled === true;
 
-            if (statusText && status) {
-              statusText.textContent = status.active ? 'Active' : 'Inactive';
+            if (statusText) {
+              statusText.textContent = isActive ? 'Active' : 'Inactive';
+              statusText.style.color = isActive ? '#10b981' : '#ef4444';
             }
 
-            if (startBtn && status) {
-              startBtn.disabled = status.active;
+            if (startBtn) {
+              startBtn.disabled = isActive;
             }
 
-            if (stopBtn && status) {
-              stopBtn.disabled = !status.active;
+            if (stopBtn) {
+              stopBtn.disabled = !isActive;
             }
           }
         } catch (error) {

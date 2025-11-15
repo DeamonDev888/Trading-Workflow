@@ -1,7 +1,7 @@
 """
  Wallet Registry
 Central registry for managing approved wallets and their permissions
-Built with love by Deamon Dev 🚀
+Built with love by Deamon Dev [START]
 """
 
 import json
@@ -44,7 +44,7 @@ class WalletRegistry:
                 with open(self.registry_file, "r") as f:
                     return json.load(f)
         except Exception as e:
-            cprint(f"⚠️ Failed to load registry: {str(e)}", "yellow")
+            cprint(f"[WARNING] Failed to load registry: {str(e)}", "yellow")
 
         return {
             "master_address": "",
@@ -60,7 +60,7 @@ class WalletRegistry:
             with open(self.registry_file, "w") as f:
                 json.dump(self.registry, f, indent=2, default=str)
         except Exception as e:
-            cprint(f"❌ Failed to save registry: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to save registry: {str(e)}", "red")
 
     def register_wallet(self, wallet_address: str, metadata: Dict[str, Any]) -> bool:
         """
@@ -96,13 +96,13 @@ class WalletRegistry:
             self._save_registry()
 
             cprint(
-                f"✅ Registered wallet: {wallet_address[:8]}...{wallet_address[-6:]}",
+                f"[OK] Registered wallet: {wallet_address[:8]}...{wallet_address[-6:]}",
                 "green",
             )
             return True
 
         except Exception as e:
-            cprint(f"❌ Failed to register wallet: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to register wallet: {str(e)}", "red")
             return False
 
     def update_wallet_permissions(
@@ -120,7 +120,7 @@ class WalletRegistry:
         """
         try:
             if wallet_address not in self.registry.get("wallets", {}):
-                cprint(f"⚠️ Wallet not found: {wallet_address[:8]}...", "yellow")
+                cprint(f"[WARNING] Wallet not found: {wallet_address[:8]}...", "yellow")
                 return False
 
             self.registry["wallets"][wallet_address]["permissions"] = permissions
@@ -130,12 +130,12 @@ class WalletRegistry:
             self._save_registry()
 
             cprint(
-                f"✅ Updated permissions for wallet: {wallet_address[:8]}...", "green"
+                f"[OK] Updated permissions for wallet: {wallet_address[:8]}...", "green"
             )
             return True
 
         except Exception as e:
-            cprint(f"❌ Failed to update permissions: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to update permissions: {str(e)}", "red")
             return False
 
     def get_wallet_info(self, wallet_address: str) -> Optional[Dict[str, Any]]:
@@ -193,7 +193,7 @@ class WalletRegistry:
         """
         try:
             if wallet_address not in self.registry.get("wallets", {}):
-                cprint(f"⚠️ Wallet not found: {wallet_address[:8]}...", "yellow")
+                cprint(f"[WARNING] Wallet not found: {wallet_address[:8]}...", "yellow")
                 return False
 
             self.registry["wallets"][wallet_address]["is_active"] = False
@@ -207,7 +207,7 @@ class WalletRegistry:
             return True
 
         except Exception as e:
-            cprint(f"❌ Failed to deactivate wallet: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to deactivate wallet: {str(e)}", "red")
             return False
 
     def log_wallet_activity(
@@ -260,7 +260,7 @@ class WalletRegistry:
             self._save_registry()
 
         except Exception as e:
-            cprint(f"⚠️ Failed to log activity: {str(e)}", "yellow")
+            cprint(f"[WARNING] Failed to log activity: {str(e)}", "yellow")
 
     def get_active_wallets(self) -> List[Dict[str, Any]]:
         """Get all active wallets"""
@@ -389,10 +389,10 @@ class WalletRegistry:
         try:
             with open(filepath, "w") as f:
                 json.dump(self.registry, f, indent=2, default=str)
-            cprint(f"✅ Registry exported to: {filepath}", "green")
+            cprint(f"[OK] Registry exported to: {filepath}", "green")
             return True
         except Exception as e:
-            cprint(f"❌ Failed to export registry: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to export registry: {str(e)}", "red")
             return False
 
     def import_registry(self, filepath: str) -> bool:
@@ -416,8 +416,8 @@ class WalletRegistry:
                 self.registry["wallets"].update(imported_registry["wallets"])
 
             self._save_registry()
-            cprint(f"✅ Registry imported from: {filepath}", "green")
+            cprint(f"[OK] Registry imported from: {filepath}", "green")
             return True
         except Exception as e:
-            cprint(f"❌ Failed to import registry: {str(e)}", "red")
+            cprint(f"[ERROR] Failed to import registry: {str(e)}", "red")
             return False

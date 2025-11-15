@@ -44,11 +44,11 @@ export class DatabaseManager extends EventEmitter {
   private initializeConfig(): void {
     // Configuration pour PostgreSQL (production)
     this.config = {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'novaquote_prod',
-      user: process.env.DB_USER || 'novaquote_user',
-      password: process.env.DB_PASSWORD || 'your_secure_password',
+      host: process.env['DB_HOST'] || 'localhost',
+      port: parseInt(process.env['DB_PORT'] || '5432'),
+      database: process.env['DB_NAME'] || 'novaquote_prod',
+      user: process.env['DB_USER'] || 'novaquote_user',
+      password: process.env['DB_PASSWORD'] || 'your_secure_password',
       max: 20, // Maximum connections
       min: 5,  // Minimum connections
       idleTimeoutMillis: 30000, // 30 seconds
@@ -111,7 +111,7 @@ export class DatabaseManager extends EventEmitter {
   private async connectToPostgreSQL(): Promise<void> {
     const poolConfig: PoolConfig = {
       ...this.config,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      ssl: process.env['NODE_ENV'] === 'production' ? { rejectUnauthorized: false } : false
     };
 
     this.pool = new Pool(poolConfig);

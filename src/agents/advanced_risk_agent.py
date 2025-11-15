@@ -511,7 +511,7 @@ Should this aggressive position be approved with the proposed parameters?
     def _display_assessment_result(self, result: Dict):
         """Display comprehensive assessment result"""
         print(f"\n{'='*80}")
-        approved_symbol = "✅ APPROVED" if result["approved"] else "❌ REJECTED"
+        approved_symbol = "[OK] APPROVED" if result["approved"] else "[ERROR] REJECTED"
         print(f"[ASSESSMENT RESULT] {approved_symbol}")
         print(f"{'='*80}")
 

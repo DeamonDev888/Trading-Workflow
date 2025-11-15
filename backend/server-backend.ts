@@ -174,8 +174,8 @@ interface TradingConfig {
 
 // Configuration du Mode Unidirectionnel - Active par défaut
 const TRADING_CONFIG: TradingConfig = {
-  UNIDIRECTIONAL_MODE: true, // ✅ ACTIF - Empêche LONG + SHORT simultanés
-  ALLOWED_SIDE: 'long', // Ou 'short' - Détermine la direction autorisée
+  UNIDIRECTIONAL_MODE: false, // ✅ DÉSACTIVÉ - Permet LONG + SHORT pour paper trading
+  ALLOWED_SIDE: 'both', // Permet les deux directions en mode simulation
 };
 
 // 🚀 Logger Ultra-Efficace - HyperLiquid Optimized
@@ -403,17 +403,126 @@ async function initializeHyperLiquid(): Promise<void> {
       }
 }
 
-// Initialize HyperLiquid WebSocket
+// WebSocket reconnection management
+let wsReconnectAttempts = 0;
+let wsReconnectTimer: NodeJS.Timeout | null = null;
+let wsHeartbeatTimer: NodeJS.Timeout | null = null;
+const MAX_RECONNECT_ATTEMPTS = 50;
+const BASE_RECONNECT_DELAY = 2000; // 2 seconds base
+const HEARTBEAT_INTERVAL = 15000; // 15 seconds
+
+// Initialize HyperLiquid WebSocket with improved reconnection
 function initializeHyperLiquidWS(): void {
+  wsReconnectAttempts = 0;
+  connectHyperLiquidWS();
+}
+
+function connectHyperLiquidWS(): void {
   try {
-    if (HyperliquidWebSocket) {
+    if (HyperliquidWebSocket && wsReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      log.info(`Connecting to HyperLiquid WebSocket (attempt ${wsReconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`, 'WEBSOCKET');
+
       hlWS = new HyperliquidWebSocket();
-      hlWS.connect();
-      log.success('HyperLiquid WebSocket connected');
-    }
-      } catch (error: any) {
-        log.error(`Failed to initialize HyperLiquid WebSocket: ${error?.message || error}`);
+
+      // Add connection event listeners if available
+      if (hlWS.on) {
+        hlWS.on('open', () => {
+          log.success('HyperLiquid WebSocket connected', 'SYSTEM');
+          wsReconnectAttempts = 0;
+          startWSHeartbeat();
+
+          // Clear any existing reconnect timer
+          if (wsReconnectTimer) {
+            clearTimeout(wsReconnectTimer);
+            wsReconnectTimer = null;
+          }
+        });
+
+        hlWS.on('close', (code: number, reason: string) => {
+          log.info(`HyperLiquid WebSocket disconnected - Code: ${code}, Reason: ${reason || 'No reason'}`, 'SYSTEM');
+          stopWSHeartbeat();
+          scheduleReconnect();
+        });
+
+        hlWS.on('error', (error: any) => {
+          log.error(`HyperLiquid WebSocket error: ${error?.message || error}`, 'WEBSOCKET');
+          stopWSHeartbeat();
+        });
+
+        hlWS.on('pong', () => {
+          log.info('HyperLiquid WebSocket pong received', 'WEBSOCKET');
+        });
       }
+
+      hlWS.connect();
+      log.success('HyperLiquid WebSocket connection initiated', 'SYSTEM');
+
+      // Fallback heartbeat if no events are available
+      setTimeout(() => {
+        if (wsReconnectAttempts === 0) {
+          startWSHeartbeat();
+        }
+      }, 5000);
+
+    } else if (wsReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      log.error(`Maximum WebSocket reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`, 'WEBSOCKET');
+    }
+  } catch (error: any) {
+    log.error(`Failed to initialize HyperLiquid WebSocket: ${error?.message || error}`, 'WEBSOCKET');
+    scheduleReconnect();
+  }
+}
+
+function scheduleReconnect(): void {
+  if (wsReconnectTimer) {
+    return; // Already scheduled
+  }
+
+  wsReconnectAttempts++;
+
+  // Exponential backoff with jitter
+  const exponentialDelay = BASE_RECONNECT_DELAY * Math.pow(1.5, Math.min(wsReconnectAttempts - 1, 10));
+  const jitter = Math.random() * 1000; // 0-1 second jitter
+  const totalDelay = exponentialDelay + jitter;
+
+  log.info(`Scheduling WebSocket reconnection attempt ${wsReconnectAttempts + 1} in ${Math.round(totalDelay)}ms`, 'WEBSOCKET');
+
+  wsReconnectTimer = setTimeout(() => {
+    wsReconnectTimer = null;
+    connectHyperLiquidWS();
+  }, totalDelay);
+}
+
+function startWSHeartbeat(): void {
+  stopWSHeartbeat(); // Clear any existing timer
+
+  wsHeartbeatTimer = setInterval(() => {
+    try {
+      if (hlWS && hlWS.readyState === 1) { // WebSocket.OPEN
+        // Send ping if available
+        if (hlWS.ping) {
+          hlWS.ping();
+        } else {
+          log.info('HyperLiquid WebSocket heartbeat (no ping method)', 'WEBSOCKET');
+        }
+      } else {
+        log.warn('HyperLiquid WebSocket not ready for heartbeat', 'WEBSOCKET');
+        stopWSHeartbeat();
+        scheduleReconnect();
+      }
+    } catch (error: any) {
+      log.error(`WebSocket heartbeat error: ${error?.message || error}`, 'WEBSOCKET');
+      stopWSHeartbeat();
+      scheduleReconnect();
+    }
+  }, HEARTBEAT_INTERVAL);
+}
+
+function stopWSHeartbeat(): void {
+  if (wsHeartbeatTimer) {
+    clearInterval(wsHeartbeatTimer);
+    wsHeartbeatTimer = null;
+  }
 }
 
 // ============================================================================
@@ -571,6 +680,147 @@ let autoTradingStats = {
   aggressive_mode: true,
   paper_trading_mode: true,
 };
+
+// 📊 Paper Trading P&L Calculation
+interface PaperTrade {
+  timestamp: number;
+  symbol: string;
+  side: 'BUY' | 'SELL';
+  entryPrice: number;
+  size: number;
+  currentPrice?: number;
+  pnl?: number;
+  status: 'OPEN' | 'CLOSED';
+}
+
+let paperTrades: PaperTrade[] = [];
+let paperWalletBalance = 1000; // Starting balance
+
+function calculatePaperTradingPnL() {
+  const now = Date.now();
+
+  // Generate initial positions when auto-trading is active
+  if (autoTradingActive && paperTrades.length === 0) {
+    // Create 3 initial simulated positions
+    const initialSymbols = ['BTC', 'ETH', 'SOL'];
+    const initialSides: ('BUY' | 'SELL')[] = ['BUY', 'SELL', 'BUY'];
+
+    for (let i = 0; i < 3; i++) {
+      const symbol = initialSymbols[i];
+      const side: 'BUY' | 'SELL' = initialSides[i];
+
+      // Use realistic prices for different symbols
+      let basePrice: number;
+      switch(symbol) {
+      case 'BTC':
+        basePrice = 90000 + Math.random() * 10000; // $90k-$100k
+        break;
+      case 'ETH':
+        basePrice = 3000 + Math.random() * 500; // $3k-$3.5k
+        break;
+      case 'SOL':
+        basePrice = 200 + Math.random() * 50; // $200-$250
+        break;
+      case 'ARB':
+        basePrice = 1.0 + Math.random() * 0.5; // $1-$1.5
+        break;
+      case 'APT':
+        basePrice = 10 + Math.random() * 5; // $10-$15
+        break;
+      default:
+        basePrice = 100; // fallback
+    }
+
+    const newTrade: PaperTrade = {
+      timestamp: now,
+      symbol: symbol,
+      side,
+      entryPrice: basePrice,
+      size: 0.01 + Math.random() * 0.09, // 0.01 - 0.1 size (more visible)
+      status: 'OPEN'
+    };
+
+    paperTrades.push(newTrade);
+    log.info(`Paper trade added: ${side} ${newTrade.size.toFixed(4)} ${symbol} @ $${basePrice.toFixed(2)}`, 'PAPER-TRADING');
+    }
+  }
+
+  // Update current prices and calculate P&L for open trades
+  let totalPnL = 0;
+  let total24hPnL = 0;
+  const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+
+  paperTrades = paperTrades.map(trade => {
+    // Simulate price movement with more realistic volatility
+    const priceChange = (Math.random() - 0.5) * 0.04; // ±2%
+    trade.currentPrice = trade.entryPrice * (1 + priceChange);
+
+    // Calculate P&L properly
+    if (trade.entryPrice > 0 && trade.size > 0) {
+      const priceDiff = trade.currentPrice - trade.entryPrice;
+      trade.pnl = trade.side === 'BUY' ?
+        priceDiff * trade.size :
+        -priceDiff * trade.size;
+
+      // Add to totals
+      totalPnL += trade.pnl;
+      if (trade.timestamp > twentyFourHoursAgo) {
+        total24hPnL += trade.pnl;
+      }
+    } else {
+      trade.pnl = 0;
+    }
+
+    return trade;
+  });
+
+  // Close some profitable trades randomly (but don't close them too often)
+  if (paperTrades.length > 1 && Math.random() > 0.9) {
+    const randomIndex = Math.floor(Math.random() * paperTrades.length);
+    if (paperTrades[randomIndex].pnl && paperTrades[randomIndex].pnl! > 5 && paperTrades[randomIndex].status === 'OPEN') {
+      paperTrades[randomIndex].status = 'CLOSED';
+      // Update wallet balance when trade closes
+      paperWalletBalance += paperTrades[randomIndex].pnl!;
+      log.info(`Paper trade closed: ${paperTrades[randomIndex].symbol} P&L: $${paperTrades[randomIndex].pnl!.toFixed(2)}`, 'PAPER-TRADING');
+    }
+  }
+
+  // Calculate current equity - only include open trades P&L
+  const openTradesPnL = paperTrades.filter(t => t.status === 'OPEN').reduce((sum, t) => sum + (t.pnl || 0), 0);
+  const currentEquity = paperWalletBalance + openTradesPnL;
+
+  // Calculate percentages based on initial balance
+  const initialBalance = 1000;
+  const pnlPercent24h = initialBalance > 0 ? (total24hPnL / initialBalance) * 100 : 0;
+  const pnlPercentTotal = initialBalance > 0 ? (totalPnL / initialBalance) * 100 : 0;
+
+  return {
+    address: 'paper-trading-simulated',
+    network: 'simulation',
+    balance: currentEquity,
+    usd_balance: currentEquity,
+    collateral: currentEquity,
+    equity: currentEquity,
+    margin_usage: paperTrades.length > 0 ? Math.min((totalPnL / currentEquity) * 100, 95) : 0,
+    leverage: 1,
+    mode: 'paper_trading',
+    status: 'active',
+    timestamp: new Date().toISOString(),
+    positions_count: paperTrades.filter(t => t.status === 'OPEN').length,
+    open_orders_count: 0,
+    pnl_24h: total24hPnL,
+    pnl_total: totalPnL,
+    pnl_percent_24h: pnlPercent24h,
+    pnl_percent_total: pnlPercentTotal,
+    trades_count: paperTrades.length,
+    active_trades: paperTrades.filter(t => t.status === 'OPEN'),
+    trading_performance: {
+      win_rate: paperTrades.filter(t => t.status === 'CLOSED' && t.pnl! > 0).length / Math.max(paperTrades.filter(t => t.status === 'CLOSED').length, 1) * 100,
+      total_trades: paperTrades.length,
+      profitable_trades: paperTrades.filter(t => t.pnl! > 0).length
+    }
+  };
+}
 
 // 🔄 Fonction d'exécution automatique de l'auto-trading
 async function executeAutoTrading() {
@@ -1178,7 +1428,63 @@ app.post('/api/trading/order', async (req: Request, res: Response) => {
  */
 app.get('/api/positions', async (req: Request, res: Response) => {
   try {
-    // Récupérer les positions avec P&L et ROE en temps réel
+    // Check if paper trading mode
+    const metamaskAddress = (req.headers['x-metamask-address'] as string) || (req.query['address'] as string);
+
+    if (!metamaskAddress) {
+      // Return simulated paper trading positions
+      const paperTradingData = calculatePaperTradingPnL();
+      const simulatedPositions = paperTradingData.active_trades.map((trade: PaperTrade) => ({
+        coin: trade.symbol,
+        side: trade.side,
+        position: trade.size > 0 ? trade.size.toFixed(4) : '0.0001',
+        entry_price: trade.entryPrice > 0 ? trade.entryPrice.toFixed(2) : '0.00',
+        mark_price: trade.currentPrice && trade.currentPrice > 0 ? trade.currentPrice.toFixed(2) : trade.entryPrice.toFixed(2),
+        pnl_value: trade.pnl && !isNaN(trade.pnl) ? trade.pnl.toFixed(2) : '0.00',
+        pnl_percentage: trade.entryPrice > 0 && trade.size > 0 && trade.pnl && !isNaN(trade.pnl) ?
+          ((trade.pnl / (trade.entryPrice * trade.size)) * 100).toFixed(2) : '0.00',
+        leverage: '1x',
+        margin_used: trade.entryPrice > 0 && trade.size > 0 ? (trade.size * trade.entryPrice).toFixed(2) : '0.00',
+        liquidation_price: trade.side === 'BUY' ? (trade.entryPrice * 0.8).toFixed(2) : (trade.entryPrice * 1.2).toFixed(2),
+        funding_rate: (Math.random() * 0.02 - 0.01).toFixed(4), // Random funding rate
+        next_funding_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), // 8 hours from now
+        status: trade.status,
+        unrealized_pnl: trade.pnl && !isNaN(trade.pnl) ? trade.pnl.toFixed(2) : '0.00',
+        realized_pnl: '0.00',
+        timestamp_opened: new Date(trade.timestamp).toISOString(),
+        roe: trade.entryPrice > 0 && trade.size > 0 && trade.pnl && !isNaN(trade.pnl) ?
+          ((trade.pnl / (trade.entryPrice * trade.size)) * 100).toFixed(2) : '0.00'
+      }));
+
+      const stats = {
+        total_count: simulatedPositions.length,
+        total_value: simulatedPositions.reduce((sum, pos) => sum + parseFloat(pos.margin_used), 0),
+        total_pnl: simulatedPositions.reduce((sum, pos) => sum + parseFloat(pos.pnl_value), 0),
+        winning_positions: simulatedPositions.filter(pos => parseFloat(pos.pnl_value) > 0).length,
+        losing_positions: simulatedPositions.filter(pos => parseFloat(pos.pnl_value) < 0).length,
+        win_rate: simulatedPositions.length > 0 ? (simulatedPositions.filter(pos => parseFloat(pos.pnl_value) > 0).length / simulatedPositions.length * 100) : 0
+      };
+
+      return res.json({
+        success: true,
+        data: {
+          positions: simulatedPositions,
+          stats,
+          config: {
+            unidirectionalMode: false,
+            allowedSide: 'Both',
+          },
+          realTimeData: {
+            pricesUpdated: new Date().toISOString(),
+            source: 'Paper Trading Simulation',
+          },
+          paperTrading: true
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Récupérer les positions réelles avec P&L et ROE en temps réel
     const positions = await getActivePositionsWithMetrics();
     const stats = getPositionsStats();
 
@@ -1195,6 +1501,7 @@ app.get('/api/positions', async (req: Request, res: Response) => {
           pricesUpdated: new Date().toISOString(),
           source: 'HyperLiquid API (getAllMids)',
         },
+        paperTrading: false
       },
       timestamp: new Date().toISOString(),
     });
@@ -2188,15 +2495,134 @@ function generateInferenceData(agentId: string): any {
  * 📅 Get activity timeline
  */
 app.get('/api/activity/timeline', (req: Request, res: Response) => {
-  // Return empty timeline - real activities will be added when agents are running
+  try {
+    // Check if paper trading mode
+    const metamaskAddress = (req.headers['x-metamask-address'] as string) || (req.query['address'] as string);
+
+    if (!metamaskAddress) {
+      // Return simulated paper trading activities
+      const activities = generatePaperTradingActivities();
+
+      return res.json({
+        success: true,
+        activities: activities,
+        count: activities.length,
+        timestamp: new Date().toISOString(),
+        paperTrading: true
+      });
+    }
+
+    // Return empty timeline for real trading - activities will be added when agents are running
+    const activities: any[] = [];
+
+    res.json({
+      success: true,
+      activities: activities,
+      count: activities.length,
+      timestamp: new Date().toISOString(),
+      paperTrading: false
+    });
+  } catch (error: any) {
+    log.error(`Get activity timeline error: ${error.message}`, 'TIMELINE-ERROR');
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get activity timeline',
+    });
+  }
+});
+
+function generatePaperTradingActivities() {
+  const now = Date.now();
   const activities: any[] = [];
 
-  res.json({
-    activities: activities,
-    count: activities.length,
-    timestamp: new Date().toISOString(),
-  });
-});
+  // Generate some past activities
+  for (let i = 0; i < 8; i++) {
+    const timestamp = now - (i * 15 * 60 * 1000); // Every 15 minutes
+    const activityTypes = ['trade_opened', 'trade_closed', 'signal_generated', 'risk_assessment', 'market_analysis'];
+    const symbols = ['BTC', 'ETH', 'SOL', 'ARB', 'APT'];
+
+    const type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+
+    let activity: any = {
+      id: `paper_${timestamp}_${i}`,
+      timestamp: new Date(timestamp).toISOString(),
+      type: type,
+      agent: ['Risk Agent', 'Strategy Agent', 'Funding Agent', 'Sentiment Agent'][Math.floor(Math.random() * 4)],
+      description: '',
+      details: {},
+      status: 'success',
+      confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
+    };
+
+    // Generate specific activity details
+    switch (type) {
+      case 'trade_opened':
+        activity.description = `Opened ${['BUY', 'SELL'][Math.floor(Math.random() * 2)]} position on ${symbol}`;
+        activity.details = {
+          symbol: symbol,
+          side: ['BUY', 'SELL'][Math.floor(Math.random() * 2)],
+          size: (Math.random() * 0.5 + 0.01).toFixed(4),
+          price: symbol === 'BTC' ? (95000 + Math.random() * 5000).toFixed(2) :
+                symbol === 'ETH' ? (3500 + Math.random() * 200).toFixed(2) :
+                (100 + Math.random() * 50).toFixed(2),
+          leverage: '5x',
+          reason: 'Strong buy signal detected'
+        };
+        break;
+
+      case 'trade_closed':
+        const pnl = (Math.random() - 0.3) * 200; // -60 to +140
+        activity.description = `Closed ${symbol} position with ${pnl > 0 ? 'profit' : 'loss'}`;
+        activity.details = {
+          symbol: symbol,
+          pnl: pnl.toFixed(2),
+          pnl_percent: ((pnl / 1000) * 100).toFixed(2),
+          duration: `${Math.floor(Math.random() * 120 + 10)} minutes`,
+          success: pnl > 0
+        };
+        break;
+
+      case 'signal_generated':
+        activity.description = `Generated ${['BUY', 'SELL', 'HOLD'][Math.floor(Math.random() * 3)]} signal for ${symbol}`;
+        activity.details = {
+          symbol: symbol,
+          signal: ['BUY', 'SELL', 'HOLD'][Math.floor(Math.random() * 3)],
+          strength: (Math.random() * 0.4 + 0.6).toFixed(2), // 0.6-1.0
+          indicators: ['RSI', 'MACD', 'BB', 'Volume'].slice(0, Math.floor(Math.random() * 3) + 2),
+          time_horizon: ['Short', 'Medium', 'Long'][Math.floor(Math.random() * 3)]
+        };
+        break;
+
+      case 'risk_assessment':
+        activity.description = `Risk assessment for ${symbol} - ${['APPROVED', 'REJECTED', 'REVIEW'][Math.floor(Math.random() * 3)]}`;
+        activity.details = {
+          symbol: symbol,
+          risk_level: ['LOW', 'MEDIUM', 'HIGH'][Math.floor(Math.random() * 3)],
+          recommendation: ['APPROVED', 'REJECTED', 'MANUAL_REVIEW'][Math.floor(Math.random() * 3)],
+          factors: ['Volatility', 'Liquidity', 'Trend', 'Volume'].slice(0, Math.floor(Math.random() * 3) + 1)
+        };
+        break;
+
+      case 'market_analysis':
+        activity.description = `Market analysis completed - ${['BULLISH', 'BEARISH', 'NEUTRAL'][Math.floor(Math.random() * 3)]} sentiment`;
+        activity.details = {
+          timeframe: ['1m', '5m', '15m', '1h'][Math.floor(Math.random() * 4)],
+          sentiment: ['BULLISH', 'BEARISH', 'NEUTRAL'][Math.floor(Math.random() * 3)],
+          confidence_score: (Math.random() * 30 + 70).toFixed(1),
+          key_factors: ['Price action', 'Volume', 'News', 'Technical'].slice(0, Math.floor(Math.random() * 3) + 1)
+        };
+        break;
+    }
+
+    activities.push(activity);
+  }
+
+  // Sort by timestamp (newest first)
+  activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  return activities;
+}
 
 // Data endpoints
 app.get('/api/data/backtest', async (req: Request, res: Response) => {
@@ -3571,28 +3997,12 @@ app.get('/api/wallet', async (req: Request, res: Response) => {
 
     // If no MetaMask address provided, return paper trading wallet data
     if (!metamaskAddress) {
-      // Return default paper trading wallet data (from database)
+      // Calculate dynamic P&L for paper trading
+      const paperTradingData = calculatePaperTradingPnL();
+
       return res.json({
         success: true,
-        data: {
-          address: 'paper-trading-simulated',
-          network: 'simulation',
-          balance: 1000,
-          usd_balance: 1000,
-          collateral: 1000,
-          equity: 1000,
-          margin_usage: 0,
-          leverage: 1,
-          mode: 'paper_trading',
-          status: 'active',
-          timestamp: new Date().toISOString(),
-          positions_count: 0,
-          open_orders_count: 0,
-          pnl_24h: 245.5,
-          pnl_total: 892.3,
-          pnl_percent_24h: 2.51,
-          pnl_percent_total: 9.81,
-        },
+        data: paperTradingData,
         timestamp: new Date().toISOString(),
       });
     }
