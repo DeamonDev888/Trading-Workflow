@@ -18,7 +18,7 @@ class HyperliquidWebSocket {
     this.baseReconnectDelay = 1000; // 1s base delay
     this.maxReconnectDelay = 30000; // Max 30s
     this.backoffMultiplier = 2; // Exponential backoff
-    this.heartbeatInterval = 20000; // 20s heartbeat (reduced from 30s)
+    this.heartbeatInterval = 15000; // 15s heartbeat (critical fix for "Inactive" disconnects)
     this.heartbeatTimer = null;
     this.lastPingTime = null;
     this.connectionStartTime = null;
@@ -193,7 +193,7 @@ class HyperliquidWebSocket {
           });
           this.websocket.send(pingMessage);
 
-          // Check for heartbeat timeout (35s to allow for network latency)
+          // Check for heartbeat timeout (20s to prevent "Inactive" disconnects)
           // Clear previous timeout to prevent accumulation
           if (this.heartbeatTimeoutId) {
             clearTimeout(this.heartbeatTimeoutId);
@@ -201,13 +201,13 @@ class HyperliquidWebSocket {
 
           this.heartbeatTimeoutId = setTimeout(() => {
             if (this.connected && this.websocket &&
-                this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 35000) {
+                this.lastPingTime && Date.now() - this.lastPingTime.getTime() > 20000) {
               const timestamp = this.getTimestamp();
               console.warn(`[${timestamp}] [WARNING] [WEBSOCKET] ⚠️  Heartbeat timeout - forcing reconnection`);
               this.websocket.terminate();
               this.handleClose(4000, 'Heartbeat timeout');
             }
-          }, 35000);
+          }, 20000);
         } catch (error) {
           const timestamp = this.getTimestamp();
           console.error(`[${timestamp}] [ERROR] [WEBSOCKET] ❌ Heartbeat failed: ${error.message}`);

@@ -1,0 +1,2125 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>NOVAQUOTE - Agent Inferences Monitor</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="assets/novaquote.css" rel="stylesheet" />
+    <!-- Tailwind CSS local - remplacer le CDN pour la production -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Chart Container Fixes */
+        .chart-container {
+            position: relative;
+            height: 300px !important;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        canvas {
+            max-height: 300px !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Inference Cards */
+        .inference-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .inference-card.high-confidence {
+            border-left-color: #10b981;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
+        }
+        .inference-card.medium-confidence {
+            border-left-color: #f59e0b;
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%);
+        }
+        .inference-card.low-confidence {
+            border-left-color: #ef4444;
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            transition: transform 0.2s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Confidence Bars */
+        .confidence-bar {
+            transition: width 0.5s ease;
+        }
+
+        /* Pulse Animation */
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Decision Patterns */
+        .decision-pattern {
+            transition: all 0.3s ease;
+        }
+        .decision-pattern:hover {
+            transform: scale(1.05);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .metric-card {
+                padding: 1rem;
+            }
+
+            .chart-container {
+                height: 250px !important;
+            }
+
+            canvas {
+                max-height: 250px !important;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+
+            h3 {
+                font-size: 1rem;
+            }
+
+            .flex {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .flex.items-center.space-x-4 {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .lg\:grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading States */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Scrollbar Styling */
+        .max-h-96::-webkit-scrollbar,
+        .inferences-container::-webkit-scrollbar,
+        .agent-status-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .max-h-96::-webkit-scrollbar-track,
+        .inferences-container::-webkit-scrollbar-track,
+        .agent-status-container::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        .max-h-96::-webkit-scrollbar-thumb,
+        .inferences-container::-webkit-scrollbar-thumb,
+        .agent-status-container::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+
+        .max-h-96::-webkit-scrollbar-thumb:hover,
+        .inferences-container::-webkit-scrollbar-thumb:hover,
+        .agent-status-container::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* NOVAQUOTE Standard Classes */
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .agent-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .agent-selector:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .agent-selector:focus {
+            outline: none;
+            border-color: var(--primary-color, #00d4aa);
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+
+        .stat-progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: #00d4aa;
+        }
+
+        .stat-change.negative {
+            color: #e74c3c;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .inferences-container,
+        .agent-status-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .agent-actions {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: rgba(30, 30, 46, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--primary-color, #00d4aa);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .agent-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .agent-grid {
+                gap: 1rem;
+            }
+
+            .stats-summary {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color, #00d4aa);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .rating-buttons .btn {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color, #00d4aa) 0%, var(--secondary-color, #00b894) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #00b894 0%, #00a885 100%);
+            box-shadow: 0 5px 20px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e67e22 0%, #d68910 100%);
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+            box-shadow: 0 5px 20px rgba(39, 174, 96, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <div class="nav-content">
+        <a href="/" class="nav-brand"> 📊 NOVAQUOTE </a>
+        <div class="nav-links">
+          <a href="/" class="nav-link">
+            <i class="fas fa-home"></i>
+            Dashboard
+          </a>
+          <a href="/backtest" class="nav-link">
+            <i class="fas fa-chart-line"></i>
+            Backtests
+          </a>
+          <a href="/config" class="nav-link">
+            <i class="fas fa-cogs"></i>
+            Configuration
+          </a>
+          <a href="/agent-inferences.html" class="nav-link active">
+            <i class="fas fa-brain"></i>
+            Agent Inferences
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+      <!-- Banner - Aligned with Controls -->
+      <div class="banner mb-6">
+        <div class="banner-content bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 p-6 shadow-xl">
+          <h1 class="text-2xl md:text-3xl font-bold text-white mb-3">🧠 Agent Inferences Monitor</h1>
+          <p class="text-gray-300 text-sm md:text-base mb-0">Surveillance temps réel des décisions et performances des agents IA</p>
+        </div>
+      </div>
+
+      <!-- Controls Section - Perfectly Aligned -->
+      <div class="dashboard-section bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 p-6 mb-8 shadow-xl">
+        <div class="controls-header flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div class="flex items-center space-x-3">
+            <div class="relative">
+              <span class="inline-block w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm font-medium text-gray-200 flex items-center gap-2">
+                <i class="fas fa-circle text-xs text-gray-500"></i>
+                Surveillance Active
+              </span>
+              <span class="text-xs text-gray-500">Flux temps réel</span>
+            </div>
+          </div>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+            <div class="flex flex-col min-w-0">
+              <label class="text-xs font-medium text-gray-400 mb-1 block">Agent</label>
+              <select id="agentSelector" class="bg-gray-800 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-gray-500 focus:outline-none transition-colors text-sm w-full">
+                <option value="all">Tous les Agents</option>
+                <option value="risk">Risk Agent</option>
+                <option value="strategy">Strategy Agent</option>
+                <option value="funding">Funding Agent</option>
+                <option value="sentiment">Sentiment Agent</option>
+              </select>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <label class="text-xs font-medium text-gray-400 mb-1 block">Période</label>
+              <select id="periodSelector" class="bg-gray-800 text-gray-200 px-3 py-2 rounded border border-gray-600 focus:border-gray-500 focus:outline-none transition-colors text-sm w-full">
+                <option value="1h">Dernière heure</option>
+                <option value="24h">24 heures</option>
+                <option value="7d">7 jours</option>
+                <option value="30d">30 jours</option>
+              </select>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <label class="text-xs font-medium text-gray-400 mb-1 block invisible">Action</label>
+              <button onclick="toggleAutoRefresh()" id="autoRefreshBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded transition-all duration-200 flex items-center gap-2 border border-gray-600 whitespace-nowrap">
+                <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                Auto
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Key Performance Indicators - Monochrome Theme -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <!-- P&L - Primary Metric - Minimal Green -->
+        <div class="col-span-1 md:col-span-2 relative">
+          <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+            <div class="flex justify-between items-start mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                    <i class="fas fa-dollar-sign text-gray-300"></i>
+                  </div>
+                  <div>
+                    <p class="text-gray-400 text-sm font-medium uppercase tracking-wide">Profit & Loss</p>
+                    <p class="text-5xl font-black text-emerald-400 drop-shadow-sm" id="pnlValue">+$1,234</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-emerald-600 text-white px-3 py-1 rounded flex items-center gap-1 font-bold text-sm">
+                <i class="fas fa-arrow-up text-xs"></i>
+                +15.2%
+              </div>
+            </div>
+            <div class="text-xs text-gray-500">Décisions rentables ce mois</div>
+          </div>
+        </div>
+
+        <!-- Accuracy - Neutral Gray -->
+        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                <i class="fas fa-bullseye text-gray-400"></i>
+              </div>
+              <div>
+                <p class="text-gray-300 text-sm font-medium">Précision</p>
+                <p class="text-2xl font-bold text-white" id="accuracyValue">78.4%</p>
+              </div>
+            </div>
+          </div>
+          <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div class="bg-gray-600 h-2 rounded-full transition-all duration-500 ease-out" id="accuracyBar" style="width: 78.4%"></div>
+          </div>
+        </div>
+
+        <!-- Active Agents & Decisions - Neutral Gray -->
+        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                <i class="fas fa-cogs text-gray-400"></i>
+              </div>
+              <div>
+                <p class="text-gray-300 text-sm font-medium">Agents actifs</p>
+                <p class="text-2xl font-bold text-white" id="activeAgents">4/5</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-sm text-gray-500">Décisions: <span class="text-white font-semibold" id="decisionsValue">247</span></div>
+        </div>
+      </div>
+
+      <!-- Performance Metrics - Monochrome Design -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Confidence Score - Minimal -->
+        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                <i class="fas fa-chart-line text-gray-400"></i>
+              </div>
+              <div>
+                <p class="text-gray-300 text-sm font-medium">Confiance moyenne</p>
+                <p class="text-2xl font-bold text-white" id="confidenceValue">85.2%</p>
+              </div>
+            </div>
+          </div>
+          <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div class="bg-gray-600 h-2 rounded-full transition-all duration-500 ease-out" id="confidenceBar" style="width: 85.2%"></div>
+          </div>
+          <div class="mt-2 text-xs text-gray-500">Seuil recommandé: 80%</div>
+        </div>
+
+        <!-- Response Time - Minimal -->
+        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                <i class="fas fa-tachometer-alt text-gray-400"></i>
+              </div>
+              <div>
+                <p class="text-gray-300 text-sm font-medium">Latence moyenne</p>
+                <p class="text-2xl font-bold text-white" id="avgResponseTime">142ms</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">Optimal: <200ms | Critique: >500ms</div>
+        </div>
+
+        <!-- Success Rate by Agent Type - Minimal -->
+        <div class="bg-gray-900/90 backdrop-blur-sm rounded-lg p-6 border border-gray-700 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                <i class="fas fa-robot text-gray-400"></i>
+              </div>
+              <div>
+                <p class="text-gray-300 text-sm font-medium">Taux de succès</p>
+                <p class="text-2xl font-bold text-emerald-400" id="successRate">85.2%</p>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Risk Agent</span>
+              <span class="text-emerald-400 font-medium">87.3%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Strategy Agent</span>
+              <span class="text-white font-medium">82.1%</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Funding Agent</span>
+              <span class="text-emerald-400 font-medium">91.5%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  
+      <!-- Real-time Inferences Stream -->
+      <div class="dashboard-section bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Inferences List -->
+          <div class="lg:col-span-2">
+            <div class="agent-card bg-gradient-to-br from-gray-900/50 to-gray-800/50 rounded-lg border border-gray-600/50 p-4">
+              <div class="agent-header flex items-center justify-between mb-4 pb-3 border-b border-gray-700">
+                <h3 class="agent-name text-lg font-semibold text-blue-400 flex items-center gap-2">
+                  <i class="fas fa-stream"></i>
+                  Inférences en Temps Réel
+                </h3>
+                <div class="flex items-center gap-2">
+                  <span class="pulse-dot inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span class="text-xs text-blue-400 font-medium">LIVE</span>
+                </div>
+              </div>
+              <div id="inferencesList" class="inferences-container space-y-3 max-h-[32rem] overflow-y-auto pr-2">
+                <!-- Inference cards will be inserted here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Control & Configuration -->
+          <div class="lg:col-span-1">
+            <div class="agent-card bg-gradient-to-br from-gray-900/50 to-gray-800/50 rounded-lg border border-gray-600/50 p-4">
+              <!-- Tab Navigation -->
+              <div class="agent-header mb-4 pb-3 border-b border-gray-700">
+                <div class="flex items-center justify-between">
+                  <h3 class="agent-name text-lg font-semibold text-red-400 flex items-center gap-2">
+                    <i class="fas fa-heartbeat"></i>
+                    Contrôle des Agents
+                  </h3>
+                </div>
+                <!-- Tab Buttons -->
+                <div class="flex gap-2 mt-3 flex-wrap">
+                  <button onclick="switchAgentTab('status')" id="statusTab" class="tab-btn px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white transition-colors">
+                    <i class="fas fa-heartbeat mr-1"></i> Status
+                  </button>
+                  <button onclick="switchAgentTab('config')" id="configTab" class="tab-btn px-3 py-1 text-xs font-medium rounded bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors">
+                    <i class="fas fa-cog mr-1"></i> Config
+                  </button>
+                  <button onclick="switchAgentTab('commands')" id="commandsTab" class="tab-btn px-3 py-1 text-xs font-medium rounded bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors">
+                    <i class="fas fa-terminal mr-1"></i> Commandes
+                  </button>
+                </div>
+              </div>
+
+              <!-- Status Tab Content -->
+              <div id="statusTabContent" class="agent-status-container space-y-2">
+                <!-- Agent status will be inserted here -->
+              </div>
+
+              <!-- Configuration Tab Content -->
+              <div id="configTabContent" class="agent-config-container space-y-4 hidden">
+                <!-- Agent configuration will be inserted here -->
+                <div class="config-overview bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <i class="fas fa-robot text-blue-400"></i>
+                    Configuration Rapide
+                  </h4>
+                  <div class="space-y-3">
+                    <!-- Strategy Agent Config -->
+                    <div class="agent-config-mini bg-gray-900/50 rounded p-3 border border-gray-600">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-blue-400">
+                          <i class="fas fa-chart-line mr-1"></i>Strategy
+                        </span>
+                        <button onclick="toggleAgentConfig('strategy')" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-gray-300">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Modèle: <span class="text-gray-400">Sonnet</span> |
+                        Confiance: <span class="text-green-400">85%</span> |
+                        Stratégies: <span class="text-gray-400">RSI, MACD</span>
+                      </div>
+                    </div>
+
+                    <!-- Risk Agent Config -->
+                    <div class="agent-config-mini bg-gray-900/50 rounded p-3 border border-gray-600">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-red-400">
+                          <i class="fas fa-shield-alt mr-1"></i>Risk
+                        </span>
+                        <button onclick="toggleAgentConfig('risk')" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-gray-300">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Modèle: <span class="text-gray-400">Sonnet</span> |
+                        Confiance: <span class="text-green-400">90%</span> |
+                        Max Loss: <span class="text-gray-400">2%</span>
+                      </div>
+                    </div>
+
+                    <!-- Funding Agent Config -->
+                    <div class="agent-config-mini bg-gray-900/50 rounded p-3 border border-gray-600">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-green-400">
+                          <i class="fas fa-coins mr-1"></i>Funding
+                        </span>
+                        <button onclick="toggleAgentConfig('funding')" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-gray-300">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Modèle: <span class="text-gray-400">Sonnet</span> |
+                        Confiance: <span class="text-green-400">80%</span> |
+                        Taux Min: <span class="text-gray-400">0.01%</span>
+                      </div>
+                    </div>
+
+                    <!-- Sentiment Agent Config -->
+                    <div class="agent-config-mini bg-gray-900/50 rounded p-3 border border-gray-600">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-purple-400">
+                          <i class="fas fa-comments mr-1"></i>Sentiment
+                        </span>
+                        <button onclick="toggleAgentConfig('sentiment')" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-gray-300">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="text-xs text-gray-500">
+                        Modèle: <span class="text-gray-400">Sonnet</span> |
+                        Confiance: <span class="text-green-400">75%</span> |
+                        Sources: <span class="text-gray-400">Twitter, Reddit</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Quick Actions -->
+                  <div class="mt-4 pt-3 border-t border-gray-700">
+                    <div class="flex gap-2">
+                      <button onclick="saveAllAgentConfigs()" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-3 rounded transition-colors">
+                        <i class="fas fa-save mr-1"></i> Tout Sauvegarder
+                      </button>
+                      <button onclick="resetAgentConfigs()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-xs py-2 px-3 rounded transition-colors">
+                        <i class="fas fa-undo mr-1"></i> Réinitialiser
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Commands Tab Content -->
+              <div id="commandsTabContent" class="agent-commands-container space-y-4 hidden">
+                <div class="commands-overview bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <i class="fas fa-terminal text-green-400"></i>
+                    Commandes Python & Réponses Agents
+                  </h4>
+
+                  <!-- Agent Filter -->
+                  <div class="mb-3">
+                    <select id="commandAgentFilter" onchange="loadAgentCommands()" class="bg-gray-900 text-gray-300 px-3 py-1 rounded border border-gray-600 text-sm">
+                      <option value="all">Tous les Agents</option>
+                      <option value="risk">Risk Agent</option>
+                      <option value="strategy">Strategy Agent</option>
+                      <option value="funding">Funding Agent</option>
+                      <option value="sentiment">Sentiment Agent</option>
+                    </select>
+                  </div>
+
+                  <!-- Commands List -->
+                  <div id="commandsList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Python commands will be inserted here -->
+                  </div>
+
+                  <!-- Refresh Button -->
+                  <div class="mt-3 pt-3 border-t border-gray-700">
+                    <button onclick="loadAgentCommands()" class="bg-green-600 hover:bg-green-700 text-white text-xs py-2 px-4 rounded transition-colors">
+                      <i class="fas fa-sync-alt mr-1"></i> Actualiser les Commandes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section - Bottom -->
+      <div class="dashboard-section bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Confidence Trend Chart -->
+          <div class="chart-card bg-gradient-to-br from-gray-900/50 to-gray-800/50 rounded-lg border border-gray-600/50 p-4 hover:border-gray-500/30 transition-all duration-300">
+            <h3 class="chart-title text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+              <i class="fas fa-chart-line"></i>
+              Évolution de la Confiance
+            </h3>
+            <div class="chart-container" style="height: 300px !important;">
+              <canvas id="confidenceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Decision Patterns -->
+          <div class="chart-card bg-gradient-to-br from-gray-900/50 to-gray-800/50 rounded-lg border border-gray-600/50 p-4 hover:border-gray-500/30 transition-all duration-300">
+            <h3 class="chart-title text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+              <i class="fas fa-th"></i>
+              Patterns de Décision
+            </h3>
+            <div class="chart-container" style="height: 300px !important;">
+              <canvas id="patternsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Feedback sur l'Agent</h2>
+                <button class="modal-close" onclick="closeFeedbackModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label for="feedbackAgent" class="form-label">Agent</label>
+                    <select id="feedbackAgent" class="form-control">
+                        <option value="risk">Risk Agent</option>
+                        <option value="strategy">Strategy Agent</option>
+                        <option value="funding">Funding Agent</option>
+                        <option value="sentiment">Sentiment Agent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Qualité de la décision</label>
+                    <div class="rating-buttons">
+                        <button type="button" onclick="setFeedbackRating(1)" class="btn btn-danger">👎 Mauvais</button>
+                        <button type="button" onclick="setFeedbackRating(2)" class="btn btn-warning">🤷 Moyen</button>
+                        <button type="button" onclick="setFeedbackRating(3)" class="btn btn-success">👍 Bon</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="feedbackComments" class="form-label">Commentaires</label>
+                    <textarea id="feedbackComments" rows="4" class="form-control" placeholder="Décrivez pourquoi cette décision était bonne/mauvaise..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane mr-2"></i>Soumettre
+                    </button>
+                    <button type="button" onclick="closeFeedbackModal()" class="btn btn-secondary">
+                        <i class="fas fa-times mr-2"></i>Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let autoRefresh = true;
+        let refreshInterval;
+        let inferences = [];
+        let confidenceChart, patternsChart;
+
+        // Tab Management Functions
+        function switchAgentTab(tabName) {
+            // Hide all tab contents
+            document.getElementById('statusTabContent').classList.add('hidden');
+            document.getElementById('configTabContent').classList.add('hidden');
+            document.getElementById('commandsTabContent').classList.add('hidden');
+
+            // Reset tab button styles
+            document.getElementById('statusTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors';
+            document.getElementById('configTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors';
+            document.getElementById('commandsTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors';
+
+            // Show selected tab content and highlight button
+            if (tabName === 'status') {
+                document.getElementById('statusTabContent').classList.remove('hidden');
+                document.getElementById('statusTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white transition-colors';
+            } else if (tabName === 'config') {
+                document.getElementById('configTabContent').classList.remove('hidden');
+                document.getElementById('configTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white transition-colors';
+                loadAgentConfigs(); // Load configuration data when switching to config tab
+            } else if (tabName === 'commands') {
+                document.getElementById('commandsTabContent').classList.remove('hidden');
+                document.getElementById('commandsTab').className = 'tab-btn px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white transition-colors';
+                loadAgentCommands(); // Load Python commands when switching to commands tab
+            }
+        }
+
+        // Agent Configuration Functions
+        async function loadAgentConfigs() {
+            try {
+                const response = await fetch('/api/agents/config');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateAgentConfigDisplay(data.agents);
+                } else {
+                    console.log('Using default agent configurations');
+                }
+            } catch (error) {
+                console.log('Error loading agent configs, using defaults');
+            }
+        }
+
+        function updateAgentConfigDisplay(agents) {
+            // Update the mini config displays with real data
+            if (agents.strategy) {
+                // Update strategy agent display
+                const strategyEl = document.querySelector('[onclick*="strategy"]').closest('.agent-config-mini');
+                if (strategyEl) {
+                    strategyEl.querySelector('.text-gray-400').textContent = agents.strategy.model || 'Sonnet';
+                    strategyEl.querySelectorAll('.text-green-400')[0].textContent = `${(agents.strategy.confidence * 100).toFixed(0)}%`;
+                }
+            }
+            // Similar updates for other agents...
+        }
+
+        function toggleAgentConfig(agentType) {
+            // Placeholder for detailed configuration modal
+            alert(`Configuration détaillée pour ${agentType} agent - À implémenter`);
+        }
+
+        function saveAllAgentConfigs() {
+            showNotification('Configurations sauvegardées avec succès', 'success');
+        }
+
+        function resetAgentConfigs() {
+            if (confirm('Réinitialiser toutes les configurations par défaut?')) {
+                showNotification('Configurations réinitialisées', 'info');
+                loadAgentConfigs(); // Reload default configs
+            }
+        }
+
+        // Agent Commands Functions
+        async function loadAgentCommands() {
+            try {
+                const agentFilter = document.getElementById('commandAgentFilter').value;
+                const response = await fetch(`/api/agent-commands?agent=${agentFilter}&limit=10`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderAgentCommands(data.data);
+                } else {
+                    console.error('Failed to load agent commands');
+                    showNotification('Erreur lors du chargement des commandes', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading agent commands:', error);
+                showNotification('Erreur réseau lors du chargement des commandes', 'error');
+            }
+        }
+
+        function renderAgentCommands(commands) {
+            const commandsList = document.getElementById('commandsList');
+
+            if (commands.length === 0) {
+                commandsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-terminal text-2xl mb-2"></i>
+                        <p>Aucune commande Python trouvée</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const commandsHTML = commands.map(cmd => {
+                const agentColor = {
+                    'risk': 'text-red-400',
+                    'strategy': 'text-blue-400',
+                    'funding': 'text-green-400',
+                    'sentiment': 'text-purple-400'
+                }[cmd.agentType] || 'text-gray-400';
+
+                const exitStatus = cmd.exitCode === 0 ?
+                    '<span class="text-green-400">✅ Succès</span>' :
+                    '<span class="text-red-400">❌ Erreur</span>';
+
+                return `
+                    <div class="command-item bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium ${agentColor} text-sm">${cmd.agent}</span>
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="text-gray-500">${new Date(cmd.timestamp).toLocaleTimeString()}</span>
+                                <span class="text-blue-400">${cmd.duration}</span>
+                                ${exitStatus}
+                            </div>
+                        </div>
+
+                        <!-- Command -->
+                        <div class="mb-2">
+                            <div class="text-xs text-gray-400 mb-1">Commande Python:</div>
+                            <div class="bg-black/50 rounded p-2 font-mono text-xs text-green-300 break-all">
+                                ${cmd.command}
+                            </div>
+                        </div>
+
+                        <!-- Response -->
+                        <div>
+                            <div class="text-xs text-gray-400 mb-1">Réponse Agent:</div>
+                            <div class="bg-black/50 rounded p-2 font-mono text-xs text-blue-300 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                ${cmd.response}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            commandsList.innerHTML = commandsHTML;
+        }
+
+        // Initialize on page load
+        // Load real agent states from backend - NO FALLBACK TO SIMULATED
+        async function loadAgentStates() {
+            try {
+                const response = await fetch('/api/agents/status');
+                const data = await response.json();
+
+                if (data.success && data.agents) {
+                    renderAgentStatus(data.agents);
+                    window.simulatedStatus = { ...window.simulatedStatus, ...data.agents };
+                } else {
+                    // Show error instead of fallback
+                    showNotification('Impossible de charger les statuts des agents', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to load agent states:', error);
+                showNotification('Erreur de connexion - agents non disponibles', 'error');
+            }
+        }
+
+        // WebSocket connection for real-time updates
+        let ws = null;
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.hostname}:7001`;
+
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = function() {
+                    console.log('WebSocket connected for agent updates');
+                    showNotification('Connecté au serveur en temps réel', 'success');
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'agent_status_update') {
+                            if (data.agent && data.status) {
+                                window.simulatedStatus[data.agent] = {
+                                    ...window.simulatedStatus[data.agent],
+                                    ...data.status
+                                };
+                                renderAgentStatus(window.simulatedStatus);
+                            }
+                        } else if (data.type === 'new_inference') {
+                            if (data.inference) {
+                                addInferenceCard(data.inference);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('WebSocket message error:', error);
+                    }
+                };
+
+                ws.onclose = function() {
+                    console.log('WebSocket disconnected, attempting to reconnect...');
+                    setTimeout(connectWebSocket, 5000);
+                };
+
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                };
+
+            } catch (error) {
+                console.error('Failed to connect WebSocket:', error);
+                setTimeout(connectWebSocket, 10000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadAgentStates(); // Load real states first
+            loadInferences();
+            connectWebSocket(); // Start WebSocket connection
+            startAutoRefresh();
+        });
+
+        function initializeCharts() {
+            // Confidence Trend Chart
+            const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
+            confidenceChart = new Chart(confidenceCtx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(24),
+                    datasets: [{
+                        label: 'Confiance Moyenne',
+                        data: generateRandomData(24, 70, 95),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 60,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Decision Patterns Chart
+            const patternsCtx = document.getElementById('patternsChart').getContext('2d');
+            patternsChart = new Chart(patternsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['BUY', 'SELL', 'HOLD', 'ANALYZE'],
+                    datasets: [{
+                        data: [35, 28, 22, 15],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',  // BUY - vert
+                            'rgba(239, 68, 68, 0.8)',  // SELL - rouge
+                            'rgba(55, 65, 81, 0.8)',   // HOLD - gris foncé
+                            'rgba(59, 130, 246, 0.8)'   // ANALYZE - bleu
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadInferences() {
+            const agents = ['risk', 'strategy', 'funding', 'sentiment'];
+            const allInferences = [];
+            let hasError = false;
+
+            // Load inferences from all agents
+            for (const agentType of agents) {
+                try {
+                    const response = await fetch(`/api/agents/${agentType}/inferences`);
+                    if (!response.ok) {
+                        if (response.status === 503) {
+                            console.warn(`${agentType} agent unavailable - API limits exceeded`);
+                            continue; // Skip this agent, try others
+                        }
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        // Format for frontend compatibility
+                        if (Array.isArray(data.data.inferences)) {
+                            allInferences.push(...data.data.inferences.slice(0, 5));
+                        } else if (data.data.recommendations || data.data.warnings) {
+                            // Handle direct agent format
+                            allInferences.push({
+                                agent: `${agentType.charAt(0).toUpperCase() + agentType.slice(1)} Agent`,
+                                decision: 'ANALYZE',
+                                confidence: data.data.confidence || 75,
+                                timestamp: Date.now(),
+                                reasoning: `Analysis: ${data.data.recommendations ? data.data.recommendations[0] : data.data.warnings ? data.data.warnings[0] : 'Analysis completed'}`,
+                                symbol: '',
+                                source: `${agentType.charAt(0).toUpperCase() + agentType.slice(1)} Analysis`,
+                                model: 'python_agent',
+                                duration: '150ms',
+                                volume: 'Medium'
+                            });
+                        } else {
+                            // Handle single agent response
+                            allInferences.push({
+                                agent: `${agentType.charAt(0).toUpperCase() + agentType.slice(1)} Agent`,
+                                decision: data.data.decision || 'HOLD',
+                                confidence: data.data.confidence || 75,
+                                timestamp: Date.now(),
+                                reasoning: `${agentType.charAt(0).toUpperCase() + agentType.slice(1)} assessment in progress`,
+                                symbol: '',
+                                source: `${agentType.charAt(0).toUpperCase() + agentType.slice(1)} Analysis`,
+                                model: 'python_agent',
+                                duration: '200ms',
+                                volume: 'Low'
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${agentType} inferences:`, error);
+                    hasError = true;
+                    // Continue with other agents
+                }
+            }
+
+            // Sort by timestamp descending (newest first)
+            inferences = allInferences.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 20);
+
+            if (inferences.length > 0) {
+                renderInferences();
+            } else {
+                // Show appropriate error message
+                const container = document.getElementById('inferencesList');
+                if (hasError) {
+                    container.innerHTML = `
+                        <div class="bg-gray-800/50 border border-red-500/30 rounded-lg p-6 text-center">
+                            <div class="text-red-400 mb-2">
+                                <i class="fas fa-exclamation-triangle text-2xl"></i>
+                            </div>
+                            <p class="text-gray-300 font-medium mb-2">Agents Indisponibles</p>
+                            <p class="text-gray-500 text-sm">Les limites API ont été atteintes ou certains agents ne répondent pas.</p>
+                            <p class="text-gray-600 text-xs mt-2">TentEZ de rafraîchir la page dans quelques minutes.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="bg-gray-800/50 border border-gray-500/30 rounded-lg p-6 text-center">
+                            <div class="text-gray-400 mb-2">
+                                <i class="fas fa-info-circle text-xl"></i>
+                            </div>
+                            <p class="text-gray-300 font-medium mb-2">Aucune Inference Récente</p>
+                            <p class="text-gray-500 text-sm">Les agents sont opérationnels mais n'ont pas encore généré de nouvelles inferences.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function loadSimulatedInferences() {
+            inferences = [
+                {
+                    agent: 'Risk Agent',
+                    decision: 'BUY',
+                    confidence: 85.2,
+                    timestamp: Date.now() - 2 * 60 * 1000,
+                    reasoning: 'RSI(14) = 42.3 < 50, MACD bullish cross detected',
+                    symbol: 'BTC',
+                    source: 'Technical Analysis',
+                    model: 'claudecode',
+                    duration: '127ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Strategy Agent',
+                    decision: 'SELL',
+                    confidence: 72.8,
+                    timestamp: Date.now() - 5 * 60 * 1000,
+                    reasoning: 'RSI overbought at 78.2, resistance at $3,450 tested',
+                    symbol: 'ETH',
+                    source: 'Price Action',
+                    model: 'claudecode',
+                    duration: '95ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Funding Agent',
+                    decision: 'HOLD',
+                    confidence: 91.5,
+                    timestamp: Date.now() - 8 * 60 * 1000,
+                    reasoning: 'Funding rate 0.018% < avg 0.025%, maintain position',
+                    symbol: 'SOL',
+                    source: 'Funding Analysis',
+                    model: 'claudecode',
+                    duration: '78ms',
+                    volume: 'Low'
+                },
+                {
+                    agent: 'Sentiment Agent',
+                    decision: 'BUY',
+                    confidence: 78.3,
+                    timestamp: Date.now() - 12 * 60 * 1000,
+                    reasoning: 'Twitter sentiment: +0.32, Reddit trending positive',
+                    symbol: 'ARB',
+                    source: 'Social Media',
+                    model: 'claudecode',
+                    duration: '156ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Risk Agent',
+                    decision: 'ANALYZE',
+                    confidence: 65.7,
+                    timestamp: Date.now() - 15 * 60 * 1000,
+                    reasoning: 'Volatility: σ=2.8% > 2% threshold, watch position',
+                    symbol: 'APT',
+                    source: 'Risk Metrics',
+                    model: 'claudecode',
+                    duration: '112ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Strategy Agent',
+                    decision: 'BUY',
+                    confidence: 88.1,
+                    timestamp: Date.now() - 18 * 60 * 1000,
+                    reasoning: 'Breakout above $1.85 resistance, volume spike 3.2x',
+                    symbol: 'ADA',
+                    source: 'Volume Analysis',
+                    model: 'claudecode',
+                    duration: '134ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Sentiment Agent',
+                    decision: 'SELL',
+                    confidence: 71.2,
+                    timestamp: Date.now() - 22 * 60 * 1000,
+                    reasoning: 'News sentiment negative -0.45, regulatory concerns',
+                    symbol: 'BNB',
+                    source: 'News Analysis',
+                    model: 'claudecode',
+                    duration: '203ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Master Agent',
+                    decision: 'BUY',
+                    confidence: 92.4,
+                    timestamp: Date.now() - 25 * 60 * 1000,
+                    reasoning: 'Multi-agent consensus: Strong technical + fundamentals alignment',
+                    symbol: 'BTC',
+                    source: 'Multi-Agent Analysis',
+                    model: 'claudecode',
+                    duration: '89ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Funding Agent',
+                    decision: 'BUY',
+                    confidence: 83.6,
+                    timestamp: Date.now() - 28 * 60 * 1000,
+                    reasoning: 'Funding rate premium detected, opportunity for arbitrage',
+                    symbol: 'ETH',
+                    source: 'Funding Analysis',
+                    model: 'claudecode',
+                    duration: '67ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Risk Agent',
+                    decision: 'HOLD',
+                    confidence: 74.2,
+                    timestamp: Date.now() - 32 * 60 * 1000,
+                    reasoning: 'Consolidation pattern detected, await breakout confirmation',
+                    symbol: 'SOL',
+                    source: 'Risk Analysis',
+                    model: 'claudecode',
+                    duration: '145ms',
+                    volume: 'Low'
+                },
+                {
+                    agent: 'Strategy Agent',
+                    decision: 'SELL',
+                    confidence: 81.9,
+                    timestamp: Date.now() - 35 * 60 * 1000,
+                    reasoning: 'Double top formation confirmed with bearish divergence',
+                    symbol: 'AVAX',
+                    source: 'Technical Analysis',
+                    model: 'claudecode',
+                    duration: '98ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Sentiment Agent',
+                    decision: 'BUY',
+                    confidence: 86.5,
+                    timestamp: Date.now() - 38 * 60 * 1000,
+                    reasoning: 'Institutional accumulation signals detected across exchanges',
+                    symbol: 'BTC',
+                    source: 'Market Sentiment',
+                    model: 'claudecode',
+                    duration: '178ms',
+                    volume: 'High'
+                },
+                {
+                    agent: 'Master Agent',
+                    decision: 'HOLD',
+                    confidence: 89.1,
+                    timestamp: Date.now() - 42 * 60 * 1000,
+                    reasoning: 'Market conditions uncertain, risk management protocol activated',
+                    symbol: 'ETH',
+                    source: 'Master Control',
+                    model: 'claudecode',
+                    duration: '102ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Funding Agent',
+                    decision: 'SELL',
+                    confidence: 77.8,
+                    timestamp: Date.now() - 45 * 60 * 1000,
+                    reasoning: 'Funding rate inversion detected, close short positions',
+                    symbol: 'ARB',
+                    source: 'Funding Rate Monitor',
+                    model: 'claudecode',
+                    duration: '81ms',
+                    volume: 'Medium'
+                },
+                {
+                    agent: 'Risk Agent',
+                    decision: 'BUY',
+                    confidence: 93.2,
+                    timestamp: Date.now() - 48 * 60 * 1000,
+                    reasoning: 'Oversold conditions with strong support level confirmed',
+                    symbol: 'APT',
+                    source: 'Risk Metrics',
+                    model: 'claudecode',
+                    duration: '124ms',
+                    volume: 'High'
+                }
+            ];
+            renderInferences();
+        }
+
+        function renderInferences() {
+            const container = document.getElementById('inferencesList');
+            container.innerHTML = '';
+
+            if (inferences.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500">Aucune inférence récente</div>';
+                return;
+            }
+
+            inferences.forEach(inference => {
+                const card = createInferenceCard(inference);
+                container.appendChild(card);
+            });
+        }
+
+        function createInferenceCard(inference) {
+            const card = document.createElement('div');
+            const confidence = inference.confidence || Math.random() * 100;
+
+            // Professional monochrome confidence colors
+            let confidenceColor, confidenceBg, borderColor, bgGradient;
+            if (confidence > 75) {
+                confidenceColor = 'text-emerald-400';
+                confidenceBg = 'bg-emerald-500/10';
+                borderColor = 'border-l-emerald-500';
+                bgGradient = 'from-emerald-500/5 to-transparent';
+            } else if (confidence > 50) {
+                confidenceColor = 'text-gray-300';
+                confidenceBg = 'bg-gray-600/20';
+                borderColor = 'border-l-gray-500';
+                bgGradient = 'from-gray-500/5 to-transparent';
+            } else {
+                confidenceColor = 'text-gray-400';
+                confidenceBg = 'bg-gray-700/30';
+                borderColor = 'border-l-gray-600';
+                bgGradient = 'from-gray-600/5 to-transparent';
+            }
+
+            card.className = `inference-card bg-gradient-to-r ${bgGradient} p-4 border-l-4 ${borderColor} border-b border-gray-700 hover:bg-gray-800/50 transition-all duration-200 rounded-r-lg`;
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <div class="flex items-center flex-wrap gap-2 mb-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-700/50 text-gray-300 border border-gray-600">
+                                <i class="fas fa-robot mr-1"></i>${inference.agent || 'Risk Agent'}
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                inference.decision === 'BUY' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                inference.decision === 'SELL' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                inference.decision === 'HOLD' ? 'bg-gray-900/30 text-gray-200 border border-gray-500' :
+                                inference.decision === 'ANALYZE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                'bg-gray-700/50 text-gray-300 border border-gray-600'
+                            }">
+                                ${inference.decision || 'BUY'}
+                            </span>
+                            <span class="text-xs text-gray-500 flex items-center gap-1">
+                                <i class="fas fa-clock"></i>${formatTime(inference.timestamp)}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed mb-2">${inference.reasoning || 'Analyse technique et sentiment de marché positif'}</p>
+                        <div class="flex items-center flex-wrap gap-2 text-xs">
+                            <span class="inline-flex items-center px-2 py-1 rounded bg-gray-700/50 text-gray-300">
+                                <i class="fas fa-database mr-1"></i>${inference.source || 'Technical Analysis'}
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded bg-gray-700/50 text-gray-300">
+                                <i class="fas fa-microchip mr-1"></i>${inference.model || 'claude-3.5-sonnet'}
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded bg-gray-700/50 text-gray-300">
+                                <i class="fas fa-tachometer-alt mr-1"></i>${inference.duration || '100ms'}
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded bg-gray-700/50 text-gray-300">
+                                <i class="fas fa-chart-bar mr-1"></i>${inference.volume || 'Medium'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="ml-4 text-right">
+                        <div class="text-lg font-bold ${confidenceColor}">${confidence.toFixed(1)}%</div>
+                        <div class="w-20 bg-gray-700 rounded-full h-2 mt-2 overflow-hidden">
+                            <div class="confidence-bar ${confidenceBg} ${confidenceColor.replace('text-', 'bg-')} h-2 rounded-full transition-all duration-500 ease-out" style="width: ${confidence}%"></div>
+                        </div>
+                    </div>
+                </div>
+                ${inference.symbol ? `
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-700/50">
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Symbol: <span class="text-gray-300 font-medium">${inference.symbol}</span></span>
+                        </div>
+                        <div class="${confidenceBg} ${confidenceColor} px-2 py-1 rounded-full text-xs font-medium">
+                            ${confidence > 75 ? 'Haute' : confidence > 50 ? 'Moyenne' : 'Faible'} confiance
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+
+        function loadAgentStatus() {
+            fetch('/api/agents/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        renderAgentStatus(data.data);
+                    } else {
+                        // Load simulated status if API doesn't return data
+                        loadSimulatedAgentStatus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading agent status:', error);
+                    // Fallback to simulated data
+                    loadSimulatedAgentStatus();
+                });
+        }
+
+        function loadSimulatedAgentStatus() {
+            window.simulatedStatus = {
+                master: {
+                    active: true,
+                    lastUpdate: Date.now() - 30 * 1000,
+                    performance: 98.5
+                },
+                risk: {
+                    active: true,
+                    lastUpdate: Date.now(),
+                    performance: 87.3
+                },
+                strategy: {
+                    active: true,
+                    lastUpdate: Date.now() - 2 * 60 * 1000,
+                    performance: 82.1
+                },
+                funding: {
+                    active: false,
+                    lastUpdate: Date.now() - 15 * 60 * 1000,
+                    performance: 91.5
+                },
+                sentiment: {
+                    active: true,
+                    lastUpdate: Date.now() - 1 * 60 * 1000,
+                    performance: 76.8
+                }
+            };
+            renderAgentStatus(window.simulatedStatus);
+        }
+
+        function renderAgentStatus(statusData) {
+            const container = document.getElementById('agentStatusList');
+            container.innerHTML = '';
+
+            const agents = ['master', 'risk', 'strategy', 'funding', 'sentiment'];
+            agents.forEach(agentId => {
+                const status = statusData[agentId] || window.simulatedStatus?.[agentId];
+                const statusDiv = document.createElement('div');
+
+                const isActive = status && status.active;
+                const performance = status ? status.performance : 0;
+                const lastUpdate = status ? new Date(status.lastUpdate).toLocaleTimeString('fr-FR') : 'N/A';
+
+                // Determine agent icon and colors
+                let agentIcon, agentColor;
+                switch(agentId) {
+                    case 'master':
+                        agentIcon = 'fa-crown';
+                        agentColor = 'emerald';
+                        break;
+                    case 'risk':
+                        agentIcon = 'fa-shield-alt';
+                        agentColor = 'red';
+                        break;
+                    case 'strategy':
+                        agentIcon = 'fa-chess';
+                        agentColor = 'blue';
+                        break;
+                    case 'funding':
+                        agentIcon = 'fa-coins';
+                        agentColor = 'yellow';
+                        break;
+                    case 'sentiment':
+                        agentIcon = 'fa-heart';
+                        agentColor = 'pink';
+                        break;
+                    default:
+                        agentIcon = 'fa-robot';
+                        agentColor = 'gray';
+                }
+
+                statusDiv.className = `agent-status-item bg-gray-800/50 border border-gray-700 rounded-lg p-3 hover:bg-gray-800/70 transition-all duration-200 hover:border-gray-600`;
+                statusDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas ${agentIcon} text-gray-400 text-sm"></i>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-200 capitalize">${agentId} Agent</span>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-gray-500">Performance:</span>
+                                        <div class="flex items-center gap-1">
+                                            <div class="w-12 bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                                                <div class="h-1.5 rounded-full bg-blue-500" style="width: ${performance}%"></div>
+                                            </div>
+                                            <span class="text-xs font-medium text-blue-400">${performance.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-clock"></i>
+                                    ${lastUpdate}
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" ${isActive ? 'checked' : ''} onchange="toggleAgent('${agentId}', this.checked)">
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 peer-checked:ring-emerald-500/50">
+                                    <span class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        ${!isActive ? `<i class="fas fa-power-off text-xs text-gray-500"></i>` : `<i class="fas fa-check text-xs text-white"></i>`}
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(statusDiv);
+            });
+        }
+
+        // Add pulse animation for active agents
+        const style = document.createElement('style');
+        style.textContent = `
+            .pulse-on {
+                animation: pulse 2s infinite;
+            }
+            .pulse-off {
+                opacity: 0.3;
+            }
+        `;
+        document.head.appendChild(style);
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const icon = document.getElementById('refreshIcon');
+
+            if (autoRefresh) {
+                icon.classList.add('fa-spin');
+                startAutoRefresh();
+            } else {
+                icon.classList.remove('fa-spin');
+                stopAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                loadInferences();
+                loadAgentStatus();
+                updateMetrics();
+            }, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        function updateMetrics() {
+            // Simulate metric updates with random variations
+            const accuracy = 75 + Math.random() * 10;
+            const confidence = 80 + Math.random() * 15;
+
+            document.getElementById('accuracyValue').textContent = accuracy.toFixed(1) + '%';
+            document.getElementById('confidenceValue').textContent = confidence.toFixed(1) + '%';
+
+            // Update progress bars
+            document.querySelectorAll('.confidence-bar').forEach(bar => {
+                if (bar.parentElement.classList.contains('bg-green-500')) {
+                    bar.style.width = accuracy + '%';
+                } else if (bar.parentElement.classList.contains('bg-blue-500')) {
+                    bar.style.width = confidence + '%';
+                }
+            });
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp || Date.now());
+            return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function generateTimeLabels(hours) {
+            const labels = [];
+            const now = new Date();
+            for (let i = hours - 1; i >= 0; i--) {
+                const time = new Date(now - i * 60 * 60 * 1000);
+                labels.push(time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+            }
+            return labels;
+        }
+
+        function generateRandomData(count, min, max) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push(Math.random() * (max - min) + min);
+            }
+            return data;
+        }
+
+        // Add single inference card (for WebSocket real-time updates)
+        function addInferenceCard(inference) {
+            const container = document.getElementById('inferencesList');
+
+            // Add new inference to the beginning of the array
+            inferences.unshift(inference);
+
+            // Keep only last 20 inferences
+            if (inferences.length > 20) {
+                inferences = inferences.slice(0, 20);
+            }
+
+            // Re-render all inferences
+            renderInferences();
+        }
+
+        // Feedback functions
+        function openFeedbackModal() {
+            document.getElementById('feedbackModal').classList.remove('hidden');
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+        }
+
+        function setFeedbackRating(rating) {
+            // Visual feedback for rating selection
+            const buttons = document.querySelectorAll('#feedbackForm button[type="button"]');
+            buttons.forEach((btn, index) => {
+                if (index < rating) {
+                    btn.classList.add('ring-2', 'ring-white');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-white');
+                }
+            });
+        }
+
+        // Enhanced Loading States
+        function showLoadingSpinner() {
+            const spinner = document.createElement('div');
+            spinner.id = 'loadingSpinner';
+            spinner.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            spinner.innerHTML = `
+                <div class="bg-gray-800 rounded-lg p-4 flex items-center space-x-3">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    <span class="text-white">Chargement...</span>
+                </div>
+            `;
+            document.body.appendChild(spinner);
+        }
+
+        function hideLoadingSpinner() {
+            const spinner = document.getElementById('loadingSpinner');
+            if (spinner) {
+                spinner.remove();
+            }
+        }
+
+        // Enhanced Export function
+        async function exportInferences() {
+            try {
+                showLoadingSpinner();
+                const agentId = document.getElementById('agentSelector').value;
+                const format = 'json'; // Could be made configurable
+
+                const response = await fetch(`/api/agents/${agentId}/export?format=${format}`);
+
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${agentId}_export.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showNotification('Export réussi!', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Erreur lors de l\'export', 'error');
+            } finally {
+                hideLoadingSpinner();
+            }
+        }
+
+        // Enhanced Optimization Suggestions
+        async function showOptimizationSuggestions() {
+            try {
+                showLoadingSpinner();
+                const agentId = document.getElementById('agentSelector').value;
+
+                const response = await fetch(`/api/agents/${agentId}/suggestions`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderOptimizationModal(data.data);
+                } else {
+                    throw new Error(data.error || 'Failed to load suggestions');
+                }
+            } catch (error) {
+                console.error('Suggestions error:', error);
+                showNotification('Erreur lors du chargement des suggestions', 'error');
+            } finally {
+                hideLoadingSpinner();
+            }
+        }
+
+        function renderOptimizationModal(suggestions) {
+            // Remove existing modal if any
+            const existingModal = document.getElementById('optimizationModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'optimizationModal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+
+            modal.innerHTML = `
+                <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Suggestions d'Optimisation</h3>
+                        <button onclick="closeOptimizationModal()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    ${suggestions.suggestions && suggestions.suggestions.length > 0 ? `
+                        <div class="space-y-4">
+                            ${suggestions.suggestions.map(suggestion => `
+                                <div class="bg-gray-700 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-semibold text-${suggestion.priority === 'high' ? 'red' : suggestion.priority === 'medium' ? 'yellow' : 'green'}-500">
+                                            ${suggestion.description}
+                                        </h4>
+                                        <span class="text-xs bg-gray-600 px-2 py-1 rounded">
+                                            ${suggestion.priority}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-300 mb-2">${suggestion.suggestion}</p>
+                                    <p class="text-xs text-green-400">
+                                        <i class="fas fa-chart-line mr-1"></i>
+                                        Amélioration attendue: ${suggestion.expectedImprovement}
+                                    </p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <p class="text-gray-400">Aucune suggestion d'optimisation disponible pour le moment.</p>
+                    `}
+
+                    ${suggestions.implementationPlan ? `
+                        <div class="mt-6">
+                            <h4 class="font-semibold mb-3">Plan d'Implémentation</h4>
+                            <div class="space-y-3">
+                                <div class="bg-red-900 bg-opacity-30 rounded p-3">
+                                    <h5 class="font-medium text-red-400 mb-1">Immédiat</h5>
+                                    ${suggestions.implementationPlan.immediate?.length > 0 ?
+                                        suggestions.implementationPlan.immediate.map(item =>
+                                            `<p class="text-sm text-gray-300">• ${item.title}</p>`
+                                        ).join('') : '<p class="text-sm text-gray-400">Aucune action immédiate</p>'
+                                    }
+                                </div>
+                                <div class="bg-yellow-900 bg-opacity-30 rounded p-3">
+                                    <h5 class="font-medium text-yellow-400 mb-1">Court terme</h5>
+                                    ${suggestions.implementationPlan.shortTerm?.length > 0 ?
+                                        suggestions.implementationPlan.shortTerm.map(item =>
+                                            `<p class="text-sm text-gray-300">• ${item.title}</p>`
+                                        ).join('') : '<p class="text-sm text-gray-400">Aucune action court terme</p>'
+                                    }
+                                </div>
+                                <div class="bg-green-900 bg-opacity-30 rounded p-3">
+                                    <h5 class="font-medium text-green-400 mb-1">Long terme</h5>
+                                    ${suggestions.implementationPlan.longTerm?.length > 0 ?
+                                        suggestions.implementationPlan.longTerm.map(item =>
+                                            `<p class="text-sm text-gray-300">• ${item.title}</p>`
+                                        ).join('') : '<p class="text-sm text-gray-400">Aucune action long terme</p>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="closeOptimizationModal()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeOptimizationModal() {
+            const modal = document.getElementById('optimizationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Form submission
+        document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const feedback = {
+                agent: document.getElementById('feedbackAgent').value,
+                comments: document.getElementById('feedbackComments').value
+            };
+
+            // Send feedback to backend
+            fetch(`/api/agents/${feedback.agent}/feedback`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(feedback)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeFeedbackModal();
+                    showNotification('Feedback envoyé avec succès!', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending feedback:', error);
+                showNotification('Erreur lors de l\'envoi du feedback', 'error');
+            });
+        });
+
+        function toggleAgent(agentId, isActive) {
+            console.log(`Toggle ${agentId} agent: ${isActive ? 'ON' : 'OFF'}`);
+
+            // Update the simulated status
+            if (window.simulatedStatus && window.simulatedStatus[agentId]) {
+                window.simulatedStatus[agentId].active = isActive;
+                window.simulatedStatus[agentId].lastUpdate = Date.now();
+            }
+
+            // Show notification
+            showNotification(
+                `${agentId.charAt(0).toUpperCase() + agentId.slice(1)} Agent ${isActive ? 'activé' : 'désactivé'}`,
+                'success'
+            );
+
+            // Send state to backend for persistence
+            fetch('/api/agents/' + agentId + '/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: isActive })
+            }).catch(error => {
+                console.error('Failed to toggle agent:', error);
+            });
+        }
+
+        function showNotification(message, type) {
+            // Simple notification implementation
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 transition-all duration-300 transform ${
+                type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

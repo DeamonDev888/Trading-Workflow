@@ -1,11 +1,22 @@
 """
-[OK] Deamon Dev's Risk Management Agent V2 - Claude Code Sub-Agent Version
+[OK] Deamon Dev's Risk Management Agent V3 - KiloCode CLI Version
 Built with love by Deamon Dev [ROCKET]
 
-Version 2.0: Utilise les sub-agents Claude Code au lieu d'appels LLM directs
-Garde la même logique que V1 mais délègue l'analyse IA au sub-agent claude-risk-advisor
+Version 3.0: Utilise KiloCode CLI au lieu des sub-agents Claude Code
+Garde la même logique que V2 mais délègue l'analyse IA via KiloCode CLI modes
 """
 
+import json
+import os
+import subprocess
+import time
+import traceback
+from datetime import datetime, timedelta
+
+import pandas as pd
+import numpy as np
+from dotenv import load_dotenv
+from termcolor import cprint
 import json
 import os
 import subprocess
@@ -18,6 +29,7 @@ from termcolor import cprint
 
 import src.nice_funcs as n
 from src.utils.unicode_support import safe_print, create_safe_cprint, get_utf8_subprocess_kwargs
+from src.utils.kilocode_logger import kilocode_logger
 
 from src import config
 from src.agents.base_agent import BaseAgent
@@ -28,15 +40,16 @@ from src.config import (
     CASH_PERCENTAGE,
     MAX_CONCURRENT_POSITIONS,
     MAX_DAILY_LOSS,
+    MAX_GAIN_PERCENT,
     MAX_GAIN_USD,
     MAX_LOSS_GAIN_CHECK_HOURS,
     MAX_LOSS_PERCENT,
     MAX_LOSS_USD,
     MINIMUM_BALANCE_USD,
     MONITORED_TOKENS,
+    USE_AI_CONFIRMATION,
     USE_PERCENTAGE,
 )
-
 EXCLUDED_TOKENS = ["USDC", "SOL"]
 
 load_dotenv()
@@ -54,7 +67,7 @@ class RiskAgent(BaseAgent):
             "risk_agent", enable_postgres=True
         )  # Initialize base agent with PostgreSQL support
 
-        self.subagent_name = "claude-risk-advisor"
+        # Utilise KiloCode CLI au lieu de Claude Code sub-agents
 
         self.start_balance = self.get_portfolio_value()
         print(f"[BANK] Initial Portfolio Balance: ${self.start_balance:.2f}")
@@ -64,14 +77,14 @@ class RiskAgent(BaseAgent):
         self.last_override_check = None
 
         cprint(
-            "[OK] Risk Agent initialized with Claude Code Sub-Agents!",
+            "[OK] Risk Agent initialized with KiloCode CLI!",
             "white",
             "on_blue",
         )
 
     def call_subagent(self, prompt: str, context_data: dict = None) -> str:
         """
-        Appeler le sub-agent claude-risk-advisor via Claude Code CLI
+        Appeler le sub-agent de gestion risque via KiloCode CLI
 
         Args:
             prompt: Le prompt pour le sub-agent
@@ -83,25 +96,28 @@ class RiskAgent(BaseAgent):
         Raises:
             RuntimeError: Si l'appel au sub-agent échoue
         """
-        full_prompt = f"""Use the claude-risk-advisor subagent to analyze this risk scenario:
+        full_prompt = f"""Analyze this risk scenario and provide detailed risk management recommendations:
 
 {prompt}
 
 Context Data:
 {json.dumps(context_data, indent=2) if context_data else 'N/A'}
 
-Please provide a detailed risk assessment with clear recommendations."""
+Please provide a detailed risk assessment with clear recommendations in the following format:
+RISK_LEVEL: [LOW/MEDIUM/HIGH/CRITICAL]
+RECOMMENDATION: [CLOSE_ALL_POSITIONS/HOLD_PARTIAL/MONITOR_CLOSELY]
+REASONING: [detailed explanation]
+CONFIDENCE: [0-100%]"""
 
         cmd = [
-            "claude",
-            "--dangerously-skip-permissions",
-            "--agent",
-            self.subagent_name,
+            "kilocode",
+            "-m", "ask",
+            "--auto",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: {self.subagent_name} (skipping permissions)",
+            f"[INFO] Calling KiloCode risk analysis agent",
             "cyan",
         )
 
@@ -111,14 +127,31 @@ Please provide a detailed risk assessment with clear recommendations."""
             'cwd': os.getcwd(),
         })
 
+        start_time = time.time()
         result = subprocess.run(cmd, **subprocess_kwargs)
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        # Logger l'appel KiloCode
+        kilocode_logger.log_command(
+            agent_name="Risk Agent",
+            command=" ".join(cmd),
+            response=result.stdout,
+            duration_ms=duration_ms,
+            exit_code=result.returncode,
+            mode="ask",
+            agent_type="risk",
+            metadata={
+                "prompt": prompt,
+                "context_data": context_data
+            }
+        )
 
         if result.returncode != 0:
-            error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
+            error_msg = f"[ERROR] KiloCode agent error: {result.stderr}"
             cprint(error_msg, "red")
             raise RuntimeError(error_msg)
 
-        cprint("[OK] Sub-agent response received", "green")
+        cprint("[OK] KiloCode risk analysis response received", "green")
         return result.stdout
 
     def get_portfolio_value(self):
@@ -347,7 +380,7 @@ Provide a detailed analysis with clear recommendation.
                 },
             }
 
-            cprint("[AI] Claude Code Sub-Agent analyzing risk...", "white", "on_green")
+            cprint("[AI] KiloCode Risk Agent analyzing...", "white", "on_green")
 
             response = self.call_subagent(prompt, context_data)
 
@@ -355,20 +388,20 @@ Provide a detailed analysis with clear recommendation.
 
             self.override_active = "OVERRIDE" in response.upper()
 
-            cprint("\n[BRAIN] Risk Sub-Agent Analysis:", "white", "on_blue")
+            cprint("\n[BRAIN] KiloCode Risk Analysis:", "white", "on_blue")
             print("=" * 80)
             print(response)
             print("=" * 80)
 
             if self.override_active:
                 cprint(
-                    "\n[AI] Sub-Agent suggests keeping positions open",
+                    "\n[AI] KiloCode Risk Agent suggests keeping positions open",
                     "white",
                     "on_yellow",
                 )
             else:
                 cprint(
-                    "\n[SHIELD] Sub-Agent recommends closing positions",
+                    "\n[SHIELD] KiloCode Risk Agent recommends closing positions",
                     "white",
                     "on_red",
                 )
@@ -525,6 +558,7 @@ Provide a detailed analysis with clear recommendation.
                 print(
                     f"\n[ALERT] {breach_type} limit breached! Closing all positions immediately..."
                 )
+                print("[IDEA] (AI confirmation disabled in config)")
                 print(f"[IDEA] (AI confirmation disabled in config)")
                 self.close_all_positions()
                 return
@@ -574,27 +608,27 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
             }
 
             cprint(
-                "\n[AI] Consulting Claude Code Sub-Agent for risk decision...",
+                "\n[AI] Consulting KiloCode Risk Agent for decision...",
                 "white",
                 "on_yellow",
             )
             response = self.call_subagent(prompt, context_data)
 
-            print("\n[AI] Sub-Agent Risk Assessment:")
+            print("\n[AI] KiloCode Risk Assessment:")
             print("=" * 80)
             print(response)
             print("=" * 80)
 
             decision = response.split("\n")[0].strip()
             if "CLOSE_ALL" in decision.upper():
-                print("[ALERT] Sub-Agent recommends closing all positions!")
+                print("[ALERT] KiloCode Risk Agent recommends closing all positions!")
                 self.close_all_positions()
             else:
-                print("[HOLD] Sub-Agent recommends holding positions despite breach")
+                print("[HOLD] KiloCode Risk Agent recommends holding positions despite breach")
 
         except Exception as e:
             print(f"[ERROR] Error handling limit breach: {str(e)}")
-            print("[WARNING] Error in sub-agent consultation - defaulting to close all positions")
+            print("[WARNING] Error in KiloCode agent consultation - defaulting to close all positions")
             self.close_all_positions()
 
     def get_current_pnl(self):
@@ -650,7 +684,7 @@ Please provide a detailed risk assessment with clear recommendation: CLOSE_ALL o
 
 def main():
     """Main function to run the risk agent"""
-    safe_print("[SHIELD] Risk Agent (Claude Code Sub-Agents) Starting...", "white", "on_blue")
+    safe_print("[SHIELD] Risk Agent (KiloCode CLI) Starting...", "white", "on_blue")
 
     agent = RiskAgent()
 

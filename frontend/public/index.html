@@ -1138,6 +1138,10 @@
             <i class="fas fa-chart-line"></i>
             Backtest
           </a>
+          <a href="/agent-inferences.html" class="nav-link">
+            <i class="fas fa-brain"></i>
+            Agent Monitor
+          </a>
           <a href="/config" class="nav-link">
             <i class="fas fa-cogs"></i>
             Configuration
@@ -1854,7 +1858,7 @@
       // ====== API CLIENT FOR WALLET & POSITIONS ======
       class TradingAPIClient {
         constructor() {
-          this.baseURL = 'http://localhost:7000';
+          this.baseURL = ''; // Use relative URLs like Agent Monitor
           this.cache = new Map();
         }
 
@@ -1933,7 +1937,7 @@
           // Call backend API
           const action = agent.active ? 'stop' : 'start';
           const response = await fetch(
-            `http://localhost:7000/api/agents/${agentType}/${action}`,
+            `/api/agents/${agentType}/${action}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -2586,23 +2590,35 @@
         return 'Just now';
       }
 
-      // Auto-refresh inferences every 30 seconds
+      // Auto-refresh inferences with prevention of duplicate intervals
       let inferenceRefreshInterval;
+      let isAutoRefreshRunning = false;
 
       function startInferenceAutoRefresh() {
+        // Prevent multiple intervals from running
+        if (isAutoRefreshRunning) {
+          console.log('[INFERENCE] Auto-refresh already running, skipping duplicate call');
+          return;
+        }
+
         // Vérifier si un interval existe déjà et le清除
         if (inferenceRefreshInterval) {
           clearInterval(inferenceRefreshInterval);
           inferenceRefreshInterval = null;
           console.log('[INFERENCE] Cleared previous interval');
         }
+
+        isAutoRefreshRunning = true;
+        console.log('[INFERENCE] Starting auto-refresh with 60s interval');
+
         // Initial load for all agents
         ['risk', 'strategy', 'funding', 'sentiment'].forEach((agentType) => {
           refreshAgentInferences(agentType);
         });
 
-        // Set up auto-refresh
+        // Set up auto-refresh with longer interval to reduce server load
         inferenceRefreshInterval = setInterval(() => {
+          console.log('[INFERENCE] Running scheduled refresh...');
           ['risk', 'strategy', 'funding', 'sentiment'].forEach((agentType) => {
             // Only refresh if the agent is active
             const card = document.getElementById(`${agentType}-agent-card`);
@@ -2610,7 +2626,7 @@
               refreshAgentInferences(agentType);
             }
           });
-        }, 30000); // Refresh every 30 seconds
+        }, 60000); // Increased to 60 seconds to reduce server load
       }
 
       function stopInferenceAutoRefresh() {
@@ -2618,6 +2634,8 @@
           clearInterval(inferenceRefreshInterval);
           inferenceRefreshInterval = null;
         }
+        isAutoRefreshRunning = false;
+        console.log('[INFERENCE] Auto-refresh stopped');
       }
 
       function getAgentDisplayName(agentType) {
@@ -2634,7 +2652,7 @@
       async function checkAgentStatus() {
         try {
           const response = await fetch(
-            'http://localhost:7000/api/agents/status'
+            '/api/agents/status'
           );
           const result = await response.json();
 
@@ -3923,13 +3941,30 @@
       }
 
       // WebSocket connection for real-time price updates
+      let wsReconnectAttempts = 0;
+      let wsMaxReconnectAttempts = 10;
+      let wsReconnectTimeout = null;
+
       function initWebSocket() {
         try {
+          // Clear any existing reconnection timeout
+          if (wsReconnectTimeout) {
+            clearTimeout(wsReconnectTimeout);
+            wsReconnectTimeout = null;
+          }
+
+          // Close existing connection if any
+          if (window.wsConnection && window.wsConnection.readyState === WebSocket.OPEN) {
+            console.log('[WEBSOCKET] Connection already exists, skipping initialization');
+            return;
+          }
+
           // Connect to WebSocket server on port 7001
           window.wsConnection = new WebSocket('ws://localhost:7001');
 
           window.wsConnection.onopen = function(event) {
             console.log('[WEBSOCKET] Connected to real-time price feed');
+            wsReconnectAttempts = 0; // Reset counter on successful connection
             showNotification('WebSocket connecté', 'success');
           };
 
@@ -3954,11 +3989,19 @@
             console.log('[WEBSOCKET] Connection closed:', event.code, event.reason);
             showNotification('WebSocket déconnecté', 'warning');
 
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-              console.log('[WEBSOCKET] Attempting to reconnect...');
-              initWebSocket();
-            }, 5000);
+            // Only attempt to reconnect if it wasn't a normal closure and we haven't exceeded max attempts
+            if (event.code !== 1000 && wsReconnectAttempts < wsMaxReconnectAttempts) {
+              wsReconnectAttempts++;
+              const delay = Math.min(5000 * wsReconnectAttempts, 30000); // Exponential backoff, max 30s
+
+              console.log(`[WEBSOCKET] Attempting to reconnect ${wsReconnectAttempts}/${wsMaxReconnectAttempts} in ${delay}ms...`);
+              wsReconnectTimeout = setTimeout(() => {
+                initWebSocket();
+              }, delay);
+            } else if (wsReconnectAttempts >= wsMaxReconnectAttempts) {
+              console.log('[WEBSOCKET] Max reconnection attempts reached, stopping reconnection');
+              showNotification('WebSocket connexion abandonnée après plusieurs tentatives', 'error');
+            }
           };
 
           window.wsConnection.onerror = function(error) {
@@ -4019,114 +4062,197 @@
         }
       }
 
-      // Initialize page
-      document.addEventListener('DOMContentLoaded', function () {
-        updateSystemStatus();
-        syncWalletStatus(); // Check for connected wallet from config page
-        updateQuickConnectButton(); // Show/hide quick connect button
-        startAutoRefresh(); // Load wallet & positions from backend
-        loadAutoTradingStatus(); // Load auto-trading status on page load
+      // Initialize page with error handling
+      function safeInit() {
+        try {
+          console.log('🚀 Starting NOVAQUOTE Dashboard initialization...');
 
-        // Initialize agent control system
-        updateMasterControlPanel();
+          // Check if critical elements exist before proceeding
+          const criticalElements = ['walletSelect', 'agentsSummary', 'positionsTable'];
+          let missingElements = [];
 
-        // Start periodic agent status check
-        // Vérifier si un interval existe déjà et le清除
-        if (window.agentStatusIntervalId) {
-          clearInterval(window.agentStatusIntervalId);
-        }
-        window.agentStatusIntervalId = setInterval(checkAgentStatus, 10000); // Check every 10 seconds
-
-        // Initial agent status check
-        checkAgentStatus();
-
-        // Setup wallet event listeners
-        if (isWalletAvailable()) {
-          window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-              console.log(
-                '[WALLET] Account disconnected, clearing wallet data'
-              );
-              localStorage.removeItem('novaquote_wallet');
-              localStorage.removeItem('novaquote_wallet_type');
-              syncWalletStatus();
-              updateQuickConnectButton();
-              showNotification('Wallet déconnecté', 'info');
-            } else {
-              console.log('[WALLET] Account changed, refreshing wallet data');
-              // Reload page to refresh wallet data
-              window.location.reload();
+          criticalElements.forEach(id => {
+            if (!document.getElementById(id)) {
+              missingElements.push(id);
             }
           });
 
-          window.ethereum.on('chainChanged', (chainId) => {
-            console.log('[WALLET] Network changed:', chainId);
-            // Update wallet status on network change
+          if (missingElements.length > 0) {
+            console.warn('⚠️ Missing critical elements:', missingElements);
+            // Continue with limited functionality
+          }
+
+          // Safe initialization with individual try-catch blocks
+          try {
+            updateSystemStatus();
+          } catch (error) {
+            console.warn('Error in updateSystemStatus:', error);
+          }
+
+          try {
             syncWalletStatus();
-          });
+          } catch (error) {
+            console.warn('Error in syncWalletStatus:', error);
+          }
+
+          try {
+            updateQuickConnectButton();
+          } catch (error) {
+            console.warn('Error in updateQuickConnectButton:', error);
+          }
+
+          try {
+            startAutoRefresh();
+          } catch (error) {
+            console.warn('Error in startAutoRefresh:', error);
+          }
+
+          try {
+            loadAutoTradingStatus();
+          } catch (error) {
+            console.warn('Error in loadAutoTradingStatus:', error);
+          }
+
+          // Initialize agent control system
+          try {
+            updateMasterControlPanel();
+          } catch (error) {
+            console.warn('Error in updateMasterControlPanel:', error);
+          }
+
+          // Start periodic agent status check (safely)
+          try {
+            if (window.agentStatusIntervalId) {
+              clearInterval(window.agentStatusIntervalId);
+            }
+            window.agentStatusIntervalId = setInterval(function() {
+              try {
+                checkAgentStatus();
+              } catch (error) {
+                console.warn('Error in periodic agent status check:', error);
+              }
+            }, 10000);
+
+            checkAgentStatus();
+          } catch (error) {
+            console.warn('Error setting up agent status check:', error);
+          }
+
+          // Setup wallet event listeners safely
+          try {
+            if (isWalletAvailable() && window.ethereum) {
+              window.ethereum.on('accountsChanged', (accounts) => {
+                try {
+                  if (accounts.length === 0) {
+                    console.log('[WALLET] Account disconnected');
+                    localStorage.removeItem('novaquote_wallet');
+                    localStorage.removeItem('novaquote_wallet_type');
+                    syncWalletStatus();
+                    updateQuickConnectButton();
+                    showNotification('Wallet déconnecté', 'info');
+                  } else {
+                    console.log('[WALLET] Account changed');
+                    window.location.reload();
+                  }
+                } catch (error) {
+                  console.warn('Error in accountsChanged handler:', error);
+                }
+              });
+
+              window.ethereum.on('chainChanged', (chainId) => {
+                try {
+                  console.log('[WALLET] Network changed:', chainId);
+                  syncWalletStatus();
+                } catch (error) {
+                  console.warn('Error in chainChanged handler:', error);
+                }
+              });
+            }
+          } catch (error) {
+            console.warn('Error setting up wallet listeners:', error);
+          }
+
+          // Start inference monitoring safely
+          try {
+            console.log('[INFERENCE] Starting real-time inference monitoring...');
+            startInferenceAutoRefresh();
+          } catch (error) {
+            console.warn('Error starting inference monitoring:', error);
+          }
+
+          // Initialize WebSocket safely
+          try {
+            initWebSocket();
+          } catch (error) {
+            console.warn('Error initializing WebSocket:', error);
+          }
+
+          console.log('✅ NOVAQUOTE Dashboard initialized successfully');
+          showNotification('Dashboard initialisé', 'success');
+
+        } catch (error) {
+          console.error('❌ Critical error during dashboard initialization:', error);
+          showNotification('Erreur d\'initialisation du dashboard', 'error');
         }
-
-        // Start inference monitoring
-        console.log('[INFERENCE] Starting real-time inference monitoring...');
-        startInferenceAutoRefresh();
-
-        console.log(
-          '🚀 NOVAQUOTE Dashboard initialized with wallet, positions & agent control + inference monitoring'
-        );
-
-        // Initialize WebSocket connection for real-time price updates
-        initWebSocket();
-      });
-
-      // Also ensure updateMasterControlPanel is called on window load
-      window.addEventListener('load', function() {
-        console.log('[MASTER PANEL] Window loaded, calling updateMasterControlPanel');
-        updateMasterControlPanel();
-      });
-
-      // Force page refresh to clear any cached issues
-      if (performance.navigation.type === 1) {
-        console.log('[PAGE] Page loaded from cache, forcing refresh to clear cache');
-        setTimeout(() => {
-          window.location.reload(true);
-        }, 100);
       }
+
+      // Initialize page on DOM ready
+      document.addEventListener('DOMContentLoaded', function () {
+        safeInit();
+      });
+
+      // Safe window load handler
+      window.addEventListener('load', function() {
+        try {
+          console.log('[MASTER PANEL] Window loaded');
+          updateMasterControlPanel();
+        } catch (error) {
+          console.warn('Error in window load handler:', error);
+        }
+      });
 
       // Global test function - can be called from browser console
       window.testMasterPanel = function() {
-        console.log('=== MASTER PANEL TEST ===');
-        console.log('window.agentStates:', window.agentStates);
-        const activeCount = Object.values(window.agentStates || {}).filter(agent => agent.active).length;
-        const totalCount = Object.keys(window.agentStates || {}).length;
-        console.log('Active:', activeCount, 'Total:', totalCount);
+        try {
+          console.log('=== MASTER PANEL TEST ===');
+          console.log('window.agentStates:', window.agentStates);
+          const agentStates = window.agentStates || {};
+          const activeCount = Object.values(agentStates).filter(agent => agent && agent.active).length;
+          const totalCount = Object.keys(agentStates).length;
+          console.log('Active:', activeCount, 'Total:', totalCount);
 
-        const activeCountEl = document.getElementById('active-agents-count');
-        console.log('active-agents-count element:', activeCountEl);
-        if (activeCountEl) {
-          console.log('Current value:', activeCountEl.textContent);
+          const activeCountEl = document.getElementById('active-agents-count');
+          console.log('active-agents-count element:', activeCountEl);
+          if (activeCountEl) {
+            console.log('Current value:', activeCountEl.textContent);
+          }
+
+          const systemStatusEl = document.getElementById('system-status');
+          console.log('system-status element:', systemStatusEl);
+          if (systemStatusEl) {
+            console.log('Current value:', systemStatusEl.textContent);
+          }
+
+          console.log('Calling updateMasterControlPanel()...');
+          updateMasterControlPanel();
+
+          setTimeout(() => {
+            console.log('After update:');
+            const newActiveCountEl = document.getElementById('active-agents-count');
+            const newSystemStatusEl = document.getElementById('system-status');
+            if (newActiveCountEl) console.log('active-agents-count:', newActiveCountEl.textContent);
+            if (newSystemStatusEl) console.log('system-status:', newSystemStatusEl.textContent);
+          }, 100);
+          console.log('=== END TEST ===');
+        } catch (error) {
+          console.error('Error in testMasterPanel:', error);
         }
-
-        const systemStatusEl = document.getElementById('system-status');
-        console.log('system-status element:', systemStatusEl);
-        if (systemStatusEl) {
-          console.log('Current value:', systemStatusEl.textContent);
-        }
-
-        console.log('Calling updateMasterControlPanel()...');
-        updateMasterControlPanel();
-
-        setTimeout(() => {
-          console.log('After update:');
-          if (activeCountEl) console.log('active-agents-count:', activeCountEl.textContent);
-          if (systemStatusEl) console.log('system-status:', systemStatusEl.textContent);
-        }, 100);
-        console.log('=== END TEST ===');
       };
 
       // Auto-run test after page loads
       setTimeout(() => {
         console.log('%c[NOVAQUOTE] Page loaded! Type testMasterPanel() in console to test.', 'color: #00d4aa; font-size: 14px; font-weight: bold');
-      }, 1000);
+      }, 2000);
     </script>
 
     <!-- Notification Panel -->
@@ -4143,3 +4269,5 @@
     </div>
   </body>
 </html>
+< s c r i p t   s r c = ' t r o u b l e s h o o t . j s ' > < / s c r i p t > 
+ 

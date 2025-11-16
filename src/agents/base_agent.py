@@ -226,14 +226,13 @@ class BaseAgent:
         self.last_update = time.time()
 
         self.debug(
-            f"Batch state update",
+            "Batch state update",
             {
                 "updates": updates,
                 "previous_state_size": len(old_state),
                 "new_state_size": len(self.state),
             },
         )
-
     def save_state(self, filename: Optional[str] = None):
         """Save agent state to file with logging"""
         if filename is None:

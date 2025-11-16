@@ -21,6 +21,7 @@ projet trading/
 ├── docs/
 |   ├── agents/
 |   ├── AGENTS_ARCHITECTURE_DIAGRAM.md
+|   ├── AGENTS_GRAPH_VISUALIZATION.md
 |   ├── api/
 |   ├── architecture/
 |   ├── COMMANDS_AGENTS.md
@@ -47,6 +48,8 @@ projet trading/
 |   |   └── test_claude_agents.html
 |   ├── server-frontend.js
 |   └── server-frontend.ts
+├── NOVAQUOTE_ROADMAP_2025.md
+├── NOVAQUOTE_ROADMAP_SIMPLIFIEE.md
 ├── package-lock.json
 ├── package.json
 ├── PROMPT_SYSTEME_NOVAQUOTE.md
@@ -70,7 +73,12 @@ projet trading/
 |   ├── scan-report-2025-11-13_01-51-56.md
 |   ├── scan-report-2025-11-13_01-52-25.md
 |   ├── scan-report-2025-11-13_02-00-50.md
-|   └── scan-report-2025-11-13_02-03-44.md
+|   ├── scan-report-2025-11-13_02-03-44.md
+|   ├── scan-report-2025-11-14_01-59-58.md
+|   ├── scan-report-2025-11-14_02-05-06.md
+|   ├── scan-report-2025-11-14_02-06-27.md
+|   ├── scan-report-2025-11-14_02-06-55.md
+|   └── scan-report-2025-11-14_02-07-37.md
 ├── run.ts
 ├── scripts/
 |   ├── agent_logs_monitor.js
@@ -80,6 +88,7 @@ projet trading/
 |   ├── database_startup_optimization.js
 |   ├── database_validation.py
 |   ├── db_validation_simple.py
+|   ├── deploy-mainnet.js
 |   ├── documentation_manager.py
 |   ├── fix_database_constraints.py
 |   ├── generate_context.py

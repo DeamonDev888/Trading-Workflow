@@ -220,14 +220,13 @@ class DiscordSentimentCollector:
                 except Exception as e:
                     print(f"[ERROR] Discord webhook failed: {e}")
                     continue
-
-            print(f"[INFO] Discord collection not implemented (requires Bot API)")
+            
+            print("[INFO] Discord collection not implemented (requires Bot API)")
             return messages
 
         except Exception as e:
             print(f"[ERROR] Discord collection failed: {e}")
             return messages
-
 
 class TelegramSentimentCollector:
     """Collect sentiment data from Telegram channels"""
@@ -269,7 +268,7 @@ class NewsSentimentCollector:
             async with aiohttp.ClientSession() as session:
                 try:
                     async with session.get(
-                        f"https://api.coindesk.com/v1/news/search",
+                        "https://api.coindesk.com/v1/news/search",
                         params={"q": token, "limit": limit},
                     ) as response:
                         if response.status == 200:
@@ -382,26 +381,31 @@ class SentimentAnalysisAgent:
         return all_data
 
     def call_subagent(self, prompt: str) -> str:
-        """Appeler le sub-agent Claude pour l'analyse de sentiment"""
+        """Appeler l'agent KiloCode pour l'analyse de sentiment"""
         import subprocess
         import json
 
-        full_prompt = f"""Use the Deamon-sentiment-analyzer subagent to analyze this sentiment data:
+        full_prompt = f"""Analyze this sentiment data and provide detailed trading sentiment analysis:
 
 {prompt}
 
-Please provide a detailed sentiment analysis with clear trading recommendations."""
+Please provide a detailed sentiment analysis with clear trading recommendations in the following format:
+SENTIMENT: [VERY_BEARISH/BEARISH/NEUTRAL/BULLISH/VERY_BULLISH]
+STRENGTH: [0-100%]
+ACTION: [BUY/SELL/HOLD]
+CONFIDENCE: [0-100%]
+KEY_FACTORS: [3-5 bullet points]
+RISK_ASSESSMENT: [brief assessment]"""
 
         cmd = [
-            "claude",
-            "--dangerously-skip-permissions",
-            "--agent",
-            "Deamon-sentiment-analyzer",
+            "kilocode",
+            "-m", "ask",
+            "--auto",
             full_prompt,
         ]
 
         cprint(
-            f"[INFO] Calling sub-agent: Deamon-sentiment-analyzer",
+            f"[INFO] Calling KiloCode sentiment analysis agent",
             "cyan",
         )
 
@@ -414,11 +418,11 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
         )
 
         if result.returncode != 0:
-            error_msg = f"[ERROR] Sub-agent error: {result.stderr}"
+            error_msg = f"[ERROR] KiloCode agent error: {result.stderr}"
             cprint(error_msg, "red")
             raise RuntimeError(error_msg)
 
-        cprint("[OK] Sub-agent response received", "green")
+        cprint("[OK] KiloCode sentiment analysis response received", "green")
         return result.stdout
 
     async def analyze_sentiment(self, token: str) -> Dict[str, Any]:
@@ -458,7 +462,7 @@ Please provide a detailed sentiment analysis with clear trading recommendations.
             RISK_ASSESSMENT: [brief assessment]
             """
 
-            cprint("[AI] Calling Claude Sentiment Analyzer...", "cyan")
+            cprint("[AI] Calling KiloCode Sentiment Analyzer...", "cyan")
             analysis_response = self.call_subagent(prompt)
 
             parsed = self._parse_analysis_response(analysis_response)
